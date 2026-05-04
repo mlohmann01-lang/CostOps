@@ -1,163 +1,116 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { recommendationsTable } from "@workspace/db";
-import { eq, and, inArray } from "drizzle-orm";
+import { connectorSyncStatusTable, recommendationsTable } from "@workspace/db";
+import { eq, and } from "drizzle-orm";
+import { assessTrust } from "../lib/trust-engine";
+import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
+import { ingestM365Tenant } from "../lib/connectors/m365-ingestion";
+import { reliabilityFromHealth } from "../lib/connectors/connector-health";
 
 const router = Router();
+const MVP_MODE = true;
 
-const MOCK_USERS = [
-  { email: "james.hartley@acme.com", displayName: "James Hartley", sku: "E5", cost: 57, days: 187 },
-  { email: "priya.nair@acme.com", displayName: "Priya Nair", sku: "E3", cost: 36, days: 134 },
-  { email: "tom.walsh@acme.com", displayName: "Tom Walsh", sku: "E5", cost: 57, days: 220 },
-  { email: "sarah.kim@acme.com", displayName: "Sarah Kim", sku: "BUSINESS_PREMIUM", cost: 32, days: 98 },
-  { email: "dev.service@acme.com", displayName: "Dev Service Account", sku: "E3", cost: 36, days: 312 },
-  { email: "alex.morgan@acme.com", displayName: "Alex Morgan", sku: "E5", cost: 57, days: 67 },
-  { email: "lisa.chen@acme.com", displayName: "Lisa Chen", sku: "E3", cost: 36, days: 156 },
-  { email: "mike.johnson@acme.com", displayName: "Mike Johnson", sku: "BUSINESS_PREMIUM", cost: 32, days: 43 },
-  { email: "noreply.system@acme.com", displayName: "No-Reply System", sku: "E3", cost: 36, days: 450 },
-  { email: "rachel.adams@acme.com", displayName: "Rachel Adams", sku: "E5", cost: 57, days: 29 },
-];
-
-function calcTrustScore(days: number, email: string): number {
-  const identityConf = email.includes("service") || email.includes("noreply") ? 0.6 : 0.9;
-  const freshness = Math.min(days / 180, 1);
-  const signalConf = days > 90 ? 0.85 : 0.65;
-  return Math.round((identityConf * 0.4 + freshness * 0.3 + signalConf * 0.3) * 100) / 100;
-}
-
-function calcExecutionStatus(score: number): string {
-  if (score >= 0.9) return "AUTO_EXECUTE";
-  if (score >= 0.75) return "APPROVAL_REQUIRED";
-  if (score >= 0.5) return "INVESTIGATE";
-  return "BLOCKED";
+function buildTrustContext(user: any, metadata: any, action: string) {
+  const isService = user.userPrincipalName.includes("service") || user.userPrincipalName.includes("noreply");
+  return {
+    entity_input: {
+      identity_confidence: isService ? 0.7 : 1.0,
+      source_consistency: 1.0,
+      data_freshness: metadata.dataFreshnessScore,
+      ownership_confidence: 0.75,
+      source_reliability: reliabilityFromHealth(metadata.connectorHealth),
+    },
+    recommendation_input: {
+      usage_signal_quality: user.lastLoginDaysAgo == null ? 0.0 : user.lastLoginDaysAgo > 90 ? 0.85 : 0.7,
+      entitlement_confidence: 1.0,
+      policy_fit: 0.75,
+      savings_confidence: 0.8,
+    },
+    execution_input: { action_reversibility: 0.75, approval_state: 0.4, blast_radius_score: 1.0, rollback_confidence: 0.75 },
+    blocker_context: {
+      admin_or_service_account_match: isService,
+      connector_health_failed: metadata.connectorHealth === "FAILED",
+      source_stale_beyond_sla: metadata.dataFreshnessScore <= 0.2,
+      usage_data_missing_for_removal_action: action === "REMOVE_LICENSE" && user.lastLoginDaysAgo == null,
+    },
+    warnings: metadata.partialData ? ["Partial connector data returned"] : [],
+    mvp_mode: MVP_MODE,
+  };
 }
 
 router.get("/", async (req, res) => {
-  try {
-    const statusFilter = req.query.status as string | undefined;
-    const playbookFilter = req.query.playbook as string | undefined;
-
-    let rows = await db.select().from(recommendationsTable).orderBy(recommendationsTable.createdAt);
-
-    if (statusFilter && statusFilter !== "all") {
-      rows = rows.filter((r) => r.status === statusFilter);
-    }
-    if (playbookFilter) {
-      rows = rows.filter((r) => r.playbook === playbookFilter);
-    }
-
-    res.json(
-      rows.map((r) => ({
-        id: r.id,
-        userEmail: r.userEmail,
-        displayName: r.displayName,
-        licenceSku: r.licenceSku,
-        monthlyCost: r.monthlyCost,
-        annualisedCost: r.annualisedCost,
-        trustScore: r.trustScore,
-        executionStatus: r.executionStatus,
-        status: r.status,
-        playbook: r.playbook,
-        connector: r.connector,
-        lastActivity: r.lastActivity ? r.lastActivity.toISOString() : null,
-        daysSinceActivity: r.daysSinceActivity,
-        rejectionReason: r.rejectionReason,
-        createdAt: r.createdAt.toISOString(),
-      }))
-    );
-  } catch (err) {
-    req.log.error({ err }, "Error listing recommendations");
-    res.status(500).json({ error: "Internal server error" });
-  }
+  const rows = await db.select().from(recommendationsTable).orderBy(recommendationsTable.createdAt);
+  res.json(rows);
 });
 
 router.post("/generate", async (req, res) => {
   try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    const ingestion = await ingestM365Tenant(tenantId);
+
+    await db.insert(connectorSyncStatusTable).values({
+      tenantId,
+      connector: ingestion.metadata.connector,
+      lastSyncTime: new Date(ingestion.metadata.lastSyncTime),
+      connectorHealth: ingestion.metadata.connectorHealth,
+      dataFreshnessScore: ingestion.metadata.dataFreshnessScore,
+      freshnessBand: ingestion.metadata.freshnessBand,
+      partialData: String(ingestion.metadata.partialData),
+      errorCode: ingestion.metadata.errorCode ?? null,
+      errorMessage: ingestion.metadata.errorMessage ?? null,
+      requestId: ingestion.metadata.requestId,
+    });
+
     const generated = [];
-    for (const user of MOCK_USERS) {
-      const trustScore = calcTrustScore(user.days, user.email);
-      const executionStatus = calcExecutionStatus(trustScore);
-      const lastActivity = new Date(Date.now() - user.days * 24 * 60 * 60 * 1000);
+    for (const user of ingestion.users) {
+      for (const playbook of PLAYBOOK_REGISTRY) {
+        const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled, assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName, mailboxType: "user" };
+        const evaluation = playbook.evaluate(mapped);
+        if (!evaluation.matched || evaluation.exclusions.length > 0) continue;
 
-      const [existing] = await db
-        .select()
-        .from(recommendationsTable)
-        .where(and(eq(recommendationsTable.userEmail, user.email), eq(recommendationsTable.status, "pending")));
+        const [existing] = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.userEmail, user.userPrincipalName), eq(recommendationsTable.status, "pending")));
+        if (existing) continue;
 
-      if (existing) continue;
-
-      const [rec] = await db
-        .insert(recommendationsTable)
-        .values({
-          userEmail: user.email,
-          displayName: user.displayName,
-          licenceSku: user.sku,
-          monthlyCost: user.cost,
-          annualisedCost: user.cost * 12,
-          trustScore,
-          executionStatus,
+        const trust = assessTrust(buildTrustContext(user, ingestion.metadata, evaluation.recommendedAction));
+        const [rec] = await db.insert(recommendationsTable).values({
+          userEmail: user.userPrincipalName,
+          displayName: user.displayName ?? user.userPrincipalName,
+          licenceSku: mapped.sku,
+          monthlyCost: evaluation.estimatedMonthlySaving,
+          annualisedCost: evaluation.estimatedMonthlySaving * 12,
+          trustScore: trust.execution_readiness_score,
+          entityTrustScore: trust.entity_trust_score,
+          recommendationTrustScore: trust.recommendation_trust_score,
+          executionReadinessScore: trust.execution_readiness_score,
+          executionStatus: trust.execution_gate,
+          criticalBlockers: trust.critical_blockers,
+          warnings: trust.warnings,
+          scoreBreakdown: trust.score_breakdown,
           status: "pending",
-          playbook: "inactive_user_licence_reclaim",
+          playbook: playbook.vendor,
+          playbookId: playbook.id,
+          playbookName: playbook.name,
+          playbookEvidence: evaluation.evidence,
+          playbookRequiredSignals: evaluation.requiredSignals,
+          playbookExclusions: evaluation.exclusions,
           connector: "m365",
-          lastActivity,
-          daysSinceActivity: user.days,
+          ingestionRunId: ingestion.ingestionRunId,
+          sourceTimestamp: new Date(user.sourceTimestamp),
+          connectorHealth: ingestion.metadata.connectorHealth,
+          dataFreshnessScore: ingestion.metadata.dataFreshnessScore,
+          freshnessBand: ingestion.metadata.freshnessBand,
+          partialData: String(ingestion.metadata.partialData),
+          connectorHealthSnapshot: ingestion.metadata,
+          lastActivity: user.lastLoginDaysAgo == null ? null : new Date(Date.now() - user.lastLoginDaysAgo * 86400000),
+          daysSinceActivity: user.lastLoginDaysAgo,
           rejectionReason: null,
-        })
-        .returning();
-
-      generated.push({
-        id: rec.id,
-        userEmail: rec.userEmail,
-        displayName: rec.displayName,
-        licenceSku: rec.licenceSku,
-        monthlyCost: rec.monthlyCost,
-        annualisedCost: rec.annualisedCost,
-        trustScore: rec.trustScore,
-        executionStatus: rec.executionStatus,
-        status: rec.status,
-        playbook: rec.playbook,
-        connector: rec.connector,
-        lastActivity: rec.lastActivity ? rec.lastActivity.toISOString() : null,
-        daysSinceActivity: rec.daysSinceActivity,
-        rejectionReason: rec.rejectionReason,
-        createdAt: rec.createdAt.toISOString(),
-      });
+        }).returning();
+        generated.push(rec);
+      }
     }
-
-    res.json({ generated: generated.length, recommendations: generated });
+    res.json({ generated: generated.length, recommendations: generated, ingestionMetadata: ingestion.metadata, warnings: ingestion.warnings });
   } catch (err) {
     req.log.error({ err }, "Error generating recommendations");
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
-
-  try {
-    const [rec] = await db.select().from(recommendationsTable).where(eq(recommendationsTable.id, id));
-    if (!rec) return res.status(404).json({ error: "Recommendation not found" });
-
-    res.json({
-      id: rec.id,
-      userEmail: rec.userEmail,
-      displayName: rec.displayName,
-      licenceSku: rec.licenceSku,
-      monthlyCost: rec.monthlyCost,
-      annualisedCost: rec.annualisedCost,
-      trustScore: rec.trustScore,
-      executionStatus: rec.executionStatus,
-      status: rec.status,
-      playbook: rec.playbook,
-      connector: rec.connector,
-      lastActivity: rec.lastActivity ? rec.lastActivity.toISOString() : null,
-      daysSinceActivity: rec.daysSinceActivity,
-      rejectionReason: rec.rejectionReason,
-      createdAt: rec.createdAt.toISOString(),
-    });
-  } catch (err) {
-    req.log.error({ err }, "Error fetching recommendation");
     res.status(500).json({ error: "Internal server error" });
   }
 });
