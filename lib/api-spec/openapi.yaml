@@ -3,20 +3,29 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: AI Outcome Control Plane API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: dashboard
+    description: Dashboard summary and metrics
+  - name: connectors
+    description: Data source connectors
+  - name: recommendations
+    description: Cost optimisation recommendations
+  - name: execution
+    description: Execution and approval actions
+  - name: outcomes
+    description: Savings ledger and outcome tracking
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,250 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get dashboard summary metrics
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/savings-trend:
+    get:
+      operationId: getSavingsTrend
+      tags: [dashboard]
+      summary: Get monthly savings trend over time
+      responses:
+        "200":
+          description: Savings trend data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavingsTrendPoint"
+
+  /dashboard/action-breakdown:
+    get:
+      operationId: getActionBreakdown
+      tags: [dashboard]
+      summary: Get breakdown of actions by status
+      responses:
+        "200":
+          description: Action breakdown
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActionBreakdownItem"
+
+  /connectors:
+    get:
+      operationId: listConnectors
+      tags: [connectors]
+      summary: List all data source connectors
+      responses:
+        "200":
+          description: List of connectors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Connector"
+
+  /connectors/{id}/sync:
+    post:
+      operationId: syncConnector
+      tags: [connectors]
+      summary: Trigger a connector sync
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Sync triggered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Connector"
+
+  /recommendations:
+    get:
+      operationId: listRecommendations
+      tags: [recommendations]
+      summary: List all recommendations
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected, executed, all]
+        - name: playbook
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of recommendations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Recommendation"
+
+  /recommendations/generate:
+    post:
+      operationId: generateRecommendations
+      tags: [recommendations]
+      summary: Run playbooks to generate new recommendations
+      responses:
+        "200":
+          description: Generated recommendations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  generated:
+                    type: integer
+                  recommendations:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Recommendation"
+                required: [generated, recommendations]
+
+  /recommendations/{id}:
+    get:
+      operationId: getRecommendation
+      tags: [recommendations]
+      summary: Get a single recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Recommendation detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recommendation"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /execution/approve/{id}:
+    post:
+      operationId: approveRecommendation
+      tags: [execution]
+      summary: Approve and execute a recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Approved and executed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExecutionResult"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "400":
+          description: Cannot approve
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /execution/reject/{id}:
+    post:
+      operationId: rejectRecommendation
+      tags: [execution]
+      summary: Reject a recommendation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectRecommendationBody"
+      responses:
+        "200":
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recommendation"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /outcomes:
+    get:
+      operationId: listOutcomes
+      tags: [outcomes]
+      summary: List all outcomes in the savings ledger
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: List of outcomes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OutcomeLedgerEntry"
+
+  /outcomes/summary:
+    get:
+      operationId: getOutcomesSummary
+      tags: [outcomes]
+      summary: Get total savings summary from the ledger
+      responses:
+        "200":
+          description: Savings summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OutcomesSummary"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +284,235 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    DashboardSummary:
+      type: object
+      properties:
+        totalMonthlySavings:
+          type: number
+          description: Total monthly savings realised in USD
+        totalAnnualisedSavings:
+          type: number
+        pendingRecommendations:
+          type: integer
+        executedActions:
+          type: integer
+        blockedActions:
+          type: integer
+        activeConnectors:
+          type: integer
+        avgTrustScore:
+          type: number
+        savingsThisMonth:
+          type: number
+      required:
+        - totalMonthlySavings
+        - totalAnnualisedSavings
+        - pendingRecommendations
+        - executedActions
+        - blockedActions
+        - activeConnectors
+        - avgTrustScore
+        - savingsThisMonth
+
+    SavingsTrendPoint:
+      type: object
+      properties:
+        month:
+          type: string
+        savings:
+          type: number
+        actions:
+          type: integer
+      required: [month, savings, actions]
+
+    ActionBreakdownItem:
+      type: object
+      properties:
+        status:
+          type: string
+        count:
+          type: integer
+        value:
+          type: number
+      required: [status, count, value]
+
+    Connector:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          enum: [m365, aws, azure, gcp, salesforce, slack, zoom, github]
+        status:
+          type: string
+          enum: [connected, disconnected, syncing, error]
+        lastSync:
+          type: string
+          nullable: true
+        recordCount:
+          type: integer
+        trustScore:
+          type: number
+      required: [id, name, type, status, lastSync, recordCount, trustScore]
+
+    Recommendation:
+      type: object
+      properties:
+        id:
+          type: integer
+        userEmail:
+          type: string
+        displayName:
+          type: string
+        licenceSku:
+          type: string
+        monthlyCost:
+          type: number
+        annualisedCost:
+          type: number
+        trustScore:
+          type: number
+        executionStatus:
+          type: string
+          enum: [AUTO_EXECUTE, APPROVAL_REQUIRED, INVESTIGATE, BLOCKED]
+        status:
+          type: string
+          enum: [pending, approved, rejected, executed]
+        playbook:
+          type: string
+        connector:
+          type: string
+        lastActivity:
+          type: string
+          nullable: true
+        daysSinceActivity:
+          type: integer
+          nullable: true
+        rejectionReason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - userEmail
+        - displayName
+        - licenceSku
+        - monthlyCost
+        - annualisedCost
+        - trustScore
+        - executionStatus
+        - status
+        - playbook
+        - connector
+        - lastActivity
+        - daysSinceActivity
+        - rejectionReason
+        - createdAt
+
+    ExecutionResult:
+      type: object
+      properties:
+        recommendation:
+          $ref: "#/components/schemas/Recommendation"
+        outcome:
+          $ref: "#/components/schemas/OutcomeLedgerEntry"
+      required: [recommendation, outcome]
+
+    OutcomeLedgerEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        recommendationId:
+          type: integer
+        userEmail:
+          type: string
+        displayName:
+          type: string
+        action:
+          type: string
+        licenceSku:
+          type: string
+        beforeCost:
+          type: number
+        afterCost:
+          type: number
+        monthlySaving:
+          type: number
+        annualisedSaving:
+          type: number
+        approved:
+          type: boolean
+        executed:
+          type: boolean
+        executionMode:
+          type: string
+        evidence:
+          type: object
+          additionalProperties: true
+        approvedAt:
+          type: string
+          nullable: true
+        executedAt:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+      required:
+        - id
+        - recommendationId
+        - userEmail
+        - displayName
+        - action
+        - licenceSku
+        - beforeCost
+        - afterCost
+        - monthlySaving
+        - annualisedSaving
+        - approved
+        - executed
+        - executionMode
+        - evidence
+        - approvedAt
+        - executedAt
+        - createdAt
+
+    OutcomesSummary:
+      type: object
+      properties:
+        totalMonthlySaving:
+          type: number
+        totalAnnualisedSaving:
+          type: number
+        totalActionsExecuted:
+          type: integer
+        topPlaybook:
+          type: string
+        avgMonthlySavingPerAction:
+          type: number
+      required:
+        - totalMonthlySaving
+        - totalAnnualisedSaving
+        - totalActionsExecuted
+        - topPlaybook
+        - avgMonthlySavingPerAction
+
+    RejectRecommendationBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required: [reason]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]

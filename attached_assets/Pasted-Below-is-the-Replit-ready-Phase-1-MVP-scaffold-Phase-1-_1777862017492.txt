@@ -1,0 +1,99 @@
+Below is the Replit-ready Phase 1 MVP scaffold.
+
+Phase 1 MVP — Replit Project Structure
+cost-control-mvp/├── app.py├── requirements.txt├── .env.example├── README.md├── /models│   └── database.py├── /services│   ├── m365_connector.py│   ├── trust_score.py│   ├── playbook_inactive_users.py│   ├── outcome_ledger.py│   └── execution_service.py├── /routes│   ├── health.py│   ├── m365.py│   ├── recommendations.py│   ├── execution.py│   └── outcomes.py└── /templates    └── dashboard.html
+
+requirements.txt
+flaskflask-corspython-dotenvrequestssqlalchemypsycopg2-binary
+
+.env.example
+DATABASE_URL=postgresql://user:password@host:5432/dbnameM365_TENANT_ID=M365_CLIENT_ID=M365_CLIENT_SECRET=APP_ENV=development
+
+app.py
+from flask import Flask, render_templatefrom flask_cors import CORSfrom dotenv import load_dotenvfrom routes.health import health_bpfrom routes.m365 import m365_bpfrom routes.recommendations import recommendations_bpfrom routes.execution import execution_bpfrom routes.outcomes import outcomes_bpfrom models.database import init_dbload_dotenv()app = Flask(__name__)CORS(app)init_db()app.register_blueprint(health_bp)app.register_blueprint(m365_bp, url_prefix="/api/m365")app.register_blueprint(recommendations_bp, url_prefix="/api/recommendations")app.register_blueprint(execution_bp, url_prefix="/api/execution")app.register_blueprint(outcomes_bp, url_prefix="/api/outcomes")@app.route("/")def dashboard():    return render_template("dashboard.html")if __name__ == "__main__":    app.run(host="0.0.0.0", port=5000)
+
+models/database.py
+import osfrom sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, JSONfrom sqlalchemy.orm import declarative_base, sessionmakerfrom datetime import datetimeDATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///local.db")engine = create_engine(DATABASE_URL)SessionLocal = sessionmaker(bind=engine)Base = declarative_base()class Recommendation(Base):    __tablename__ = "recommendations"    id = Column(Integer, primary_key=True)    user_email = Column(String, index=True)    licence_sku = Column(String)    monthly_cost = Column(Float, default=0)    reason = Column(String)    trust_score = Column(Float)    execution_status = Column(String)    recommended_action = Column(String)    raw_payload = Column(JSON)    created_at = Column(DateTime, default=datetime.utcnow)class OutcomeLedger(Base):    __tablename__ = "outcome_ledger"    id = Column(Integer, primary_key=True)    user_email = Column(String)    action = Column(String)    licence_sku = Column(String)    before_cost = Column(Float)    after_cost = Column(Float)    monthly_saving = Column(Float)    approved = Column(Boolean, default=False)    executed = Column(Boolean, default=False)    evidence = Column(JSON)    created_at = Column(DateTime, default=datetime.utcnow)def init_db():    Base.metadata.create_all(bind=engine)
+
+services/m365_connector.py
+import osimport requestsfrom datetime import datetime, timedeltaclass M365Connector:    def __init__(self):        self.tenant_id = os.getenv("M365_TENANT_ID")        self.client_id = os.getenv("M365_CLIENT_ID")        self.client_secret = os.getenv("M365_CLIENT_SECRET")        self.base_url = "https://graph.microsoft.com/v1.0"    def get_token(self):        url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/token"        payload = {            "client_id": self.client_id,            "client_secret": self.client_secret,            "scope": "https://graph.microsoft.com/.default",            "grant_type": "client_credentials",        }        response = requests.post(url, data=payload, timeout=30)        response.raise_for_status()        return response.json()["access_token"]    def headers(self):        return {"Authorization": f"Bearer {self.get_token()}"}    def list_users(self):        """        MVP: Pull users and licence assignments.        Later: add paging, delta sync, retry handling.        """        url = f"{self.base_url}/users?$select=id,displayName,userPrincipalName,accountEnabled,assignedLicenses"        response = requests.get(url, headers=self.headers(), timeout=30)        response.raise_for_status()        return response.json().get("value", [])    def mock_users(self):        """        Used for local MVP development before live Graph auth.        """        return [            {                "id": "u1",                "displayName": "John Smith",                "userPrincipalName": "john.smith@company.com",                "accountEnabled": False,                "assignedLicenses": [{"skuId": "E5"}],                "lastLoginDaysAgo": 120,            },            {                "id": "u2",                "displayName": "Sarah Active",                "userPrincipalName": "sarah.active@company.com",                "accountEnabled": True,                "assignedLicenses": [{"skuId": "E3"}],                "lastLoginDaysAgo": 5,            },        ]
+
+services/trust_score.py
+def calculate_trust_score(identity_confidence, freshness_score, signal_confidence):    score = (        identity_confidence * 0.4        + freshness_score * 0.3        + signal_confidence * 0.3    )    return round(score, 2)def execution_status_from_score(score):    if score >= 0.90:        return "APPROVAL_REQUIRED"    if score >= 0.75:        return "APPROVAL_REQUIRED"    if score >= 0.50:        return "INVESTIGATE"    return "BLOCKED"def score_user_reclaim_candidate(user):    email = user.get("userPrincipalName")    disabled = user.get("accountEnabled") is False    last_login_days = user.get("lastLoginDaysAgo", 999)    identity_confidence = 1.0 if email else 0.3    if last_login_days <= 7:        freshness_score = 1.0    elif last_login_days <= 30:        freshness_score = 0.7    else:        freshness_score = 0.4    if disabled and last_login_days > 90:        signal_confidence = 1.0    elif last_login_days > 90:        signal_confidence = 0.7    elif disabled:        signal_confidence = 0.7    else:        signal_confidence = 0.2    trust_score = calculate_trust_score(        identity_confidence,        freshness_score,        signal_confidence,    )    return {        "trust_score": trust_score,        "execution_status": execution_status_from_score(trust_score),        "identity_confidence": identity_confidence,        "freshness_score": freshness_score,        "signal_confidence": signal_confidence,    }
+
+services/playbook_inactive_users.py
+from services.trust_score import score_user_reclaim_candidateDEFAULT_LICENSE_COSTS = {    "E5": 57.00,    "E3": 36.00,    "BUSINESS_PREMIUM": 32.00,}def is_excluded_user(user):    email = user.get("userPrincipalName", "").lower()    display_name = user.get("displayName", "").lower()    exclusion_terms = [        "admin",        "service",        "shared",        "noreply",        "no-reply",    ]    return any(term in email or term in display_name for term in exclusion_terms)def run_disabled_inactive_user_reclaim(users):    recommendations = []    for user in users:        if is_excluded_user(user):            continue        assigned_licenses = user.get("assignedLicenses", [])        if not assigned_licenses:            continue        disabled = user.get("accountEnabled") is False        last_login_days = user.get("lastLoginDaysAgo", 999)        eligible = disabled or last_login_days > 90        if not eligible:            continue        trust = score_user_reclaim_candidate(user)        for licence in assigned_licenses:            sku = licence.get("skuId", "UNKNOWN")            monthly_cost = DEFAULT_LICENSE_COSTS.get(sku, 25.00)            recommendations.append({                "user_email": user.get("userPrincipalName"),                "licence_sku": sku,                "monthly_cost": monthly_cost,                "reason": "Disabled or inactive user with assigned licence",                "trust_score": trust["trust_score"],                "execution_status": trust["execution_status"],                "recommended_action": "REMOVE_LICENCE",                "trust_breakdown": trust,                "raw_user": user,            })    return recommendations
+
+services/outcome_ledger.py
+from models.database import SessionLocal, OutcomeLedgerdef log_outcome(    user_email,    action,    licence_sku,    before_cost,    after_cost,    approved,    executed,    evidence,):    db = SessionLocal()    monthly_saving = before_cost - after_cost    outcome = OutcomeLedger(        user_email=user_email,        action=action,        licence_sku=licence_sku,        before_cost=before_cost,        after_cost=after_cost,        monthly_saving=monthly_saving,        approved=approved,        executed=executed,        evidence=evidence,    )    db.add(outcome)    db.commit()    db.refresh(outcome)    db.close()    return outcome
+
+services/execution_service.py
+from services.outcome_ledger import log_outcomedef approve_and_execute_recommendation(recommendation):    """    Phase 1 MVP:    - Manual approval only    - Simulated execution first    - Later replace with real Graph licence removal call    """    if recommendation.execution_status not in ["APPROVAL_REQUIRED"]:        raise ValueError("Recommendation is not approved for execution")    evidence = {        "execution_mode": "MANUAL_APPROVAL_REQUIRED",        "execution_type": "SIMULATED",        "before": {            "user_email": recommendation.user_email,            "licence_sku": recommendation.licence_sku,            "monthly_cost": recommendation.monthly_cost,        },        "after": {            "licence_removed": True,            "monthly_cost": 0,        },    }    outcome = log_outcome(        user_email=recommendation.user_email,        action=recommendation.recommended_action,        licence_sku=recommendation.licence_sku,        before_cost=recommendation.monthly_cost,        after_cost=0,        approved=True,        executed=True,        evidence=evidence,    )    return outcome
+
+routes/health.py
+from flask import Blueprint, jsonifyhealth_bp = Blueprint("health", __name__)@health_bp.route("/health")def health():    return jsonify({"status": "ok"})
+
+routes/m365.py
+from flask import Blueprint, jsonifyfrom services.m365_connector import M365Connectorm365_bp = Blueprint("m365", __name__)@m365_bp.route("/mock-users")def mock_users():    connector = M365Connector()    return jsonify(connector.mock_users())@m365_bp.route("/users")def live_users():    connector = M365Connector()    users = connector.list_users()    return jsonify(users)
+
+routes/recommendations.py
+from flask import Blueprint, jsonifyfrom models.database import SessionLocal, Recommendationfrom services.m365_connector import M365Connectorfrom services.playbook_inactive_users import run_disabled_inactive_user_reclaimrecommendations_bp = Blueprint("recommendations", __name__)@recommendations_bp.route("/generate")def generate_recommendations():    connector = M365Connector()    # MVP defaults to mock data.    users = connector.mock_users()    results = run_disabled_inactive_user_reclaim(users)    db = SessionLocal()    saved = []    for rec in results:        recommendation = Recommendation(            user_email=rec["user_email"],            licence_sku=rec["licence_sku"],            monthly_cost=rec["monthly_cost"],            reason=rec["reason"],            trust_score=rec["trust_score"],            execution_status=rec["execution_status"],            recommended_action=rec["recommended_action"],            raw_payload=rec,        )        db.add(recommendation)        db.commit()        db.refresh(recommendation)        saved.append({            "id": recommendation.id,            "user_email": recommendation.user_email,            "licence_sku": recommendation.licence_sku,            "monthly_cost": recommendation.monthly_cost,            "trust_score": recommendation.trust_score,            "execution_status": recommendation.execution_status,            "recommended_action": recommendation.recommended_action,            "reason": recommendation.reason,        })    db.close()    return jsonify(saved)@recommendations_bp.route("/")def list_recommendations():    db = SessionLocal()    rows = db.query(Recommendation).order_by(Recommendation.created_at.desc()).all()    output = [        {            "id": r.id,            "user_email": r.user_email,            "licence_sku": r.licence_sku,            "monthly_cost": r.monthly_cost,            "trust_score": r.trust_score,            "execution_status": r.execution_status,            "recommended_action": r.recommended_action,            "reason": r.reason,        }        for r in rows    ]    db.close()    return jsonify(output)
+
+routes/execution.py
+from flask import Blueprint, jsonifyfrom models.database import SessionLocal, Recommendationfrom services.execution_service import approve_and_execute_recommendationexecution_bp = Blueprint("execution", __name__)@execution_bp.route("/approve/<int:recommendation_id>", methods=["POST"])def approve(recommendation_id):    db = SessionLocal()    recommendation = db.query(Recommendation).filter_by(id=recommendation_id).first()    if not recommendation:        db.close()        return jsonify({"error": "Recommendation not found"}), 404    outcome = approve_and_execute_recommendation(recommendation)    db.close()    return jsonify({        "status": "executed",        "outcome_id": outcome.id,        "user_email": outcome.user_email,        "monthly_saving": outcome.monthly_saving,    })
+
+routes/outcomes.py
+from flask import Blueprint, jsonifyfrom models.database import SessionLocal, OutcomeLedgeroutcomes_bp = Blueprint("outcomes", __name__)@outcomes_bp.route("/")def list_outcomes():    db = SessionLocal()    rows = db.query(OutcomeLedger).order_by(OutcomeLedger.created_at.desc()).all()    output = [        {            "id": r.id,            "user_email": r.user_email,            "action": r.action,            "licence_sku": r.licence_sku,            "before_cost": r.before_cost,            "after_cost": r.after_cost,            "monthly_saving": r.monthly_saving,            "approved": r.approved,            "executed": r.executed,            "evidence": r.evidence,            "created_at": r.created_at.isoformat(),        }        for r in rows    ]    db.close()    return jsonify(output)
+
+templates/dashboard.html
+<!DOCTYPE html><html><head>  <title>Cost Control MVP</title>  <style>    body {      font-family: Arial, sans-serif;      margin: 40px;      background: #f6f8fa;    }    .card {      background: white;      border-radius: 12px;      padding: 20px;      margin-bottom: 20px;      box-shadow: 0 2px 10px rgba(0,0,0,0.05);    }    button {      padding: 10px 14px;      border: none;      border-radius: 8px;      cursor: pointer;      background: #111827;      color: white;    }    table {      width: 100%;      border-collapse: collapse;      margin-top: 15px;    }    th, td {      padding: 10px;      border-bottom: 1px solid #e5e7eb;      text-align: left;    }  </style></head><body>  <h1>AI Cost Control MVP</h1>  <p>M365 inactive licence reclaim — execution + proof loop.</p>  <div class="card">    <h2>Generate Recommendations</h2>    <button onclick="generateRecommendations()">Run M365 Playbook</button>  </div>  <div class="card">    <h2>Recommendations</h2>    <table id="recommendationsTable">      <thead>        <tr>          <th>User</th>          <th>Licence</th>          <th>Monthly Cost</th>          <th>Trust</th>          <th>Status</th>          <th>Action</th>        </tr>      </thead>      <tbody></tbody>    </table>  </div>  <div class="card">    <h2>Outcome Ledger</h2>    <table id="outcomesTable">      <thead>        <tr>          <th>User</th>          <th>Action</th>          <th>Saving</th>          <th>Executed</th>        </tr>      </thead>      <tbody></tbody>    </table>  </div><script>async function generateRecommendations() {  await fetch('/api/recommendations/generate');  loadRecommendations();}async function loadRecommendations() {  const res = await fetch('/api/recommendations/');  const data = await res.json();  const tbody = document.querySelector('#recommendationsTable tbody');  tbody.innerHTML = '';  data.forEach(r => {    tbody.innerHTML += `      <tr>        <td>${r.user_email}</td>        <td>${r.licence_sku}</td>        <td>$${r.monthly_cost}</td>        <td>${r.trust_score}</td>        <td>${r.execution_status}</td>        <td>          <button onclick="approve(${r.id})">Approve</button>        </td>      </tr>    `;  });}async function approve(id) {  await fetch(`/api/execution/approve/${id}`, { method: 'POST' });  loadOutcomes();}async function loadOutcomes() {  const res = await fetch('/api/outcomes/');  const data = await res.json();  const tbody = document.querySelector('#outcomesTable tbody');  tbody.innerHTML = '';  data.forEach(o => {    tbody.innerHTML += `      <tr>        <td>${o.user_email}</td>        <td>${o.action}</td>        <td>$${o.monthly_saving}</td>        <td>${o.executed}</td>      </tr>    `;  });}loadRecommendations();loadOutcomes();</script></body></html>
+
+README.md
+# AI Cost Control MVPPhase 1 MVP for M365 licence optimisation.## What this provesThis MVP demonstrates the core loop:Detect → Recommend → Approve → Execute → Prove## Current scope- Mock M365 user/licence data- Disabled/inactive user licence reclaim playbook- Basic trust scoring- Manual approval execution- Outcome Ledger## Run locally / Replit1. Install dependencies```bashpip install -r requirements.txt
+
+
+Start app
+
+
+python app.py
+
+
+Open
+
+
+/
+Key endpoints
+GET  /healthGET  /api/m365/mock-usersGET  /api/recommendations/generateGET  /api/recommendations/POST /api/execution/approve/<id>GET  /api/outcomes/
+Guardrails
+
+
+No auto execution
+
+
+Manual approval required
+
+
+Execution is simulated in Phase 1
+
+
+Outcome evidence is logged
+
+
+Next phase
+
+
+Replace mock data with live Graph API
+
+
+Add real licence removal dry-run
+
+
+Add Action Risk Classification
+
+
+Add approval policy engine
+
+
+---# Replit Prompt```txtBuild this Flask MVP exactly as specified.Goal:Create a Phase 1 MVP for an AI Cost Control Platform focused on Microsoft 365 inactive/disabled user licence reclaim.Use:- Flask- SQLAlchemy- SQLite fallback if DATABASE_URL is not present- Simple HTML dashboard- Mock M365 data first- No live execution yetCore loop:Detect inactive/disabled licensed users→ generate recommendation→ calculate trust score→ require manual approval→ simulate licence removal→ write proof to Outcome LedgerDo not add extra modules.Do not add multi-tenancy yet.Do not add Flexera or ServiceNow.Do not add auto-execution.Do not over-engineer.Acceptance criteria:1. App starts with python app.py2. /health returns ok3. Dashboard loads at /4. Clicking Run M365 Playbook creates at least one recommendation5. Recommendation includes user, licence, cost, trust score, execution status6. Approve button simulates execution7. Outcome Ledger records saving8. No recommendation can execute unless execution_status = APPROVAL_REQUIRED
+
+This is the right Phase 1: one loop, one playbook, one proof path.
