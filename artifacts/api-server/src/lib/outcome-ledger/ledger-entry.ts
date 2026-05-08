@@ -3,6 +3,9 @@ export type SavingConfidence = "ESTIMATED" | "VERIFIED";
 export type LedgerEntryInput = {
   tenantId: string;
   recommendation: any;
+  recommendationId: string;
+  action: string;
+  idempotencyKey: string;
   trustSnapshot: Record<string, unknown>;
   actionRiskProfile: Record<string, unknown>;
   beforeState: Record<string, unknown>;

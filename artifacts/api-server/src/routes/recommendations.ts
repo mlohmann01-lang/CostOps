@@ -6,6 +6,7 @@ import { assessTrust } from "../lib/trust-engine";
 import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
 import { ingestM365Tenant } from "../lib/connectors/m365-ingestion";
 import { reliabilityFromHealth } from "../lib/connectors/connector-health";
+import { createPlaybookEvaluationEvent } from "../lib/playbooks/evaluation-log";
 
 const router = Router();
 const MVP_MODE = true;
@@ -66,10 +67,37 @@ router.post("/generate", async (req, res) => {
       for (const playbook of PLAYBOOK_REGISTRY) {
         const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled, assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName, mailboxType: "user" };
         const evaluation = playbook.evaluate(mapped);
-        if (!evaluation.matched || evaluation.exclusions.length > 0) continue;
+        const missingSignals = (evaluation.requiredSignals ?? []).filter((signal: string) => {
+          if (signal === "assignedLicenses") return (mapped.assignedLicenses?.length ?? 0) === 0;
+          if (signal === "userPrincipalName") return !mapped.userPrincipalName;
+          if (signal === "accountEnabled") return mapped.accountEnabled == null;
+          if (signal === "lastLoginDaysAgo") return user.lastLoginDaysAgo == null;
+          return false;
+        });
+
+        const evaluationEvent = await createPlaybookEvaluationEvent({
+          tenantId,
+          ingestionRunId: ingestion.ingestionRunId,
+          playbookId: playbook.id,
+          playbookName: playbook.name,
+          candidateType: "USER",
+          candidateId: mapped.email,
+          candidateDisplayName: mapped.displayName,
+          matched: evaluation.matched,
+          reason: evaluation.reason,
+          recommendedAction: evaluation.recommendedAction,
+          exclusions: evaluation.exclusions,
+          requiredSignals: evaluation.requiredSignals,
+          missingSignals,
+          evidence: evaluation.evidence,
+        });
 
         const [existing] = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.userEmail, user.userPrincipalName), eq(recommendationsTable.status, "pending")));
-        if (existing) continue;
+
+        const shouldCreateRecommendation = evaluation.matched && evaluation.exclusions.length === 0 && missingSignals.length === 0 && !existing;
+        if (!shouldCreateRecommendation) {
+          continue;
+        }
 
         const trust = assessTrust(buildTrustContext(user, ingestion.metadata, evaluation.recommendedAction));
         const [rec] = await db.insert(recommendationsTable).values({
@@ -93,6 +121,7 @@ router.post("/generate", async (req, res) => {
           playbookEvidence: evaluation.evidence,
           playbookRequiredSignals: evaluation.requiredSignals,
           playbookExclusions: evaluation.exclusions,
+          evaluationEventId: String(evaluationEvent.id),
           connector: "m365",
           ingestionRunId: ingestion.ingestionRunId,
           sourceTimestamp: new Date(user.sourceTimestamp),

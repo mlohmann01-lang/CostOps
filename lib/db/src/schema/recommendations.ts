@@ -24,6 +24,7 @@ export const recommendationsTable = pgTable("recommendations", {
   playbookEvidence: jsonb("playbook_evidence").notNull().default({}),
   playbookRequiredSignals: jsonb("playbook_required_signals").notNull().default([]),
   playbookExclusions: jsonb("playbook_exclusions").notNull().default([]),
+  evaluationEventId: text("evaluation_event_id").notNull().default(""),
   connector: text("connector").notNull(),
   ingestionRunId: text("ingestion_run_id").notNull().default(""),
   sourceTimestamp: timestamp("source_timestamp", { withTimezone: true }),

@@ -1,19 +1,31 @@
 import { evaluateExecutionGate } from "./execution-gate";
 import { runDryRun } from "./dry-run";
+import { canExecute } from "../governance/authorization";
+import { buildIdempotencyKey } from "./idempotency";
 
-export async function runExecutionEngine(input: { recommendation: any; actorId: string; mode: "DRY_RUN" | "APPROVAL_EXECUTE"; mvpMode: boolean }) {
+export async function runExecutionEngine(input: { recommendation: any; actorId?: string; tenantId: string; mode: "DRY_RUN" | "APPROVAL_EXECUTE"; mvpMode: boolean }) {
   const gateResult = evaluateExecutionGate(input);
   const dryRunResult = runDryRun(input.recommendation);
+  const action = "REMOVE_LICENSE";
+  const idempotencyKey = buildIdempotencyKey(String(input.recommendation.id), action);
+  const authorizationResult = canExecute(input.actorId, input.tenantId, {
+    ...input.recommendation,
+    actionRiskProfile: gateResult.actionRiskProfile,
+  });
 
-  if (!gateResult.allowed) {
+  if (!gateResult.allowed || !authorizationResult.allowed) {
     return {
       allowed: false,
       executed: false,
       gate: gateResult.gate,
-      denialReasons: gateResult.denialReasons,
+      denialReasons: authorizationResult.allowed
+        ? gateResult.denialReasons
+        : [...gateResult.denialReasons, `AUTHORIZATION_${authorizationResult.reason}`],
       actionRiskProfile: gateResult.actionRiskProfile,
       dryRunResult,
-      evidence: { actorId: input.actorId, mode: input.mode, gatingPassed: false },
+      idempotencyKey,
+      duplicateExecution: false,
+      evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: false, authorizationResult },
     };
   }
 
@@ -25,7 +37,9 @@ export async function runExecutionEngine(input: { recommendation: any; actorId: 
       denialReasons: [],
       actionRiskProfile: gateResult.actionRiskProfile,
       dryRunResult,
-      evidence: { actorId: input.actorId, mode: input.mode, gatingPassed: true, dryRun: true },
+      idempotencyKey,
+      duplicateExecution: false,
+      evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: true, dryRun: true, authorizationResult },
     };
   }
 
@@ -36,6 +50,8 @@ export async function runExecutionEngine(input: { recommendation: any; actorId: 
     denialReasons: [],
     actionRiskProfile: gateResult.actionRiskProfile,
     dryRunResult,
-    evidence: { actorId: input.actorId, mode: input.mode, gatingPassed: true, dryRun: false },
+    idempotencyKey,
+    duplicateExecution: false,
+    evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: true, dryRun: false, authorizationResult },
   };
 }
