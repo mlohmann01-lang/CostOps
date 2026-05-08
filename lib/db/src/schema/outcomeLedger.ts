@@ -1,11 +1,12 @@
-import { pgTable, serial, text, real, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const outcomeLedgerTable = pgTable("outcome_ledger", {
   id: serial("id").primaryKey(),
   tenantId: text("tenant_id").notNull().default("default"),
-  recommendationId: integer("recommendation_id").notNull(),
+  recommendationId: text("recommendation_id").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
   playbookId: text("playbook_id").notNull().default(""),
   playbookName: text("playbook_name").notNull().default(""),
   action: text("action").notNull(),
@@ -22,7 +23,7 @@ export const outcomeLedgerTable = pgTable("outcome_ledger", {
   executionMode: text("execution_mode").notNull().default("MANUAL_APPROVAL_REQUIRED"),
   executionStatus: text("execution_status").notNull().default("EXECUTED"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [unique("outcome_ledger_idempotency_key_unique").on(table.idempotencyKey)]);
 
 export const insertOutcomeLedgerSchema = createInsertSchema(outcomeLedgerTable).omit({ id: true, createdAt: true });
 export type InsertOutcomeLedger = z.infer<typeof insertOutcomeLedgerSchema>;

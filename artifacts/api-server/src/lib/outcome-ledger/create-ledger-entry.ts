@@ -6,10 +6,11 @@ export function createLedgerEntry(input: LedgerEntryInput) {
 
   return {
     tenantId: input.tenantId,
-    recommendationId: input.recommendation.id,
+    recommendationId: input.recommendationId,
+    idempotencyKey: input.idempotencyKey,
     playbookId: input.recommendation.playbookId ?? "",
     playbookName: input.recommendation.playbookName ?? "",
-    action: "REMOVE_LICENSE",
+    action: input.action,
     actionRiskProfile: input.actionRiskProfile,
     trustSnapshot: input.trustSnapshot,
     beforeState: input.beforeState,
