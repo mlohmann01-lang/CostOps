@@ -1,10 +1,9 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { connectorSyncStatusTable, recommendationsTable } from "@workspace/db";
-import { eq, and } from "drizzle-orm";
+import { connectorSyncStatusTable, m365UsersTable, recommendationsTable } from "@workspace/db";
+import { eq, and, desc } from "drizzle-orm";
 import { assessTrust } from "../lib/trust-engine";
 import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
-import { ingestM365Tenant } from "../lib/connectors/m365-ingestion";
 import { reliabilityFromHealth } from "../lib/connectors/connector-health";
 import { createPlaybookEvaluationEvent } from "../lib/playbooks/evaluation-log";
 
@@ -47,25 +46,30 @@ router.get("/", async (req, res) => {
 router.post("/generate", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
-    const ingestion = await ingestM365Tenant(tenantId);
+    const [latestSync] = await db
+      .select()
+      .from(connectorSyncStatusTable)
+      .where(eq(connectorSyncStatusTable.tenantId, tenantId))
+      .orderBy(desc(connectorSyncStatusTable.createdAt))
+      .limit(1);
 
-    await db.insert(connectorSyncStatusTable).values({
-      tenantId,
-      connector: ingestion.metadata.connector,
-      lastSyncTime: new Date(ingestion.metadata.lastSyncTime),
-      connectorHealth: ingestion.metadata.connectorHealth,
-      dataFreshnessScore: ingestion.metadata.dataFreshnessScore,
-      freshnessBand: ingestion.metadata.freshnessBand,
-      partialData: String(ingestion.metadata.partialData),
-      errorCode: ingestion.metadata.errorCode ?? null,
-      errorMessage: ingestion.metadata.errorMessage ?? null,
-      requestId: ingestion.metadata.requestId,
-    });
+    if (!latestSync) {
+      return res.status(400).json({ error: "NO_VALID_SYNC" });
+    }
+    if (latestSync.connectorHealth === "FAILED") {
+      return res.status(400).json({ error: "CONNECTOR_HEALTH_FAILED", metadata: latestSync });
+    }
+
+    const canonicalUsers = await db
+      .select()
+      .from(m365UsersTable)
+      .where(eq(m365UsersTable.tenantId, tenantId))
+      .orderBy(desc(m365UsersTable.updatedAt));
 
     const generated = [];
-    for (const user of ingestion.users) {
+    for (const user of canonicalUsers) {
       for (const playbook of PLAYBOOK_REGISTRY) {
-        const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled, assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName, mailboxType: "user" };
+        const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled === "true", assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName, mailboxType: "user" };
         const evaluation = playbook.evaluate(mapped);
         const missingSignals = (evaluation.requiredSignals ?? []).filter((signal: string) => {
           if (signal === "assignedLicenses") return (mapped.assignedLicenses?.length ?? 0) === 0;
@@ -77,7 +81,7 @@ router.post("/generate", async (req, res) => {
 
         const evaluationEvent = await createPlaybookEvaluationEvent({
           tenantId,
-          ingestionRunId: ingestion.ingestionRunId,
+          ingestionRunId: user.ingestionRunId,
           playbookId: playbook.id,
           playbookName: playbook.name,
           candidateType: "USER",
@@ -94,12 +98,10 @@ router.post("/generate", async (req, res) => {
 
         const [existing] = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.userEmail, user.userPrincipalName), eq(recommendationsTable.status, "pending")));
 
-        const shouldCreateRecommendation = evaluation.matched && evaluation.exclusions.length === 0 && missingSignals.length === 0 && !existing;
-        if (!shouldCreateRecommendation) {
-          continue;
-        }
+        const shouldCreateRecommendation = latestSync.connectorHealth !== "FAILED" && evaluation.matched && evaluation.exclusions.length === 0 && missingSignals.length === 0 && !existing;
+        if (!shouldCreateRecommendation) continue;
 
-        const trust = assessTrust(buildTrustContext(user, ingestion.metadata, evaluation.recommendedAction));
+        const trust = assessTrust(buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, evaluation.recommendedAction));
         const [rec] = await db.insert(recommendationsTable).values({
           userEmail: user.userPrincipalName,
           displayName: user.displayName ?? user.userPrincipalName,
@@ -123,13 +125,13 @@ router.post("/generate", async (req, res) => {
           playbookExclusions: evaluation.exclusions,
           evaluationEventId: String(evaluationEvent.id),
           connector: "m365",
-          ingestionRunId: ingestion.ingestionRunId,
-          sourceTimestamp: new Date(user.sourceTimestamp),
-          connectorHealth: ingestion.metadata.connectorHealth,
-          dataFreshnessScore: ingestion.metadata.dataFreshnessScore,
-          freshnessBand: ingestion.metadata.freshnessBand,
-          partialData: String(ingestion.metadata.partialData),
-          connectorHealthSnapshot: ingestion.metadata,
+          ingestionRunId: user.ingestionRunId,
+          sourceTimestamp: user.sourceTimestamp,
+          connectorHealth: latestSync.connectorHealth,
+          dataFreshnessScore: latestSync.dataFreshnessScore,
+          freshnessBand: latestSync.freshnessBand,
+          partialData: latestSync.partialData,
+          connectorHealthSnapshot: latestSync,
           lastActivity: user.lastLoginDaysAgo == null ? null : new Date(Date.now() - user.lastLoginDaysAgo * 86400000),
           daysSinceActivity: user.lastLoginDaysAgo,
           rejectionReason: null,
@@ -137,10 +139,10 @@ router.post("/generate", async (req, res) => {
         generated.push(rec);
       }
     }
-    res.json({ generated: generated.length, recommendations: generated, ingestionMetadata: ingestion.metadata, warnings: ingestion.warnings });
+    return res.json({ generated: generated.length, recommendations: generated, syncMetadata: latestSync });
   } catch (err) {
     req.log.error({ err }, "Error generating recommendations");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

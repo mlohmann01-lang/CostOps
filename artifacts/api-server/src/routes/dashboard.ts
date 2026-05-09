@@ -1,33 +1,33 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { recommendationsTable, outcomeLedgerTable, connectorsTable } from "@workspace/db";
-import { sql, eq, count, sum } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 const router = Router();
 
 router.get("/summary", async (req, res) => {
   try {
-    const outcomes = await db.select().from(outcomeLedgerTable).where(eq(outcomeLedgerTable.executed, true));
-    const totalMonthlySavings = outcomes.reduce((acc, o) => acc + o.monthlySaving, 0);
-    const totalAnnualisedSavings = outcomes.reduce((acc, o) => acc + o.annualisedSaving, 0);
+    const outcomes = (await db.select().from(outcomeLedgerTable).where(eq((outcomeLedgerTable as any).executed, true))) as any[];
+    const totalMonthlySavings = outcomes.reduce((acc: number, o) => acc + o.monthlySaving, 0);
+    const totalAnnualisedSavings = outcomes.reduce((acc: number, o) => acc + o.annualisedSaving, 0);
 
-    const recs = await db.select().from(recommendationsTable);
+    const recs = (await db.select().from(recommendationsTable)) as any[];
     const pendingRecommendations = recs.filter((r) => r.status === "pending").length;
     const executedActions = recs.filter((r) => r.status === "executed").length;
     const blockedActions = recs.filter((r) => r.executionStatus === "BLOCKED").length;
 
-    const connectors = await db.select().from(connectorsTable);
+    const connectors = (await db.select().from(connectorsTable)) as any[];
     const activeConnectors = connectors.filter((c) => c.status === "connected" || c.status === "syncing").length;
     const avgTrustScore =
-      connectors.length > 0 ? connectors.reduce((acc, c) => acc + c.trustScore, 0) / connectors.length : 0;
+      connectors.length > 0 ? connectors.reduce((acc: number, c) => acc + c.trustScore, 0) / connectors.length : 0;
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const savingsThisMonth = outcomes
-      .filter((o) => o.executedAt && new Date(o.executedAt) >= startOfMonth)
-      .reduce((acc, o) => acc + o.monthlySaving, 0);
+            .filter((o) => o.executedAt && new Date(o.executedAt) >= startOfMonth)
+            .reduce((acc: number, o) => acc + o.monthlySaving, 0);
 
-    res.json({
+    return res.json({
       totalMonthlySavings: Math.round(totalMonthlySavings * 100) / 100,
       totalAnnualisedSavings: Math.round(totalAnnualisedSavings * 100) / 100,
       pendingRecommendations,
@@ -39,13 +39,13 @@ router.get("/summary", async (req, res) => {
     });
   } catch (err) {
     req.log.error({ err }, "Error fetching dashboard summary");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
 router.get("/savings-trend", async (req, res) => {
   try {
-    const outcomes = await db.select().from(outcomeLedgerTable).where(eq(outcomeLedgerTable.executed, true));
+    const outcomes = (await db.select().from(outcomeLedgerTable).where(eq((outcomeLedgerTable as any).executed, true))) as any[];
 
     const byMonth: Record<string, { savings: number; actions: number }> = {};
     for (const o of outcomes) {
@@ -70,16 +70,16 @@ router.get("/savings-trend", async (req, res) => {
       trend.push(...months.map((m, i) => ({ month: m, savings: 0, actions: 0 })));
     }
 
-    res.json(trend);
+    return res.json(trend);
   } catch (err) {
     req.log.error({ err }, "Error fetching savings trend");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
 router.get("/action-breakdown", async (req, res) => {
   try {
-    const recs = await db.select().from(recommendationsTable);
+    const recs = (await db.select().from(recommendationsTable)) as any[];
 
     const groups: Record<string, { count: number; value: number }> = {};
     for (const r of recs) {
@@ -95,10 +95,10 @@ router.get("/action-breakdown", async (req, res) => {
       value: Math.round(data.value * 100) / 100,
     }));
 
-    res.json(breakdown);
+    return res.json(breakdown);
   } catch (err) {
     req.log.error({ err }, "Error fetching action breakdown");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

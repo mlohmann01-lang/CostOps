@@ -10,14 +10,14 @@ router.get("/", async (req, res) => {
     const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
     const limit = isNaN(limitParam) ? 50 : limitParam;
 
-    const rows = await db
+    const rows = (await db
       .select()
       .from(outcomeLedgerTable)
       .orderBy(desc(outcomeLedgerTable.createdAt))
-      .limit(limit);
+      .limit(limit)) as any[];
 
-    res.json(
-      rows.map((o) => ({
+    return res.json(
+      rows.map((o: (typeof rows)[number]) => ({
         id: o.id,
         recommendationId: o.recommendationId,
         userEmail: o.userEmail,
@@ -39,19 +39,19 @@ router.get("/", async (req, res) => {
     );
   } catch (err) {
     req.log.error({ err }, "Error listing outcomes");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
 router.get("/summary", async (req, res) => {
   try {
-    const outcomes = await db
+    const outcomes = (await db
       .select()
       .from(outcomeLedgerTable)
-      .where(eq(outcomeLedgerTable.executed, true));
+      .where(eq((outcomeLedgerTable as any).executed, true))) as any[];
 
-    const totalMonthlySaving = outcomes.reduce((acc, o) => acc + o.monthlySaving, 0);
-    const totalAnnualisedSaving = outcomes.reduce((acc, o) => acc + o.annualisedSaving, 0);
+    const totalMonthlySaving = outcomes.reduce((acc: number, o) => acc + o.monthlySaving, 0);
+    const totalAnnualisedSaving = outcomes.reduce((acc: number, o) => acc + o.annualisedSaving, 0);
     const totalActionsExecuted = outcomes.length;
 
     const playbookCounts: Record<string, number> = {};
@@ -63,7 +63,7 @@ router.get("/summary", async (req, res) => {
 
     const avgMonthlySavingPerAction = totalActionsExecuted > 0 ? totalMonthlySaving / totalActionsExecuted : 0;
 
-    res.json({
+    return res.json({
       totalMonthlySaving: Math.round(totalMonthlySaving * 100) / 100,
       totalAnnualisedSaving: Math.round(totalAnnualisedSaving * 100) / 100,
       totalActionsExecuted,
@@ -72,7 +72,7 @@ router.get("/summary", async (req, res) => {
     });
   } catch (err) {
     req.log.error({ err }, "Error fetching outcomes summary");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 
