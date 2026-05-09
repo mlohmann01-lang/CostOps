@@ -63,10 +63,10 @@ router.post("/approve/:id", async (req, res) => {
     const [outcome] = await db.insert(outcomeLedgerTable).values(ledgerEntry).returning();
 
     const [updated] = await db.update(recommendationsTable).set({ status: "executed" }).where(eq(recommendationsTable.id, id)).returning();
-    res.json({ recommendation: updated, outcome, engineResult });
+    return res.json({ recommendation: updated, outcome, engineResult });
   } catch (err) {
     req.log.error({ err }, "Error approving recommendation");
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 });
 

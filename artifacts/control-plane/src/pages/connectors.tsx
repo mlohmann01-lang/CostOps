@@ -1,7 +1,9 @@
+import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListConnectors,
   useSyncConnector,
+  useGenerateRecommendations,
   getListConnectorsQueryKey,
 } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
@@ -76,7 +78,7 @@ export default function Connectors() {
 
   const sync = useSyncConnector({
     mutation: {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         queryClient.invalidateQueries({ queryKey: getListConnectorsQueryKey() });
         toast({ title: `${data.name} sync triggered` });
       },
@@ -85,6 +87,55 @@ export default function Connectors() {
       },
     },
   });
+  const generate = useGenerateRecommendations({
+    mutation: {
+      onSuccess: (data: any) => toast({ title: `${data.generated} recommendation(s) generated` }),
+      onError: () => toast({ title: "Recommendation generation failed", variant: "destructive" }),
+    },
+  });
+
+  const [readiness, setReadiness] = React.useState<any | null>(null);
+  const [smokeResult, setSmokeResult] = React.useState<any | null>(null);
+  const [loadingReadiness, setLoadingReadiness] = React.useState(false);
+  const [loadingSmoke, setLoadingSmoke] = React.useState(false);
+
+  const checkReadiness = async () => {
+    setLoadingReadiness(true);
+    try {
+      const res = await fetch("/api/connectors/m365/readiness");
+      const data = await res.json();
+      setReadiness(data);
+    } finally {
+      setLoadingReadiness(false);
+    }
+  };
+
+
+  const runFullSync = async (connector: any) => {
+    if (connector.type !== "m365") {
+      sync.mutate({ id: connector.id });
+      return;
+    }
+    try {
+      const res = await fetch("/api/connectors/m365/sync", { method: "POST" });
+      const data = await res.json();
+      toast({ title: `M365 sync complete (${data.usersSynced ?? 0} users)` });
+      queryClient.invalidateQueries({ queryKey: getListConnectorsQueryKey() });
+    } catch {
+      toast({ title: "M365 sync failed", variant: "destructive" });
+    }
+  };
+
+  const runSmokeTest = async () => {
+    setLoadingSmoke(true);
+    try {
+      const res = await fetch("/api/connectors/m365/smoke-test", { method: "POST" });
+      const data = await res.json();
+      setSmokeResult(data);
+    } finally {
+      setLoadingSmoke(false);
+    }
+  };
 
   return (
     <Layout>
@@ -99,11 +150,11 @@ export default function Connectors() {
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <Wifi className="w-3.5 h-3.5 text-green-500" />
-            {connectors.data?.filter((c) => c.status === "connected" || c.status === "syncing").length ?? 0} active
+            {connectors.data?.filter((c: any) => c.status === "connected" || c.status === "syncing").length ?? 0} active
           </div>
           <div className="flex items-center gap-1.5">
             <XCircle className="w-3.5 h-3.5 text-muted-foreground" />
-            {connectors.data?.filter((c) => c.status === "disconnected" || c.status === "error").length ?? 0} inactive
+            {connectors.data?.filter((c: any) => c.status === "disconnected" || c.status === "error").length ?? 0} inactive
           </div>
         </div>
 
@@ -115,7 +166,7 @@ export default function Connectors() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {connectors.data?.map((connector) => {
+            {connectors.data?.map((connector: any) => {
               const Icon = CONNECTOR_ICONS[connector.type] ?? Wifi;
               const iconColor = CONNECTOR_COLORS[connector.type] ?? "text-foreground";
               const trustPct = Math.round(connector.trustScore * 100);
@@ -181,8 +232,8 @@ export default function Connectors() {
                       size="sm"
                       variant="outline"
                       className="w-full gap-2 text-xs"
-                      onClick={() => sync.mutate({ id: connector.id })}
-                      disabled={sync.isPending || connector.status === "syncing"}
+                      onClick={() => runFullSync(connector)}
+                      disabled={sync.isPending || connector.status === "syncing" || (connector.type === "m365" && readiness?.status === "BLOCKED")}
                       data-testid={`button-sync-${connector.id}`}
                     >
                       <RefreshCw
@@ -190,8 +241,49 @@ export default function Connectors() {
                           sync.isPending || connector.status === "syncing" ? "animate-spin" : ""
                         }`}
                       />
-                      {connector.status === "syncing" ? "Syncing..." : "Sync Now"}
+                      {connector.status === "syncing" ? "Syncing..." : "Run Full Sync"}
                     </Button>
+
+                    {connector.type === "m365" && (
+                      <div className="space-y-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button size="sm" variant="secondary" className="text-xs" onClick={checkReadiness} disabled={loadingReadiness}>
+                            {loadingReadiness ? "Checking..." : "Check Readiness"}
+                          </Button>
+                          <Button size="sm" variant="secondary" className="text-xs" onClick={runSmokeTest} disabled={loadingSmoke}>
+                            {loadingSmoke ? "Running..." : "Run Smoke Test"}
+                          </Button>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs"
+                          disabled={generate.isPending || readiness?.status === "BLOCKED"}
+                          onClick={() => generate.mutate({})}
+                        >
+                          {generate.isPending ? "Generating..." : "Generate Recommendations"}
+                        </Button>
+                        {readiness && (
+                          <div className="rounded-md border p-2 text-xs space-y-1">
+                            <p><span className="font-semibold">Readiness:</span> {readiness.status}</p>
+                            <p><span className="font-semibold">Missing required:</span> {(readiness.missingRequired ?? []).join(", ") || "None"}</p>
+                            <p><span className="font-semibold">Missing optional:</span> {(readiness.missingOptional ?? []).join(", ") || "None"}</p>
+                            <p><span className="font-semibold">Warnings:</span> {(readiness.warnings ?? []).join(" | ") || "None"}</p>
+                            <p className="truncate"><span className="font-semibold">Evidence:</span> {JSON.stringify(readiness.evidence ?? {})}</p>
+                          </div>
+                        )}
+                        {smokeResult && (
+                          <div className="rounded-md border p-2 text-xs space-y-1">
+                            <p><span className="font-semibold">Smoke:</span> {smokeResult.status} ({smokeResult.connectorHealth})</p>
+                            <p><span className="font-semibold">Counts:</span> users {smokeResult.counts?.usersFetched ?? 0}, licences {smokeResult.counts?.licencesFetched ?? 0}, activity {smokeResult.counts?.activityFetched ?? 0}, normalized {smokeResult.counts?.normalizedUsers ?? 0}</p>
+                            <p><span className="font-semibold">Request IDs:</span> {(smokeResult.requestIds ?? []).join(", ") || "None"}</p>
+                            <p><span className="font-semibold">Warnings:</span> {(smokeResult.warnings ?? []).join(" | ") || "None"}</p>
+                            <p><span className="font-semibold">Errors:</span> {(smokeResult.errors ?? []).join(" | ") || "None"}</p>
+                            <p><span className="font-semibold">Sample:</span> {JSON.stringify(smokeResult.sample ?? [])}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
