@@ -40,12 +40,41 @@ import { formatCurrency, formatCompactCurrency, getTrustScoreColor, getExecution
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
+type RecommendationWithPricing = {
+  id: number;
+  displayName: string;
+  userEmail: string;
+  licenceSku: string;
+  daysSinceActivity: number | null;
+  trustScore: number;
+  executionStatus: string;
+  monthlyCost: number;
+  annualisedCost: number;
+  pricingConfidence?: string;
+  pricingSource?: string;
+};
+
 const STATUS_COLORS: Record<string, string> = {
   AUTO_EXECUTE: "#22c55e",
   APPROVAL_REQUIRED: "#f59e0b",
   INVESTIGATE: "#f97316",
   BLOCKED: "#ef4444",
 };
+
+function isVerified(confidence?: string) {
+  return confidence === "VERIFIED_CONTRACT" || confidence === "VERIFIED_INVOICE" || confidence === "VERIFIED_CSP";
+}
+
+function pricingLabel(confidence?: string) {
+  switch (confidence) {
+    case "VERIFIED_CONTRACT": return "Contract verified";
+    case "VERIFIED_INVOICE": return "Invoice verified";
+    case "VERIFIED_CSP": return "CSP verified";
+    case "INFERRED": return "Inferred";
+    case "PUBLIC_LIST": return "Microsoft list price";
+    default: return "Unknown pricing";
+  }
+}
 
 export default function Dashboard() {
   const queryClient = useQueryClient();
@@ -102,6 +131,10 @@ export default function Dashboard() {
     },
   ];
 
+  const pending = (recommendations.data ?? []) as RecommendationWithPricing[];
+  const verifiedMonthly = pending.filter((r) => isVerified(r.pricingConfidence)).reduce((sum, r) => sum + r.monthlyCost, 0);
+  const estimatedMonthly = pending.filter((r) => !isVerified(r.pricingConfidence)).reduce((sum, r) => sum + r.monthlyCost, 0);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -114,7 +147,7 @@ export default function Dashboard() {
           </div>
           <Button
             data-testid="button-generate-recommendations"
-            onClick={() => generate.mutate({})}
+            onClick={() => generate.mutate()}
             disabled={generate.isPending}
             variant="outline"
             size="sm"
@@ -261,6 +294,9 @@ export default function Dashboard() {
               <span className="text-xs text-primary hover:underline cursor-pointer">View all</span>
             </Link>
           </CardHeader>
+          <div className="px-6 pb-2 text-xs text-muted-foreground">
+            Verified pipeline: {formatCompactCurrency(verifiedMonthly)}/mo · Estimated pipeline: {formatCompactCurrency(estimatedMonthly)}/mo
+          </div>
           <CardContent className="p-0">
             {recommendations.isLoading ? (
               <div className="px-6 py-4 space-y-3">
@@ -276,7 +312,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {recommendations.data.slice(0, 5).map((rec) => (
+                {pending.slice(0, 5).map((rec) => (
                   <Link key={rec.id} href={`/recommendations/${rec.id}`}>
                     <div
                       className="flex items-center justify-between px-6 py-3 hover:bg-secondary/50 transition-colors cursor-pointer"
@@ -287,6 +323,9 @@ export default function Dashboard() {
                           <p className="text-sm font-medium truncate">{rec.displayName}</p>
                           <p className="text-xs text-muted-foreground truncate">
                             {rec.userEmail} · {rec.licenceSku} · {rec.daysSinceActivity}d inactive
+                          </p>
+                          <p className="text-[11px] text-muted-foreground truncate">
+                            {pricingLabel(rec.pricingConfidence)} · {rec.pricingSource || "—"} · {formatCurrency(rec.annualisedCost)}/yr
                           </p>
                         </div>
                       </div>

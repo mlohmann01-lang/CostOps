@@ -19,6 +19,13 @@ export function createLedgerEntry(input: LedgerEntryInput) {
     executionEvidence: input.executionEvidence,
     monthlySaving: input.recommendation.monthlyCost,
     annualisedSaving: input.recommendation.annualisedCost,
+    pricingSnapshot: input.pricingSnapshot ?? {
+      monthlyCost: input.recommendation.monthlyCost,
+      annualisedCost: input.recommendation.annualisedCost,
+      currency: "USD",
+    },
+    pricingConfidence: input.pricingConfidence ?? input.recommendation.pricingConfidence ?? "UNKNOWN",
+    pricingSource: input.pricingSource ?? input.recommendation.pricingSource ?? "",
     savingConfidence,
     actorId: input.actorId,
     executionMode: input.executionMode,

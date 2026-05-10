@@ -15,4 +15,7 @@ export type LedgerEntryInput = {
   actorId: string;
   executionMode: string;
   executionStatus: string;
+  pricingSnapshot?: Record<string, unknown>;
+  pricingConfidence?: string;
+  pricingSource?: string;
 };

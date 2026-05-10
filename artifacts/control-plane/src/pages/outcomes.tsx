@@ -16,6 +16,17 @@ import {
 import { TrendingUp, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 import { formatCurrency, formatDateTime, formatCompactCurrency } from "@/lib/format";
 
+function pricingLabel(confidence?: string) {
+  switch (confidence) {
+    case "VERIFIED_CONTRACT": return "Contract verified";
+    case "VERIFIED_INVOICE": return "Invoice verified";
+    case "VERIFIED_CSP": return "CSP verified";
+    case "INFERRED": return "Inferred";
+    case "PUBLIC_LIST": return "Microsoft list price";
+    default: return "Unknown pricing";
+  }
+}
+
 export default function Outcomes() {
   const summary = useGetOutcomesSummary();
   const outcomes = useListOutcomes();
@@ -106,13 +117,14 @@ export default function Outcomes() {
                   <TableHead className="text-right">After</TableHead>
                   <TableHead className="text-right">Monthly Saving</TableHead>
                   <TableHead className="text-right">Annualised</TableHead>
+                  <TableHead>Pricing</TableHead>
                   <TableHead>Mode</TableHead>
                   <TableHead>Executed</TableHead>
                   <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {outcomes.data.map((o) => (
+                {outcomes.data.map((o: any) => (
                   <>
                     <TableRow
                       key={o.id}
@@ -145,6 +157,9 @@ export default function Outcomes() {
                         {formatCurrency(o.annualisedSaving)}
                       </TableCell>
                       <TableCell>
+                        <Badge variant="outline" className="text-xs">{pricingLabel(o.pricingConfidence)}</Badge>
+                      </TableCell>
+                      <TableCell>
                         <span className="text-xs text-muted-foreground font-mono">
                           {o.executionMode.split("_").slice(0, 2).join(" ")}
                         </span>
@@ -162,7 +177,12 @@ export default function Outcomes() {
                     </TableRow>
                     {expandedId === o.id && (
                       <TableRow key={`${o.id}-expanded`}>
-                        <TableCell colSpan={10} className="bg-secondary/20 px-6 py-3">
+                        <TableCell colSpan={11} className="bg-secondary/20 px-6 py-3 space-y-2">
+                          <div>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest mb-1">Pricing Snapshot</p>
+                            <p className="text-xs text-muted-foreground">Source: {o.pricingSource || "—"}</p>
+                            <pre className="text-xs font-mono text-foreground/80 whitespace-pre-wrap">{JSON.stringify(o.pricingSnapshot ?? {}, null, 2)}</pre>
+                          </div>
                           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Evidence</p>
                           <pre className="text-xs font-mono text-foreground/80 whitespace-pre-wrap">
                             {JSON.stringify(o.evidence, null, 2)}

@@ -36,6 +36,28 @@ import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
 type StatusFilter = "all" | "pending" | "approved" | "rejected" | "executed";
+type RecommendationWithPricing = {
+  pricingConfidence?: string;
+  pricingSource?: string;
+};
+
+function pricingLabel(confidence?: string) {
+  switch (confidence) {
+    case "VERIFIED_CONTRACT": return "Contract verified";
+    case "VERIFIED_INVOICE": return "Invoice verified";
+    case "VERIFIED_CSP": return "CSP verified";
+    case "INFERRED": return "Inferred";
+    case "PUBLIC_LIST": return "Microsoft list price";
+    default: return "Unknown pricing";
+  }
+}
+
+function pricingCopy(confidence?: string) {
+  if (confidence === "UNKNOWN" || !confidence) return "Savings estimate unavailable until pricing source is connected.";
+  if (confidence === "PUBLIC_LIST") return "Estimated from public Microsoft pricing; actual tenant cost may differ.";
+  if (confidence.startsWith("VERIFIED_")) return "Savings backed by tenant pricing evidence.";
+  return "Savings derived from inferred tenant pricing signals.";
+}
 
 export default function Recommendations() {
   const queryClient = useQueryClient();
@@ -114,7 +136,7 @@ export default function Recommendations() {
           </div>
           <Button
             data-testid="button-generate"
-            onClick={() => generate.mutate({})}
+            onClick={() => generate.mutate()}
             disabled={generate.isPending}
             variant="outline"
             size="sm"
@@ -159,7 +181,7 @@ export default function Recommendations() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {recommendations.data.map((rec) => (
+              {(recommendations.data as (typeof recommendations.data[number] & RecommendationWithPricing)[]).map((rec) => (
                 <div
                   key={rec.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-secondary/30 transition-colors"
@@ -190,6 +212,15 @@ export default function Recommendations() {
                         {rec.userEmail} · {rec.licenceSku} · {rec.daysSinceActivity} days inactive ·{" "}
                         {formatDate(rec.createdAt)}
                       </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatCurrency(rec.monthlyCost)}/mo · {formatCurrency(rec.annualisedCost)}/yr · Source: {rec.pricingSource || "—"}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="text-xs">
+                          {pricingLabel(rec.pricingConfidence)}
+                        </Badge>
+                        <span className="text-[11px] text-muted-foreground">{pricingCopy(rec.pricingConfidence)}</span>
+                      </div>
                       {rec.rejectionReason && (
                         <p className="text-xs text-red-400 mt-0.5">Rejected: {rec.rejectionReason}</p>
                       )}
