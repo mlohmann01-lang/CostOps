@@ -259,7 +259,7 @@ export default function Connectors() {
                           variant="outline"
                           className="w-full text-xs"
                           disabled={generate.isPending || readiness?.status === "BLOCKED"}
-                          onClick={() => generate.mutate({})}
+                          onClick={() => generate.mutate()}
                         >
                           {generate.isPending ? "Generating..." : "Generate Recommendations"}
                         </Button>

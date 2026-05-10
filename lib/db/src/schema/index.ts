@@ -6,3 +6,4 @@ export * from "./driftEvents";
 export * from "./playbookEvaluationEvents";
 
 export * from "./m365Users";
+export * from "./pricing";

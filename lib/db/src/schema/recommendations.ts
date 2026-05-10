@@ -9,6 +9,8 @@ export const recommendationsTable = pgTable("recommendations", {
   licenceSku: text("licence_sku").notNull(),
   monthlyCost: real("monthly_cost").notNull(),
   annualisedCost: real("annualised_cost").notNull(),
+  pricingConfidence: text("pricing_confidence").notNull().default("UNKNOWN"),
+  pricingSource: text("pricing_source").notNull().default(""),
   trustScore: real("trust_score").notNull(),
   entityTrustScore: real("entity_trust_score").notNull(),
   recommendationTrustScore: real("recommendation_trust_score").notNull(),

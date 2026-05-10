@@ -44,7 +44,7 @@ router.post("/approve/:id", async (req, res) => {
     };
 
     const ledgerEntry = createLedgerEntry({
-      tenantId: "default",
+      tenantId,
       recommendation: rec,
       recommendationId: String(rec.id),
       action,
@@ -58,6 +58,14 @@ router.post("/approve/:id", async (req, res) => {
       actorId: actorId ?? "",
       executionMode: "APPROVAL_EXECUTE",
       executionStatus: "EXECUTED",
+      pricingSnapshot: {
+        skuId: rec.licenceSku,
+        monthlyCost: rec.monthlyCost,
+        annualisedCost: rec.annualisedCost,
+        currency: "USD",
+      },
+      pricingConfidence: rec.pricingConfidence,
+      pricingSource: rec.pricingSource,
     });
 
     const [outcome] = await db.insert(outcomeLedgerTable).values(ledgerEntry).returning();

@@ -6,6 +6,7 @@ import { assessTrust } from "../lib/trust-engine";
 import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
 import { reliabilityFromHealth } from "../lib/connectors/connector-health";
 import { createPlaybookEvaluationEvent } from "../lib/playbooks/evaluation-log";
+import { resolveProjectedSavings } from "../lib/pricing/pricing-engine";
 
 const router = Router();
 const MVP_MODE = true;
@@ -101,20 +102,23 @@ router.post("/generate", async (req, res) => {
         const shouldCreateRecommendation = latestSync.connectorHealth !== "FAILED" && evaluation.matched && evaluation.exclusions.length === 0 && missingSignals.length === 0 && !existing;
         if (!shouldCreateRecommendation) continue;
 
+        const pricing = await resolveProjectedSavings(tenantId, mapped.sku, 1);
         const trust = assessTrust(buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, evaluation.recommendedAction));
         const [rec] = await db.insert(recommendationsTable).values({
           userEmail: user.userPrincipalName,
           displayName: user.displayName ?? user.userPrincipalName,
           licenceSku: mapped.sku,
-          monthlyCost: evaluation.estimatedMonthlySaving,
-          annualisedCost: evaluation.estimatedMonthlySaving * 12,
+          monthlyCost: pricing.projectedMonthlySaving || evaluation.estimatedMonthlySaving,
+          annualisedCost: pricing.projectedAnnualSaving || evaluation.estimatedMonthlySaving * 12,
+          pricingConfidence: pricing.pricingConfidence,
+          pricingSource: pricing.pricingSource,
           trustScore: trust.execution_readiness_score,
           entityTrustScore: trust.entity_trust_score,
           recommendationTrustScore: trust.recommendation_trust_score,
           executionReadinessScore: trust.execution_readiness_score,
           executionStatus: trust.execution_gate,
           criticalBlockers: trust.critical_blockers,
-          warnings: trust.warnings,
+          warnings: pricing.warning ? [...trust.warnings, pricing.warning] : trust.warnings,
           scoreBreakdown: trust.score_breakdown,
           status: "pending",
           playbook: playbook.vendor,
