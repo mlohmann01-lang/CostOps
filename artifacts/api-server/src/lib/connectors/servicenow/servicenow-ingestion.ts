@@ -1,0 +1,4 @@
+import { randomUUID } from 'node:crypto';
+import { fetchServiceNowSample } from './servicenow-client';
+import { normalizeServiceNowAssets, normalizeServiceNowContracts } from './servicenow-normalizer';
+export async function ingestServiceNowTenant(tenantId:string){ const sourceTimestamp=new Date().toISOString(); const ingestionRunId=randomUUID(); const raw=await fetchServiceNowSample(); return {assets:normalizeServiceNowAssets(tenantId,raw.assets,sourceTimestamp,ingestionRunId,'HEALTHY'),contracts:normalizeServiceNowContracts(tenantId,raw.contracts,sourceTimestamp,ingestionRunId,'HEALTHY'),metadata:{tenantId,connector:'SERVICENOW',connectorHealth:'HEALTHY',lastSyncTime:sourceTimestamp,dataFreshnessScore:1,freshnessBand:'0_7',partialData:false,requestId:raw.requestId},warnings:[],ingestionRunId}; }
