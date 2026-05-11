@@ -9,6 +9,7 @@ import RecommendationDetail from "@/pages/recommendation-detail";
 import Outcomes from "@/pages/outcomes";
 import Connectors from "@/pages/connectors";
 import ExecutionLog from "@/pages/execution-log";
+import Pricing from "@/pages/pricing";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/outcomes" component={Outcomes} />
       <Route path="/connectors" component={Connectors} />
       <Route path="/execution" component={ExecutionLog} />
+      <Route path="/pricing" component={Pricing} />
       <Route component={NotFound} />
     </Switch>
   );

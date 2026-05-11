@@ -6,6 +6,7 @@ import recommendationsRouter from "./recommendations";
 import executionRouter from "./execution";
 import outcomesRouter from "./outcomes";
 import driftRouter from "./drift";
+import tenantPricingRouter from "./tenant-pricing";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use("/recommendations", recommendationsRouter);
 router.use("/execution", executionRouter);
 router.use("/outcomes", outcomesRouter);
 router.use("/drift", driftRouter);
+router.use("/pricing/tenant", tenantPricingRouter);
 
 export default router;
