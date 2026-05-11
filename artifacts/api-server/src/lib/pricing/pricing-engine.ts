@@ -6,7 +6,7 @@ const priority: PricingConfidence[] = ["VERIFIED_CONTRACT", "VERIFIED_INVOICE", 
 export async function resolveSkuPrice(tenantId: string, skuId: string) {
   const now = new Date();
   const tenantRows = await db.select().from(tenantSkuPricingTable)
-    .where(and(eq(tenantSkuPricingTable.tenantId, tenantId), eq(tenantSkuPricingTable.skuId, skuId)))
+    .where(and(eq(tenantSkuPricingTable.tenantId, tenantId), eq(tenantSkuPricingTable.skuId, skuId), lte(tenantSkuPricingTable.contractStart, now), or(isNull(tenantSkuPricingTable.contractEnd), gte(tenantSkuPricingTable.contractEnd, now))))
     .orderBy(desc(tenantSkuPricingTable.lastValidated));
 
   const bestTenant = tenantRows.sort((a: any, b: any) => priority.indexOf(a.pricingConfidence as PricingConfidence) - priority.indexOf(b.pricingConfidence as PricingConfidence))[0];
