@@ -41,10 +41,18 @@ export const tenantSkuPricingTable = pgTable("tenant_sku_pricing", {
   id: serial("id").primaryKey(),
   tenantId: text("tenant_id").notNull(),
   skuId: text("sku_id").notNull(),
+  canonicalSkuId: text("canonical_sku_id").notNull().default(""),
+  skuAliases: jsonb("sku_aliases").notNull().default([]),
   pricingSource: text("pricing_source").notNull(),
   effectiveMonthlyCost: real("effective_monthly_cost").notNull(),
   effectiveAnnualCost: real("effective_annual_cost").notNull(),
   currency: text("currency").notNull().default("USD"),
+  originalCurrency: text("original_currency").notNull().default("USD"),
+  originalMonthlyCost: real("original_monthly_cost").notNull().default(0),
+  originalAnnualCost: real("original_annual_cost").notNull().default(0),
+  fxRateUsed: real("fx_rate_used").notNull().default(1),
+  fxRateSource: text("fx_rate_source").notNull().default("NONE"),
+  fxTimestamp: timestamp("fx_timestamp", { withTimezone: true }),
   pricingConfidence: text("pricing_confidence").notNull().default("UNKNOWN"),
   evidenceSource: text("evidence_source").notNull().default("MANUAL_IMPORT"),
   evidenceId: text("evidence_id"),
@@ -52,7 +60,32 @@ export const tenantSkuPricingTable = pgTable("tenant_sku_pricing", {
   derivedFrom: text("derived_from").notNull().default(""),
   contractStart: timestamp("contract_start", { withTimezone: true }),
   contractEnd: timestamp("contract_end", { withTimezone: true }),
+  approvalRequired: text("approval_required").notNull().default("false"),
+  approvedBy: text("approved_by"),
   lastValidated: timestamp("last_validated", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const skuIdentityMapTable = pgTable("sku_identity_map", {
+  id: serial("id").primaryKey(),
+  canonicalSkuId: text("canonical_sku_id").notNull(),
+  sourceSystem: text("source_system").notNull(),
+  sourceSkuId: text("source_sku_id").notNull(),
+  sourceSkuName: text("source_sku_name"),
+  active: text("active").notNull().default("true"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const pricingDriftEventsTable = pgTable("pricing_drift_events", {
+  id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull(),
+  skuId: text("sku_id").notNull(),
+  eventType: text("event_type").notNull(),
+  severity: text("severity").notNull().default("MEDIUM"),
+  priorState: jsonb("prior_state").notNull().default({}),
+  currentState: jsonb("current_state").notNull().default({}),
+  reason: text("reason").notNull().default(""),
+  detectedAt: timestamp("detected_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 
