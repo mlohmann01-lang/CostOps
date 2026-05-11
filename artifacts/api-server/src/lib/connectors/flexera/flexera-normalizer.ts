@@ -1,0 +1,3 @@
+export function normalizeFlexeraEntitlements(tenantId:string,items:any[],sourceTimestamp:string,ingestionRunId:string,connectorHealth:string){
+ return items.map((x)=>({tenantId,sourceObjectId:String(x.id),userPrincipalName:x.userPrincipalName??null,productName:x.productName??'Unknown',skuId:x.skuId??null,skuPartNumber:x.skuPartNumber??null,entitlementQuantity:Number(x.entitlementQuantity??0),consumedQuantity:x.consumedQuantity==null?null:Number(x.consumedQuantity),cost:x.cost==null?null:Number(x.cost),currency:x.currency??null,contractId:x.contractId??null,sourceTimestamp,ingestionRunId,connectorHealth,sourceMetadata:{connector:'FLEXERA',rawId:x.id}}));
+}

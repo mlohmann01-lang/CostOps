@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Activity, LayoutDashboard, Database, CheckSquare, Inbox, ShieldCheck, ReceiptText } from "lucide-react";
+import { Activity, LayoutDashboard, Database, CheckSquare, Inbox, ShieldCheck, ReceiptText, GitMerge } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LayoutProps {
@@ -17,6 +17,7 @@ export function Layout({ children }: LayoutProps) {
     { name: "Execution Log", href: "/execution", icon: Activity },
     { name: "Data Connectors", href: "/connectors", icon: Database },
     { name: "Tenant Pricing", href: "/pricing", icon: ReceiptText },
+    { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
   ];
 
   return (

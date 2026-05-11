@@ -1,11 +1,15 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { connectorsTable, connectorSyncStatusTable, m365UsersTable, type Connector } from "@workspace/db";
+import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, type Connector } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { checkM365PermissionReadiness } from "../lib/connectors/m365/m365-permission-check";
 import { fetchGraphUserActivity, fetchGraphUserLicences, fetchGraphUsersFirstPage, getGraphAccessToken } from "../lib/connectors/m365/m365-graph-client";
 import { normalizeM365Users } from "../lib/connectors/m365-normalizer";
 import { ingestM365Tenant } from "../lib/connectors/m365-ingestion";
+import { checkFlexeraReadiness } from "../lib/connectors/flexera/flexera-readiness";
+import { ingestFlexeraTenant } from "../lib/connectors/flexera/flexera-ingestion";
+import { checkServiceNowReadiness } from "../lib/connectors/servicenow/servicenow-readiness";
+import { ingestServiceNowTenant } from "../lib/connectors/servicenow/servicenow-ingestion";
 
 const router = Router();
 
@@ -243,5 +247,21 @@ router.post("/m365/smoke-test", async (_req, res) => {
     });
   }
 });
+
+
+
+router.get("/flexera/readiness", async (_req, res) => res.json(await checkFlexeraReadiness()));
+router.post("/flexera/smoke-test", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const readiness = await checkFlexeraReadiness();
+  if (readiness.status !== "READY") return res.status(200).json({ ...readiness, sample: [] });
+  const ingestion = await ingestFlexeraTenant(tenantId);
+  return res.status(200).json({ status: "PASS", connectorHealth: ingestion.metadata.connectorHealth, counts: { entitlements: ingestion.records.length }, sample: ingestion.records.slice(0, 3).map((r) => ({ sourceObjectId: r.sourceObjectId, userPrincipalName: r.userPrincipalName?.replace(/(^.).+(@.*$)/, "$1***$2") ?? null, productName: r.productName })), requestIds: [ingestion.metadata.requestId], warnings: ingestion.warnings, errors: [] });
+});
+router.post("/flexera/sync", async (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; const ingestion = await ingestFlexeraTenant(tenantId); await db.insert(connectorSyncStatusTable).values({ tenantId, connector: "FLEXERA", lastSyncTime: new Date(ingestion.metadata.lastSyncTime), connectorHealth: ingestion.metadata.connectorHealth, dataFreshnessScore: ingestion.metadata.dataFreshnessScore, freshnessBand: ingestion.metadata.freshnessBand, partialData: String(ingestion.metadata.partialData), requestId: ingestion.metadata.requestId }); for (const r of ingestion.records) { await db.insert(flexeraEntitlementsTable).values({ ...r, sourceTimestamp: new Date(r.sourceTimestamp) }).onConflictDoUpdate({ target: [flexeraEntitlementsTable.tenantId, flexeraEntitlementsTable.sourceObjectId], set: { ...r, sourceTimestamp: new Date(r.sourceTimestamp), updatedAt: new Date() } }); } return res.json({ tenantId, ingestionRunId: ingestion.ingestionRunId, connectorHealth: ingestion.metadata.connectorHealth, entitlementsSynced: ingestion.records.length, warnings: ingestion.warnings }); });
+
+router.get("/servicenow/readiness", async (_req, res) => res.json(await checkServiceNowReadiness()));
+router.post("/servicenow/smoke-test", async (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; const readiness = await checkServiceNowReadiness(); if (readiness.status !== "READY") return res.status(200).json({ ...readiness, sample: { assets: [], contracts: [] } }); const ingestion = await ingestServiceNowTenant(tenantId); return res.status(200).json({ status: "PASS", connectorHealth: ingestion.metadata.connectorHealth, counts: { assets: ingestion.assets.length, contracts: ingestion.contracts.length }, sample: { assets: ingestion.assets.slice(0, 2).map((a) => ({ sourceObjectId: a.sourceObjectId, userPrincipalName: a.userPrincipalName?.replace(/(^.).+(@.*$)/, "$1***$2") ?? null, status: a.status })), contracts: ingestion.contracts.slice(0, 2).map((c) => ({ sourceObjectId: c.sourceObjectId, vendor: c.vendor, productName: c.productName })) }, requestIds: [ingestion.metadata.requestId], warnings: ingestion.warnings, errors: [] }); });
+router.post("/servicenow/sync", async (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; const ingestion = await ingestServiceNowTenant(tenantId); await db.insert(connectorSyncStatusTable).values({ tenantId, connector: "SERVICENOW", lastSyncTime: new Date(ingestion.metadata.lastSyncTime), connectorHealth: ingestion.metadata.connectorHealth, dataFreshnessScore: ingestion.metadata.dataFreshnessScore, freshnessBand: ingestion.metadata.freshnessBand, partialData: String(ingestion.metadata.partialData), requestId: ingestion.metadata.requestId }); for (const a of ingestion.assets) { await db.insert(servicenowAssetsTable).values({ ...a, sourceTimestamp: new Date(a.sourceTimestamp) }).onConflictDoUpdate({ target: [servicenowAssetsTable.tenantId, servicenowAssetsTable.sourceObjectId], set: { ...a, sourceTimestamp: new Date(a.sourceTimestamp), updatedAt: new Date() } }); } for (const c of ingestion.contracts) { await db.insert(servicenowContractsTable).values({ ...c, sourceTimestamp: new Date(c.sourceTimestamp) }).onConflictDoUpdate({ target: [servicenowContractsTable.tenantId, servicenowContractsTable.sourceObjectId], set: { ...c, sourceTimestamp: new Date(c.sourceTimestamp), updatedAt: new Date() } }); } return res.json({ tenantId, ingestionRunId: ingestion.ingestionRunId, connectorHealth: ingestion.metadata.connectorHealth, assetsSynced: ingestion.assets.length, contractsSynced: ingestion.contracts.length, warnings: ingestion.warnings }); });
 
 export default router;

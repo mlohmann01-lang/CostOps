@@ -36,6 +36,7 @@ test("architecture boundary guards", () => {
     "../routes/",
     "@workspace/db",
     "execution-engine",
+    "reconciliation/trust-signal-adapter",
   ]);
 
   assertNoForbiddenImports("../lib/execution/execution-engine.ts", [

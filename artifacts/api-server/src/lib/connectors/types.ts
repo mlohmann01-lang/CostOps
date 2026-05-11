@@ -1,6 +1,8 @@
 export type ConnectorHealth = "HEALTHY" | "DEGRADED" | "FAILED";
 export type FreshnessBand = "0_7" | "8_30" | "31_90" | "GT_90" | "UNKNOWN";
 
+import type { ConnectorCapability, ConnectorEvidenceContract, ConnectorHealthContract, ConnectorId } from "./sdk";
+
 export type NormalizedM365User = {
   tenantId: string;
   userPrincipalName: string;
@@ -30,4 +32,21 @@ export type M365IngestionResult = {
   metadata: ConnectorMetadata;
   warnings: string[];
   ingestionRunId: string;
+};
+
+
+export type ConnectorAuthState = "READY" | "EXPIRED" | "MISSING" | "ERROR";
+
+export type ConnectorRegistryRecord = {
+  connector: ConnectorId;
+  capabilities: ConnectorCapability[];
+  authState: ConnectorAuthState;
+  syncCron: string;
+  enabled: boolean;
+};
+
+export type ConnectorSyncResult<TPayload> = {
+  payload: TPayload;
+  health: ConnectorHealthContract;
+  evidence: ConnectorEvidenceContract;
 };

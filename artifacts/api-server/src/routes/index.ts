@@ -7,6 +7,7 @@ import executionRouter from "./execution";
 import outcomesRouter from "./outcomes";
 import driftRouter from "./drift";
 import tenantPricingRouter from "./tenant-pricing";
+import reconciliationRouter from "./reconciliation";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/execution", executionRouter);
 router.use("/outcomes", outcomesRouter);
 router.use("/drift", driftRouter);
 router.use("/pricing/tenant", tenantPricingRouter);
+router.use("/reconciliation", reconciliationRouter);
 
 export default router;
