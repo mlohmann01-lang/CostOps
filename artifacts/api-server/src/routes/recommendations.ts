@@ -7,6 +7,7 @@ import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
 import { reliabilityFromHealth } from "../lib/connectors/connector-health";
 import { createPlaybookEvaluationEvent } from "../lib/playbooks/evaluation-log";
 import { resolveProjectedSavings } from "../lib/pricing/pricing-engine";
+import { buildTrustSignalsFromFindings } from "../lib/reconciliation/trust-signal-adapter";
 
 const router = Router();
 const MVP_MODE = true;
@@ -103,7 +104,9 @@ router.post("/generate", async (req, res) => {
         if (!shouldCreateRecommendation) continue;
 
         const pricing = await resolveProjectedSavings(tenantId, mapped.sku, 1);
-        const trust = assessTrust(buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, evaluation.recommendedAction));
+        const reconciliationTrustSignals = await buildTrustSignalsFromFindings(tenantId, user.userPrincipalName);
+        const trustContext = buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, evaluation.recommendedAction);
+        const trust = assessTrust({ ...trustContext, reconciliationTrustSignals });
         const [rec] = await db.insert(recommendationsTable).values({
           userEmail: user.userPrincipalName,
           displayName: user.displayName ?? user.userPrincipalName,
