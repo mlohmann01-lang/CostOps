@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { connectorSyncStatusTable, m365UsersTable, recommendationsTable } from "@workspace/db";
 import { eq, and, desc } from "drizzle-orm";
 import { assessTrust } from "../lib/trust-engine";
+import { evaluateExceptions } from "../lib/governance/exceptions";
 import { PLAYBOOK_REGISTRY } from "../lib/playbooks/registry";
 import { reliabilityFromHealth } from "../lib/connectors/connector-health";
 import { createPlaybookEvaluationEvent } from "../lib/playbooks/evaluation-log";
@@ -114,6 +115,7 @@ router.post("/generate", async (req, res) => {
         const recommendationAction = Array.isArray(evaluation.recommendedAction) ? evaluation.recommendedAction.join("+") : evaluation.recommendedAction;
         const trustContext = buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, recommendationAction);
         const trust = assessTrust({ ...trustContext, reconciliationTrustSignals });
+        const exEval = await evaluateExceptions({ tenantId, recommendationId: "", targetType: "USER", targetId: user.userPrincipalName, pricingConfidence: pricing.pricingConfidence, trustGate: trust.execution_gate, riskClass: "B", policyDecision: trust.execution_gate === "APPROVAL_REQUIRED" ? "REQUIRE_APPROVAL" : "ALLOW" });
         const [rec] = await db.insert(recommendationsTable).values({
           userEmail: user.userPrincipalName,
           displayName: user.displayName ?? user.userPrincipalName,
@@ -130,7 +132,7 @@ router.post("/generate", async (req, res) => {
           criticalBlockers: trust.critical_blockers,
           warnings: pricing.warning ? [...trust.warnings, pricing.warning] : trust.warnings,
           scoreBreakdown: trust.score_breakdown,
-          status: "pending",
+          status: exEval.reasons.includes("SUPPRESSED_BY_EXCEPTION") ? "SUPPRESSED" : "pending",
           playbook: playbook.vendor,
           playbookId: playbook.id,
           playbookName: playbook.name,

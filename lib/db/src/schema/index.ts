@@ -15,3 +15,8 @@ export * from "./reconciliationFindings";
 
 export * from "./rollbackEvents";
 export * from "./jobs";
+
+export * from "./outcomeVerifications";
+export * from "./approvals";
+export * from "./governancePolicies";
+export * from "./governanceExceptions";

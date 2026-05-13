@@ -15,7 +15,8 @@ test("job orchestration files and handlers are present", () => {
   assert.ok(registry.includes("PRICING_REFRESH"));
 });
 
-test("outcome verification placeholder reason exists", () => {
+test("outcome verification handler is wired", () => {
   const registry = readFileSync(join(root, "src/lib/jobs/job-registry.ts"), "utf8");
-  assert.ok(registry.includes("verification connector not configured"));
+  assert.ok(registry.includes("OUTCOME_VERIFICATION"));
+  assert.ok(registry.includes("verifyOutcome"));
 });

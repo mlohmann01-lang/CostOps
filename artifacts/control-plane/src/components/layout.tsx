@@ -19,6 +19,8 @@ export function Layout({ children }: LayoutProps) {
     { name: "Tenant Pricing", href: "/pricing", icon: ReceiptText },
     { name: "Reconciliation", href: "/reconciliation", icon: GitMerge },
     { name: "Jobs / Orchestration", href: "/jobs", icon: Workflow },
+    { name: "Approvals", href: "/approvals", icon: ShieldCheck },
+    { name: "Governance", href: "/governance", icon: ShieldCheck },
   ];
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useListRecommendations,
@@ -66,6 +66,7 @@ export default function Recommendations() {
   const [approveId, setApproveId] = useState<number | null>(null);
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [approvalStatus, setApprovalStatus] = useState<Record<number, string>>({});
 
   const recommendations = useListRecommendations({ status: statusFilter });
 
@@ -125,6 +126,9 @@ export default function Recommendations() {
   };
 
   const recRows = (recommendations.data ?? []) as any[];
+  useEffect(() => {
+    recRows.forEach((r:any)=>{ if(r.executionStatus==="APPROVAL_REQUIRED"){ fetch(`/api/approvals/recommendation/${r.id}`).then(x=>x.json()).then(a=>setApprovalStatus((m)=>({...m,[r.id]:a?.status ?? "MISSING"}))).catch(()=>{}); }});
+  }, [recommendations.data]);
   const groupedRecommendations: Record<string, any[]> = recRows.reduce((acc, rec) => {
     const key = rec.playbookName || rec.playbook || "Unknown Playbook";
     acc[key] = acc[key] ?? [];
@@ -253,6 +257,9 @@ export default function Recommendations() {
 
                     {rec.status === "pending" && (
                       <>
+                        {rec.executionStatus === "APPROVAL_REQUIRED" && approvalStatus[rec.id] !== "APPROVED" ? (
+                          <Button size="sm" variant="outline" onClick={async()=>{ await fetch("/api/approvals",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({tenantId:"default",recommendationId:String(rec.id),requestedBy:"admin@contoso.com",reason:"Approval requested from recommendations",riskClass:"B"})}); setApprovalStatus((m)=>({...m,[rec.id]:"PENDING"})); }} data-testid={`button-request-approval-${rec.id}`}>Request Approval</Button>
+                        ) : (
                         <Button
                           size="sm"
                           variant="outline"
@@ -263,6 +270,7 @@ export default function Recommendations() {
                           <CheckCircle2 className="w-3.5 h-3.5" />
                           Approve
                         </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="outline"
