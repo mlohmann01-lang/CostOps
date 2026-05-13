@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { runExecutionEngine } from "../lib/execution/execution-engine";
 import { createLedgerEntry } from "../lib/outcome-ledger/create-ledger-entry";
 import { assertNotAlreadyExecuted } from "../lib/execution/idempotency";
+import { rollbackOutcome } from "../lib/execution/rollback-engine";
 
 const router = Router();
 
@@ -51,12 +52,12 @@ router.post("/approve/:id", async (req, res) => {
       idempotencyKey: idempotencyCheck.idempotencyKey,
       trustSnapshot,
       actionRiskProfile: engineResult.actionRiskProfile,
-      beforeState: { hasLicense: true, licenceSku: rec.licenceSku, monthlyCost: rec.monthlyCost },
-      afterState: { hasLicense: false, licenceSku: null, monthlyCost: 0 },
+      beforeState: (engineResult.dryRunResult as any)?.before ?? { hasLicense: true, licenceSku: rec.licenceSku, monthlyCost: rec.monthlyCost },
+      afterState: (engineResult.dryRunResult as any)?.after ?? { hasLicense: false, licenceSku: null, monthlyCost: 0 },
       dryRunResult: engineResult.dryRunResult,
       executionEvidence: { ...engineResult.evidence, authorizationResult: engineResult.evidence.authorizationResult },
       actorId: actorId ?? "",
-      executionMode: "APPROVAL_EXECUTE",
+      executionMode: (engineResult as any).executionMode ?? "SIMULATED",
       executionStatus: "EXECUTED",
       pricingSnapshot: {
         skuId: rec.licenceSku,
@@ -87,6 +88,23 @@ router.post("/dry-run/:id", async (req, res) => {
   const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
   const engineResult = await runExecutionEngine({ recommendation: rec, actorId, tenantId, mode: "DRY_RUN", mvpMode: true });
   return res.json(engineResult);
+});
+
+router.post("/rollback/:outcomeLedgerId", async (req, res) => {
+  const actorId = req.body?.actorId as string | undefined;
+  const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
+  const result = await rollbackOutcome({ outcomeLedgerId: req.params.outcomeLedgerId, actorId, tenantId, dryRun: false });
+  if (!result.allowed && (result as any).status === 409) return res.status(409).json(result);
+  if (!result.allowed) return res.status(400).json(result);
+  return res.json(result);
+});
+
+router.post("/rollback/:outcomeLedgerId/dry-run", async (req, res) => {
+  const actorId = req.body?.actorId as string | undefined;
+  const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
+  const result = await rollbackOutcome({ outcomeLedgerId: req.params.outcomeLedgerId, actorId, tenantId, dryRun: true });
+  if (!result.allowed) return res.status(400).json(result);
+  return res.json(result);
 });
 
 export default router;

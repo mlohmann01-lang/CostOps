@@ -8,7 +8,7 @@ export type PlaybookSubject = {
 export type PlaybookEvaluationResult = {
   matched: boolean;
   reason: string;
-  recommendedAction: string;
+  recommendedAction: string | string[];
   estimatedMonthlySaving: number;
   subject: PlaybookSubject;
   evidence: Record<string, unknown>;
