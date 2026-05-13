@@ -8,7 +8,8 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:contoso": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-contoso-test.mjs"
+    "test:contoso": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-contoso-test.mjs",
+    "test:platform-boundaries": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-platform-boundary-tests.mjs"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

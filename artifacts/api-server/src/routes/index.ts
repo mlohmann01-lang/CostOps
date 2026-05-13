@@ -8,6 +8,7 @@ import outcomesRouter from "./outcomes";
 import driftRouter from "./drift";
 import tenantPricingRouter from "./tenant-pricing";
 import reconciliationRouter from "./reconciliation";
+import jobsRouter from "./jobs";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/outcomes", outcomesRouter);
 router.use("/drift", driftRouter);
 router.use("/pricing/tenant", tenantPricingRouter);
 router.use("/reconciliation", reconciliationRouter);
+router.use("/jobs", jobsRouter);
 
 export default router;

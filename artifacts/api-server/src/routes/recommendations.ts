@@ -71,13 +71,19 @@ router.post("/generate", async (req, res) => {
     const generated = [];
     for (const user of canonicalUsers) {
       for (const playbook of PLAYBOOK_REGISTRY) {
-        const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled === "true", assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName, mailboxType: "user" };
+        const mapped = { email: user.userPrincipalName, displayName: user.displayName ?? user.userPrincipalName, sku: user.assignedLicenses[0] ?? "UNKNOWN", cost: 57, days: user.lastLoginDaysAgo ?? 999, accountEnabled: user.accountEnabled === "true", assignedLicenses: user.assignedLicenses, userPrincipalName: user.userPrincipalName , mailboxType: user.userPrincipalName.includes("shared") ? "shared" : "user", isSharedMailbox: user.userPrincipalName.includes("shared"), hasDesktopActivity: !user.userPrincipalName.includes("webonly"), advancedFeatureUsage: user.lastLoginDaysAgo != null && user.lastLoginDaysAgo < 30 ? 0.8 : 0.1, activityPresent: (user.lastLoginDaysAgo ?? 999) <= 90, isFrontlineWorker: user.userPrincipalName.includes("frontline"), addonUsageDaysAgo: user.assignedLicenses?.[0]?.startsWith("ADDON_") ? 120 : null };
         const evaluation = playbook.evaluate(mapped);
         const missingSignals = (evaluation.requiredSignals ?? []).filter((signal: string) => {
           if (signal === "assignedLicenses") return (mapped.assignedLicenses?.length ?? 0) === 0;
           if (signal === "userPrincipalName") return !mapped.userPrincipalName;
           if (signal === "accountEnabled") return mapped.accountEnabled == null;
           if (signal === "lastLoginDaysAgo") return user.lastLoginDaysAgo == null;
+          if (signal === "mailboxType") return mapped.mailboxType == null;
+          if (signal === "advancedFeatureUsage") return mapped.advancedFeatureUsage == null;
+          if (signal === "activityPresent") return mapped.activityPresent == null;
+          if (signal === "hasDesktopActivity") return mapped.hasDesktopActivity == null;
+          if (signal === "isFrontlineWorker") return mapped.isFrontlineWorker == null;
+          if (signal === "addonUsageDaysAgo") return mapped.addonUsageDaysAgo == null;
           return false;
         });
 
@@ -91,7 +97,7 @@ router.post("/generate", async (req, res) => {
           candidateDisplayName: mapped.displayName,
           matched: evaluation.matched,
           reason: evaluation.reason,
-          recommendedAction: evaluation.recommendedAction,
+          recommendedAction: Array.isArray(evaluation.recommendedAction) ? evaluation.recommendedAction.join("+") : evaluation.recommendedAction,
           exclusions: evaluation.exclusions,
           requiredSignals: evaluation.requiredSignals,
           missingSignals,
@@ -105,7 +111,8 @@ router.post("/generate", async (req, res) => {
 
         const pricing = await resolveProjectedSavings(tenantId, mapped.sku, 1);
         const reconciliationTrustSignals = await buildTrustSignalsFromFindings(tenantId, user.userPrincipalName);
-        const trustContext = buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, evaluation.recommendedAction);
+        const recommendationAction = Array.isArray(evaluation.recommendedAction) ? evaluation.recommendedAction.join("+") : evaluation.recommendedAction;
+        const trustContext = buildTrustContext({ userPrincipalName: user.userPrincipalName, lastLoginDaysAgo: user.lastLoginDaysAgo }, latestSync, recommendationAction);
         const trust = assessTrust({ ...trustContext, reconciliationTrustSignals });
         const [rec] = await db.insert(recommendationsTable).values({
           userEmail: user.userPrincipalName,

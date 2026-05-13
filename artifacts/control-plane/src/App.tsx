@@ -11,6 +11,7 @@ import Connectors from "@/pages/connectors";
 import ExecutionLog from "@/pages/execution-log";
 import Pricing from "@/pages/pricing";
 import ReconciliationPage from "@/pages/reconciliation";
+import JobsPage from "@/pages/jobs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/execution" component={ExecutionLog} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/reconciliation" component={ReconciliationPage} />
+      <Route path="/jobs" component={JobsPage} />
       <Route component={NotFound} />
     </Switch>
   );

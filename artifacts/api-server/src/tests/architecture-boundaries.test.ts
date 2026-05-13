@@ -46,6 +46,12 @@ test("architecture boundary guards", () => {
   ]);
 
   assertNoForbiddenImports("../lib/outcome-ledger/create-ledger-entry.ts", ["trust-engine"]);
+  assertNoForbiddenImports("../lib/jobs/scheduler.ts", [
+    "m365-graph-client",
+    "trust-engine",
+    "execution/m365-graph-actions",
+  ]);
+
 
   assertNoForbiddenImports("../lib/monitoring/drift-monitor.ts", ["outcome-ledger/create-ledger-entry"]);
 });

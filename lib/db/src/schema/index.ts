@@ -12,3 +12,6 @@ export * from "./flexeraEntitlements";
 export * from "./servicenowAssets";
 export * from "./servicenowContracts";
 export * from "./reconciliationFindings";
+
+export * from "./rollbackEvents";
+export * from "./jobs";

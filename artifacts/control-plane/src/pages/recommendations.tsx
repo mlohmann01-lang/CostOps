@@ -124,6 +124,14 @@ export default function Recommendations() {
     }
   };
 
+  const recRows = (recommendations.data ?? []) as any[];
+  const groupedRecommendations: Record<string, any[]> = recRows.reduce((acc, rec) => {
+    const key = rec.playbookName || rec.playbook || "Unknown Playbook";
+    acc[key] = acc[key] ?? [];
+    acc[key].push(rec);
+    return acc;
+  }, {} as Record<string, any[]>);
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -181,7 +189,10 @@ export default function Recommendations() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {(recommendations.data as (typeof recommendations.data[number] & RecommendationWithPricing)[]).map((rec) => (
+              {Object.entries(groupedRecommendations).map(([playbookName, recs]) => (
+                <div key={playbookName}>
+                  <div className="px-6 py-2 bg-muted/30 text-xs font-semibold uppercase tracking-wide">{playbookName}</div>
+                  {recs.map((rec) => (
                 <div
                   key={rec.id}
                   className="flex items-center justify-between px-6 py-4 hover:bg-secondary/30 transition-colors"
@@ -209,7 +220,7 @@ export default function Recommendations() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {rec.userEmail} · {rec.licenceSku} · {rec.daysSinceActivity} days inactive ·{" "}
+                        {rec.userEmail} · {rec.licenceSku} · Action: {(rec.playbookId.includes("rightsizing") || rec.playbookId.includes("web_only")) ? "DOWNGRADE_LICENSE" : rec.playbookId.includes("shared_mailbox") ? "CONVERT_TO_SHARED_MAILBOX + REMOVE_LICENSE" : "REMOVE_LICENSE"} · {rec.daysSinceActivity} days inactive ·{" "}
                         {formatDate(rec.createdAt)}
                       </p>
                       <p className="text-xs text-muted-foreground mt-0.5">
@@ -221,6 +232,7 @@ export default function Recommendations() {
                         </Badge>
                         <span className="text-[11px] text-muted-foreground">{pricingCopy(rec.pricingConfidence)}</span>
                       </div>
+                      <p className="text-[11px] text-muted-foreground mt-1">Trust: {rec.executionStatus} · Reconciliation warnings: {(rec.warnings ?? []).join(", ") || "None"}</p>
                       {rec.rejectionReason && (
                         <p className="text-xs text-red-400 mt-0.5">Rejected: {rec.rejectionReason}</p>
                       )}
@@ -271,6 +283,8 @@ export default function Recommendations() {
                       <ChevronRight className="w-4 h-4 text-muted-foreground hover:text-foreground cursor-pointer" />
                     </Link>
                   </div>
+                </div>
+              ))}
                 </div>
               ))}
             </div>
