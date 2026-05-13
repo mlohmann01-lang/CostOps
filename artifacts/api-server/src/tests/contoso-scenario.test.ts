@@ -77,7 +77,7 @@ test("Contoso Scenario Integration Test Matrix V1", async () => {
   assert.equal(blocked.executed, false);
   assert.equal(investigate.executed, false);
 
-  const approved = await runExecutionEngine({ recommendation: { ...recommendations[0], executionStatus: "APPROVAL_REQUIRED", criticalBlockers: [] }, actorId: "approver@contoso.com", tenantId: "default", mode: "APPROVAL_EXECUTE", mvpMode: true });
+  const approved = await runExecutionEngine({ recommendation: { ...recommendations[0], executionStatus: "APPROVAL_REQUIRED", criticalBlockers: [], actionRiskProfile: { riskClass: "B" }, approvalStatus: "APPROVED" }, actorId: "approver@contoso.com", tenantId: "default", mode: "APPROVAL_EXECUTE", mvpMode: true });
   assert.equal(approved.executed, true);
 
   const key = buildIdempotencyKey("42", "REMOVE_LICENSE");

@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { db, governanceExceptionsTable } from "@workspace/db";
+import { desc, eq } from "drizzle-orm";
+import { approveException, cancelException, createExceptionRequest, expireExceptions, rejectException } from "../lib/governance/exceptions";
+const router=Router();
+router.get('/',async(req,res)=>{const t=(req.query.tenantId as string)??'default'; try{return res.json(await db.select().from(governanceExceptionsTable).where(eq(governanceExceptionsTable.tenantId,t)).orderBy(desc(governanceExceptionsTable.createdAt)));}catch{return res.json([]);}});
+router.post('/',async(req,res)=>{try{return res.json(await createExceptionRequest(req.body));}catch(e:any){return res.status(400).json({error:e.message});}});
+router.post('/:id/approve',async(req,res)=>{try{return res.json(await approveException({exceptionId:Number(req.params.id),actorId:req.body?.actorId,reason:req.body?.reason}));}catch(e:any){return res.status(400).json({error:e.message});}});
+router.post('/:id/reject',async(req,res)=>{try{return res.json(await rejectException({exceptionId:Number(req.params.id),actorId:req.body?.actorId,reason:req.body?.reason}));}catch(e:any){return res.status(400).json({error:e.message});}});
+router.post('/:id/cancel',async(req,res)=>{try{return res.json(await cancelException({exceptionId:Number(req.params.id),actorId:req.body?.actorId,reason:req.body?.reason}));}catch(e:any){return res.status(400).json({error:e.message});}});
+router.post('/expire',async(req,res)=>res.json(await expireExceptions({tenantId:req.body?.tenantId??'default'})));
+export default router;

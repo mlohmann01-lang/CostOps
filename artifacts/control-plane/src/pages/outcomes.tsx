@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useListOutcomes, useGetOutcomesSummary } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,17 @@ export default function Outcomes() {
   const summary = useGetOutcomesSummary();
   const outcomes = useListOutcomes();
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [verifications, setVerifications] = useState<Record<number, any>>({});
+
+  useEffect(() => {
+    fetch("/api/verification/outcomes?tenantId=contoso").then((r) => r.json()).then((rows) => {
+      const byOutcome: Record<number, any> = {};
+      (rows ?? []).forEach((v: any) => {
+        if (!(v.outcomeLedgerId in byOutcome)) byOutcome[v.outcomeLedgerId] = v;
+      });
+      setVerifications(byOutcome);
+    }).catch(() => setVerifications({}));
+  }, []);
 
   return (
     <Layout>
@@ -124,7 +135,9 @@ export default function Outcomes() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {outcomes.data.map((o: any) => (
+                {outcomes.data.map((o: any) => {
+                  const v = verifications[o.id];
+                  return (
                   <>
                     <TableRow
                       key={o.id}
@@ -183,6 +196,15 @@ export default function Outcomes() {
                             <p className="text-xs text-muted-foreground">Source: {o.pricingSource || "—"}</p>
                             <pre className="text-xs font-mono text-foreground/80 whitespace-pre-wrap">{JSON.stringify(o.pricingSnapshot ?? {}, null, 2)}</pre>
                           </div>
+                          <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Verification</p>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <p>Status: <span className="font-mono">{v?.verificationStatus ?? "PROJECTED"}</span></p>
+                            <p>Confidence: <span className="font-mono">{v?.verificationConfidence ?? "LOW"}</span></p>
+                            <p>Source: <span className="font-mono">{v?.verificationSource ?? "LEDGER_ONLY"}</span></p>
+                            <p>Projected: <span className="font-mono">{formatCurrency(v?.projectedMonthlySaving ?? o.monthlySaving)}</span></p>
+                            <p>Verified: <span className="font-mono">{v?.verifiedMonthlySaving == null ? "—" : formatCurrency(v.verifiedMonthlySaving)}</span></p>
+                            <p>Variance: <span className="font-mono">{v?.varianceAmount == null ? "—" : formatCurrency(v.varianceAmount)}</span></p>
+                          </div>
                           <p className="text-xs text-muted-foreground uppercase tracking-widest mb-2">Evidence</p>
                           <pre className="text-xs font-mono text-foreground/80 whitespace-pre-wrap">
                             {JSON.stringify(o.evidence, null, 2)}
@@ -191,7 +213,7 @@ export default function Outcomes() {
                       </TableRow>
                     )}
                   </>
-                ))}
+                );})}
               </TableBody>
             </Table>
           )}

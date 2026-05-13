@@ -4,6 +4,8 @@ import { ingestServiceNowTenant } from "../connectors/servicenow/servicenow-inge
 import { runReconciliation } from "../reconciliation/reconciliation-engine";
 import { checkM365LicenceReclaimDrift } from "../monitoring/drift-monitor";
 import { db, outcomeLedgerTable } from "@workspace/db";
+import { verifyOutcome } from "../verification/outcome-verification";
+import { expireExceptions } from "../governance/exceptions";
 import { and, desc, eq } from "drizzle-orm";
 import { resolveProjectedSavings } from "../pricing/pricing-engine";
 
@@ -16,5 +18,6 @@ export const JOB_HANDLERS: Record<string, (input:any)=>Promise<any>> = {
   DRIFT_SCAN: async ({tenantId}:any)=>{ const rows=await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId,tenantId),eq(outcomeLedgerTable.executionStatus,"EXECUTED"))).orderBy(desc(outcomeLedgerTable.createdAt)).limit(10); let c=0; for(const r of rows){ await checkM365LicenceReclaimDrift({tenantId,recommendationId:r.recommendationId,action:r.action,outcomeLedgerRow:r}); c++; } return {rows:c};},
   PRICING_REFRESH: async ({tenantId}:any)=>resolveProjectedSavings(tenantId,"E5",1),
   PRICING_DRIFT_DETECTION: async ()=>({status:"SKIPPED",reason:"pricing drift detector not configured"}),
-  OUTCOME_VERIFICATION: async ()=>({status:"SKIPPED",reason:"verification connector not configured"}),
+  OUTCOME_VERIFICATION: async ({tenantId}:any)=>{ const rows=await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId,tenantId),eq(outcomeLedgerTable.executionStatus,"EXECUTED"))).orderBy(desc(outcomeLedgerTable.createdAt)).limit(25); let c=0; for(const r of rows){ await verifyOutcome(r as any); c++; } return {rows:c}; },
+  EXCEPTION_EXPIRY_SWEEP: async ({tenantId}:any)=>expireExceptions({tenantId}),
 };
