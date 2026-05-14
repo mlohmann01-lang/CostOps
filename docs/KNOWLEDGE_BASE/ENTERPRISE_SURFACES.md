@@ -26,3 +26,6 @@ Deterministic, auditable, tenant-scoped behavior.
 
 ## Future roadmap
 Harden auth, isolation, deployment, observability, and partner acceleration.
+
+## Enterprise Surfaces V2
+- Enterprise Graph V2, Automation Center, and Enterprise Forecasting surfaces added.

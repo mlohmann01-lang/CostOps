@@ -26,3 +26,6 @@ Deterministic, auditable, tenant-scoped behavior.
 
 ## Future roadmap
 Harden auth, isolation, deployment, observability, and partner acceleration.
+
+## Checkpoint 7 (Production Readiness Pass 5)
+- Enterprise-scale operational intelligence and controlled automation scope landed.

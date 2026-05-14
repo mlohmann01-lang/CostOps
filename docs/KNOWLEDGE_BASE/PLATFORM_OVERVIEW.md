@@ -26,3 +26,6 @@ Deterministic, auditable, tenant-scoped behavior.
 
 ## Future roadmap
 Harden auth, isolation, deployment, observability, and partner acceleration.
+
+## Pass 5 Enterprise Scale Update
+- Added Enterprise Graph V2, controlled automation, forecasting, and multi-region runtime foundations.
