@@ -3,6 +3,9 @@ import { evaluateExecutionRuntimeControls } from "../security/runtime-controls";
 import { transitionOrchestrationState } from "./execution-orchestration-state-machine";
 import { ExecutionOrchestrationRepository } from "./execution-orchestration.repository";
 
+const BATCH_DEFAULTS = { maxItemsPerBatch:25, maxAffectedEntities:25, maxRiskClass:"B", maxBlastRadiusScore:74, cooldownMinutes:30, sampleBatchSize:5, maxFailureRatePercent:10 };
+const AUTO_DEFAULTS = { minSuccessfulRuns:10, minVerifiedSampleBatches:2, maxFailureRatePercent:5, criticalEscalationsAllowed:0, autoSafeAllowedRiskClass:"A", autoSafeAllowedBlastRadius:"LOW", rollbackRequired:true };
+
 export class ExecutionOrchestrationTelemetryService {
   constructor(private readonly repo = new ExecutionOrchestrationRepository()) {}
   async emit(event: any) {
@@ -83,15 +86,35 @@ export class ExecutionSlaService {
 }
 
 export class ExecutionBatchService {
-  createBatch(input: any) { return { ...input, status: "CREATED" }; }
-  assignItemsToBatch(items: any[], constraints: any) { return items.slice(0, constraints.maxItemCount ?? 10); }
-  evaluateBatchReadiness(items: any[]) { return { ready: items.every((i) => !["WAITING_DEPENDENCIES", "BLOCKED", "ESCALATED"].includes(i.status)) }; }
-  markBatchRunning(batch: any) { return { ...batch, status: "RUNNING" }; }
-  markBatchPartial(batch: any) { return { ...batch, status: "PARTIAL" }; }
-  markBatchCompleted(batch: any) { return { ...batch, status: "COMPLETED" }; }
-  markBatchFailed(batch: any) { return { ...batch, status: "FAILED" }; }
+  constructor(private readonly repo = new ExecutionOrchestrationRepository(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(repo), private readonly escalation = new ExecutionEscalationService(repo)) {}
+  async createBatch(input: any) { const b = await this.repo.createBatch({ ...input, status: input.status ?? "DRAFT" }); await this.telemetry.emitFailSafe({ tenantId: b.tenantId, planId: b.planId, eventType: "BATCH_CREATED", source:"execution-orchestration", correlationId: input.correlationId ?? `batch:${b.id}`, payload: b }); return b; }
+  async assignItemsToBatch(batchId:number, items: any[], constraints=BATCH_DEFAULTS) { return this.repo.assignBatchItems(items.slice(0, constraints.maxItemsPerBatch).map((i:any)=>({tenantId:i.tenantId,batchId,queueItemId:i.id}))); }
+  getBatch(tenantId:string,id:number){ return this.repo.getBatch(tenantId,id); }
+  listBatches(tenantId:string){ return this.repo.listBatches(tenantId); }
+  async evaluateBatchReadiness(tenantId:string,batchId:number,constraints=BATCH_DEFAULTS){ const batch=await this.repo.getBatch(tenantId,batchId); const links=await this.repo.getBatchItems(tenantId,batchId); const items=await Promise.all(links.map((l:any)=>this.repo.updateItem(tenantId,l.queueItemId,{})));
+    const blocked=items.some((i:any)=>["BLOCKED","QUARANTINED","CANCELLED"].includes(i?.status)); if(blocked) return this.repo.updateBatch(tenantId,batchId,{status:"BLOCKED"});
+    if(items.some((i:any)=>i?.status==="WAITING_DEPENDENCIES")) return this.repo.updateBatch(tenantId,batchId,{status:"WAITING_DEPENDENCIES"});
+    if(items.some((i:any)=>i?.approvalStatus && i.approvalStatus!=="APPROVED" && i.approvalStatus!=="NOT_REQUIRED")) return this.repo.updateBatch(tenantId,batchId,{status:"WAITING_APPROVAL"});
+    if(items.length>constraints.maxItemsPerBatch) return this.repo.updateBatch(tenantId,batchId,{status:"BLOCKED",readiness:"MAX_ITEMS_EXCEEDED"});
+    if((batch?.cooldownUntil && new Date(batch.cooldownUntil).getTime()>Date.now())) return this.repo.updateBatch(tenantId,batchId,{status:"PAUSED",readiness:"COOLDOWN"});
+    const requiresSample = items.some((i:any)=>i?.riskClass==="B"||i?.blastRadiusBand==="HIGH") && !batch?.isSampleBatch;
+    if(requiresSample && (!batch?.sampleBatchStatus || batch?.sampleBatchStatus!=="COMPLETED" || !batch?.sampleOutcomeVerified)) return this.repo.updateBatch(tenantId,batchId,{status:"WAITING_DEPENDENCIES",readiness:"SAMPLE_REQUIRED"});
+    const ready=await this.repo.updateBatch(tenantId,batchId,{status:"READY",lastEvaluatedAt:new Date()});
+    await this.telemetry.emitFailSafe({tenantId,planId:batch?.planId,eventType:"BATCH_READY",source:"execution-orchestration",correlationId:`batch:${batchId}`,payload:{batchId}}); return ready;
+  }
+  markBatchRunning(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"RUNNING",startedAt:new Date()}); }
+  markBatchPartial(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"PARTIAL"}); }
+  markBatchCompleted(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"COMPLETED",completedAt:new Date()}); }
+  markBatchFailed(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"FAILED",completedAt:new Date()}); }
+  pauseBatch(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"PAUSED",cooldownUntil:new Date(Date.now()+BATCH_DEFAULTS.cooldownMinutes*60_000)}); }
+  cancelBatch(tenantId:string,id:number){ return this.repo.updateBatch(tenantId,id,{status:"CANCELLED",completedAt:new Date()}); }
+  async evaluateBatchFailurePolicy(batch:any, failures:number,total:number){ const rate = total ? (failures/total)*100 : 0; if (rate > BATCH_DEFAULTS.maxFailureRatePercent) { await this.pauseBatch(batch.tenantId,batch.id); await this.escalation.escalatePlan({ tenantId: batch.tenantId, planId: batch.planId, escalationType:"BATCH_FAILURE_THRESHOLD", severity:"HIGH", reason:`Failure rate ${rate.toFixed(2)} exceeded threshold`, correlationId:`batch:${batch.id}` }); return { paused:true, rate }; } return { paused:false, rate }; }
 }
 
+export class ExecutionAutomationPromotionService {
+  evaluatePromotion(candidate:any, cfg=AUTO_DEFAULTS){ if(candidate.lastCriticalEscalationAt || candidate.lastRuntimeBlockAt) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(candidate.successfulRuns<cfg.minSuccessfulRuns || candidate.verifiedSampleBatches<cfg.minVerifiedSampleBatches) return {recommendedMode:candidate.currentMode,promotionStatus:"CANDIDATE"}; if(candidate.failureRatePercent>cfg.maxFailureRatePercent) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(!candidate.rollbackAvailable && cfg.rollbackRequired) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(candidate.riskClass!=="A"||candidate.blastRadiusBand!=="LOW") return {recommendedMode:"SCHEDULED_SUPERVISED",promotionStatus:"READY_FOR_REVIEW"}; return {recommendedMode:"AUTO_EXECUTE_SAFE",promotionStatus:"READY_FOR_REVIEW"}; }
+  evaluateDemotion(candidate:any,cfg=AUTO_DEFAULTS){ if(candidate.lastCriticalEscalationAt) return {mode:"RECOMMEND_ONLY",event:"AUTOMATION_REVOKED"}; if(candidate.lastRuntimeBlockAt || candidate.failureRatePercent>cfg.maxFailureRatePercent || !candidate.rollbackAvailable) return {mode:candidate.currentMode==="AUTO_EXECUTE_SAFE"?"SCHEDULED_SUPERVISED":"SUPERVISED_EXECUTION",event:"AUTOMATION_DEMOTED"}; return null; }
+}
 export class ExecutionQueueService {
   constructor(private readonly repo = new ExecutionOrchestrationRepository(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(repo), private readonly dependencyService = new ExecutionDependencyService(repo)) {}
   createPlan(input:any){ return this.repo.createPlan(input); }
