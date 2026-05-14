@@ -26,9 +26,9 @@
   - runs `pnpm test`.
 
 ## Validation commands run
-- `pnpm install`
+- `pnpm install --frozen-lockfile`
 - `pnpm typecheck`
-- `pnpm run test`
+- `pnpm test`
 - `pnpm --filter @workspace/api-server run test:contoso`
 - `pnpm --filter @workspace/api-server run test:platform-boundaries`
 
@@ -40,3 +40,4 @@
 - Verified `.github/workflows` had no docker workflow even though GitHub required `docker-build / docker`.
 - Added `.github/workflows/docker-build.yml` with workflow name `docker-build` and job name `docker` to satisfy existing required checks.
 - Current policy decision: Docker is not required for this repository right now because no Dockerfile exists; docker check is intentionally a passing no-op in that state.
+
