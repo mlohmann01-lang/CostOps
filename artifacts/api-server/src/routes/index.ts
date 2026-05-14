@@ -18,6 +18,7 @@ import enterpriseRouter from "./enterprise";
 import onboardingRouter from "./onboarding";
 import platformEventsRouter from "./platform-events";
 import authRouter from "./auth";
+import executionOrchestrationRouter from "./execution-orchestration";
 
 const router: IRouter = Router();
 
@@ -40,5 +41,6 @@ router.use("/enterprise", enterpriseRouter);
 router.use("/onboarding", onboardingRouter);
 router.use("/platform-events", platformEventsRouter);
 router.use("/auth", authRouter);
+router.use("/execution-orchestration", executionOrchestrationRouter);
 
 export default router;

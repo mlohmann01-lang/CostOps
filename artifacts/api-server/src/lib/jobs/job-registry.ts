@@ -1,3 +1,4 @@
+import { processExecutionOrchestrationQueueJob } from "../../jobs/process-execution-orchestration-queue";
 import { ingestM365Tenant } from "../connectors/m365-ingestion";
 import { ingestFlexeraTenant } from "../connectors/flexera/flexera-ingestion";
 import { ingestServiceNowTenant } from "../connectors/servicenow/servicenow-ingestion";
@@ -25,4 +26,5 @@ export const JOB_HANDLERS: Record<string, (input:any)=>Promise<any>> = {
   OPERATIONALIZATION_ASSESSMENT: async ({tenantId}:any)=>{ const s=await runOperationalizationAssessment({tenantId}); return { ...s, evidence: { appsDiscovered:s.appsDiscovered, ownershipEdgesCreated:s.ownershipEdgesCreated, mappingsCreated:s.mappingsCreated, readyForGovernance:s.readyForGovernance, needsOwner:s.needsOwner, needsEntitlementMapping:s.needsEntitlementMapping } }; },
   SERVICENOW_SAM_PACK_RUN: async ({tenantId}:any)=>{ const p=await runOperationalizationPack({tenantId,packType:"SERVICENOW_SAM_ACCELERATION"}); return { ...p, evidence: { readinessScore:p.readinessScore, blockers:p.blockers, appsReady:p.appsReady, appsBlocked:p.appsBlocked, recommendationsGenerated:p.nextActionsGenerated } }; },
   FLEXERA_VALUE_PACK_RUN: async ({tenantId}:any)=>{ const p=await runOperationalizationPack({tenantId,packType:"FLEXERA_VALUE_REALIZATION"}); return { ...p, evidence: { readinessScore:p.readinessScore, blockers:p.blockers, appsReady:p.appsReady, appsBlocked:p.appsBlocked, recommendationsGenerated:p.nextActionsGenerated } }; },
+  PROCESS_EXECUTION_ORCHESTRATION_QUEUE: async ({tenantId}:any)=>processExecutionOrchestrationQueueJob({tenantId}),
 };
