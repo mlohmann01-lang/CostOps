@@ -39,6 +39,7 @@ export function Layout({ children }: LayoutProps) {
     { name: "Observability V2", href: "/platform-observability-v2", icon: ShieldCheck },
     { name: "Enterprise Graph", href: "/enterprise-graph", icon: ShieldCheck },
     { name: "Workflow Center", href: "/workflow-center", icon: ShieldCheck },
+    { name: "Execution Orchestration", href: "/execution-orchestration", icon: ShieldCheck },
   ];
 
   return (
