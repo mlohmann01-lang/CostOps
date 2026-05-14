@@ -52,3 +52,39 @@ test("critical escalation revokes auto-safe eligibility", () => {
   const out = svc.evaluateDemotion({ currentMode:"AUTO_EXECUTE_SAFE", lastCriticalEscalationAt:new Date(), failureRatePercent:0, rollbackAvailable:true });
   assert.equal(out?.event, "AUTOMATION_REVOKED");
 });
+
+
+test("HIGH blast-radius cannot promote to AUTO_EXECUTE_SAFE", () => {
+  const svc = new ExecutionAutomationPromotionService();
+  const out = svc.evaluatePromotion({ currentMode:"SCHEDULED_SUPERVISED", successfulRuns: 20, verifiedSampleBatches: 3, failureRatePercent: 0, rollbackAvailable: true, riskClass:"A", blastRadiusBand:"HIGH" });
+  assert.notEqual(out.recommendedMode, "AUTO_EXECUTE_SAFE");
+});
+
+test("rollback missing is not eligible for auto-safe", () => {
+  const svc = new ExecutionAutomationPromotionService();
+  const out = svc.evaluatePromotion({ currentMode:"SCHEDULED_SUPERVISED", successfulRuns: 20, verifiedSampleBatches: 3, failureRatePercent: 0, rollbackAvailable: false, riskClass:"A", blastRadiusBand:"LOW" });
+  assert.equal(out.decision, "NOT_ELIGIBLE");
+});
+
+test("promotion evaluation includes evidence snapshot", () => {
+  const svc = new ExecutionAutomationPromotionService();
+  const out = svc.evaluatePromotion({ id: 9, tenantId: "t1", actionType: "ASSIGN_LICENSE", currentMode:"SCHEDULED_SUPERVISED", successfulRuns: 20, failedRuns: 1, verifiedSampleBatches: 3, failureRatePercent: 1, rollbackAvailable: true, riskClass:"A", blastRadiusBand:"LOW" });
+  assert.equal(out.evidence.candidateId, 9);
+  assert.equal(out.evidence.decision, "PROMOTE");
+});
+
+
+test("approve-auto-safe rejects unsafe candidate constraints via promotion decision", () => {
+  const svc = new ExecutionAutomationPromotionService();
+  const out = svc.evaluatePromotion({ id: 2, tenantId: "t1", actionType:"ASSIGN_LICENSE", currentMode:"SCHEDULED_SUPERVISED", successfulRuns: 20, verifiedSampleBatches: 3, failureRatePercent: 0, rollbackAvailable: true, riskClass:"A", blastRadiusBand:"CRITICAL" });
+  assert.notEqual(out.recommendedMode, "AUTO_EXECUTE_SAFE");
+});
+
+test("batch evaluate readiness is control-plane only and returns readiness result", async () => {
+  let updated = false;
+  const repo: any = { getBatch: async()=>({id:7,tenantId:"t1",planId:4}), getBatchItems: async()=>[{queueItemId:1}], updateItem: async()=>({status:"READY",approvalStatus:"APPROVED",riskClass:"A",blastRadiusBand:"LOW"}), updateBatch: async(_t:string,_i:number,p:any)=>{ updated=true; return p; } };
+  const svc = new ExecutionBatchService(repo, { emitFailSafe: async()=>({}) } as any, {} as any);
+  const out = await svc.evaluateBatchReadiness("t1", 7);
+  assert.equal(updated, true);
+  assert.equal(out.status, "READY");
+});
