@@ -1,0 +1,1 @@
+export function buildWorkflowQueue(input:{onboarding:number;approvals:number;blockers:number}){ return [{name:'onboarding',count:input.onboarding},{name:'approvals',count:input.approvals},{name:'remediation',count:input.blockers}]; }

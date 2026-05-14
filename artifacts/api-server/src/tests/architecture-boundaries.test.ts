@@ -61,4 +61,34 @@ test("architecture boundary guards", () => {
   ]);
 
   assertNoForbiddenImports("../lib/monitoring/drift-monitor.ts", ["outcome-ledger/create-ledger-entry"]);
+  assertNoForbiddenImports("../lib/operationalization/app-discovery.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/entitlement-ownership.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/alias-resolution.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/owner-inference.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/readiness-blockers.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/packs/base-pack.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/packs/servicenow-sam-pack.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/packs/flexera-value-pack.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/operationalization/packs/pack-runner.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/enterprise/operator-workbench.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/enterprise/evidence-explorer.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/enterprise/executive-dashboard.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/enterprise/connector-operations-console.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/enterprise/value-realization-analytics.ts", ["connectors/","execution-engine","recommendations","outcome-ledger"]);
+  assertNoForbiddenImports("../lib/auth/auth-context.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/auth/rbac.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/onboarding/onboarding-state.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/observability/platform-events.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/security/security-controls.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/auth/providers/microsoft-entra.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/auth/providers/jwt-validation.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/auth/providers/session-manager.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/security/tenant-context.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/security/anomaly-detection.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/analytics/operational-maturity.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/analytics/savings-realization.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/analytics/governance-posture.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/analytics/onboarding-velocity.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/analytics/connector-performance.ts", ["connectors/","execution-engine"]);
+
 });

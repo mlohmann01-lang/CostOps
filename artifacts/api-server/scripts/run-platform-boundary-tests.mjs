@@ -1,18 +1,12 @@
 import { build } from 'esbuild';
 import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 
-const arch = spawnSync(process.execPath, ['--test', 'artifacts/api-server/src/tests/architecture-boundaries.test.ts'], {
-  stdio: 'inherit', cwd: '/workspace/CostOps', env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://localhost:5432/contoso_test' },
-});
+const projectRoot = resolve(import.meta.dirname, '../../..');
+const arch = spawnSync(process.execPath, ['--test', 'artifacts/api-server/src/tests/architecture-boundaries.test.ts'], { stdio: 'inherit', cwd: projectRoot, env: { ...process.env, DATABASE_URL: process.env.DATABASE_URL ?? 'postgres://localhost:5432/contoso_test' } });
 if ((arch.status ?? 1) !== 0) process.exit(arch.status ?? 1);
 
-const tests = [
-  'src/tests/job-orchestration.test.ts',
-  'src/tests/connector-registry.test.ts',
-  'src/tests/trust-signal-adapter.test.ts',
-  'src/tests/governance-exceptions.test.ts',
-];
-
+const tests = ['src/tests/job-orchestration.test.ts', 'src/tests/connector-registry.test.ts', 'src/tests/trust-signal-adapter.test.ts', 'src/tests/governance-exceptions.test.ts', 'src/tests/operationalization.test.ts', 'src/tests/operationalization-packs.test.ts', 'src/tests/enterprise-subsystems.test.ts', 'src/tests/auth-rbac.test.ts', 'src/tests/tenant-isolation.test.ts', 'src/tests/env-validation.test.ts', 'src/tests/security-controls.test.ts', 'src/tests/auth-providers.test.ts', 'src/tests/tenant-isolation-v2.test.ts', 'src/tests/deployment-runtime.test.ts', 'src/tests/observability-metrics.test.ts', 'src/tests/security-anomaly.test.ts', 'src/tests/tenant-isolation-v3.test.ts', 'src/tests/auth-session-v3.test.ts', 'src/tests/enterprise-graph.test.ts', 'src/tests/workflow-intelligence.test.ts', 'src/tests/runtime-controls-v4.test.ts'];
 for (const testFile of tests) {
   const out = `dist/tests/${testFile.split('/').pop().replace('.ts', '.bundle.test.cjs')}`;
   await build({ entryPoints: [testFile], bundle: true, platform: 'node', format: 'cjs', sourcemap: false, outfile: out });

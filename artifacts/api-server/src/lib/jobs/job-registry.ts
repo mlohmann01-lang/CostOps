@@ -8,6 +8,8 @@ import { verifyOutcome } from "../verification/outcome-verification";
 import { expireExceptions } from "../governance/exceptions";
 import { and, desc, eq } from "drizzle-orm";
 import { resolveProjectedSavings } from "../pricing/pricing-engine";
+import { runOperationalizationAssessment } from "../operationalization/operationalization-runner";
+import { runOperationalizationPack } from "../operationalization/packs/pack-runner";
 
 export const JOB_HANDLERS: Record<string, (input:any)=>Promise<any>> = {
   M365_SYNC: async ({tenantId}:any)=>ingestM365Tenant(tenantId),
@@ -20,4 +22,7 @@ export const JOB_HANDLERS: Record<string, (input:any)=>Promise<any>> = {
   PRICING_DRIFT_DETECTION: async ()=>({status:"SKIPPED",reason:"pricing drift detector not configured"}),
   OUTCOME_VERIFICATION: async ({tenantId}:any)=>{ const rows=await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId,tenantId),eq(outcomeLedgerTable.executionStatus,"EXECUTED"))).orderBy(desc(outcomeLedgerTable.createdAt)).limit(25); let c=0; for(const r of rows){ await verifyOutcome(r as any); c++; } return {rows:c}; },
   EXCEPTION_EXPIRY_SWEEP: async ({tenantId}:any)=>expireExceptions({tenantId}),
+  OPERATIONALIZATION_ASSESSMENT: async ({tenantId}:any)=>{ const s=await runOperationalizationAssessment({tenantId}); return { ...s, evidence: { appsDiscovered:s.appsDiscovered, ownershipEdgesCreated:s.ownershipEdgesCreated, mappingsCreated:s.mappingsCreated, readyForGovernance:s.readyForGovernance, needsOwner:s.needsOwner, needsEntitlementMapping:s.needsEntitlementMapping } }; },
+  SERVICENOW_SAM_PACK_RUN: async ({tenantId}:any)=>{ const p=await runOperationalizationPack({tenantId,packType:"SERVICENOW_SAM_ACCELERATION"}); return { ...p, evidence: { readinessScore:p.readinessScore, blockers:p.blockers, appsReady:p.appsReady, appsBlocked:p.appsBlocked, recommendationsGenerated:p.nextActionsGenerated } }; },
+  FLEXERA_VALUE_PACK_RUN: async ({tenantId}:any)=>{ const p=await runOperationalizationPack({tenantId,packType:"FLEXERA_VALUE_REALIZATION"}); return { ...p, evidence: { readinessScore:p.readinessScore, blockers:p.blockers, appsReady:p.appsReady, appsBlocked:p.appsBlocked, recommendationsGenerated:p.nextActionsGenerated } }; },
 };

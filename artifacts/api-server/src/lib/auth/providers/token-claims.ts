@@ -1,0 +1,2 @@
+export type ProviderClaims = { sub: string; email?: string; tenantId?: string; groups?: string[]; name?: string };
+export function mapClaimsToRole(groups: string[] = []) { if (groups.includes("platform-admin")) return "PLATFORM_ADMIN"; if (groups.includes("tenant-admin")) return "TENANT_ADMIN"; if (groups.includes("approver")) return "APPROVER"; if (groups.includes("operator")) return "OPERATOR"; return "VIEWER"; }

@@ -20,3 +20,14 @@ export * from "./outcomeVerifications";
 export * from "./approvals";
 export * from "./governancePolicies";
 export * from "./governanceExceptions";
+
+export * from "./operationalization";
+export * from "./operationalizationPacks";
+export * from "./auth";
+export * from "./tenantOnboarding";
+export * from "./platformEvents";
+export * from "./platformMetrics";
+export * from "./connectorMetrics";
+export * from "./executionMetrics";
+export * from "./jobMetrics";
+export * from "./enterpriseGraph";

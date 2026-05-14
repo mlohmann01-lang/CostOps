@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    environment:
+      RUNTIME_ENV: DEV
+    ports: ["3000:3000"]

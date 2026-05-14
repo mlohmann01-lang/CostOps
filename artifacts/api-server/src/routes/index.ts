@@ -13,6 +13,11 @@ import verificationRouter from "./verification";
 import approvalsRouter from "./approvals";
 import governanceRouter from "./governance";
 import governanceExceptionsRouter from "./governance-exceptions";
+import operationalizationRouter from "./operationalization";
+import enterpriseRouter from "./enterprise";
+import onboardingRouter from "./onboarding";
+import platformEventsRouter from "./platform-events";
+import authRouter from "./auth";
 
 const router: IRouter = Router();
 
@@ -30,5 +35,10 @@ router.use("/verification", verificationRouter);
 router.use("/approvals", approvalsRouter);
 router.use("/governance", governanceRouter);
 router.use("/governance/exceptions", governanceExceptionsRouter);
+router.use("/operationalization", operationalizationRouter);
+router.use("/enterprise", enterpriseRouter);
+router.use("/onboarding", onboardingRouter);
+router.use("/platform-events", platformEventsRouter);
+router.use("/auth", authRouter);
 
 export default router;

@@ -1,3 +1,4 @@
+import { authMiddleware } from "../middleware/auth";
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { recommendationsTable, outcomeLedgerTable } from "@workspace/db";
@@ -8,6 +9,7 @@ import { assertNotAlreadyExecuted } from "../lib/execution/idempotency";
 import { rollbackOutcome } from "../lib/execution/rollback-engine";
 
 const router = Router();
+router.use(authMiddleware);
 
 router.post("/approve/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);

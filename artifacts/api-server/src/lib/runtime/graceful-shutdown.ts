@@ -1,0 +1,1 @@
+export function registerGracefulShutdown(onShutdown: ()=>Promise<void> | void){ const fn=()=>Promise.resolve(onShutdown()).finally(()=>process.exit(0)); process.on("SIGTERM",fn); process.on("SIGINT",fn); }

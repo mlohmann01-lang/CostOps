@@ -1,0 +1,1 @@
+export function detectGraphConflicts(items: Array<{entityKey:string;value:string}>){ const map=new Map<string,Set<string>>(); for(const i of items){ const s=map.get(i.entityKey) ?? new Set<string>(); s.add(i.value); map.set(i.entityKey,s);} return [...map.entries()].filter(([,v])=>v.size>1).map(([k])=>k); }
