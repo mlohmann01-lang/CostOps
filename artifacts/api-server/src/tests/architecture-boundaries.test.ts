@@ -84,6 +84,8 @@ test("architecture boundary guards", () => {
   assertNoForbiddenImports("../lib/auth/providers/jwt-validation.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/auth/providers/session-manager.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/security/tenant-context.ts", ["connectors/","execution-engine"]);
+  assertNoForbiddenImports("../lib/security/runtime-controls.ts", ["connectors/", "m365-graph-client", "outcome-ledger", "recommendations"]);
+  assertNoForbiddenImports("../lib/security/anomaly-detection.ts", ["execution-engine", "rollback-engine", "approval-workflow"]);
   assertNoForbiddenImports("../lib/security/anomaly-detection.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/analytics/operational-maturity.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/analytics/savings-realization.ts", ["connectors/","execution-engine"]);

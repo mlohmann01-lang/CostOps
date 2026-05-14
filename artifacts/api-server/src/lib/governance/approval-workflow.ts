@@ -2,6 +2,8 @@ import { approvalEventsTable, approvalRequestsTable, db } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { canApprove } from "./authorization";
 import { evaluateApprovalPolicy } from "./policy-engine";
+import { evaluateApprovalRuntimeControls } from "../security/runtime-controls";
+import { emitPlatformEvent } from "../observability/platform-events";
 
 const EXPIRY_HOURS = 72;
 
@@ -20,8 +22,14 @@ export async function approveRequest(input: { approvalRequestId: number; actorId
   if (new Date(req.expiresAt).getTime() < Date.now()) throw new Error("APPROVAL_EXPIRED");
   const auth = canApprove(input.actorId, req.tenantId, { actionRiskProfile: { riskClass: req.riskClass } });
   if (!auth.allowed) throw new Error(`AUTH_${auth.reason}`);
+  const runtimeControl = evaluateApprovalRuntimeControls({ tenantId: req.tenantId, actorId: input.actorId, riskClass: req.riskClass, action: req.action });
+  if (runtimeControl.decision === "BLOCK") throw new Error("APPROVAL_BLOCKED_BY_RUNTIME_CONTROL");
   const [updated] = await db.update(approvalRequestsTable).set({ status: "APPROVED", updatedAt: new Date() }).where(eq(approvalRequestsTable.id, req.id)).returning();
-  await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: req.tenantId, actorId: input.actorId, eventType: "APPROVED", reason: input.reason ?? "", evidence: { role: auth.role } });
+  const eventType = runtimeControl.decision === "ALLOW" ? "APPROVED" : "APPROVED_WITH_WARNING";
+  await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: req.tenantId, actorId: input.actorId, eventType, reason: input.reason ?? "", evidence: { role: auth.role, runtimeControl } });
+  if (runtimeControl.decision !== "ALLOW") {
+    await emitPlatformEvent({ tenantId: req.tenantId, eventType: "SUSPICIOUS_APPROVAL_DETECTED", severity: "WARNING", source: "approval-workflow", correlationId: `approval:${req.id}`, entityType: "approval_request", entityId: String(req.id), message: runtimeControl.reasons.join(",") || "Suspicious approval pattern", evidence: runtimeControl.evidence });
+  }
   return updated;
 }
 

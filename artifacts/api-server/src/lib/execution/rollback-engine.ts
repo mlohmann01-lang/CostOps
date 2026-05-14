@@ -2,6 +2,8 @@ import { db, m365UsersTable, outcomeLedgerTable, rollbackEventsTable } from "@wo
 import { and, eq } from "drizzle-orm";
 import { canExecute } from "../governance/authorization";
 import { getGraphAccessToken } from "../connectors/m365/m365-graph-client";
+import { evaluateRollbackRuntimeControls } from "../security/runtime-controls";
+import { emitPlatformEvent } from "../observability/platform-events";
 
 export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?: string; tenantId: string; dryRun: boolean }) {
   const [outcome] = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.id, Number(input.outcomeLedgerId)), eq(outcomeLedgerTable.tenantId, input.tenantId))).limit(1);
@@ -23,6 +25,11 @@ export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?
   const before = { assignedLicenses: user.assignedLicenses ?? [] };
   const after = { assignedLicenses: [...new Set([...(user.assignedLicenses ?? []), rollbackPayload.skuId])] };
 
+  const runtimeControl = evaluateRollbackRuntimeControls({ tenantId: input.tenantId, actorId: input.actorId, action: rollbackPayload.action, rollbackCount: (outcome.executionEvidence as any)?.rollbackCount, anomalySeries: (outcome.executionEvidence as any)?.rollbackSeries });
+  if (runtimeControl.decision === "BLOCK" || runtimeControl.decision === "QUARANTINE") {
+    await emitPlatformEvent({ tenantId: input.tenantId, eventType: "ROLLBACK_ANOMALY_BLOCK", severity: "WARNING", source: "rollback-engine", correlationId: `rollback:${outcome.id}`, entityType: "outcome", entityId: String(outcome.id), message: runtimeControl.reasons.join(","), evidence: runtimeControl.evidence });
+    return { allowed: false, error: runtimeControl.reasons[0] ?? "ROLLBACK_BLOCKED", evidence: runtimeControl.evidence };
+  }
   const liveEnabled = process.env.ENABLE_LIVE_M365_EXECUTION === "true";
   if (!liveEnabled) return { allowed: false, error: "LIVE_EXECUTION_DISABLED" };
 
