@@ -1,14 +1,36 @@
 name: tests
-on: [push]
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
 jobs:
   tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter @workspace/api-server test:contoso
-      - run: pnpm --filter @workspace/api-server test:operationalization
-      - run: pnpm --filter @workspace/api-server test:platform-boundaries
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup pnpm
+        run: npm install -g pnpm@10.33.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test contoso scenario
+        run: pnpm --filter @workspace/api-server run test:contoso
+
+      - name: Test operationalization
+        run: pnpm --filter @workspace/api-server run test:operationalization
+
+      - name: Test platform boundaries
+        run: pnpm --filter @workspace/api-server run test:platform-boundaries
