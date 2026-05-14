@@ -1,28 +1,20 @@
 # GOVERNANCE LAYER
 
-## Why this module exists
-Provides baseline enterprise governance capability.
+## Position of runtime controls
+Runtime controls are now part of governance enforcement, not scaffolding. They complement governance decisions but do not replace them.
 
-## Problem it solves
-Reduces fragmented operations and increases auditable control.
+## Governance precedence remains intact
+Runtime controls must not override:
+- Trust evaluation
+- Risk classification
+- Authentication/authorization
+- Approval requirements
+- Policy constraints
 
-## Architecture approach
-Layered design over systems-of-record.
+## Enforcement semantics
+- Denials (`BLOCK`, `QUARANTINE`) remain hard-stop outcomes.
+- Warnings (`WARN`) remain evidence-rich pass-through outcomes.
+- Escalation requirements (`REQUIRE_APPROVAL_ESCALATION`) remain explicit governance signals.
 
-## Major components
-Core services, routes, data models, UI surfaces.
-
-## Safety rules
-No bypass of governance, trust, tenant isolation, or execution gates.
-
-## Boundaries
-Read-only where required; no connector-client leakage.
-
-## Workflows
-Ingest -> normalize -> assess -> govern -> execute safely -> verify outcomes.
-
-## Operational behavior
-Deterministic, auditable, tenant-scoped behavior.
-
-## Future roadmap
-Harden auth, isolation, deployment, observability, and partner acceleration.
+## Auditability
+Each runtime-control outcome is evented through platform observability with tenant/correlation context and evidence payloads.
