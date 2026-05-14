@@ -1,25 +1,23 @@
 # RUNTIME CONTROLS
 
-## Why it exists
-Improve enterprise operational governance intelligence safely.
+## Enforcement status
+Runtime controls are **enforcement-path controls**. They are no longer scaffold-only checks.
 
-## Architecture
-Composable runtime services with evidence-linked outputs.
+## Decision contract
+Runtime controls can emit only:
+- `ALLOW`
+- `WARN` (pass-through, execution continues, evidence required)
+- `REQUIRE_APPROVAL_ESCALATION` (pass-through with escalation marker)
+- `BLOCK` (hard deny)
+- `QUARANTINE` (hard deny)
 
-## Workflows
-Assess -> explain -> govern -> execute safely -> verify.
+## Non-override guarantees
+Runtime controls do **not** override Trust, Risk, AuthN/AuthZ, Approval workflow, or Policy outcomes. They add additional guardrail decisions in the execution path.
 
-## Controls
-Tenant isolation, policy gating, audit lineage, runtime guardrails.
+## Required behavior
+- `BLOCK` and `QUARANTINE` remain denial behavior.
+- `WARN` remains pass-through behavior with attached evidence.
+- Platform events are emitted for runtime-control outcomes (`WARN`, `BLOCK`, `QUARANTINE`, escalation).
 
-## Safety rules
-No autonomous execution, no governance bypass, no hidden actions.
-
-## Operational impact
-Higher trust, faster onboarding, reduced operational friction.
-
-## Partner positioning
-Accelerates ServiceNow/Flexera/Microsoft ecosystems.
-
-## Roadmap
-Deepen telemetry, graph quality, connector depth, workflow cohesion.
+## Operational notes
+Event persistence is best-effort: emission is attempted for every runtime-control decision, and persistence failures are handled without weakening enforcement decisions.

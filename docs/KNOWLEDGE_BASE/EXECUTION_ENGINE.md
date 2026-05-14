@@ -1,28 +1,20 @@
 # EXECUTION ENGINE
 
-## Why this module exists
-Provides baseline enterprise governance capability.
+## Runtime controls integration
+Execution engine runtime controls now execute on the enforcement path for recommendation actions and produce explicit runtime decisions.
 
-## Problem it solves
-Reduces fragmented operations and increases auditable control.
+## Ordering and boundaries
+Execution still honors existing gate ordering:
+1. Identity/AuthZ/Tenant checks
+2. Trust/Risk/Policy/Approval gates
+3. Runtime controls (additional enforcement layer)
 
-## Architecture approach
-Layered design over systems-of-record.
+Runtime controls cannot bypass or override earlier governance layers.
 
-## Major components
-Core services, routes, data models, UI surfaces.
+## Outcome mapping
+- `BLOCK` / `QUARANTINE`: execution denied.
+- `WARN`: execution may proceed, evidence captured.
+- `REQUIRE_APPROVAL_ESCALATION`: execution path marks escalation and emits warning-class event.
 
-## Safety rules
-No bypass of governance, trust, tenant isolation, or execution gates.
-
-## Boundaries
-Read-only where required; no connector-client leakage.
-
-## Workflows
-Ingest -> normalize -> assess -> govern -> execute safely -> verify outcomes.
-
-## Operational behavior
-Deterministic, auditable, tenant-scoped behavior.
-
-## Future roadmap
-Harden auth, isolation, deployment, observability, and partner acceleration.
+## Observability
+Execution engine emits platform events for runtime control outcomes with correlation IDs and evidence payloads.
