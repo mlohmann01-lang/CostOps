@@ -112,8 +112,23 @@ export class ExecutionBatchService {
 }
 
 export class ExecutionAutomationPromotionService {
-  evaluatePromotion(candidate:any, cfg=AUTO_DEFAULTS){ if(candidate.lastCriticalEscalationAt || candidate.lastRuntimeBlockAt) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(candidate.successfulRuns<cfg.minSuccessfulRuns || candidate.verifiedSampleBatches<cfg.minVerifiedSampleBatches) return {recommendedMode:candidate.currentMode,promotionStatus:"CANDIDATE"}; if(candidate.failureRatePercent>cfg.maxFailureRatePercent) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(!candidate.rollbackAvailable && cfg.rollbackRequired) return {recommendedMode:candidate.currentMode,promotionStatus:"NOT_ELIGIBLE"}; if(candidate.riskClass!=="A"||candidate.blastRadiusBand!=="LOW") return {recommendedMode:"SCHEDULED_SUPERVISED",promotionStatus:"READY_FOR_REVIEW"}; return {recommendedMode:"AUTO_EXECUTE_SAFE",promotionStatus:"READY_FOR_REVIEW"}; }
-  evaluateDemotion(candidate:any,cfg=AUTO_DEFAULTS){ if(candidate.lastCriticalEscalationAt) return {mode:"RECOMMEND_ONLY",event:"AUTOMATION_REVOKED"}; if(candidate.lastRuntimeBlockAt || candidate.failureRatePercent>cfg.maxFailureRatePercent || !candidate.rollbackAvailable) return {mode:candidate.currentMode==="AUTO_EXECUTE_SAFE"?"SCHEDULED_SUPERVISED":"SUPERVISED_EXECUTION",event:"AUTOMATION_DEMOTED"}; return null; }
+  constructor(private readonly repo = new ExecutionOrchestrationRepository(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(repo)) {}
+  buildEvidence(candidate:any, decision:string, reasons:string[], recommendedMode:string, promotionStatus:string, cfg=AUTO_DEFAULTS){
+    return { tenantId: candidate.tenantId, candidateId: candidate.id, actionType: candidate.actionType, currentMode: candidate.currentMode, recommendedMode, promotionStatus,
+      criteria: { successfulRuns: candidate.successfulRuns ?? 0, failedRuns: candidate.failedRuns ?? 0, verifiedSampleBatches: candidate.verifiedSampleBatches ?? 0, failureRatePercent: candidate.failureRatePercent ?? 0, minSuccessfulRuns: cfg.minSuccessfulRuns, minVerifiedSampleBatches: cfg.minVerifiedSampleBatches, maxFailureRatePercent: cfg.maxFailureRatePercent, rollbackRequired: cfg.rollbackRequired, rollbackAvailable: candidate.rollbackAvailable ?? false, riskClass: candidate.riskClass, allowedRiskClass: cfg.autoSafeAllowedRiskClass, blastRadiusBand: candidate.blastRadiusBand, allowedBlastRadius: cfg.autoSafeAllowedBlastRadius, runtimeBlockHistory: Boolean(candidate.lastRuntimeBlockAt), criticalEscalationHistory: Boolean(candidate.lastCriticalEscalationAt) },
+      decision, reasons, evaluatedAt: new Date().toISOString() };
+  }
+  evaluatePromotion(candidate:any, cfg=AUTO_DEFAULTS){ const reasons:string[]=[]; let decision="NO_CHANGE"; let recommendedMode=candidate.currentMode; let promotionStatus="NOT_ELIGIBLE";
+    if(candidate.lastCriticalEscalationAt){ reasons.push("CRITICAL_ESCALATION_HISTORY"); decision="NOT_ELIGIBLE"; }
+    else if(candidate.lastRuntimeBlockAt){ reasons.push("RUNTIME_BLOCK_HISTORY"); decision="NOT_ELIGIBLE"; }
+    else if(candidate.successfulRuns<cfg.minSuccessfulRuns || candidate.verifiedSampleBatches<cfg.minVerifiedSampleBatches){ reasons.push("INSUFFICIENT_VERIFIED_RUNS"); decision="NOT_ELIGIBLE"; promotionStatus="CANDIDATE"; }
+    else if(candidate.failureRatePercent>cfg.maxFailureRatePercent){ reasons.push("FAILURE_RATE_TOO_HIGH"); decision="NOT_ELIGIBLE"; }
+    else if(!candidate.rollbackAvailable && cfg.rollbackRequired){ reasons.push("ROLLBACK_UNAVAILABLE"); decision="NOT_ELIGIBLE"; }
+    else if(candidate.riskClass!==cfg.autoSafeAllowedRiskClass || candidate.blastRadiusBand!==cfg.autoSafeAllowedBlastRadius){ reasons.push("REQUIRES_SCHEDULED_APPROVAL"); decision="PROMOTE"; recommendedMode="SCHEDULED_SUPERVISED"; promotionStatus="READY_FOR_REVIEW"; }
+    else { reasons.push("AUTO_SAFE_ELIGIBLE"); decision="PROMOTE"; recommendedMode="AUTO_EXECUTE_SAFE"; promotionStatus="READY_FOR_REVIEW"; }
+    return { recommendedMode, promotionStatus, decision, reasons, evidence: this.buildEvidence(candidate, decision, reasons, recommendedMode, promotionStatus, cfg), eventType: "AUTOMATION_EVALUATED" };
+  }
+  evaluateDemotion(candidate:any,cfg=AUTO_DEFAULTS){ if(candidate.lastCriticalEscalationAt) return {mode:"RECOMMEND_ONLY",event:"AUTOMATION_REVOKED",decision:"REVOKE",reasons:["CRITICAL_ESCALATION_HISTORY"]}; if(candidate.lastRuntimeBlockAt || candidate.failureRatePercent>cfg.maxFailureRatePercent || !candidate.rollbackAvailable) return {mode:candidate.currentMode==="AUTO_EXECUTE_SAFE"?"SCHEDULED_SUPERVISED":"SUPERVISED_EXECUTION",event:"AUTOMATION_DEMOTED",decision:"DEMOTE",reasons:["RUNTIME_OR_FAILURE_OR_ROLLBACK"]}; return null; }
 }
 export class ExecutionQueueService {
   constructor(private readonly repo = new ExecutionOrchestrationRepository(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(repo), private readonly dependencyService = new ExecutionDependencyService(repo)) {}

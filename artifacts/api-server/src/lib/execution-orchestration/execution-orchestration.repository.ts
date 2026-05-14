@@ -1,4 +1,4 @@
-import { db, executionBatchItemsTable, executionBatchesTable, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
+import { db, executionAutomationCandidatesTable, executionBatchItemsTable, executionBatchesTable, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
 import { and, eq, isNull, lt, or, inArray } from "drizzle-orm";
 
 export class ExecutionOrchestrationRepository {
@@ -32,4 +32,8 @@ export class ExecutionOrchestrationRepository {
   async getBatch(tenantId:string,id:number){ const [b]=await db.select().from(executionBatchesTable).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).limit(1); return b; }
   async listBatches(tenantId:string){ return db.select().from(executionBatchesTable).where(eq(executionBatchesTable.tenantId, tenantId)); }
   async getBatchItems(tenantId:string,batchId:number){ return db.select().from(executionBatchItemsTable).where(and(eq(executionBatchItemsTable.tenantId,tenantId),eq(executionBatchItemsTable.batchId,batchId))); }
+
+  async getAutomationCandidate(tenantId:string,id:number){ const [c]=await db.select().from(executionAutomationCandidatesTable).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).limit(1); return c; }
+  async listAutomationCandidates(tenantId:string){ return db.select().from(executionAutomationCandidatesTable).where(eq(executionAutomationCandidatesTable.tenantId,tenantId)); }
+  async updateAutomationCandidate(tenantId:string,id:number,patch:any){ const [c]=await db.update(executionAutomationCandidatesTable).set({...patch,updatedAt:new Date()}).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).returning(); return c; }
 }
