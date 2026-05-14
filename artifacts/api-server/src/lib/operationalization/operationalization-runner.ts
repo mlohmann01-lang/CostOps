@@ -1,0 +1,7 @@
+import { db, discoveredAppsTable, metadataMappingEventsTable } from "@workspace/db"; import { eq } from "drizzle-orm";
+import { discoverApps } from "./app-discovery"; import { buildEntitlementOwnershipGraph } from "./entitlement-ownership"; import { scoreAppOnboarding } from "./onboarding-confidence"; import { calculateAppPriority } from "./app-prioritization";
+export async function runOperationalizationAssessment({tenantId}:{tenantId:string}){ const d=await discoverApps({tenantId}); const o=await buildEntitlementOwnershipGraph({tenantId});
+ let ready=0,needsOwner=0,needsEntitlementMapping=0; for(const app of d.apps){const sc=scoreAppOnboarding(app); const pr=calculateAppPriority({...app,onboardingConfidence:sc.onboardingConfidence}); if(sc.readinessStatus==="READY_FOR_GOVERNANCE") ready++; if(sc.readinessStatus==="NEEDS_OWNER") needsOwner++; if(sc.readinessStatus==="NEEDS_ENTITLEMENT_MAPPING") needsEntitlementMapping++;
+ await db.update(discoveredAppsTable).set({onboardingConfidence:sc.onboardingConfidence,priorityScore:pr.priorityScore,status:sc.readinessStatus,updatedAt:new Date(),evidence:{blockers:sc.blockers,warnings:sc.warnings,priorityReasons:pr.priorityReasons}}).where(eq(discoveredAppsTable.tenantId,tenantId)); }
+ const mappings=await db.select().from(metadataMappingEventsTable).where(eq(metadataMappingEventsTable.tenantId,tenantId));
+ return {tenantId,appsDiscovered:d.apps.length,ownershipEdgesCreated:o.created,mappingsCreated:mappings.length,readyForGovernance:ready,needsOwner,needsEntitlementMapping}; }

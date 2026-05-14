@@ -1,0 +1,1 @@
+export function runtimeHealth(){ return { db: "unknown", scheduler: process.env.ENABLE_JOB_SCHEDULER === "true" ? "enabled" : "disabled", connectors: process.env.LIVE_CONNECTORS_ENABLED === "true" ? "enabled" : "disabled" }; }

@@ -1,0 +1,10 @@
+import { Router } from "express";
+import { authProviderRegistry } from "../lib/auth/providers/auth-provider-registry";
+import { issueSessionToken, hashSessionToken } from "../lib/auth/providers/session-manager";
+import { mapClaimsToRole } from "../lib/auth/providers/token-claims";
+const router=Router();
+router.get('/login', (req,res)=>res.json({ provider:'MICROSOFT_ENTRA', loginUrl: authProviderRegistry.MICROSOFT_ENTRA.loginUrl(String(req.query.state ?? 'state')) }));
+router.get('/callback', (req,res)=>{ const claims=authProviderRegistry.MICROSOFT_ENTRA.exchangeCodeForClaims(String(req.query.code ?? '')); const token=issueSessionToken(); res.json({ sessionToken: token, sessionTokenHash: hashSessionToken(token), claims, mappedRole: mapClaimsToRole(claims.groups) }); });
+router.post('/logout', (_req,res)=>res.json({ revoked:true }));
+router.get('/me', (req,res)=>res.json((req as any).auth ?? null));
+export default router;

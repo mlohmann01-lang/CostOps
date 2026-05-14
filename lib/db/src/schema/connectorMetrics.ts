@@ -1,0 +1,2 @@
+import { pgTable, serial, text, timestamp, jsonb, real } from "drizzle-orm/pg-core";
+export const connectorMetricsTable = pgTable("connector_metrics", { id: serial("id").primaryKey(), tenantId: text("tenant_id"), metricType: text("metric_type").notNull(), duration: real("duration").notNull().default(0), status: text("status").notNull().default("OK"), correlationId: text("correlation_id").notNull(), dimensions: jsonb("dimensions").notNull().default({}), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow() });

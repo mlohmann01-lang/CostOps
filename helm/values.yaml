@@ -1,0 +1,4 @@
+replicaCount: 2
+image:
+  repository: govops
+  tag: latest

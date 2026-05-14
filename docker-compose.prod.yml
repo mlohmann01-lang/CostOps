@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    environment:
+      RUNTIME_ENV: PROD
+      LIVE_EXECUTION_ENABLED: "false"
+    ports: ["3000:3000"]
