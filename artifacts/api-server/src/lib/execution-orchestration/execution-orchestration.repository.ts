@@ -28,5 +28,8 @@ export class ExecutionOrchestrationRepository {
   async appendEvent(input:any){ const [e]=await db.insert(executionOrchestrationEventsTable).values(input).returning(); return e; }
   async createBatch(input:any){ const [b]=await db.insert(executionBatchesTable).values(input).returning(); return b; }
   async assignBatchItems(items:any[]){ return db.insert(executionBatchItemsTable).values(items).returning(); }
-  async updateBatch(tenantId:string,id:number,patch:any){ const [b]=await db.update(executionBatchesTable).set(patch).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).returning(); return b; }
+  async updateBatch(tenantId:string,id:number,patch:any){ const [b]=await db.update(executionBatchesTable).set({...patch, updatedAt:new Date()}).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).returning(); return b; }
+  async getBatch(tenantId:string,id:number){ const [b]=await db.select().from(executionBatchesTable).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).limit(1); return b; }
+  async listBatches(tenantId:string){ return db.select().from(executionBatchesTable).where(eq(executionBatchesTable.tenantId, tenantId)); }
+  async getBatchItems(tenantId:string,batchId:number){ return db.select().from(executionBatchItemsTable).where(and(eq(executionBatchItemsTable.tenantId,tenantId),eq(executionBatchItemsTable.batchId,batchId))); }
 }
