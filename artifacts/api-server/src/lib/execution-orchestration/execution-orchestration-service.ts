@@ -106,9 +106,33 @@ export class ExecutionQueueService {
   markBlocked(tenantId:string,id:number,reason:string){ return this.repo.updateItem(tenantId,id,{status:"BLOCKED",failureReason:reason,lockedAt:null,lockedBy:null}); }
   markQuarantined(tenantId:string,id:number,reason:string){ return this.repo.updateItem(tenantId,id,{status:"QUARANTINED",failureReason:reason,lockedAt:null,lockedBy:null}); }
   async pausePlan(plan:any){ transitionOrchestrationState(plan.status,"PAUSED"); await this.repo.updatePlan(plan.tenantId, plan.id, { status: "PAUSED" }); }
-  async resumePlan(plan:any){ transitionOrchestrationState(plan.status,"READY"); await this.repo.updatePlan(plan.tenantId, plan.id, { status: "READY" }); const items = await this.repo.getPlanItems(plan.tenantId, plan.id); for (const i of items.filter((x:any)=>x.status==="PAUSED" || x.status === "WAITING_DEPENDENCIES")) await this.dependencyService.evaluateItemDependencyReadiness(plan.tenantId, i.id); }
+  async resumePlan(plan:any, actorId = "system"){
+    if (!["PAUSED","ESCALATED"].includes(plan.status)) throw new Error(`Plan ${plan.id} in status ${plan.status} cannot resume`);
+    if (["BLOCKED","QUARANTINED","CANCELLED","COMPLETED"].includes(plan.status)) throw new Error(`Plan ${plan.id} in status ${plan.status} cannot resume`);
+    transitionOrchestrationState(plan.status,"READY");
+    const updated = await this.repo.updatePlan(plan.tenantId, plan.id, { status: "READY" });
+    const items = await this.repo.getPlanItems(plan.tenantId, plan.id);
+    for (const i of items.filter((x:any)=>x.status==="PAUSED" || x.status === "WAITING_DEPENDENCIES")) await this.dependencyService.evaluateItemDependencyReadiness(plan.tenantId, i.id);
+    await this.telemetry.emitFailSafe({ tenantId: plan.tenantId, planId: plan.id, eventType: "PLAN_RESUMED", source: "execution-orchestration", actorId, correlationId: plan.correlationId, payload: { previousStatus: plan.status, nextStatus: updated?.status ?? "READY" } });
+    return updated;
+  }
   async cancelPlan(planId:number,tenantId:string){ await this.repo.updatePlan(tenantId, planId, { status:"CANCELLED", cancelledAt:new Date()}); return this.repo.cancelPendingItems(tenantId, planId); }
-  async cancelQueueItem(tenantId:string, id:number){ return this.repo.updateItem(tenantId, id, { status: "CANCELLED", lockedAt:null, lockedBy:null }); }
+  async retryQueueItem(tenantId:string,id:number,actorId="system"){
+    const item = await this.repo.updateItem(tenantId,id,{});
+    if (!item || !["FAILED","RETRY_SCHEDULED"].includes(item.status)) throw new Error(`Item ${id} in status ${item?.status} cannot retry`);
+    const updated = await this.repo.updateItem(tenantId, id, { status: "RETRY_SCHEDULED", nextAttemptAt: new Date(), lockedAt:null, lockedBy:null });
+    await this.telemetry.emitFailSafe({ tenantId, planId: item.planId, queueItemId: id, eventType: "ITEM_RETRY_REQUESTED", source: "execution-orchestration", actorId, correlationId: item.correlationId, payload: { previousStatus: item.status, nextStatus: "RETRY_SCHEDULED" } });
+    return updated;
+  }
+  async cancelQueueItem(tenantId:string, id:number, actorId="system"){
+    const item = await this.repo.updateItem(tenantId,id,{});
+    const cancellable = ["PENDING","READY","WAITING_APPROVAL","WAITING_DEPENDENCIES","RETRY_SCHEDULED"];
+    if (item?.status === "RUNNING") throw new Error("Running queue item cancellation is not supported safely yet");
+    if (!item || !cancellable.includes(item.status)) throw new Error(`Item ${id} in status ${item?.status} cannot cancel`);
+    const updated = await this.repo.updateItem(tenantId, id, { status: "CANCELLED", lockedAt:null, lockedBy:null });
+    await this.telemetry.emitFailSafe({ tenantId, planId: item.planId, queueItemId: id, eventType: "ITEM_CANCELLED", source: "execution-orchestration", actorId, correlationId: item.correlationId, payload: { previousStatus: item.status, nextStatus: "CANCELLED" } });
+    return updated;
+  }
 }
 
 export class ExecutionOrchestrationProcessor {
@@ -124,8 +148,8 @@ export class ExecutionOrchestrationProcessor {
     await this.queue.markRunning(tenantId, item.id);
     try {
       const result = await runExecutionEngine({ tenantId, actorId: workerId, recommendation: { id: item.recommendationId, action: item.actionType, approvalStatus: item.approvalStatus }, mode: "APPROVAL_EXECUTE", mvpMode: true });
-      if (!result.allowed || !result.executed) { await this.queue.markFailed(tenantId, item.id, (result.denialReasons ?? ["EXECUTION_DENIED"]).join(",")); return { failed: true, result }; }
-      await this.queue.markSucceeded(tenantId, item.id, { idempotencyKey: result.idempotencyKey });
+      if (!result.allowed || !result.executed) { await this.queue.markFailed(tenantId, item.id, JSON.stringify({ failure:(result.denialReasons ?? ["EXECUTION_DENIED"]).join(","), dependencySnapshot:{status:item.status}, approvalSnapshot:{approvalStatus:item.approvalStatus}, runtimeControlSnapshot:runtime, blastRadiusSnapshot:{band:item.blastRadiusBand}, slaSnapshot:{evaluatedAt:new Date().toISOString()}, executionEngineResult:result, stateTransition:{from:"RUNNING",to:"FAILED"}, outcomeLedgerId:result.outcomeLedgerId ?? null })); return { failed: true, result }; }
+      await this.queue.markSucceeded(tenantId, item.id, { dependencySnapshot: { status: item.status }, approvalSnapshot: { approvalStatus: item.approvalStatus }, runtimeControlSnapshot: runtime, blastRadiusSnapshot: { band: item.blastRadiusBand }, slaSnapshot: { evaluatedAt: new Date().toISOString() }, executionEngineResult: result, stateTransition: { from: "RUNNING", to: "SUCCEEDED" }, outcomeLedgerId: result.outcomeLedgerId ?? null, idempotencyKey: result.idempotencyKey });
       return { succeeded: true, result };
     } catch (error) {
       await this.queue.markFailed(tenantId, item.id, String(error));

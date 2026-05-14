@@ -32,6 +32,7 @@ import PlatformObservabilityV2Page from "@/pages/platform-observability-v2";
 import EnterpriseGraphPage from "@/pages/enterprise-graph";
 import WorkflowCenterPage from "@/pages/workflow-center";
 import OperationalIntelligencePage from "@/pages/operational-intelligence";
+import ExecutionOrchestrationPage from "@/pages/execution-orchestration";
 
 
 const queryClient = new QueryClient({
@@ -75,6 +76,7 @@ function Router() {
       <Route path="/enterprise-graph" component={EnterpriseGraphPage} />
       <Route path="/workflow-center" component={WorkflowCenterPage} />
       <Route path="/operational-intelligence" component={OperationalIntelligencePage} />
+      <Route path="/execution-orchestration" component={ExecutionOrchestrationPage} />
       <Route component={NotFound} />
     </Switch>
   );

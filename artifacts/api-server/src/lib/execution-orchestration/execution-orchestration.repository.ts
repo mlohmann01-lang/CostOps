@@ -1,4 +1,4 @@
-import { db, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
+import { db, executionBatchItemsTable, executionBatchesTable, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
 import { and, eq, isNull, lt, or, inArray } from "drizzle-orm";
 
 export class ExecutionOrchestrationRepository {
@@ -26,4 +26,7 @@ export class ExecutionOrchestrationRepository {
   async resolveEscalation(tenantId:string,id:number,resolutionNotes?:string){ const [e] = await db.update(executionEscalationsTable).set({status:"RESOLVED",resolutionNotes,resolvedAt:new Date()}).where(and(eq(executionEscalationsTable.tenantId, tenantId), eq(executionEscalationsTable.id,id))).returning(); return e; }
   async listOpenEscalations(tenantId:string,planId?:number){ return db.select().from(executionEscalationsTable).where(planId ? and(eq(executionEscalationsTable.tenantId, tenantId), eq(executionEscalationsTable.planId, planId), eq(executionEscalationsTable.status, "OPEN")) : and(eq(executionEscalationsTable.tenantId, tenantId), eq(executionEscalationsTable.status, "OPEN"))); }
   async appendEvent(input:any){ const [e]=await db.insert(executionOrchestrationEventsTable).values(input).returning(); return e; }
+  async createBatch(input:any){ const [b]=await db.insert(executionBatchesTable).values(input).returning(); return b; }
+  async assignBatchItems(items:any[]){ return db.insert(executionBatchItemsTable).values(items).returning(); }
+  async updateBatch(tenantId:string,id:number,patch:any){ const [b]=await db.update(executionBatchesTable).set(patch).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).returning(); return b; }
 }
