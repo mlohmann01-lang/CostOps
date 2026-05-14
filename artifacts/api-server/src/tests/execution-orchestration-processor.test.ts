@@ -15,9 +15,11 @@ function fakeQueue() {
   };
 }
 
+const fakeEsc = () => ({ escalateQueueItem: async () => ({}) });
+
 test("READY item becomes BLOCKED when runtime controls block at execution time", async () => {
   const q: any = fakeQueue();
-  const p = new ExecutionOrchestrationProcessor(q as any, { emitFailSafe: async () => ({}) } as any);
+  const p = new ExecutionOrchestrationProcessor(q as any, { emitFailSafe: async () => ({}) } as any, fakeEsc() as any);
   await p.processReadyItem("t1", "w1", { id: 1, planId: 1, actionType: "REMOVE_LICENSE", recommendationId: "r1", approvalStatus: "APPROVED", riskClass: "A", recentRollbackRate: 0.9 });
   assert.equal(q.state.blocked, true);
   assert.equal(q.state.running, false);
@@ -25,7 +27,7 @@ test("READY item becomes BLOCKED when runtime controls block at execution time",
 
 test("Class B approval-required item is blocked without approved status", async () => {
   const q: any = fakeQueue();
-  const p = new ExecutionOrchestrationProcessor(q as any, { emitFailSafe: async () => ({}) } as any);
+  const p = new ExecutionOrchestrationProcessor(q as any, { emitFailSafe: async () => ({}) } as any, fakeEsc() as any);
   await p.processReadyItem("t1", "w1", { id: 2, planId: 1, actionType: "REMOVE_LICENSE", recommendationId: "r2", approvalStatus: "PENDING", riskClass: "B" });
   assert.equal(q.state.blocked, true);
   assert.equal(q.state.running, false);
