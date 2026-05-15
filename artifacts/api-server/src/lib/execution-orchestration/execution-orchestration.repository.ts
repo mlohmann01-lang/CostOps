@@ -32,6 +32,8 @@ export class ExecutionOrchestrationRepository {
   async getBatch(tenantId:string,id:number){ const [b]=await db.select().from(executionBatchesTable).where(and(eq(executionBatchesTable.tenantId,tenantId),eq(executionBatchesTable.id,id))).limit(1); return b; }
   async listBatches(tenantId:string){ return db.select().from(executionBatchesTable).where(eq(executionBatchesTable.tenantId, tenantId)); }
   async getBatchItems(tenantId:string,batchId:number){ return db.select().from(executionBatchItemsTable).where(and(eq(executionBatchItemsTable.tenantId,tenantId),eq(executionBatchItemsTable.batchId,batchId))); }
+  async listQueueByStatus(tenantId:string,status:string,limit=500){ return db.select().from(executionQueueItemsTable).where(and(eq(executionQueueItemsTable.tenantId, tenantId), eq(executionQueueItemsTable.status, status))).limit(limit); }
+  async getRecentEvents(tenantId:string,limit=200){ return db.select().from(executionOrchestrationEventsTable).where(eq(executionOrchestrationEventsTable.tenantId, tenantId)).limit(limit); }
 
   async getAutomationCandidate(tenantId:string,id:number){ const [c]=await db.select().from(executionAutomationCandidatesTable).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).limit(1); return c; }
   async listAutomationCandidates(tenantId:string){ return db.select().from(executionAutomationCandidatesTable).where(eq(executionAutomationCandidatesTable.tenantId,tenantId)); }

@@ -18,7 +18,15 @@ test("batch readiness blocks quarantined item", async () => {
 
 test("batch respects max item count", async () => {
   const svc = new ExecutionBatchService({ assignBatchItems: async (rows:any[]) => rows } as any, {} as any, {} as any);
-  const out = await svc.assignItemsToBatch(1, Array.from({length:30},(_,i)=>({id:i,tenantId:"t1"})), {maxItemsPerBatch:25});
+  const out = await svc.assignItemsToBatch(1, Array.from({length:30},(_,i)=>({id:i,tenantId:"t1"})), {
+    maxItemsPerBatch: 25,
+    maxAffectedEntities: 25,
+    maxRiskClass: "B",
+    maxBlastRadiusScore: 74,
+    cooldownMinutes: 30,
+    sampleBatchSize: 5,
+    maxFailureRatePercent: 10,
+  });
   assert.equal(out.length, 25);
 });
 
