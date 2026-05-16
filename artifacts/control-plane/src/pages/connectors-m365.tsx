@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getM365RealizedIntelligence } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ export default function ConnectorsM365() {
   const [summary, setSummary] = useState<any>(null);
   const [trust, setTrust] = useState<TrustSnapshot[]>([]);
   const [findings, setFindings] = useState<Finding[]>([]);
+  const [realized, setRealized] = useState<any>(null);
 
   const load = async () => {
     const [statusRes, evidenceRes, trustRes, findingsRes] = await Promise.all([
@@ -27,6 +29,7 @@ export default function ConnectorsM365() {
     setEvidence(await evidenceRes.json());
     setTrust(await trustRes.json());
     setFindings(await findingsRes.json());
+    try { setRealized(await getM365RealizedIntelligence("default")); } catch { setRealized(null); }
   };
 
   useEffect(() => { void load(); }, []);
@@ -49,6 +52,24 @@ export default function ConnectorsM365() {
         <div>Identity confidence: {Number(latestTrust?.identityMatchScore ?? 0).toFixed(1)} · Source reliability: {Number(latestTrust?.sourceReliabilityScore ?? 0).toFixed(1)}</div>
         <div>Critical findings: {(latestTrust?.criticalFindings ?? []).length} {(latestTrust?.criticalFindings ?? []).join(", ")}</div>
         <div>Warning findings: {(latestTrust?.warningFindings ?? []).length} {(latestTrust?.warningFindings ?? []).join(", ")}</div>
+      </CardContent>
+    </Card>
+
+
+
+    <Card>
+      <CardHeader><CardTitle>Realized Intelligence</CardTitle></CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        <p className="text-muted-foreground">Realized intelligence compares projected value against verified outcome evidence.</p>
+        {!realized ? <p>No realized intelligence available yet.</p> : <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div>Total recommendations: {realized.totalRecommendations ?? 0}</div><div>Realized: {realized.realized ?? 0}</div><div>Partially realized: {realized.partiallyRealized ?? 0}</div>
+          <div>Failed: {realized.failed ?? 0}</div><div>Drifted: {realized.drifted ?? 0}</div><div>Reversed: {realized.reversed ?? 0}</div><div>Unverified: {realized.unverified ?? 0}</div>
+          <div>Projected monthly savings: {Number(realized.projectedMonthlySavings ?? 0).toFixed(2)}</div><div>Realized monthly savings: {Number(realized.realizedMonthlySavings ?? 0).toFixed(2)}</div>
+          <div>Projected annualized savings: {Number(realized.projectedMonthlySavings ?? 0 * 12).toFixed(2)}</div><div>Realized annualized savings: {Number((realized.realizedMonthlySavings ?? 0) * 12).toFixed(2)}</div>
+          <div>Realization delta: {Number((realized.realizedMonthlySavings ?? 0) - (realized.projectedMonthlySavings ?? 0)).toFixed(2)}</div>
+          <div>Confidence calibration: {JSON.stringify(realized.confidenceAccuracyDistribution ?? {})}</div>
+        </div>}
+        <div className="text-xs">Proof is based on persisted outcome evidence, not estimates alone.</div>
       </CardContent>
     </Card>
 

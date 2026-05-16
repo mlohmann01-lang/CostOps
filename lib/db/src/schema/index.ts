@@ -43,3 +43,5 @@ export * from "./connectorTrust";
 export * from "./evidenceReconciliationFindings";
 export * from "./recommendationRationales";
 export * from "./recommendationDecisionTraces";
+
+export * from "./recommendationOutcomes";
