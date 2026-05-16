@@ -2,6 +2,8 @@ import { db, playbookEvaluationEventsTable, recommendationsTable, suppressedReco
 import { and, desc, eq } from "drizzle-orm";
 import { PLAYBOOK_REGISTRY } from "./registry";
 import { ExecutionOrchestrationRepository } from "../execution-orchestration/execution-orchestration.repository";
+import { assessTrust } from "../trust-engine";
+import { buildRecommendationExplainability } from "../recommendations/recommendation-explainability";
 
 export type M365EvidenceRecord = Record<string, any>;
 
@@ -35,10 +37,41 @@ export class PlaybookRecommendationService {
           continue;
         }
 
+        const trust = assessTrust({
+          mvp_mode: true,
+          entity_input: { identity_confidence: 0.9, source_consistency: 0.85, data_freshness: 0.9, ownership_confidence: 0.8, source_reliability: 0.85 },
+          recommendation_input: { usage_signal_quality: 0.8, entitlement_confidence: 0.85, policy_fit: 0.9, savings_confidence: mapped.cost > 0 ? 1 : 0.6 },
+          execution_input: { action_reversibility: 0.8, approval_state: 0.9, blast_radius_score: 0.8, rollback_confidence: 0.8 },
+          blocker_context: {},
+        });
+        const explainability = buildRecommendationExplainability({
+          playbookId: playbook.id,
+          playbookName: playbook.name,
+          matched: Boolean(evaluation.matched),
+          suppression: null,
+          trustBand: input.trustBand,
+          findingsBlock: input.findingsBlock,
+          trust: {
+            executionGate: trust.execution_gate,
+            criticalBlockers: trust.critical_blockers,
+            warnings: trust.warnings,
+            entityTrustScore: trust.entity_trust_score,
+            recommendationTrustScore: trust.recommendation_trust_score,
+            executionReadinessScore: trust.execution_readiness_score,
+            savingsConfidence: Number((mapped.cost > 0 ? 1 : 0.6)),
+          },
+          evidence: evaluation.evidence ?? {},
+          trustGovernanceDecisions: [
+            { stage: "EVIDENCE", decision: "ALLOW", reason: "PLAYBOOK_EVIDENCE_PRESENT" },
+            { stage: "TRUST_SCORING", decision: trust.execution_gate, reason: trust.critical_blockers[0] ?? "TRUST_THRESHOLD_PASS" },
+            { stage: "GOVERNANCE", decision: "RECOMMEND_ONLY", reason: "NO_EXECUTION_AUTHORITY" },
+          ],
+        });
+
         const rec = (await db.insert(recommendationsTable).values({
           userEmail: mapped.email, displayName: mapped.displayName ?? mapped.email, licenceSku: mapped.sku, monthlyCost: evaluation.estimatedMonthlySaving, annualisedCost: evaluation.estimatedMonthlySaving * 12,
-          trustScore: 0.8, entityTrustScore: 0.85, recommendationTrustScore: 0.8, executionReadinessScore: 0.8, executionStatus: "APPROVAL_REQUIRED", criticalBlockers: [], warnings: [], scoreBreakdown: {}, status: "pending", playbook: playbook.vendor, playbookId: playbook.id, playbookName: playbook.name, playbookEvidence: evaluation.evidence, playbookRequiredSignals: evaluation.requiredSignals, playbookExclusions: evaluation.exclusions, evaluationEventId: String(event.id), connector: "m365", partialData: "false",
-          actionType: Array.isArray(evaluation.recommendedAction)?evaluation.recommendedAction.join("+"):evaluation.recommendedAction, targetEntityId: mapped.email, targetEntityType: "USER", evidenceSummary: { ...evaluation.evidence, connectorTrustSnapshotId: input.connectorTrustSnapshotId }, trustRequirements: evaluation.trustRequirements ?? [], expectedMonthlySaving: evaluation.estimatedMonthlySaving, expectedAnnualSaving: evaluation.estimatedMonthlySaving*12, recommendationRiskClass: evaluation.riskClass ?? playbook.riskClass, recommendationExecutionMode: evaluation.executionMode ?? playbook.defaultExecutionMode, recommendationVerificationMethod: evaluation.verificationMethod ?? playbook.verificationMethod, rollbackNotes: evaluation.rollbackNotes ?? playbook.rollbackConsiderations, recommendationStatus: input.trustBand === "LOW" ? "NEEDS_TRUST_REVIEW" : "READY_FOR_ORCHESTRATION", correlationId,
+          trustScore: trust.execution_readiness_score, entityTrustScore: trust.entity_trust_score, recommendationTrustScore: trust.recommendation_trust_score, executionReadinessScore: trust.execution_readiness_score, executionStatus: trust.execution_gate, criticalBlockers: trust.critical_blockers, warnings: trust.warnings, scoreBreakdown: trust.score_breakdown, status: "pending", playbook: playbook.vendor, playbookId: playbook.id, playbookName: playbook.name, playbookEvidence: evaluation.evidence, playbookRequiredSignals: evaluation.requiredSignals, playbookExclusions: evaluation.exclusions, evaluationEventId: String(event.id), connector: "m365", partialData: "false",
+          actionType: Array.isArray(evaluation.recommendedAction)?evaluation.recommendedAction.join("+"):evaluation.recommendedAction, targetEntityId: mapped.email, targetEntityType: "USER", evidenceSummary: { ...evaluation.evidence, connectorTrustSnapshotId: input.connectorTrustSnapshotId, explainability }, trustRequirements: evaluation.trustRequirements ?? [], expectedMonthlySaving: evaluation.estimatedMonthlySaving, expectedAnnualSaving: evaluation.estimatedMonthlySaving*12, recommendationRiskClass: evaluation.riskClass ?? playbook.riskClass, recommendationExecutionMode: evaluation.executionMode ?? playbook.defaultExecutionMode, recommendationVerificationMethod: evaluation.verificationMethod ?? playbook.verificationMethod, rollbackNotes: evaluation.rollbackNotes ?? playbook.rollbackConsiderations, recommendationStatus: input.trustBand === "LOW" ? "NEEDS_TRUST_REVIEW" : "READY_FOR_ORCHESTRATION", correlationId,
         }).returning())[0];
         recommendations.push(rec);
       }
