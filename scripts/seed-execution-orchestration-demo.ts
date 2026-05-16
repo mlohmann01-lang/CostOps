@@ -1,4 +1,4 @@
-import { db, executionAutomationCandidatesTable, executionBatchesTable, executionEscalationsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
+import { db, executionAutomationCandidatesTable, executionBatchesTable, executionEscalationsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "../lib/db/src/index";
 
 const tenantId = process.env.DEMO_TENANT_ID ?? "demo-tenant";
 const actorId = "demo-seed";
