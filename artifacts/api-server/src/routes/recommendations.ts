@@ -11,9 +11,11 @@ import { resolveProjectedSavings } from "../lib/pricing/pricing-engine";
 import { buildTrustSignalsFromFindings } from "../lib/reconciliation/trust-signal-adapter";
 import { RecommendationArbitrationService } from "../lib/recommendations/recommendation-arbitration-service";
 import { recommendationArbitrationSnapshotsTable } from "@workspace/db";
+import { requireTenantContext } from "../middleware/security-guards";
 
 const router = Router();
 const MVP_MODE = true;
+router.use(requireTenantContext());
 
 function buildTrustContext(user: any, metadata: any, action: string) {
   const isService = user.userPrincipalName.includes("service") || user.userPrincipalName.includes("noreply");
@@ -47,45 +49,45 @@ function buildTrustContext(user: any, metadata: any, action: string) {
 const arbitrationService = new RecommendationArbitrationService();
 
 router.post("/arbitrate", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const queue = await arbitrationService.arbitrate(tenantId);
   res.json({ tenantId, count: queue.length, queue });
 });
 
 router.get("/arbitration", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(recommendationArbitrationSnapshotsTable).where(eq(recommendationArbitrationSnapshotsTable.tenantId, tenantId)).orderBy(desc(recommendationArbitrationSnapshotsTable.createdAt));
   res.json(rows);
 });
 
 router.get("/arbitration/:recommendationId", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(recommendationArbitrationSnapshotsTable).where(and(eq(recommendationArbitrationSnapshotsTable.tenantId, tenantId), eq(recommendationArbitrationSnapshotsTable.recommendationId, req.params.recommendationId))).orderBy(desc(recommendationArbitrationSnapshotsTable.createdAt));
   res.json(rows[0] ?? null);
 });
 
 router.get("/prioritized-queue", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(recommendationArbitrationSnapshotsTable).where(eq(recommendationArbitrationSnapshotsTable.tenantId, tenantId)).orderBy(desc(recommendationArbitrationSnapshotsTable.priorityScore), desc(recommendationArbitrationSnapshotsTable.createdAt));
   res.json(rows);
 });
 
 router.get("/arbitration/conflicts", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(recommendationArbitrationSnapshotsTable).where(eq(recommendationArbitrationSnapshotsTable.tenantId, tenantId)).orderBy(desc(recommendationArbitrationSnapshotsTable.createdAt));
   const grouped = rows.filter((r)=>r.conflictGroupId).reduce((acc:any, row:any)=>{ const key=row.conflictGroupId!; acc[key]=acc[key]??[]; acc[key].push(row); return acc; }, {});
   res.json(grouped);
 });
 
 router.get("/", async (req, res) => {
-  const tenantId = (req.query.tenantId as string) ?? "default";
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(recommendationsTable).where(eq(recommendationsTable.tenantId, tenantId)).orderBy(recommendationsTable.createdAt);
   res.json(rows);
 });
 
 router.post("/generate", async (req, res) => {
   try {
-    const tenantId = (req.query.tenantId as string) ?? "default";
+    const tenantId = String((req as any).tenantId);
     const [latestSync] = await db
       .select()
       .from(connectorSyncStatusTable)

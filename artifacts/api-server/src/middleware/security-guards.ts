@@ -2,14 +2,17 @@ import type { NextFunction, Request, Response } from "express";
 import { buildAuthContext } from "../lib/auth/auth-context";
 import { authorizationService, type Capability } from "../lib/security/authorization-service";
 
-function requestedTenant(req: Request): string {
-  return String(req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
+function requestedTenant(req: Request): string | null {
+  const tenantId = req.query.tenantId ?? req.header("x-tenant-id");
+  if (typeof tenantId !== "string" || tenantId.trim().length === 0) return null;
+  return tenantId;
 }
 
 export function requireTenantContext() {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = buildAuthContext(req);
     const tenantId = requestedTenant(req);
+    if (!tenantId) { res.status(400).json({ error: "TENANT_CONTEXT_REQUIRED" }); return; }
     if (auth.role !== "PLATFORM_ADMIN" && auth.tenantId !== tenantId) { res.status(403).json({ error: "TENANT_ACCESS_DENIED" }); return; }
     (req as any).tenantId = tenantId;
     next();

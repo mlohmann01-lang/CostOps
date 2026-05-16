@@ -2,12 +2,14 @@ import { Router } from "express";
 import { db, policySimulationsTable } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { PolicySimulationService, type SimulationScope } from "../lib/simulations/policy-simulation-service";
+import { requireTenantContext } from "../middleware/security-guards";
 
 const router = Router();
 const service = new PolicySimulationService();
+router.use(requireTenantContext());
 
 router.post("/", async (req, res) => {
-  const tenantId = String((req.headers["x-tenant-id"] as string) || "default");
+  const tenantId = String((req as any).tenantId);
   const simulationScope = String(req.body?.simulationScope || "RECOMMENDATION") as SimulationScope;
   const scopeEntityIds = Array.isArray(req.body?.scopeEntityIds) ? req.body.scopeEntityIds.map(String) : [];
   const simulationName = String(req.body?.simulationName || "Policy Simulation");
@@ -50,7 +52,7 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const tenantId = String((req.headers["x-tenant-id"] as string) || "default");
+  const tenantId = String((req as any).tenantId);
   const rows = await db.select().from(policySimulationsTable).where(eq(policySimulationsTable.tenantId, tenantId)).orderBy(desc(policySimulationsTable.createdAt));
   return res.json(rows);
 });

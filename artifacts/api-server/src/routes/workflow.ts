@@ -5,7 +5,7 @@ import { requireCapability, requireTenantContext } from "../middleware/security-
 import { workflowOperationsService } from "../lib/workflow/workflow-operations-service";
 
 const router = Router();
-const tenant = (req: any): string => { const raw = req.query.tenantId; return typeof raw === "string" ? raw : "default"; };
+const tenant = (req: any): string => String(req.tenantId);
 
 router.use(requireTenantContext());
 router.get("/items", requireCapability("READ_RECOMMENDATIONS"), async (req,res)=>res.json(await db.select().from(workflowItemsTable).where(eq(workflowItemsTable.tenantId, tenant(req)))));
