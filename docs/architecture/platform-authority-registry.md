@@ -87,3 +87,7 @@ Before creating a new service/module:
 - Telemetry path consistency: PARTIALLY_REMEDIATED
 - UI/API contract enforcement: PARTIALLY_REMEDIATED
 - Execution boundary protection: REMEDIATED
+
+- M365 domain pack expansion aligns with canonical authorities (recon in docs/m365-domain/m365-domain-expansion-recon.md).
+
+- M365 Phase A: ConnectorTrustService/EvidenceReconciliationService/M365EvidenceNormalizationService extended (no new engines).

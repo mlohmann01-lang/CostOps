@@ -43,3 +43,7 @@
 - recommendation-intelligence: PARTIALLY_REMEDIATED (route delegation boundary improved; residual orchestration remains)
 - authorization-security: REMEDIATED (core default tenant fallbacks removed in key routes)
 - telemetry: PARTIALLY_REMEDIATED (authority docs + route guard consistency; broader legacy writes remain)
+
+- 2026-05-16: Expanded M365 domain playbook pack coverage and documentation stubs.
+
+- M365 Phase A gaps: evidence/trust/reconciliation foundation PARTIALLY_REMEDIATED; downstream telemetry breadth DEFERRED.

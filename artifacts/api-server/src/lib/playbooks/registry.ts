@@ -9,6 +9,10 @@ import {
   inactiveUserReclaimPlaybook,
   overlappingSkuCleanupPlaybook,
   sharedMailboxLicenseReclaimPlaybook,
+  serviceAccountLicenseReviewPlaybook,
+  frontlineFitRightsizePlaybook,
+  storageCostExposurePlaybook,
+  renewalReadinessPackPlaybook,
 } from "./m365-multi-playbooks";
 
 export const PLAYBOOK_REGISTRY: BasePlaybook[] = [
@@ -20,5 +24,9 @@ export const PLAYBOOK_REGISTRY: BasePlaybook[] = [
   addonLicenseReclaimPlaybook,
   copilotUnderuseReallocationPlaybook,
   sharedMailboxLicenseReclaimPlaybook,
+  serviceAccountLicenseReviewPlaybook,
+  frontlineFitRightsizePlaybook,
+  storageCostExposurePlaybook,
+  renewalReadinessPackPlaybook,
   overlappingSkuCleanupPlaybook,
 ];

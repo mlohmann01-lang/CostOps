@@ -12,3 +12,5 @@ Canonical lifecycle stages:
 - SUPPRESSED — owned by `playbook-recommendation-service.ts`
 
 Routes are read/delegation boundaries and must not derive lifecycle status independently.
+
+- Phase A lifecycle gating expanded for M365 evidence freshness/trust/reconciliation statuses and suppressions.

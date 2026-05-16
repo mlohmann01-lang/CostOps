@@ -154,3 +154,5 @@
 ## P1 Boundary Status (2026-05-16)
 - Recommendation/Simulation/Workflow routes explicitly protected from execution-engine imports by tests.
 - Tenant context explicitly required in core recommendation/workflow/simulation/telemetry routes.
+
+- M365 playbook expansion remains recommendation/simulation only; no execution boundary expansion.
