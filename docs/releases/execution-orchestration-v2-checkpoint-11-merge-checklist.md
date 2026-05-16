@@ -1,40 +1,76 @@
-# Execution Orchestration V2 — Checkpoint 11 Merge Checklist
+# Execution Orchestration V2 — Checkpoint 11/12 Merge Checklist
 
 ## Scope Summary
 - Production-readiness hardening for orchestration APIs, schema checks, demo seed data, and observability summary metrics.
+- Post-merge runtime smoke validation tracking for Checkpoints 12, 12A, 12B, 12C, and 12D.
 
-## Architecture Boundaries Preserved
-- No direct execution-engine invocations added in demo data path.
-- Runtime/governance decisions remain in orchestration services/repository boundaries.
+## Merge Status
+- Merge completed on integrated branch (`work`), with history including Execution Orchestration V2 merge and Checkpoint 11A stabilization commits.
 
-## Runtime/Governance Precedence Preserved
-- Auto-safe approvals still enforce Class A + LOW blast radius + rollback + no critical escalation prerequisites.
-- Readiness evaluation endpoint remains non-executing and state/evidence oriented.
+## Build / Typecheck Status
+- Dependency-first build order validated and passing:
+  - `pnpm --filter @workspace/api-zod build`
+  - `pnpm --filter @workspace/db build`
+  - `pnpm --filter @workspace/api-server typecheck`
+- `@workspace/db` build/typecheck pass under 12C command flow.
 
-## Test Commands and Results
-- `pnpm --filter @workspace/api-server test`
-- `pnpm --filter @workspace/db typecheck`
-- `pnpm --filter @workspace/control-plane typecheck`
+## Focused Orchestration Test Status
+- Focused orchestration suite command executed and passing:
+  - `pnpm --filter @workspace/api-server test -- execution-orchestration-batch-automation.test.ts execution-orchestration-scheduler-order.test.ts execution-orchestration-operator-actions.test.ts execution-orchestration-operational-controls.test.ts execution-orchestration-processor.test.ts execution-orchestration-v2.test.ts`
 
-## Typecheck Status
-- Build-order TS6305 issues isolated and documented; dependency build-first sequence validated.
+## Seed Command Readiness
+- Workspace package-script-compatible seed command is available:
+  - `pnpm seed:orchestration-demo`
+- Command uses existing repo-installed tooling (`pnpm --filter @workspace/scripts exec tsx`) and avoids `pnpm dlx`/external fetch flow.
 
-## Known Unrelated Failures
-- Legacy strict typing issues outside orchestration scope remain for follow-up cleanup.
+## Checkpoint 12C — Postgres-Backed Smoke Validation
 
-## Migration/Schema Verification
-- Orchestration tables/fields reviewed in schema exports.
-- `pnpm --filter @workspace/db generate` executed.
+### 1) Local Postgres provisioning attempt
+- Attempted prerequisite verification command:
+  - `docker ps`
+- Result: Docker CLI is unavailable in this container (`docker: command not found`), so a local Postgres container could not be provisioned here.
 
-## Manual UI Verification Checklist
-- Orchestration overview loads summary metrics.
-- Tenant-scoped plans, batches, queue, and candidates render consistently.
-- Invalid IDs return controlled errors.
+### 2) DATABASE_URL provisioning
+- `DATABASE_URL` exported for smoke attempts:
+  - `postgresql://postgres:postgres@localhost:5432/costops_dev`
+- Verified via `echo $DATABASE_URL`.
 
-## Rollback Considerations
-- Route additions are additive and can be reverted independently.
-- Demo seed script is out-of-band and non-executing.
+### 3) DB build + push
+- Completed:
+  - `pnpm --filter @workspace/db build`
+  - `pnpm --filter @workspace/db typecheck`
+- Attempted:
+  - `pnpm --filter @workspace/db push`
+- Result: schema sync could not complete due to DB connectivity failure (`ECONNREFUSED` at `localhost:5432`).
 
-## Remaining Follow-up Items
-- Complete broad repo strict typing cleanup.
-- Expand end-to-end HTTP contract harness where needed.
+### 4) Demo orchestration seed
+- Attempted:
+  - `pnpm seed:orchestration-demo`
+- Result: seed command runs and reaches orchestration insert path, but fails due to the same Postgres connection refusal.
+- Safety note: seed path remains DB-only inserts; no Graph, execution-engine, or connector call paths were added.
+
+### 5) Runtime/UI/scheduler/observability smoke status
+- Blocked by missing reachable Postgres runtime in this environment:
+  - App stack startup validation (`pnpm dev` or equivalent with DB connected)
+  - `/execution-orchestration` UI verification (overview, plans, details, queue, batch, candidates, evidence, escalations)
+  - Observability endpoint check (`GET /execution-orchestration/observability/summary`)
+  - Scheduler job smoke for `processExecutionOrchestrationQueueJob` phase sequencing
+  - Operator action smoke tests on seeded demo data
+
+## Remaining Blockers
+- Docker is unavailable in this container, preventing local Postgres provisioning by the requested path.
+- No alternative reachable Postgres instance is available at `localhost:5432`, blocking push/seed and all DB-backed runtime smoke validations.
+
+## Final Production-Readiness Recommendation
+- **Completed:** build/typecheck flow, focused orchestration tests, and repo-compatible seed command setup.
+- **Required to close Checkpoint 12C:** rerun this exact checklist in an environment with Docker (or other provisioned Postgres), complete schema push and seed successfully, then finish UI/scheduler/observability/operator-action smoke verification before production sign-off.
+
+
+## Checkpoint 12D — External Runtime Smoke Handoff
+- Created external handoff runbook: `docs/releases/execution-orchestration-v2-runtime-smoke-handoff.md`.
+- Container limitation re-confirmed: no Docker/no reachable Postgres, so DB-backed runtime smoke cannot complete in-container.
+- External runtime smoke remains required in Replit/local dev/CI (or equivalent) with reachable Postgres.
+
+## Updated Final Merge Recommendation
+- **Code validated:** build/typecheck, focused orchestration tests, and seed command wiring are complete.
+- **Runtime DB-backed smoke pending:** must be completed using the 12D handoff in an environment with reachable Postgres before final production sign-off.
