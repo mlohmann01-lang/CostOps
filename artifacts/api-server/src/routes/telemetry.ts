@@ -2,9 +2,11 @@ import { Router } from "express";
 import { and, desc, eq } from "drizzle-orm";
 import { connectorHealthSnapshotsTable, db, governanceActivityStreamTable, operationalEventsTable, operatorActivityEventsTable } from "@workspace/db";
 import { operationalTelemetryService } from "../lib/observability/operational-telemetry-service";
+import { requireTenantContext } from "../middleware/security-guards";
 
 const router = Router();
-const tenant = (req: any) => String(req.query.tenantId ?? "default");
+router.use(requireTenantContext());
+const tenant = (req: any) => String(req.tenantId);
 
 router.get("/events", async (req, res) => res.json(await db.select().from(operationalEventsTable).where(eq(operationalEventsTable.tenantId, tenant(req))).orderBy(desc(operationalEventsTable.createdAt)).limit(200)));
 router.get("/connectors", async (req, res) => res.json(await db.select().from(connectorHealthSnapshotsTable).where(eq(connectorHealthSnapshotsTable.tenantId, tenant(req))).orderBy(desc(connectorHealthSnapshotsTable.createdAt)).limit(200)));

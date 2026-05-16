@@ -79,3 +79,11 @@ Before creating a new service/module:
 ### Deprecation/Consolidation Guidance
 - Prefer migrating route-level orchestration to canonical services over introducing new wrappers.
 - Mark legacy wrappers as compatibility layers until references are removed.
+
+
+## P1 Remediation Status (2026-05-16)
+- Recommendation authority consolidation: PARTIALLY_REMEDIATED
+- Tenant context consistency: REMEDIATED
+- Telemetry path consistency: PARTIALLY_REMEDIATED
+- UI/API contract enforcement: PARTIALLY_REMEDIATED
+- Execution boundary protection: REMEDIATED

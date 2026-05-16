@@ -21,3 +21,9 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 - Workflow orchestration helpers under `lib/workflows/*` are supporting/legacy relative to `workflow-operations-service.ts`.
 - Governance wrappers (`execution-governance-policy-service.ts`) remain supporting; canonical evaluation remains `policy-engine.ts`.
 - Connector-specific trust helpers remain supporting; canonical trust computation remains `trust-engine.ts`.
+
+
+## P1 Integrity Status (2026-05-16)
+- Tenant Context: REMEDIATED for core high-risk routes.
+- Recommendation authority consolidation: PARTIALLY_REMEDIATED pending deeper route-to-service migration.
+- Execution boundary static protections: REMEDIATED.

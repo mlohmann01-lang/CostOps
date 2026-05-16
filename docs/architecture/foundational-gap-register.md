@@ -37,3 +37,9 @@
    - **Recommended fix:** deprecation annotations and naming cleanup pass.
    - **New service required?:** No.
    - **Extend existing authority?:** Yes.
+
+
+## P1 Remediation Status Update (2026-05-16)
+- recommendation-intelligence: PARTIALLY_REMEDIATED (route delegation boundary improved; residual orchestration remains)
+- authorization-security: REMEDIATED (core default tenant fallbacks removed in key routes)
+- telemetry: PARTIALLY_REMEDIATED (authority docs + route guard consistency; broader legacy writes remain)
