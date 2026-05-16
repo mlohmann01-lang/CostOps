@@ -14,3 +14,5 @@ Canonical lifecycle stages:
 Routes are read/delegation boundaries and must not derive lifecycle status independently.
 
 - Phase A lifecycle gating expanded for M365 evidence freshness/trust/reconciliation statuses and suppressions.
+
+- Added M365 deterministic lifecycle state derivation helper for Phase B.

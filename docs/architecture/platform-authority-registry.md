@@ -91,3 +91,5 @@ Before creating a new service/module:
 - M365 domain pack expansion aligns with canonical authorities (recon in docs/m365-domain/m365-domain-expansion-recon.md).
 
 - M365 Phase A: ConnectorTrustService/EvidenceReconciliationService/M365EvidenceNormalizationService extended (no new engines).
+
+- Phase B lifecycle/governance authority extension recorded (May 16, 2026).

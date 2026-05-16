@@ -47,3 +47,5 @@
 - 2026-05-16: Expanded M365 domain playbook pack coverage and documentation stubs.
 
 - M365 Phase A gaps: evidence/trust/reconciliation foundation PARTIALLY_REMEDIATED; downstream telemetry breadth DEFERRED.
+
+- Phase B: lifecycle/governance/arbitration/workflow/simulation/renewal-readiness status: REMEDIATED (telemetry partial).
