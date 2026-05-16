@@ -33,3 +33,16 @@ export const approveAutomationCandidateScheduled = (id:number) => fetch(`${base}
 export const approveAutomationCandidateAutoSafe = (id:number) => fetch(`${base}/automation-candidates/${id}/approve-auto-safe`, { method: "POST" }).then(json<any>);
 export const rejectAutomationCandidate = (id:number, reason="REJECTED_BY_OPERATOR") => fetch(`${base}/automation-candidates/${id}/reject`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) }).then(json<any>);
 export const revokeAutomationCandidate = (id:number, reason="REVOKED_BY_OPERATOR") => fetch(`${base}/automation-candidates/${id}/revoke`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ reason }) }).then(json<any>);
+
+export const listExecutionVerifications = () => fetch(`${base}/verifications`).then(json<any[]>);
+export const getExecutionVerification = (id:number) => fetch(`${base}/verifications/${id}`).then(json<any>);
+export const markExecutionVerificationVerified = (id:number, body:any={}) => fetch(`${base}/verifications/${id}/mark-verified`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }).then(json<any>);
+export const markExecutionVerificationDisputed = (id:number, body:any={}) => fetch(`${base}/verifications/${id}/mark-disputed`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }).then(json<any>);
+export const markExecutionVerificationFailed = (id:number, body:any={}) => fetch(`${base}/verifications/${id}/mark-failed`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }).then(json<any>);
+export const markExecutionVerificationNeedsRollbackReview = (id:number, body:any={}) => fetch(`${base}/verifications/${id}/needs-rollback-review`, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(body) }).then(json<any>);
+
+export const getSavingsProofSummary = () => fetch(`${base}/savings-proof/summary`).then(json<any>);
+export const getSavingsProofByPlaybook = () => fetch(`${base}/savings-proof/by-playbook`).then(json<any[]>);
+export const getSavingsProofByActionType = () => fetch(`${base}/savings-proof/by-action-type`).then(json<any[]>);
+export const getSavingsProofByStatus = () => fetch(`${base}/savings-proof/by-status`).then(json<any[]>);
+export const getSavingsProofTimeline = (range="30d") => fetch(`${base}/savings-proof/timeline?range=${range}`).then(json<any[]>);

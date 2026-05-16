@@ -1,7 +1,8 @@
-import { db, executionAutomationCandidatesTable, executionBatchItemsTable, executionBatchesTable, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionQueueItemsTable } from "@workspace/db";
-import { and, eq, isNull, lt, or, inArray } from "drizzle-orm";
+import { db, executionAutomationCandidatesTable, executionBatchItemsTable, executionBatchesTable, executionDependenciesTable, executionEscalationsTable, executionOrchestrationEventsTable, executionOrchestrationPlansTable, executionOutcomeVerificationsTable, executionQueueItemsTable, outcomeLedgerTable } from "@workspace/db";
+import { and, desc, eq, inArray, isNull, lt, or } from "drizzle-orm";
 
 export class ExecutionOrchestrationRepository {
+  db = db;
   async createPlan(input: any) { const [plan] = await db.insert(executionOrchestrationPlansTable).values(input).returning(); return plan; }
   async updatePlan(tenantId: string, id: number, patch: any) { const [plan] = await db.update(executionOrchestrationPlansTable).set({ ...patch, updatedAt: new Date() }).where(and(eq(executionOrchestrationPlansTable.tenantId, tenantId), eq(executionOrchestrationPlansTable.id, id))).returning(); return plan; }
   async getPlan(tenantId: string, planId: number) { const [plan] = await db.select().from(executionOrchestrationPlansTable).where(and(eq(executionOrchestrationPlansTable.tenantId, tenantId), eq(executionOrchestrationPlansTable.id, planId))).limit(1); return plan; }
@@ -35,7 +36,14 @@ export class ExecutionOrchestrationRepository {
   async listQueueByStatus(tenantId:string,status:string,limit=500){ return db.select().from(executionQueueItemsTable).where(and(eq(executionQueueItemsTable.tenantId, tenantId), eq(executionQueueItemsTable.status, status))).limit(limit); }
   async getRecentEvents(tenantId:string,limit=200){ return db.select().from(executionOrchestrationEventsTable).where(eq(executionOrchestrationEventsTable.tenantId, tenantId)).limit(limit); }
 
-  async getAutomationCandidate(tenantId:string,id:number){ const [c]=await db.select().from(executionAutomationCandidatesTable).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).limit(1); return c; }
+  
+  async getVerification(tenantId:string,id:number){ const [r]=await db.select().from(executionOutcomeVerificationsTable).where(and(eq(executionOutcomeVerificationsTable.tenantId,tenantId),eq(executionOutcomeVerificationsTable.id,id))).limit(1); return r; }
+  async getVerificationByOutcomeLedgerId(tenantId:string,outcomeLedgerId:string){ const [r]=await db.select().from(executionOutcomeVerificationsTable).where(and(eq(executionOutcomeVerificationsTable.tenantId,tenantId),eq(executionOutcomeVerificationsTable.outcomeLedgerId,outcomeLedgerId))).limit(1); return r; }
+  async listVerifications(tenantId:string){ return db.select().from(executionOutcomeVerificationsTable).where(eq(executionOutcomeVerificationsTable.tenantId,tenantId)).orderBy(desc(executionOutcomeVerificationsTable.createdAt)); }
+  async listVerificationsByStatus(tenantId:string,status:string){ return db.select().from(executionOutcomeVerificationsTable).where(and(eq(executionOutcomeVerificationsTable.tenantId,tenantId),eq(executionOutcomeVerificationsTable.verificationStatus,status))).orderBy(desc(executionOutcomeVerificationsTable.createdAt)); }
+  async updateVerification(tenantId:string,id:number,patch:any){ const [r]=await db.update(executionOutcomeVerificationsTable).set({...patch,updatedAt:new Date()}).where(and(eq(executionOutcomeVerificationsTable.tenantId,tenantId),eq(executionOutcomeVerificationsTable.id,id))).returning(); return r; }
+  async getOutcomeLedgerById(tenantId:string,outcomeLedgerId:string){ const [r]=await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId,tenantId),eq(outcomeLedgerTable.id,Number(outcomeLedgerId)))).limit(1); return r; }
+async getAutomationCandidate(tenantId:string,id:number){ const [c]=await db.select().from(executionAutomationCandidatesTable).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).limit(1); return c; }
   async listAutomationCandidates(tenantId:string){ return db.select().from(executionAutomationCandidatesTable).where(eq(executionAutomationCandidatesTable.tenantId,tenantId)); }
   async updateAutomationCandidate(tenantId:string,id:number,patch:any){ const [c]=await db.update(executionAutomationCandidatesTable).set({...patch,updatedAt:new Date()}).where(and(eq(executionAutomationCandidatesTable.tenantId,tenantId),eq(executionAutomationCandidatesTable.id,id))).returning(); return c; }
 }

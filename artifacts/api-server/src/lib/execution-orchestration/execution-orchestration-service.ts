@@ -2,6 +2,7 @@ import { runExecutionEngine } from "../execution/execution-engine";
 import { evaluateExecutionRuntimeControls } from "../security/runtime-controls";
 import { transitionOrchestrationState } from "./execution-orchestration-state-machine";
 import { ExecutionOrchestrationRepository } from "./execution-orchestration.repository";
+import { ExecutionOutcomeVerificationService } from "./execution-outcome-verification-service";
 
 const BATCH_DEFAULTS = { maxItemsPerBatch:25, maxAffectedEntities:25, maxRiskClass:"B", maxBlastRadiusScore:74, cooldownMinutes:30, sampleBatchSize:5, maxFailureRatePercent:10 };
 const AUTO_DEFAULTS = { minSuccessfulRuns:10, minVerifiedSampleBatches:2, maxFailureRatePercent:5, criticalEscalationsAllowed:0, autoSafeAllowedRiskClass:"A", autoSafeAllowedBlastRadius:"LOW", rollbackRequired:true };
@@ -174,7 +175,7 @@ export class ExecutionQueueService {
 }
 
 export class ExecutionOrchestrationProcessor {
-  constructor(private readonly queue = new ExecutionQueueService(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(), private readonly escalation = new ExecutionEscalationService()) {}
+  constructor(private readonly queue = new ExecutionQueueService(), private readonly telemetry = new ExecutionOrchestrationTelemetryService(), private readonly escalation = new ExecutionEscalationService(), private readonly verification = new ExecutionOutcomeVerificationService()) {}
   async processReadyItem(tenantId:string, workerId:string, item:any) {
     const locked = await this.queue.lockQueueItem(tenantId, item.id, workerId); if (!locked) return { skipped: true, reason: "LOCK_FAILED" };
     if (item.blastRadiusBand === "CRITICAL") { await this.queue.markBlocked(tenantId, item.id, "BLAST_RADIUS_CRITICAL"); await this.escalation.escalateQueueItem({ tenantId, planId: item.planId, queueItemId: item.id, escalationType: "BLAST_RADIUS_LIMIT", severity: "CRITICAL", reason: "critical blast radius", correlationId: item.correlationId }); return { blocked: true }; }
@@ -185,9 +186,13 @@ export class ExecutionOrchestrationProcessor {
     if (item.riskClass === "B" && item.approvalStatus !== "APPROVED") { await this.queue.markBlocked(tenantId, item.id, "APPROVAL_MISSING_OR_NOT_APPROVED"); return { blocked: true }; }
     await this.queue.markRunning(tenantId, item.id);
     try {
-      const result = await runExecutionEngine({ tenantId, actorId: workerId, recommendation: { id: item.recommendationId, action: item.actionType, approvalStatus: item.approvalStatus }, mode: "APPROVAL_EXECUTE", mvpMode: true });
+      const result: any = await runExecutionEngine({ tenantId, actorId: workerId, recommendation: { id: item.recommendationId, action: item.actionType, approvalStatus: item.approvalStatus }, mode: "APPROVAL_EXECUTE", mvpMode: true });
       if (!result.allowed || !result.executed) { await this.queue.markFailed(tenantId, item.id, JSON.stringify({ failure:(result.denialReasons ?? ["EXECUTION_DENIED"]).join(","), dependencySnapshot:{status:item.status}, approvalSnapshot:{approvalStatus:item.approvalStatus}, runtimeControlSnapshot:runtime, blastRadiusSnapshot:{band:item.blastRadiusBand}, slaSnapshot:{evaluatedAt:new Date().toISOString()}, executionEngineResult:result, stateTransition:{from:"RUNNING",to:"FAILED"}, outcomeLedgerId:null })); return { failed: true, result }; }
-      await this.queue.markSucceeded(tenantId, item.id, { dependencySnapshot: { status: item.status }, approvalSnapshot: { approvalStatus: item.approvalStatus }, runtimeControlSnapshot: runtime, blastRadiusSnapshot: { band: item.blastRadiusBand }, slaSnapshot: { evaluatedAt: new Date().toISOString() }, executionEngineResult: result, stateTransition: { from: "RUNNING", to: "SUCCEEDED" }, outcomeLedgerId: null, idempotencyKey: result.idempotencyKey });
+      const successRow:any = await this.queue.markSucceeded(tenantId, item.id, { dependencySnapshot: { status: item.status }, approvalSnapshot: { approvalStatus: item.approvalStatus }, runtimeControlSnapshot: runtime, blastRadiusSnapshot: { band: item.blastRadiusBand }, slaSnapshot: { evaluatedAt: new Date().toISOString() }, executionEngineResult: result, stateTransition: { from: "RUNNING", to: "SUCCEEDED" }, outcomeLedgerId: result.outcomeLedgerId ?? item.outcomeLedgerId ?? null, idempotencyKey: result.idempotencyKey });
+      const outcomeLedgerId = successRow?.outcomeLedgerId ?? result?.outcomeLedgerId ?? item?.outcomeLedgerId;
+      if (outcomeLedgerId) {
+        await this.verification.createVerificationTask({ tenantId, outcomeLedgerId: String(outcomeLedgerId), planId: item.planId, queueItemId: item.id, batchId: item.batchId ?? null, actionType: item.actionType, targetEntityId: item.targetEntityId ?? item.recommendationId, expectedOutcome: "EXECUTION_SUCCESS", expectedMonthlySaving: Number(result?.monthlySaving ?? 0), expectedAnnualSaving: Number(result?.annualSaving ?? Number(result?.monthlySaving ?? 0) * 12), verificationMethod: "LEDGER_ONLY", verificationEvidence: { createdFrom: "PROCESSOR_SUCCESS", executionResult: result }, correlationId: item.correlationId });
+      }
       return { succeeded: true, result };
     } catch (error) {
       await this.queue.markFailed(tenantId, item.id, String(error));
