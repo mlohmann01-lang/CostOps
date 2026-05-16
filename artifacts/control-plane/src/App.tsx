@@ -33,6 +33,7 @@ import EnterpriseGraphPage from "@/pages/enterprise-graph";
 import WorkflowCenterPage from "@/pages/workflow-center";
 import OperationalIntelligencePage from "@/pages/operational-intelligence";
 import ExecutionOrchestrationPage from "@/pages/execution-orchestration";
+import ConnectorsM365 from "@/pages/connectors-m365";
 
 
 const queryClient = new QueryClient({
@@ -52,6 +53,7 @@ function Router() {
       <Route path="/recommendations/:id" component={RecommendationDetail} />
       <Route path="/outcomes" component={Outcomes} />
       <Route path="/connectors" component={Connectors} />
+      <Route path="/connectors/m365" component={ConnectorsM365} />
       <Route path="/execution" component={ExecutionLog} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/reconciliation" component={ReconciliationPage} />

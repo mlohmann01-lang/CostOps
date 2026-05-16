@@ -108,3 +108,18 @@
 - Control-plane blockers resolved or isolated
 - Demo status endpoint validated
 - UI demo path validated
+
+
+## Checkpoint 20 Additions
+- Checkpoint 20 deployment readiness pack added
+- runtime env validator added
+- demo smoke script added
+- demo-mode guard added
+- readiness endpoint added
+
+
+## Checkpoint 21 Additions
+- Checkpoint 21 M365 read-only ingestion added
+- read-only scope confirmed
+- evidence normalization validated
+- playbook evaluation from persisted evidence validated

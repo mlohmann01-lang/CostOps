@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, type Connector } from "@workspace/db";
+import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, m365ConnectorConfigsTable, m365EvidenceRecordsTable, type Connector } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
 import { checkM365PermissionReadiness } from "../lib/connectors/m365/m365-permission-check";
 import { fetchGraphUserActivity, fetchGraphUserLicences, fetchGraphUsersFirstPage, getGraphAccessToken } from "../lib/connectors/m365/m365-graph-client";
@@ -10,6 +10,8 @@ import { checkFlexeraReadiness } from "../lib/connectors/flexera/flexera-readine
 import { ingestFlexeraTenant } from "../lib/connectors/flexera/flexera-ingestion";
 import { checkServiceNowReadiness } from "../lib/connectors/servicenow/servicenow-readiness";
 import { ingestServiceNowTenant } from "../lib/connectors/servicenow/servicenow-ingestion";
+import { M365ReadOnlySyncService } from "../lib/connectors/m365/m365-read-only-sync-service";
+import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
 
 const router = Router();
 
@@ -250,6 +252,43 @@ router.post("/m365/smoke-test", async (_req, res) => {
 
 
 
+
+const m365ReadOnlySyncService = new M365ReadOnlySyncService();
+const playbookService = new PlaybookRecommendationService();
+
+router.get("/m365/status", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const status = await m365ReadOnlySyncService.getSyncStatus(tenantId);
+  return res.json(status ?? { tenantId, status: "NOT_CONFIGURED", mode: "DISABLED" });
+});
+
+router.post("/m365/validate", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const [cfg] = await db.select().from(m365ConnectorConfigsTable).where(eq(m365ConnectorConfigsTable.tenantId, tenantId)).limit(1);
+  if (!cfg) return res.status(404).json({ error: "M365 connector not configured" });
+  if (cfg.mode !== "READ_ONLY") return res.status(400).json({ error: "Connector must be READ_ONLY" });
+  return res.json({ ok: true, mode: cfg.mode, status: cfg.status });
+});
+
+router.post("/m365/sync/read-only", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  try { const summary = await m365ReadOnlySyncService.runReadOnlySync(tenantId); return res.json(summary); }
+  catch (error) { return res.status(500).json({ error: error instanceof Error ? error.message : "READ_ONLY_SYNC_FAILED" }); }
+});
+
+router.get("/m365/evidence", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const evidence = await m365ReadOnlySyncService.listLatestEvidence(tenantId);
+  return res.json(evidence);
+});
+
+router.post("/m365/evaluate-playbooks", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const evidence = await db.select().from(m365EvidenceRecordsTable).where(eq(m365EvidenceRecordsTable.tenantId, tenantId));
+  const mapped = evidence.map((e) => ({ userPrincipalName: e.userId, displayName: e.displayName ?? e.userId, assignedLicenses: e.assignedLicences as string[], cost: Number(e.monthlyLicenceCost), days: e.lastSignInAt ? Math.floor((Date.now()-new Date(e.lastSignInAt).getTime())/86400000) : 999, mailboxType: e.mailboxType, accountEnabled: e.accountStatus === "ACTIVE" }));
+  const result = await playbookService.generateRecommendationsForTenant({ tenantId, source: "M365_SYNC", evidenceRecords: mapped, actorId: "connector-evaluate" });
+  return res.json({ evaluated: mapped.length, recommendations: result.recommendations.length, suppressed: result.suppressed.length, executionTriggered: false });
+});
 router.get("/flexera/readiness", async (_req, res) => res.json(await checkFlexeraReadiness()));
 router.post("/flexera/smoke-test", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";

@@ -9,7 +9,9 @@
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "test": "pnpm --filter @workspace/api-server run test:contoso && pnpm --filter @workspace/api-server run test:platform-boundaries",
     "seed:orchestration-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-execution-orchestration-demo.ts",
-    "seed:customer-demo:m365": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-customer-demo-m365.ts"
+    "seed:customer-demo:m365": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-customer-demo-m365.ts",
+    "validate:runtime-env": "pnpm --filter @workspace/scripts exec tsx scripts/validate-runtime-env.ts",
+    "smoke:m365-demo": "pnpm --filter @workspace/scripts exec tsx scripts/smoke-m365-demo.ts"
   },
   "packageManager": "pnpm@10.33.0",
   "private": true,
