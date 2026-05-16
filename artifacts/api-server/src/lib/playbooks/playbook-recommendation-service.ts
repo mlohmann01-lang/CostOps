@@ -8,7 +8,7 @@ export type M365EvidenceRecord = Record<string, any>;
 export class PlaybookRecommendationService {
   private repo = new ExecutionOrchestrationRepository();
 
-  async generateRecommendationsForTenant(input: { tenantId: string; source: "DEMO"|"M365_SYNC"|"MANUAL_IMPORT"; evidenceRecords: M365EvidenceRecord[]; actorId?: string; }) {
+  async generateRecommendationsForTenant(input: { tenantId: string; source: "DEMO"|"M365_SYNC"|"MANUAL_IMPORT"; evidenceRecords: M365EvidenceRecord[]; actorId?: string; trustBand?: string; connectorTrustSnapshotId?: number; findingsBlock?: boolean; }) {
     const recommendations: any[] = []; const suppressed: any[] = []; const evaluationEvents: any[] = [];
     for (const evidence of input.evidenceRecords) {
       for (const playbook of PLAYBOOK_REGISTRY) {
@@ -26,6 +26,9 @@ export class PlaybookRecommendationService {
         else if ((evaluation.exclusions ?? []).some((e:string)=>e.includes("shared"))) suppression = { reasonCode: "EXCLUDED_SHARED_MAILBOX", reasonText: "Excluded shared mailbox" };
         else if (!evaluation.matched) suppression = { reasonCode: "TRUST_REQUIREMENT_FAILED", reasonText: "Playbook trigger not matched" };
 
+        if (!suppression && input.trustBand === "QUARANTINED") suppression = { reasonCode: "CONNECTOR_TRUST_QUARANTINED", reasonText: "Connector trust is quarantined" };
+        else if (!suppression && input.findingsBlock) suppression = { reasonCode: "RECONCILIATION_FINDINGS_BLOCK", reasonText: "Open high severity reconciliation findings" };
+
         if (suppression) {
           const row = (await db.insert(suppressedRecommendationsTable).values({ tenantId: input.tenantId, playbookId: playbook.id, targetEntityId: mapped.email, reasonCode: suppression.reasonCode, reasonText: suppression.reasonText, evidenceSnapshot: evaluation.evidence, correlationId }).returning())[0];
           suppressed.push(row);
@@ -35,7 +38,7 @@ export class PlaybookRecommendationService {
         const rec = (await db.insert(recommendationsTable).values({
           userEmail: mapped.email, displayName: mapped.displayName ?? mapped.email, licenceSku: mapped.sku, monthlyCost: evaluation.estimatedMonthlySaving, annualisedCost: evaluation.estimatedMonthlySaving * 12,
           trustScore: 0.8, entityTrustScore: 0.85, recommendationTrustScore: 0.8, executionReadinessScore: 0.8, executionStatus: "APPROVAL_REQUIRED", criticalBlockers: [], warnings: [], scoreBreakdown: {}, status: "pending", playbook: playbook.vendor, playbookId: playbook.id, playbookName: playbook.name, playbookEvidence: evaluation.evidence, playbookRequiredSignals: evaluation.requiredSignals, playbookExclusions: evaluation.exclusions, evaluationEventId: String(event.id), connector: "m365", partialData: "false",
-          actionType: Array.isArray(evaluation.recommendedAction)?evaluation.recommendedAction.join("+"):evaluation.recommendedAction, targetEntityId: mapped.email, targetEntityType: "USER", evidenceSummary: evaluation.evidence, trustRequirements: evaluation.trustRequirements ?? [], expectedMonthlySaving: evaluation.estimatedMonthlySaving, expectedAnnualSaving: evaluation.estimatedMonthlySaving*12, recommendationRiskClass: evaluation.riskClass ?? playbook.riskClass, recommendationExecutionMode: evaluation.executionMode ?? playbook.defaultExecutionMode, recommendationVerificationMethod: evaluation.verificationMethod ?? playbook.verificationMethod, rollbackNotes: evaluation.rollbackNotes ?? playbook.rollbackConsiderations, recommendationStatus: "READY_FOR_ORCHESTRATION", correlationId,
+          actionType: Array.isArray(evaluation.recommendedAction)?evaluation.recommendedAction.join("+"):evaluation.recommendedAction, targetEntityId: mapped.email, targetEntityType: "USER", evidenceSummary: { ...evaluation.evidence, connectorTrustSnapshotId: input.connectorTrustSnapshotId }, trustRequirements: evaluation.trustRequirements ?? [], expectedMonthlySaving: evaluation.estimatedMonthlySaving, expectedAnnualSaving: evaluation.estimatedMonthlySaving*12, recommendationRiskClass: evaluation.riskClass ?? playbook.riskClass, recommendationExecutionMode: evaluation.executionMode ?? playbook.defaultExecutionMode, recommendationVerificationMethod: evaluation.verificationMethod ?? playbook.verificationMethod, rollbackNotes: evaluation.rollbackNotes ?? playbook.rollbackConsiderations, recommendationStatus: input.trustBand === "LOW" ? "NEEDS_TRUST_REVIEW" : "READY_FOR_ORCHESTRATION", correlationId,
         }).returning())[0];
         recommendations.push(rec);
       }

@@ -12,6 +12,8 @@ import { checkServiceNowReadiness } from "../lib/connectors/servicenow/serviceno
 import { ingestServiceNowTenant } from "../lib/connectors/servicenow/servicenow-ingestion";
 import { M365ReadOnlySyncService } from "../lib/connectors/m365/m365-read-only-sync-service";
 import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
+import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
+import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
 
 const router = Router();
 
@@ -255,6 +257,8 @@ router.post("/m365/smoke-test", async (_req, res) => {
 
 const m365ReadOnlySyncService = new M365ReadOnlySyncService();
 const playbookService = new PlaybookRecommendationService();
+const trustService = new ConnectorTrustService();
+const reconciliationService = new EvidenceReconciliationService();
 
 router.get("/m365/status", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";
@@ -285,10 +289,32 @@ router.get("/m365/evidence", async (req, res) => {
 router.post("/m365/evaluate-playbooks", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";
   const evidence = await db.select().from(m365EvidenceRecordsTable).where(eq(m365EvidenceRecordsTable.tenantId, tenantId));
-  const mapped = evidence.map((e) => ({ userPrincipalName: e.userId, displayName: e.displayName ?? e.userId, assignedLicenses: e.assignedLicences as string[], cost: Number(e.monthlyLicenceCost), days: e.lastSignInAt ? Math.floor((Date.now()-new Date(e.lastSignInAt).getTime())/86400000) : 999, mailboxType: e.mailboxType, accountEnabled: e.accountStatus === "ACTIVE" }));
-  const result = await playbookService.generateRecommendationsForTenant({ tenantId, source: "M365_SYNC", evidenceRecords: mapped, actorId: "connector-evaluate" });
-  return res.json({ evaluated: mapped.length, recommendations: result.recommendations.length, suppressed: result.suppressed.length, executionTriggered: false });
+  const mapped = evidence.map((e) => ({ userPrincipalName: e.userId, displayName: e.displayName ?? e.userId, assignedLicenses: e.assignedLicences as string[], cost: Number(e.monthlyLicenceCost), days: e.lastSignInAt ? Math.floor((Date.now()-new Date(e.lastSignInAt).getTime())/86400000) : 999, mailboxType: e.mailboxType, accountEnabled: e.accountStatus === "ACTIVE", sourceSystem: e.sourceSystem, costCentre: e.costCentre }));
+  const trust = await trustService.getLatestTrustSnapshot(tenantId, "M365");
+  const findings = await reconciliationService.listFindings(tenantId);
+  const findingsBlock = findings.some((f:any) => f.status === "OPEN" && (f.severity === "HIGH" || f.severity === "CRITICAL"));
+  const result = await playbookService.generateRecommendationsForTenant({ tenantId, source: "M365_SYNC", evidenceRecords: mapped, actorId: "connector-evaluate", trustBand: trust?.trustBand, connectorTrustSnapshotId: trust?.id, findingsBlock });
+  return res.json({ evaluated: mapped.length, recommendations: result.recommendations.length, suppressed: result.suppressed.length, executionTriggered: false, trustBand: trust?.trustBand ?? null, connectorTrustSnapshotId: trust?.id ?? null });
 });
+
+router.get("/m365/trust", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  return res.json(await trustService.listTrustSnapshots(tenantId));
+});
+
+router.get("/m365/reconciliation-findings", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  return res.json(await reconciliationService.listFindings(tenantId));
+});
+
+router.post("/m365/reconciliation-findings/:id/resolve", async (req, res) => {
+  return res.json(await reconciliationService.resolveFinding(Number(req.params.id)));
+});
+
+router.post("/m365/reconciliation-findings/:id/suppress", async (req, res) => {
+  return res.json(await reconciliationService.suppressFinding(Number(req.params.id)));
+});
+
 router.get("/flexera/readiness", async (_req, res) => res.json(await checkFlexeraReadiness()));
 router.post("/flexera/smoke-test", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";
