@@ -34,3 +34,6 @@ export * from "./enterpriseGraph";
 
 export * from "./executionOrchestration";
 export * from "./suppressedRecommendations";
+
+export * from "./executionGovernancePolicies";
+export * from "./executionApprovals";

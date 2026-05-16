@@ -20,6 +20,7 @@ import platformEventsRouter from "./platform-events";
 import authRouter from "./auth";
 import executionOrchestrationRouter from "./execution-orchestration";
 import playbooksRouter from "./playbooks";
+import demoRouter from "./demo";
 
 const router: IRouter = Router();
 
@@ -44,5 +45,6 @@ router.use("/platform-events", platformEventsRouter);
 router.use("/auth", authRouter);
 router.use("/execution-orchestration", executionOrchestrationRouter);
 router.use("/playbooks", playbooksRouter);
+router.use("/demo", demoRouter);
 
 export default router;

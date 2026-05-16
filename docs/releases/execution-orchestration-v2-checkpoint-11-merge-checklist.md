@@ -93,3 +93,18 @@
 - Recommendation generation validated for expanded M365 playbooks.
 - Suppression evidence validated and persisted with reason codes.
 - Handoff now creates orchestration plan + queue item only (no execution).
+
+- Checkpoint 17 governance console added
+- Policy enforcement validated
+- Approval workflow validated
+- Runtime controls remain non-overridable
+
+- Checkpoint 18 customer demo flow added
+- End-to-end demo runbook created
+- Demo seed is safe/no-execution
+- Demo status endpoint added
+
+- Checkpoint 19 demo runtime smoke added
+- Control-plane blockers resolved or isolated
+- Demo status endpoint validated
+- UI demo path validated
