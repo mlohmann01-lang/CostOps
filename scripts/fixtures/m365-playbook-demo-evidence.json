@@ -1,0 +1,12 @@
+[
+  {"userPrincipalName":"disabled.user@contoso.com","displayName":"Disabled User","accountEnabled":false,"assignedLicenses":["E5"],"sku":"E5","cost":57,"days":5},
+  {"userPrincipalName":"inactive.user@contoso.com","displayName":"Inactive User","accountEnabled":true,"assignedLicenses":["E3"],"sku":"E3","cost":36,"days":120},
+  {"userPrincipalName":"e3.webonly@contoso.com","displayName":"E3 Web","assignedLicenses":["E3"],"sku":"E3","cost":36,"hasDesktopActivity":false,"days":15},
+  {"userPrincipalName":"e5.underused@contoso.com","displayName":"E5 Underused","assignedLicenses":["E5"],"sku":"E5","cost":57,"advancedFeatureUsage":0.1,"activityPresent":true,"days":20},
+  {"userPrincipalName":"addon.unused@contoso.com","displayName":"Addon Unused","assignedLicenses":["ADDON_AUDIO"],"sku":"ADDON_AUDIO","cost":12,"addonUsageDaysAgo":200,"days":10},
+  {"userPrincipalName":"copilot.underuse@contoso.com","displayName":"Copilot User","assignedLicenses":["COPILOT"],"sku":"COPILOT","cost":30,"copilotActivityScore":0.1,"days":10},
+  {"userPrincipalName":"shared.mailbox@contoso.com","displayName":"Shared Mailbox","assignedLicenses":["E3"],"sku":"E3","mailboxType":"shared","isSharedMailbox":true,"cost":36,"days":40},
+  {"userPrincipalName":"overlap.user@contoso.com","displayName":"Overlap User","assignedLicenses":["E3","E5"],"overlappingSkuDetected":true,"sku":"E5","cost":57,"days":7},
+  {"userPrincipalName":"admin.service@contoso.com","displayName":"Admin Service","accountEnabled":false,"assignedLicenses":["E5"],"sku":"E5","cost":57,"days":90},
+  {"userPrincipalName":"missing.evidence@contoso.com","displayName":"Missing Evidence","assignedLicenses":[],"sku":"E3","cost":36}
+]

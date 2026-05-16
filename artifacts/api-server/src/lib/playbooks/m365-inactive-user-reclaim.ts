@@ -25,9 +25,18 @@ const isExcluded = (c: M365Candidate): string[] => {
 export const m365InactiveUserReclaimPlaybook: BasePlaybook<M365Candidate> = {
   id: "m365_inactive_user_reclaim_v2",
   name: "M365 Inactive User Reclaim",
+  description: "Legacy inactive-user playbook retained for compatibility.",
   vendor: "m365",
   action: "REMOVE_LICENSE",
+  triggerConditions: ["disabled account or inactive >90 days", "assigned license exists"],
+  requiredEvidence: ["user account status", "last sign-in", "assigned licence", "SKU cost"],
+  exclusionRules: ["admin account", "service account", "shared mailbox", "noreply user"],
+  recommendedAction: "REMOVE_LICENSE",
   riskClass: "B",
+  defaultExecutionMode: "APPROVAL_REQUIRED",
+  expectedSavingsModel: "Full assigned SKU monthly cost",
+  verificationMethod: "Confirm unassigned and no immediate reactivation",
+  rollbackConsiderations: "Reassign prior license if business disruption occurs",
   evaluate(input): PlaybookEvaluationResult {
     const exclusions = isExcluded(input);
     const requiredSignals = ["accountEnabled", "lastLoginDaysAgo", "assignedLicenses", "userPrincipalName"];

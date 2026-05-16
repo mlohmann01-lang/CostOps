@@ -19,6 +19,7 @@ import onboardingRouter from "./onboarding";
 import platformEventsRouter from "./platform-events";
 import authRouter from "./auth";
 import executionOrchestrationRouter from "./execution-orchestration";
+import playbooksRouter from "./playbooks";
 
 const router: IRouter = Router();
 
@@ -42,5 +43,6 @@ router.use("/onboarding", onboardingRouter);
 router.use("/platform-events", platformEventsRouter);
 router.use("/auth", authRouter);
 router.use("/execution-orchestration", executionOrchestrationRouter);
+router.use("/playbooks", playbooksRouter);
 
 export default router;

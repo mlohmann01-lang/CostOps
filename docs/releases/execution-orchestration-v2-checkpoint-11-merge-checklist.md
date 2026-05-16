@@ -87,3 +87,9 @@
 - [x] Expected vs verified savings semantics preserved (expected not treated as realised).
 - [x] Confidence logic added (HIGH/MEDIUM/LOW).
 - [x] Validation results documented in `docs/quality-gates/checkpoint-14-savings-proof.md`.
+
+## Checkpoint 16 Addendum
+- Checkpoint 16 playbook-to-orchestration flow added.
+- Recommendation generation validated for expanded M365 playbooks.
+- Suppression evidence validated and persisted with reason codes.
+- Handoff now creates orchestration plan + queue item only (no execution).

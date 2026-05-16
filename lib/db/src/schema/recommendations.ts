@@ -4,6 +4,7 @@ import { z } from "zod/v4";
 
 export const recommendationsTable = pgTable("recommendations", {
   id: serial("id").primaryKey(),
+  tenantId: text("tenant_id").notNull().default("default"),
   userEmail: text("user_email").notNull(),
   displayName: text("display_name").notNull(),
   licenceSku: text("licence_sku").notNull(),
@@ -38,6 +39,19 @@ export const recommendationsTable = pgTable("recommendations", {
   lastActivity: timestamp("last_activity", { withTimezone: true }),
   daysSinceActivity: integer("days_since_activity"),
   rejectionReason: text("rejection_reason"),
+  actionType: text("action_type").notNull().default(""),
+  targetEntityId: text("target_entity_id").notNull().default(""),
+  targetEntityType: text("target_entity_type").notNull().default("USER"),
+  evidenceSummary: jsonb("evidence_summary").notNull().default({}),
+  trustRequirements: jsonb("trust_requirements").notNull().default([]),
+  expectedMonthlySaving: real("expected_monthly_saving").notNull().default(0),
+  expectedAnnualSaving: real("expected_annual_saving").notNull().default(0),
+  recommendationRiskClass: text("recommendation_risk_class").notNull().default("B"),
+  recommendationExecutionMode: text("recommendation_execution_mode").notNull().default("APPROVAL_REQUIRED"),
+  recommendationVerificationMethod: text("recommendation_verification_method").notNull().default(""),
+  rollbackNotes: text("rollback_notes").notNull().default(""),
+  recommendationStatus: text("recommendation_status").notNull().default("CANDIDATE"),
+  correlationId: text("correlation_id").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });
