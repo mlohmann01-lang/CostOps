@@ -34,6 +34,7 @@ import { RefreshCw, CheckCircle2, XCircle, ChevronRight } from "lucide-react";
 import { formatCurrency, getTrustScoreColor, getExecutionStatusColor, getStatusColor, formatDate } from "@/lib/format";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import { RecommendationRow, safeArrayResponse, toRecommendationRow } from "@/lib/contracts/recommendation-contract";
 
 type StatusFilter = "all" | "pending" | "approved" | "rejected" | "executed";
 
@@ -102,13 +103,13 @@ export default function Recommendations() {
     }
   };
 
-  const recRows = recommendations.data ?? [];
-  const groupedRecommendations: Record<string, typeof recRows> = recRows.reduce((acc, rec) => {
-    const key = rec.playbook ?? "Unknown Playbook";
+  const recRows: RecommendationRow[] = safeArrayResponse<unknown>(recommendations.data, "recommendations.list").map(toRecommendationRow);
+  const groupedRecommendations: Record<string, RecommendationRow[]> = recRows.reduce((acc, rec) => {
+    const key = rec.playbookName || rec.playbook || "Unknown Playbook";
     acc[key] = acc[key] ?? [];
     acc[key].push(rec);
     return acc;
-  }, {} as Record<string, typeof recRows>);
+  }, {} as Record<string, RecommendationRow[]>);
 
   return (
     <Layout>

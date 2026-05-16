@@ -64,3 +64,18 @@ Before creating a new service/module:
 - Canonical: `artifacts/api-server/src/lib/pilot-readiness-service.ts`
 - Supporting: `tenant-provisioning-service.ts`, `support-diagnostics-service.ts`
 - Duplicate candidates: readiness logic embedded in routes.
+
+
+## Platform Integrity Notes
+- Do not create a new service/module until this registry has been checked and canonical authority extension has been evaluated.
+- Validator-only modules (replay/integrity) are allowed only as non-authority helpers and must be listed explicitly.
+
+### Duplicate/Legacy Tracking (2026-05-16)
+- Governance wrappers: `governance-policy-engine.ts`, `execution-governance-policy-service.ts` are supporting modules; canonical evaluation remains `governance/policy-engine.ts`.
+- Workflow legacy helpers: `lib/workflows/workflow-orchestrator.ts` and `lib/workflows/workflow-orchestration-v2.ts` are non-canonical relative to `lib/workflow/workflow-operations-service.ts`.
+- Trust support modules: `connectors/m365/connector-trust-service.ts`, `reconciliation/trust-signal-adapter.ts`, and `reconciliation/trust-signal-mapper.ts` are supporting only; canonical trust scoring remains `lib/trust-engine.ts`.
+- Execution helpers: `execution/execution-engine.ts` and `execution/rollback-engine.ts` are supporting execution internals; canonical execution authority remains `execution-orchestration/execution-orchestration-service.ts`.
+
+### Deprecation/Consolidation Guidance
+- Prefer migrating route-level orchestration to canonical services over introducing new wrappers.
+- Mark legacy wrappers as compatibility layers until references are removed.
