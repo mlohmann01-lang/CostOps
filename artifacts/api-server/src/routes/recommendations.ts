@@ -78,7 +78,8 @@ router.get("/arbitration/conflicts", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const rows = await db.select().from(recommendationsTable).orderBy(recommendationsTable.createdAt);
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const rows = await db.select().from(recommendationsTable).where(eq(recommendationsTable.tenantId, tenantId)).orderBy(recommendationsTable.createdAt);
   res.json(rows);
 });
 
