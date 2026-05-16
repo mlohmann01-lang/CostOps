@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -11,6 +11,10 @@ import {
   getGetActionBreakdownQueryKey,
   getListOutcomesQueryKey,
   getGetOutcomesSummaryQueryKey,
+  getLatestRecommendationOutcome,
+  getRecommendationOutcomes,
+  getRecommendationOutcomeIntegrity,
+  resolveRecommendationOutcome,
 } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,6 +69,9 @@ export default function RecommendationDetail() {
   const [approveOpen, setApproveOpen] = useState(false);
   const [rejectOpen, setRejectOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
+  const [latestOutcome, setLatestOutcome] = useState<any>(null);
+  const [outcomeHistory, setOutcomeHistory] = useState<any[]>([]);
+  const [integrity, setIntegrity] = useState<any>(null);
 
   const numId = parseInt(id ?? "", 10);
   const rec = useGetRecommendation(numId, {
@@ -89,6 +96,18 @@ export default function RecommendationDetail() {
       },
     },
   });
+
+
+
+  useEffect(() => {
+    if (isNaN(numId)) return;
+    const loadOutcome = async () => {
+      try { setLatestOutcome(await getLatestRecommendationOutcome(numId)); } catch { setLatestOutcome(null); }
+      try { setOutcomeHistory(await getRecommendationOutcomes(numId)); } catch { setOutcomeHistory([]); }
+      try { setIntegrity(await getRecommendationOutcomeIntegrity(numId)); } catch { setIntegrity(null); }
+    };
+    void loadOutcome();
+  }, [numId]);
 
   const reject = useRejectRecommendation({
     mutation: {
@@ -227,6 +246,54 @@ export default function RecommendationDetail() {
                 </div>
               </CardContent>
             </Card>
+
+            
+
+            <Card>
+              <CardHeader><CardTitle>Outcome Proof</CardTitle></CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                {!latestOutcome ? <p>No outcome has been resolved for this recommendation yet.</p> : <>
+                  <div>Status: <Badge>{latestOutcome.outcomeStatus}</Badge></div>
+                  <div>Resolution confidence: {latestOutcome.resolutionConfidence}</div>
+                  <div>Projected savings: {formatCurrency(Number(latestOutcome.projectedMonthlySavings ?? 0))}/mo</div>
+                  <div>Realized savings: {formatCurrency(Number(latestOutcome.realizedMonthlySavings ?? 0))}/mo</div>
+                  <div>Delta: {Number(latestOutcome.realizationDelta ?? 0).toFixed(2)} ({Number(latestOutcome.realizationDeltaPercent ?? 0).toFixed(2)}%)</div>
+                  <div>Drift detected: {String(!!latestOutcome.driftDetected)}</div>
+                  <div>Reversal detected: {String(!!latestOutcome.reversalDetected)}</div>
+                  <div>Resolved at: {formatDateTime(latestOutcome.resolvedAt)}</div>
+                  <div>Deterministic hash: {integrity?.deterministicHash ?? latestOutcome.deterministicHash}</div>
+                  <div>Integrity status: {integrity ? String(!!integrity.integrityValid) : "No outcome integrity record available."}</div>
+                </>}
+                <Button variant="outline" size="sm" onClick={async()=>{await resolveRecommendationOutcome(numId,{tenantId:"default"}); setLatestOutcome(await getLatestRecommendationOutcome(numId)); setOutcomeHistory(await getRecommendationOutcomes(numId)); setIntegrity(await getRecommendationOutcomeIntegrity(numId));}}>Resolve Outcome</Button>
+                <p className="text-xs text-muted-foreground">Resolving an outcome records a deterministic outcome snapshot. It does not execute or remediate anything.</p>
+              </CardContent>
+            </Card>
+
+            <Card><CardHeader><CardTitle>Projected vs Realized Savings</CardTitle></CardHeader><CardContent className="text-sm space-y-1">
+              {!latestOutcome ? <p>No outcome has been resolved for this recommendation yet.</p> : <>
+                <div>Projected monthly: {Number(latestOutcome.projectedMonthlySavings ?? 0).toFixed(2)}</div>
+                <div>Realized monthly: {Number(latestOutcome.realizedMonthlySavings ?? 0).toFixed(2)}</div>
+                <div>Projected annualized: {Number(latestOutcome.projectedAnnualizedSavings ?? 0).toFixed(2)}</div>
+                <div>Realized annualized: {Number(latestOutcome.realizedAnnualizedSavings ?? 0).toFixed(2)}</div>
+                <div>Monthly delta: {Number(latestOutcome.realizationDelta ?? 0).toFixed(2)}</div>
+                <div>Annualized delta: {Number((latestOutcome.realizedAnnualizedSavings ?? 0) - (latestOutcome.projectedAnnualizedSavings ?? 0)).toFixed(2)}</div>
+                <div>Delta %: {Number(latestOutcome.realizationDeltaPercent ?? 0).toFixed(2)}%</div>
+              </>}
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>Confidence Calibration</CardTitle></CardHeader><CardContent className="text-sm">
+              <p className="text-xs text-muted-foreground">Calibration measures whether projected confidence matched verified outcome evidence.</p>
+              {!latestOutcome ? <p>No outcome has been resolved for this recommendation yet.</p> : <>
+                <div>Projected confidence: {(r as any).pricingConfidence ?? "UNKNOWN"}</div>
+                <div>Resolution confidence: {latestOutcome.resolutionConfidence}</div>
+                <div>Calibration result: {latestOutcome.confidenceCalibration}</div>
+              </>}
+            </CardContent></Card>
+
+            <Card><CardHeader><CardTitle>Outcome History</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">
+              <p className="text-xs text-muted-foreground">Outcome history is append-only. Prior outcomes are preserved for audit and replay.</p>
+              {!outcomeHistory.length ? <p>No outcome history available.</p> : outcomeHistory.map((o:any)=><div key={o.id} className="border rounded p-2 text-xs"><div>{o.outcomeStatus} · {formatDateTime(o.resolvedAt)} · {o.resolutionConfidence}</div><div>Delta: {Number(o.realizationDelta ?? 0).toFixed(2)} ({Number(o.realizationDeltaPercent ?? 0).toFixed(2)}%)</div><div>{o.driftReason ?? o.reversalReason ?? "No drift/reversal reason"}</div><div>Hash: {o.deterministicHash}</div></div>)}
+            </CardContent></Card>
 
             {r.rejectionReason && (
               <Card className="border-red-500/20 bg-red-500/5">
