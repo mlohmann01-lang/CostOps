@@ -151,3 +151,15 @@ function sortObj(v: any): any {
   if (v && typeof v === "object") return Object.keys(v).sort().reduce((a: any, k) => (a[k] = sortObj(v[k]), a), {});
   return v;
 }
+
+
+export function simulateM365LifecycleAwareSavings(rows: Array<{ lifecycleState: string; projectedMonthlySavings: number }>) {
+  let actionable=0, approvalRequired=0, reviewOnly=0;
+  for (const r of rows){
+    if (r.lifecycleState === "SUPPRESSED") continue;
+    if (r.lifecycleState === "NEEDS_EVIDENCE") { reviewOnly += r.projectedMonthlySavings; continue; }
+    if (r.lifecycleState === "GOVERNANCE_REVIEW_REQUIRED") { approvalRequired += r.projectedMonthlySavings; continue; }
+    if (r.lifecycleState === "READY_FOR_REVIEW") actionable += r.projectedMonthlySavings;
+  }
+  return { actionableSavings: actionable, approvalRequiredSavings: approvalRequired, reviewOnlySavings: reviewOnly };
+}

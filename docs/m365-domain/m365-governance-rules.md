@@ -1,3 +1,6 @@
-# Placeholder
+# m365 governance rules
 
-M365 domain pack expansion documentation created in this change set.
+Phase B implementation added deterministic authority behavior for m365-governance-rules.
+
+- No direct execution introduced.
+- Lifecycle/governance/workflow/simulation are advisory/review-only.

@@ -156,3 +156,5 @@
 - Tenant context explicitly required in core recommendation/workflow/simulation/telemetry routes.
 
 - M365 playbook expansion remains recommendation/simulation only; no execution boundary expansion.
+
+- Phase B confirms no new subsystem; extended existing recommendation/governance/workflow/simulation authorities.

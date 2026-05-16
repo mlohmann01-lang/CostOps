@@ -117,3 +117,34 @@ export class RecommendationArbitrationService {
     } as any;
   }
 }
+
+
+export function applyM365ArbitrationPrecedence(recommendations: Array<any>) {
+  const sorted = [...recommendations].sort((a, b) => precedence(a) - precedence(b));
+  const suppressed: Array<any> = [];
+  const winners = new Map<string, any>();
+  for (const rec of sorted) {
+    const key = `${rec.entityId}:${rec.licenseScope ?? rec.sku ?? "default"}`;
+    const winner = winners.get(key);
+    if (!winner) { winners.set(key, rec); continue; }
+    if (winner.type === "FULL_RECLAIM" && /RIGHTSIZE|DOWNGRADE/.test(rec.type ?? "")) suppressed.push({ ...rec, suppressedBy: "FULL_RECLAIM" });
+    else if (winner.type === "OVERLAP_ELIMINATION") suppressed.push({ ...rec, suppressedBy: "OVERLAP_ELIMINATION" });
+    else if (winner.type === "LEGAL_BLOCKER") suppressed.push({ ...rec, suppressedBy: "LEGAL_BLOCKER" });
+  }
+  return { winners: [...winners.values()], suppressed };
+}
+
+function precedence(rec: any): number {
+  const t = String(rec.type ?? "");
+  if (t === "LEGAL_BLOCKER") return 1;
+  if (t === "DISABLED_RECLAIM") return 2;
+  if (t === "INACTIVE_RECLAIM") return 3;
+  if (t === "OVERLAP_ELIMINATION") return 4;
+  if (t === "ADDON_RECLAIM") return 5;
+  if (t === "COPILOT_REALLOCATION") return 6;
+  if (/RIGHTSIZE|DOWNGRADE/.test(t)) return 7;
+  if (t === "FRONTLINE_FIT") return 8;
+  if (t === "STORAGE_REVIEW") return 9;
+  if (t === "RENEWAL_READINESS") return 10;
+  return 99;
+}
