@@ -7,7 +7,9 @@ const router = Router();
 
 router.post("/outcomes/:outcomeLedgerId", async (req, res) => {
   const outcomeLedgerId = Number(req.params.outcomeLedgerId);
+  const tenantId = (req.query.tenantId as string) ?? "default";
   const [outcome] = await db.select().from(outcomeLedgerTable).where(eq(outcomeLedgerTable.id, outcomeLedgerId)).limit(1);
+  if (outcome && outcome.tenantId !== tenantId) return res.status(404).json({ error: "Outcome not found" });
   if (!outcome) return res.status(404).json({ error: "Outcome not found" });
   return res.json(await verifyOutcome(outcome));
 });

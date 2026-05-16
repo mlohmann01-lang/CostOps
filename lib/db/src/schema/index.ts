@@ -57,3 +57,5 @@ export * from "./entityCorrelationSnapshots";
 export * from "./governancePolicyEngine";
 
 export * from "./operationalTelemetry";
+
+export * from "./workflow";
