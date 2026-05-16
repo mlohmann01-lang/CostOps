@@ -59,3 +59,5 @@ export * from "./governancePolicyEngine";
 export * from "./operationalTelemetry";
 
 export * from "./workflow";
+
+export * from "./pilotProfiles";

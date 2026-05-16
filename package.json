@@ -13,7 +13,8 @@
     "validate:runtime-env": "pnpm --filter @workspace/scripts exec tsx scripts/validate-runtime-env.ts",
     "smoke:m365-demo": "pnpm --filter @workspace/scripts exec tsx scripts/smoke-m365-demo.ts",
     "seed:golden-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-golden-demo.ts",
-    "reset:golden-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./reset-golden-demo.ts"
+    "reset:golden-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./reset-golden-demo.ts",
+    "provision:tenant": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./provision-tenant.ts"
   },
   "packageManager": "pnpm@10.33.0",
   "private": true,
