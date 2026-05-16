@@ -13,3 +13,7 @@ Date: 2026-05-16
 | `/api/telemetry` | `artifacts/api-server/src/routes/telemetry.ts` | events/connectors/governance/operators/slas/diagnostics/failures | `pages/runtime-telemetry.tsx`, `pages/platform-events.tsx` |
 | `/api/pilot` | `artifacts/api-server/src/routes/pilot.ts` | readiness + support diagnostics | `pages/pilot-readiness.tsx`, `pages/support-diagnostics.tsx` |
 | `/api/connectors` | `artifacts/api-server/src/routes/connectors.ts` | connector sync/status operations | `pages/connectors.tsx`, `pages/connectors-m365.tsx` |
+
+- Existing playbook/recommendation routes now cover expanded M365 playbook metadata.
+
+- M365 Phase A kept existing route surfaces; no per-use-case API expansion.

@@ -5,3 +5,5 @@
 - Prohibited pattern: route-level direct writes to telemetry tables for new events.
 - Event taxonomy: operational, governance, operator-activity, connector-health.
 - Correlation requirements: lifecycle flows must include `correlationId` or `traceId`; tenant-scoped flows must include tenantId.
+
+- Phase A M365 trust/evidence/reconciliation events reserved under canonical telemetry emission authority.

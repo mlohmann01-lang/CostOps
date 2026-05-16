@@ -6,13 +6,19 @@ export class EvidenceReconciliationService {
     const findings: any[] = [];
     for (const e of evidenceRecords) {
       const mk = (findingType: string, severity: "WARNING"|"CRITICAL", description: string, recommendedResolution: string) => findings.push({ tenantId, connectorType: "M365", sourceSystem: e.sourceSystem ?? "M365_GRAPH", entityType: "USER", entityId: e.userId ?? e.userPrincipalName ?? "unknown", findingType, severity, status: "OPEN", description, evidenceSnapshot: e, recommendedResolution });
-      if (!e.userId && !e.userPrincipalName) mk("MISSING_REQUIRED_FIELD", "CRITICAL", "User identity missing", "Provide userId/userPrincipalName in evidence normalization.");
-      if (!e.assignedLicences && !e.assignedLicenses) mk("MISSING_REQUIRED_FIELD", "WARNING", "Assigned licenses missing", "Populate assignedLicences from Graph assignments.");
-      if (!e.costCentre) mk("UNKNOWN_COST_CENTRE", "WARNING", "Cost centre is unknown", "Enrich identity source with cost centre mapping.");
-      if ((e.monthlyLicenceCost ?? e.cost ?? 0) <= 0 && ((e.assignedLicences ?? e.assignedLicenses ?? []).length > 0)) mk("SKU_COST_MISSING", "WARNING", "SKU cost missing for licensed user", "Load SKU catalogue pricing before evaluation.");
-      const lastTs = e.lastSignInAt ? new Date(e.lastSignInAt).getTime() : 0;
-      if (lastTs > 0 && Date.now() - lastTs > 90 * 86400000) mk("STALE_EVIDENCE", "WARNING", "Sign-in evidence is stale (>90 days)", "Run sync and verify Graph activity signals.");
-      if ((e.mailboxType === "shared" && e.accountStatus === "ACTIVE") || (e.mailboxType === "user" && e.isSharedMailbox === true)) mk("MAILBOX_TYPE_CONFLICT", "CRITICAL", "Mailbox evidence conflicts with account signal", "Reconcile mailbox type from Exchange and user profile.");
+      if (!e.userId || !e.userPrincipalName) mk("M365_LICENSE_ASSIGNMENT_CONFLICT", "CRITICAL", "Identity/licensing association is incomplete.", "Provide normalized userId+UPN with assigned SKU mappings.");
+      if (e.copilotUsage === "UNKNOWN") mk("M365_COPILOT_USAGE_UNAVAILABLE", "WARNING", "Copilot usage evidence unavailable.", "Enable Copilot telemetry and refresh sync.");
+      if (e.desktopAppUsage === "UNKNOWN" || e.webUsage === "UNKNOWN") mk("M365_USAGE_EVIDENCE_MISSING", "WARNING", "Usage evidence missing for one or more required workload signals.", "Populate workload usage sources.");
+      if (e.mailboxStorageBytes === "UNKNOWN" && e.oneDriveStorageBytes === "UNKNOWN" && e.sharePointStorageBytes === "UNKNOWN") mk("M365_STORAGE_EVIDENCE_UNAVAILABLE", "WARNING", "Storage evidence unavailable.", "Load mailbox/OneDrive/SharePoint storage metrics.");
+      if (e.overlappingSkuDetected === true) mk("M365_SKU_OVERLAP_CONFLICT", "WARNING", "Overlapping SKU entitlement suspected.", "Reconcile assigned SKUs against service-plan overlap map.");
+      if (e.isSharedMailbox === "UNKNOWN") mk("M365_SHARED_MAILBOX_CONFIDENCE_LOW", "WARNING", "Shared mailbox confidence is low.", "Validate mailbox type from Exchange evidence.");
+      if (e.isServiceAccount === "UNKNOWN") mk("M365_SERVICE_ACCOUNT_CONFIDENCE_LOW", "WARNING", "Service account confidence is low.", "Validate account classification evidence.");
+      if (e.isPrivileged === true) mk("M365_PRIVILEGED_ACCOUNT_EXCLUSION", "WARNING", "Privileged account requires governance review.", "Route recommendation to governance review.");
+      if (e.retentionPolicy === "UNKNOWN") mk("M365_RETENTION_POLICY_UNKNOWN", "WARNING", "Retention policy evidence is unknown.", "Load retention policy metadata.");
+      if (e.legalHold === true) mk("M365_LEGAL_HOLD_BLOCKER", "CRITICAL", "Legal hold blocks storage-modifying recommendation.", "Suppress storage action recommendation.");
+      if (e.evidenceFreshness === "STALE") mk("M365_CONNECTOR_FRESHNESS_DEGRADED", "WARNING", "Connector freshness degraded (stale evidence).", "Refresh connector sync.");
+      if (e.evidenceFreshness === "EXPIRED") mk("M365_USAGE_DATA_STALE", "CRITICAL", "Usage evidence is expired.", "Collect fresh usage evidence before recommendation.");
+      if ((e.pricingConfidence ?? 0) < 0.5) mk("M365_PRICING_EVIDENCE_UNAVAILABLE", "WARNING", "Pricing evidence unavailable or low confidence.", "Load tenant SKU pricing.");
     }
     if (findings.length) await db.insert(evidenceReconciliationFindingsTable).values(findings);
     return findings;

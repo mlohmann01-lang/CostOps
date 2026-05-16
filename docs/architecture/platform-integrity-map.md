@@ -27,3 +27,5 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 - Tenant Context: REMEDIATED for core high-risk routes.
 - Recommendation authority consolidation: PARTIALLY_REMEDIATED pending deeper route-to-service migration.
 - Execution boundary static protections: REMEDIATED.
+
+- M365 Phase A integrity: evidence normalization + trust/reconciliation expansion implemented in canonical M365 connector authorities.
