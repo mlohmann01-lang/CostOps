@@ -1,6 +1,8 @@
 import { resetGoldenDemo, seedGoldenDemo } from "./seed-golden-demo.ts";
+const tenantId = process.env.GOLDEN_DEMO_TENANT_ID ?? "tenant-contoso-retail-group";
 
 export async function resetAndReseedGoldenDemo() {
+  if (!tenantId.includes("demo") && !tenantId.includes("contoso")) throw new Error("Blocked reset: non-demo tenant");
   await resetGoldenDemo();
   return seedGoldenDemo();
 }

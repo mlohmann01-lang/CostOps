@@ -41,6 +41,8 @@ export function Layout({ children }: LayoutProps) {
     { name: "Operational Entity Graph", href: "/operational-entity-graph", icon: ShieldCheck },
     { name: "Workflow Center", href: "/workflow-center", icon: ShieldCheck },
     { name: "Execution Orchestration", href: "/execution-orchestration", icon: ShieldCheck },
+    { name: "Pilot Readiness", href: "/pilot-readiness", icon: ShieldCheck },
+    { name: "Support Diagnostics", href: "/support-diagnostics", icon: ShieldCheck },
   ];
 
   return (

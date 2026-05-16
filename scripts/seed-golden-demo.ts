@@ -10,7 +10,7 @@ import {
   suppressedRecommendationsTable,
 } from "../lib/db/src/index.ts";
 
-const tenantId = "tenant-contoso-retail-group";
+const tenantId = process.env.GOLDEN_DEMO_TENANT_ID ?? "tenant-contoso-retail-group";
 const tenantName = "Contoso Retail Group";
 const seededAt = new Date("2026-04-30T09:00:00.000Z");
 const connectorId = "m365-contoso-au-nz";
@@ -23,6 +23,7 @@ const recommendationsFixture = [
 ];
 
 export async function resetGoldenDemo() {
+  if (!tenantId.includes("demo") && !tenantId.includes("contoso")) throw new Error("Refusing to reset non-demo tenant");
   await db.delete(recommendationDecisionTracesTable);
   await db.delete(recommendationOutcomesTable);
   await db.delete(recommendationRationalesTable);
