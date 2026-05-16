@@ -8,7 +8,8 @@
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
     "test": "pnpm --filter @workspace/api-server run test:contoso && pnpm --filter @workspace/api-server run test:platform-boundaries",
-    "seed:orchestration-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-execution-orchestration-demo.ts"
+    "seed:orchestration-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-execution-orchestration-demo.ts",
+    "seed:customer-demo:m365": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-customer-demo-m365.ts"
   },
   "packageManager": "pnpm@10.33.0",
   "private": true,
