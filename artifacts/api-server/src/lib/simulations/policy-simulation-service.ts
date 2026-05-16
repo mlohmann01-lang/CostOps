@@ -24,6 +24,8 @@ export type SimulationInput = {
   unresolvedBlockers: number;
   lowOrQuarantinedTrustEntities: number;
   staleEvidenceEntities: number;
+  graphDependencyChains?: number;
+  linkedPrivilegedGroups?: number;
   actionType: string;
   entitlementType: string;
   connectorReliabilityScore: number;
@@ -37,7 +39,7 @@ export class PolicySimulationService {
 
   estimateBlastRadiusScore(input: SimulationInput): number {
     const base = Math.min(100, input.projectedAffectedUsers * 0.35 + input.projectedAffectedLicenses * 0.45 + input.projectedAffectedGroups * 0.2);
-    const governanceBoost = input.governanceSensitivityScore * 0.15;
+    const governanceBoost = input.governanceSensitivityScore * 0.15 + (input.graphDependencyChains ?? 0) * 1.5 + (input.linkedPrivilegedGroups ?? 0) * 2;
     const trustPenalty = input.lowOrQuarantinedTrustEntities > 0 ? 8 : 0;
     const historicalPenalty = (input.forecastInput.historicalDriftRate + input.forecastInput.historicalReversalRate) * 20;
     return clamp2(base + governanceBoost + trustPenalty + historicalPenalty);
@@ -88,6 +90,7 @@ export class PolicySimulationService {
       simulation: [
         `${input.scopeEntityIds.length} scope entities evaluated`,
         `${input.projectedAffectedLicenses} affected licenses in deterministic scope`,
+        `${input.graphDependencyChains ?? 0} graph dependency chains considered`,
         `historical realization rate ${(input.forecastInput.historicalRealizationRate * 100).toFixed(1)}%`,
       ],
       governance: {

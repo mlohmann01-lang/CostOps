@@ -34,6 +34,7 @@ import WorkflowCenterPage from "@/pages/workflow-center";
 import OperationalIntelligencePage from "@/pages/operational-intelligence";
 import ExecutionOrchestrationPage from "@/pages/execution-orchestration";
 import ConnectorsM365 from "@/pages/connectors-m365";
+import OperationalEntityGraphPage from "@/pages/operational-entity-graph";
 
 
 const queryClient = new QueryClient({
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/workflow-center" component={WorkflowCenterPage} />
       <Route path="/operational-intelligence" component={OperationalIntelligencePage} />
       <Route path="/execution-orchestration" component={ExecutionOrchestrationPage} />
+      <Route path="/operational-entity-graph" component={OperationalEntityGraphPage} />
       <Route component={NotFound} />
     </Switch>
   );
