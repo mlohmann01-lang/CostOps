@@ -38,3 +38,6 @@ export * from "./suppressedRecommendations";
 export * from "./executionGovernancePolicies";
 export * from "./executionApprovals";
 export * from "./m365ReadOnly";
+
+export * from "./connectorTrust";
+export * from "./evidenceReconciliationFindings";

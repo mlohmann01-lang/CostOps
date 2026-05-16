@@ -123,3 +123,8 @@
 - read-only scope confirmed
 - evidence normalization validated
 - playbook evaluation from persisted evidence validated
+
+## Checkpoint 22 Additions
+- Checkpoint 22 connector trust/reconciliation added
+- LOW/QUARANTINED trust gating validated
+- findings resolution/suppression validated
