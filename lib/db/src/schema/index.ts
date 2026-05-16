@@ -37,3 +37,4 @@ export * from "./suppressedRecommendations";
 
 export * from "./executionGovernancePolicies";
 export * from "./executionApprovals";
+export * from "./m365ReadOnly";

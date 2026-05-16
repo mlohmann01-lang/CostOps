@@ -3,6 +3,11 @@ import path from "node:path";
 import { db, executionApprovalsTable, executionBatchesTable, executionGovernancePoliciesTable, executionOrchestrationPlansTable, executionOutcomeVerificationsTable, recommendationsTable, suppressedRecommendationsTable } from "../lib/db/src/index.ts";
 
 export async function seedCustomerDemoM365() {
+  if (process.env.DEMO_MODE !== "true") {
+    throw new Error("DEMO_MODE=true is required for customer demo seed");
+  }
+
+  console.log("demo mode only — no external execution");
   const fixturePath = path.resolve(process.cwd(), "fixtures/customer-demo-scenario-m365.json");
   const raw = await fs.readFile(fixturePath, "utf8");
   const fixture = JSON.parse(raw) as any;
