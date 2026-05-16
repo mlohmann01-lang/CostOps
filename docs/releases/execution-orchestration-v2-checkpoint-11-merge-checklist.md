@@ -74,3 +74,16 @@
 ## Updated Final Merge Recommendation
 - **Code validated:** build/typecheck, focused orchestration tests, and seed command wiring are complete.
 - **Runtime DB-backed smoke pending:** must be completed using the 12D handoff in an environment with reachable Postgres before final production sign-off.
+
+## Checkpoint 13A Additions
+- [x] Checkpoint 13 outcome verification loop added.
+- [x] Verification tests status documented and route contract coverage added.
+- [x] Typecheck status validated for db, api-zod, api-server, control-plane.
+- [x] Savings semantics confirmed: expected vs verified savings clearly separated.
+- [x] Rollback remains supervised (rollback review only; no auto rollback).
+
+## Checkpoint 14 Additions
+- [x] Checkpoint 14 savings proof dashboard added.
+- [x] Expected vs verified savings semantics preserved (expected not treated as realised).
+- [x] Confidence logic added (HIGH/MEDIUM/LOW).
+- [x] Validation results documented in `docs/quality-gates/checkpoint-14-savings-proof.md`.
