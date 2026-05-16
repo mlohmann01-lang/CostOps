@@ -41,3 +41,5 @@ export * from "./m365ReadOnly";
 
 export * from "./connectorTrust";
 export * from "./evidenceReconciliationFindings";
+export * from "./recommendationRationales";
+export * from "./recommendationDecisionTraces";

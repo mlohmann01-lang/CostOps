@@ -4,11 +4,14 @@ import { PLAYBOOK_REGISTRY } from "./registry";
 import { ExecutionOrchestrationRepository } from "../execution-orchestration/execution-orchestration.repository";
 import { assessTrust } from "../trust-engine";
 import { buildRecommendationExplainability } from "../recommendations/recommendation-explainability";
+import { buildExplainabilityEnvelope } from "../recommendations/explainability-surface";
+import { RecommendationRationalePersistenceService } from "../recommendations/recommendation-rationale-persistence-service";
 
 export type M365EvidenceRecord = Record<string, any>;
 
 export class PlaybookRecommendationService {
   private repo = new ExecutionOrchestrationRepository();
+  private rationaleService = new RecommendationRationalePersistenceService();
 
   async generateRecommendationsForTenant(input: { tenantId: string; source: "DEMO"|"M365_SYNC"|"MANUAL_IMPORT"; evidenceRecords: M365EvidenceRecord[]; actorId?: string; trustBand?: string; connectorTrustSnapshotId?: number; findingsBlock?: boolean; }) {
     const recommendations: any[] = []; const suppressed: any[] = []; const evaluationEvents: any[] = [];
@@ -73,6 +76,19 @@ export class PlaybookRecommendationService {
           trustScore: trust.execution_readiness_score, entityTrustScore: trust.entity_trust_score, recommendationTrustScore: trust.recommendation_trust_score, executionReadinessScore: trust.execution_readiness_score, executionStatus: trust.execution_gate, criticalBlockers: trust.critical_blockers, warnings: trust.warnings, scoreBreakdown: trust.score_breakdown, status: "pending", playbook: playbook.vendor, playbookId: playbook.id, playbookName: playbook.name, playbookEvidence: evaluation.evidence, playbookRequiredSignals: evaluation.requiredSignals, playbookExclusions: evaluation.exclusions, evaluationEventId: String(event.id), connector: "m365", partialData: "false",
           actionType: Array.isArray(evaluation.recommendedAction)?evaluation.recommendedAction.join("+"):evaluation.recommendedAction, targetEntityId: mapped.email, targetEntityType: "USER", evidenceSummary: { ...evaluation.evidence, connectorTrustSnapshotId: input.connectorTrustSnapshotId, explainability }, trustRequirements: evaluation.trustRequirements ?? [], expectedMonthlySaving: evaluation.estimatedMonthlySaving, expectedAnnualSaving: evaluation.estimatedMonthlySaving*12, recommendationRiskClass: evaluation.riskClass ?? playbook.riskClass, recommendationExecutionMode: evaluation.executionMode ?? playbook.defaultExecutionMode, recommendationVerificationMethod: evaluation.verificationMethod ?? playbook.verificationMethod, rollbackNotes: evaluation.rollbackNotes ?? playbook.rollbackConsiderations, recommendationStatus: input.trustBand === "LOW" ? "NEEDS_TRUST_REVIEW" : "READY_FOR_ORCHESTRATION", correlationId,
         }).returning())[0];
+        const envelope = buildExplainabilityEnvelope(rec as Record<string, unknown>);
+        await this.rationaleService.persistSnapshot({
+          tenantId: input.tenantId,
+          recommendation: rec,
+          explainability: envelope.explainability,
+          evidenceLineage: envelope.evidenceLineage,
+          connectorTrustSnapshotId: String(input.connectorTrustSnapshotId ?? ""),
+          decisionTraces: [
+            { stage: "EVIDENCE", stageOrder: 1, outcome: "ALLOW", reason: "PLAYBOOK_EVIDENCE_PRESENT", blocking: false, warning: false, sourceEvidenceIds: Object.keys(rec.playbookEvidence ?? {}).sort() },
+            { stage: "TRUST", stageOrder: 2, outcome: trust.execution_gate, reason: trust.critical_blockers[0] ?? "TRUST_THRESHOLD_PASS", blocking: trust.execution_gate === "BLOCKED", warning: (trust.warnings?.length ?? 0) > 0, sourceEvidenceIds: [] },
+            { stage: "GOVERNANCE", stageOrder: 3, outcome: "RECOMMEND_ONLY", reason: "NO_EXECUTION_AUTHORITY", blocking: false, warning: false, sourceEvidenceIds: [] },
+          ],
+        });
         recommendations.push(rec);
       }
     }
