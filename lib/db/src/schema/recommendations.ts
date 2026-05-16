@@ -51,6 +51,7 @@ export const recommendationsTable = pgTable("recommendations", {
   recommendationVerificationMethod: text("recommendation_verification_method").notNull().default(""),
   rollbackNotes: text("rollback_notes").notNull().default(""),
   recommendationStatus: text("recommendation_status").notNull().default("CANDIDATE"),
+  latestRationaleId: text("latest_rationale_id").notNull().default(""),
   correlationId: text("correlation_id").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
