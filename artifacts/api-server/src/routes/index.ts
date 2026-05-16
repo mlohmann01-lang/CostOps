@@ -21,6 +21,7 @@ import authRouter from "./auth";
 import executionOrchestrationRouter from "./execution-orchestration";
 import playbooksRouter from "./playbooks";
 import demoRouter from "./demo";
+import simulationsRouter from "./simulations";
 
 const router: IRouter = Router();
 
@@ -46,5 +47,6 @@ router.use("/auth", authRouter);
 router.use("/execution-orchestration", executionOrchestrationRouter);
 router.use("/playbooks", playbooksRouter);
 router.use("/demo", demoRouter);
+router.use("/simulations", simulationsRouter);
 
 export default router;

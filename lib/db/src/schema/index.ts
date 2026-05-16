@@ -45,3 +45,5 @@ export * from "./recommendationRationales";
 export * from "./recommendationDecisionTraces";
 
 export * from "./recommendationOutcomes";
+
+export * from "./policySimulations";
