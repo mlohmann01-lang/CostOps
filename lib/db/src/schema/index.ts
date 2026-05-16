@@ -55,3 +55,5 @@ export * from "./operationalEntityEdges";
 export * from "./entityCorrelationSnapshots";
 
 export * from "./governancePolicyEngine";
+
+export * from "./operationalTelemetry";
