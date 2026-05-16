@@ -22,6 +22,7 @@ import executionOrchestrationRouter from "./execution-orchestration";
 import playbooksRouter from "./playbooks";
 import demoRouter from "./demo";
 import simulationsRouter from "./simulations";
+import graphRouter from "./graph";
 
 const router: IRouter = Router();
 
@@ -48,5 +49,6 @@ router.use("/execution-orchestration", executionOrchestrationRouter);
 router.use("/playbooks", playbooksRouter);
 router.use("/demo", demoRouter);
 router.use("/simulations", simulationsRouter);
+router.use("/graph", graphRouter);
 
 export default router;

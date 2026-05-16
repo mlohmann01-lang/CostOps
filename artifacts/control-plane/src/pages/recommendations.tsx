@@ -79,6 +79,8 @@ export default function Recommendations() {
   const [approvalStatus, setApprovalStatus] = useState<Record<number, string>>({});
   const [generatedRows, setGeneratedRows] = useState<any[]>([]);
   const [suppressedRows, setSuppressedRows] = useState<any[]>([]);
+  const [arbitrationRows, setArbitrationRows] = useState<any[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string>("ALL");
 
   const recommendations = useListRecommendations({ status: statusFilter });
 
@@ -142,6 +144,7 @@ export default function Recommendations() {
     recRows.forEach((r:any)=>{ if(r.executionStatus==="APPROVAL_REQUIRED"){ fetch(`/api/approvals/recommendation/${r.id}`).then(x=>x.json()).then(a=>setApprovalStatus((m)=>({...m,[r.id]:a?.status ?? "MISSING"}))).catch(()=>{}); }});
     fetch("/api/playbooks/recommendations?tenantId=default").then(r=>r.json()).then(setGeneratedRows).catch(()=>{});
     fetch("/api/playbooks/suppressed?tenantId=default").then(r=>r.json()).then(setSuppressedRows).catch(()=>{});
+    fetch("/api/recommendations/prioritized-queue?tenantId=default").then(r=>r.json()).then(setArbitrationRows).catch(()=>{});
   }, [recommendations.data]);
   const groupedRecommendations: Record<string, any[]> = recRows.reduce((acc, rec) => {
     const key = rec.playbookName || rec.playbook || "Unknown Playbook";
@@ -205,6 +208,8 @@ export default function Recommendations() {
         </Card>
         <Card><CardHeader><CardTitle>Generated Recommendations</CardTitle></CardHeader><CardContent><div className="space-y-2 text-xs">{generatedRows.map((r:any)=><div key={`g-${r.id}`} className="border rounded p-2">{r.playbookName} · {r.targetEntityId || r.userEmail} · {r.actionType} · ${r.expectedMonthlySaving}/mo · ${r.expectedAnnualSaving}/yr · {r.recommendationRiskClass} · {r.recommendationExecutionMode} · {r.recommendationVerificationMethod}<div>Trust: {(r.trustRequirements??[]).join(", ")}</div>{r.recommendationStatus === "READY_FOR_ORCHESTRATION" && <Button size="sm" variant="outline" onClick={()=>fetch(`/api/playbooks/recommendations/${r.id}/create-orchestration-plan?tenantId=default`,{method:"POST"})}>Create Orchestration Plan</Button>}</div>)}</div></CardContent></Card>
         <Card><CardHeader><CardTitle>Suppressed Recommendations</CardTitle></CardHeader><CardContent><div className="space-y-2 text-xs">{suppressedRows.map((r:any)=><div key={`s-${r.id}`} className="border rounded p-2">{r.playbookId} · {r.targetEntityId} · {r.reasonCode} · {r.reasonText}</div>)}</div></CardContent></Card>
+
+        <Card><CardHeader><CardTitle>Prioritized Recommendation Queue</CardTitle><p className="text-xs text-muted-foreground">Prioritization is deterministic and does not execute actions.</p></CardHeader><CardContent><div className="flex items-center gap-2 mb-3"><Select value={priorityFilter} onValueChange={setPriorityFilter}><SelectTrigger className="w-48"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="ALL">ALL</SelectItem><SelectItem value="CRITICAL">CRITICAL</SelectItem><SelectItem value="HIGH">HIGH</SelectItem><SelectItem value="MEDIUM">MEDIUM</SelectItem><SelectItem value="LOW">LOW</SelectItem><SelectItem value="SUPPRESSED">SUPPRESSED</SelectItem></SelectContent></Select></div><div className="space-y-2 text-xs">{arbitrationRows.filter((r:any)=>priorityFilter==="ALL"?true:r.priorityBand===priorityFilter).map((r:any)=><div key={`a-${r.id}`} className="border rounded p-2">{r.priorityBand} · Score {Number(r.priorityScore).toFixed(2)} · Rec {r.recommendationId} · SavingsScore {Number(r.projectedSavingsScore).toFixed(1)} · Trust {Number(r.trustScore).toFixed(1)} · GovRisk {Number(r.governanceRiskScore).toFixed(1)} · Blast {Number(r.blastRadiusScore).toFixed(1)} · Confidence {Number(r.realizationConfidenceScore).toFixed(1)}<div>Suppression/Conflict: {[...(r.suppressionReasons??[]), r.conflictGroupId?`CONFLICT_GROUP:${r.conflictGroupId}`:null].filter(Boolean).join(", ") || "NONE"}</div></div>)}</div></CardContent></Card>
 
         <Card className="p-0">
           {recommendations.isLoading ? (

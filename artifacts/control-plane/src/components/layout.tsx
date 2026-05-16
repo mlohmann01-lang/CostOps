@@ -38,6 +38,7 @@ export function Layout({ children }: LayoutProps) {
     { name: "Operational Intelligence", href: "/operational-intelligence", icon: ShieldCheck },
     { name: "Observability V2", href: "/platform-observability-v2", icon: ShieldCheck },
     { name: "Enterprise Graph", href: "/enterprise-graph", icon: ShieldCheck },
+    { name: "Operational Entity Graph", href: "/operational-entity-graph", icon: ShieldCheck },
     { name: "Workflow Center", href: "/workflow-center", icon: ShieldCheck },
     { name: "Execution Orchestration", href: "/execution-orchestration", icon: ShieldCheck },
   ];

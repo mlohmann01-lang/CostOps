@@ -47,3 +47,11 @@ export * from "./recommendationDecisionTraces";
 export * from "./recommendationOutcomes";
 
 export * from "./policySimulations";
+
+export * from "./recommendationArbitrationSnapshots";
+
+export * from "./operationalEntities";
+export * from "./operationalEntityEdges";
+export * from "./entityCorrelationSnapshots";
+
+export * from "./governancePolicyEngine";
