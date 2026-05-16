@@ -58,6 +58,16 @@ function pricingCopy(confidence?: string) {
   if (confidence.startsWith("VERIFIED_")) return "Savings backed by tenant pricing evidence.";
   return "Savings derived from inferred tenant pricing signals.";
 }
+const playbookLibrary = [
+  { name: "Disabled Licensed User Reclaim", description: "Reclaim licenses from disabled accounts.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "user account status, assigned license, SKU cost", action: "REMOVE_LICENSE", verification: "Confirm unassigned license and no exception", rollback: "Reassign prior SKU when needed" },
+  { name: "Inactive User Reclaim", description: "Remove licenses from inactive users.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "last sign-in, activity, assigned license", action: "REMOVE_LICENSE", verification: "Check no reactivation post-change", rollback: "Restore license on reactivation" },
+  { name: "E3 Without Desktop Apps Rightsize", description: "Downgrade E3 users with no desktop usage.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "assigned license, desktop app install/use", action: "DOWNGRADE_LICENSE", verification: "Validate no desktop demand", rollback: "Re-upgrade to E3" },
+  { name: "E5 Underused Rightsize", description: "Downgrade underused E5 users.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "assigned license, app/service activity", action: "DOWNGRADE_LICENSE", verification: "Validate E5 capabilities not needed", rollback: "Restore E5 when needed" },
+  { name: "Add-on Licence Reclaim", description: "Reclaim unused add-ons.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "assigned license, add-on usage", action: "REMOVE_LICENSE", verification: "Check continued non-usage", rollback: "Reassign add-on" },
+  { name: "Copilot Underuse Reallocation", description: "Reallocate underused Copilot seats.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "assigned license, Copilot activity", action: "REALLOCATE_LICENSE", verification: "Confirm reassignee adoption", rollback: "Return license to original owner" },
+  { name: "Shared Mailbox Licence Reclaim", description: "Remove paid SKUs from shared mailboxes.", riskClass: "B", mode: "APPROVAL_REQUIRED", evidence: "mailbox type, assigned license", action: "CONVERT_TO_SHARED_MAILBOX + REMOVE_LICENSE", verification: "Confirm mailbox shared access", rollback: "Re-license mailbox" },
+  { name: "Duplicate / Overlapping SKU Cleanup", description: "Clean duplicate entitlements.", riskClass: "C", mode: "MANUAL", evidence: "overlapping SKU detection, assigned license, SKU cost", action: "REMOVE_LICENSE", verification: "Validate capability coverage", rollback: "Restore removed SKU" },
+];
 
 export default function Recommendations() {
   const queryClient = useQueryClient();
@@ -67,6 +77,8 @@ export default function Recommendations() {
   const [rejectId, setRejectId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
   const [approvalStatus, setApprovalStatus] = useState<Record<number, string>>({});
+  const [generatedRows, setGeneratedRows] = useState<any[]>([]);
+  const [suppressedRows, setSuppressedRows] = useState<any[]>([]);
 
   const recommendations = useListRecommendations({ status: statusFilter });
 
@@ -128,6 +140,8 @@ export default function Recommendations() {
   const recRows = (recommendations.data ?? []) as any[];
   useEffect(() => {
     recRows.forEach((r:any)=>{ if(r.executionStatus==="APPROVAL_REQUIRED"){ fetch(`/api/approvals/recommendation/${r.id}`).then(x=>x.json()).then(a=>setApprovalStatus((m)=>({...m,[r.id]:a?.status ?? "MISSING"}))).catch(()=>{}); }});
+    fetch("/api/playbooks/recommendations?tenantId=default").then(r=>r.json()).then(setGeneratedRows).catch(()=>{});
+    fetch("/api/playbooks/suppressed?tenantId=default").then(r=>r.json()).then(setSuppressedRows).catch(()=>{});
   }, [recommendations.data]);
   const groupedRecommendations: Record<string, any[]> = recRows.reduce((acc, rec) => {
     const key = rec.playbookName || rec.playbook || "Unknown Playbook";
@@ -177,6 +191,20 @@ export default function Recommendations() {
             <span className="text-xs text-muted-foreground">{recommendations.data.length} result(s)</span>
           )}
         </div>
+        <Card>
+          <CardHeader><CardTitle>M365 Playbook Library</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              {playbookLibrary.map((p) => <div key={p.name} className="border rounded p-2"><div className="font-medium">{p.name}</div><div>{p.description}</div><div className="text-xs text-muted-foreground">Risk: {p.riskClass} · Mode: {p.mode} · Evidence: {p.evidence} · Action: {p.action} · Verification: {p.verification} · Rollback: {p.rollback}</div></div>)}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle>M365 Evidence Evaluation</CardTitle></CardHeader>
+          <CardContent><Button size="sm" variant="outline" onClick={async()=>{ const payload={ tenantId:"default", source:"DEMO", evidenceRecords:[] }; await fetch("/api/playbooks/m365/evaluate",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)}); const a=await fetch("/api/playbooks/recommendations?tenantId=default").then(r=>r.json()); const s=await fetch("/api/playbooks/suppressed?tenantId=default").then(r=>r.json()); setGeneratedRows(a); setSuppressedRows(s); }}>Evaluate M365 Evidence</Button></CardContent>
+        </Card>
+        <Card><CardHeader><CardTitle>Generated Recommendations</CardTitle></CardHeader><CardContent><div className="space-y-2 text-xs">{generatedRows.map((r:any)=><div key={`g-${r.id}`} className="border rounded p-2">{r.playbookName} · {r.targetEntityId || r.userEmail} · {r.actionType} · ${r.expectedMonthlySaving}/mo · ${r.expectedAnnualSaving}/yr · {r.recommendationRiskClass} · {r.recommendationExecutionMode} · {r.recommendationVerificationMethod}<div>Trust: {(r.trustRequirements??[]).join(", ")}</div>{r.recommendationStatus === "READY_FOR_ORCHESTRATION" && <Button size="sm" variant="outline" onClick={()=>fetch(`/api/playbooks/recommendations/${r.id}/create-orchestration-plan?tenantId=default`,{method:"POST"})}>Create Orchestration Plan</Button>}</div>)}</div></CardContent></Card>
+        <Card><CardHeader><CardTitle>Suppressed Recommendations</CardTitle></CardHeader><CardContent><div className="space-y-2 text-xs">{suppressedRows.map((r:any)=><div key={`s-${r.id}`} className="border rounded p-2">{r.playbookId} · {r.targetEntityId} · {r.reasonCode} · {r.reasonText}</div>)}</div></CardContent></Card>
 
         <Card className="p-0">
           {recommendations.isLoading ? (

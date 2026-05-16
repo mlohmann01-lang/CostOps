@@ -33,3 +33,4 @@ export * from "./jobMetrics";
 export * from "./enterpriseGraph";
 
 export * from "./executionOrchestration";
+export * from "./suppressedRecommendations";

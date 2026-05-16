@@ -1,98 +1,47 @@
 import type { BasePlaybook } from "./base-playbook";
 
+export const M365_EVIDENCE_TYPES = {
+  ASSIGNED_LICENSE: "assigned license",
+  LAST_SIGN_IN: "last sign-in",
+  LAST_APP_OR_SERVICE_ACTIVITY: "last app/service activity",
+  DESKTOP_APP_INSTALL_OR_USE: "desktop app install/use",
+  MAILBOX_TYPE: "mailbox type",
+  USER_ACCOUNT_STATUS: "user account status",
+  DEPARTMENT_COST_CENTRE: "department/cost centre",
+  MANAGER_OWNER: "manager/owner",
+  SKU_COST: "SKU cost",
+  COPILOT_ACTIVITY: "Copilot activity",
+  ADDON_USAGE: "add-on usage",
+  OVERLAPPING_SKU_DETECTION: "overlapping SKU detection",
+} as const;
+
 export type M365Candidate = {
-  email: string;
-  displayName: string;
-  sku: string;
-  cost: number;
-  days: number;
-  accountEnabled?: boolean;
-  assignedLicenses?: string[];
-  userPrincipalName?: string;
-  mailboxType?: string;
-  isSharedMailbox?: boolean;
-  hasDesktopActivity?: boolean;
-  advancedFeatureUsage?: number;
-  activityPresent?: boolean;
-  isFrontlineWorker?: boolean;
-  addonUsageDaysAgo?: number | null;
+  email: string; displayName: string; sku: string; cost: number; days: number;
+  accountEnabled?: boolean; assignedLicenses?: string[]; userPrincipalName?: string; mailboxType?: string;
+  isSharedMailbox?: boolean; hasDesktopActivity?: boolean; advancedFeatureUsage?: number; activityPresent?: boolean;
+  isFrontlineWorker?: boolean; addonUsageDaysAgo?: number | null; department?: string; costCentre?: string;
+  manager?: string; copilotActivityScore?: number; overlappingSkuDetected?: boolean;
 };
 
 const commonExclusions = (c: M365Candidate): string[] => {
-  const e = c.email.toLowerCase();
-  const x: string[] = [];
-  if (e.includes("admin")) x.push("admin account");
-  if (e.includes("service")) x.push("service account");
-  if (e.includes("noreply") || e.includes("no-reply")) x.push("noreply user");
-  return x;
+  const e = c.email.toLowerCase(); const x: string[] = [];
+  if (e.includes("admin")) x.push("admin account"); if (e.includes("service")) x.push("service account");
+  if (e.includes("noreply") || e.includes("no-reply")) x.push("noreply user"); return x;
 };
+const result = (p: BasePlaybook<M365Candidate>, matched:boolean, reason:string, saving:number, input:M365Candidate, evidence:Record<string,unknown>, exclusions:string[], requiredSignals:string[]) => ({ matched, reason, recommendedAction: p.recommendedAction, estimatedMonthlySaving: saving, subject: { type: "USER" as const, id: input.email, displayName: input.displayName, email: input.email }, evidence, exclusions, requiredSignals, verificationMethod: p.verificationMethod, executionMode: p.defaultExecutionMode, riskClass: p.riskClass, rollbackNotes: p.rollbackConsiderations, trustRequirements: ["Data Trust", "Governance Policy", "Approval", "Runtime Controls", "Outcome Verification", "Savings Proof"] });
 
-export const disabledLicensedUserReclaimPlaybook: BasePlaybook<M365Candidate> = {
-  id: "m365_disabled_licensed_user_reclaim_v1",
-  name: "Disabled Licensed User Reclaim",
-  vendor: "m365",
-  action: "REMOVE_LICENSE",
-  riskClass: "B",
-  evaluate(input) {
-    const matched = input.accountEnabled === false && (input.assignedLicenses?.length ?? 0) > 0;
-    return { matched, reason: matched ? "Disabled account with active licenses" : "Not disabled or unlicensed", recommendedAction: "REMOVE_LICENSE", estimatedMonthlySaving: input.cost, subject: { type: "USER", id: input.email, displayName: input.displayName, email: input.email }, evidence: { accountEnabled: input.accountEnabled, assignedLicenses: input.assignedLicenses ?? [] }, exclusions: commonExclusions(input), requiredSignals: ["accountEnabled", "assignedLicenses", "userPrincipalName"] };
-  },
-};
+export const disabledLicensedUserReclaimPlaybook: BasePlaybook<M365Candidate> = { id: "m365_disabled_licensed_user_reclaim_v1", name: "Disabled Licensed User Reclaim", description:"Reclaim licenses from disabled identities with active assignment.", vendor:"m365", action:"REMOVE_LICENSE", triggerConditions:["account disabled","assigned license exists"], requiredEvidence:[M365_EVIDENCE_TYPES.USER_ACCOUNT_STATUS,M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.SKU_COST], exclusionRules:["admin accounts","service accounts"], recommendedAction:"REMOVE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"Full assigned SKU monthly cost", verificationMethod:"Confirm license unassigned and no business exception", rollbackConsiderations:"Reassign previous SKU if owner disputes" ,evaluate(input){const exclusions=commonExclusions(input); const matched=input.accountEnabled===false&&(input.assignedLicenses?.length??0)>0; return result(this, matched, matched?"Disabled account with active licenses":"Not disabled or unlicensed", input.cost, input, {accountEnabled:input.accountEnabled,assignedLicenses:input.assignedLicenses??[]}, exclusions, ["accountEnabled","assignedLicenses","userPrincipalName"]);}};
 
-export const sharedMailboxConversionPlaybook: BasePlaybook<M365Candidate> = {
-  id: "m365_shared_mailbox_conversion_v1",
-  name: "Shared Mailbox Conversion",
-  vendor: "m365",
-  action: "CONVERT_TO_SHARED_MAILBOX",
-  riskClass: "B",
-  evaluate(input) {
-    const isShared = input.mailboxType === "shared" || input.isSharedMailbox === true || input.email.toLowerCase().includes("shared");
-    const lowActivity = input.days > 90;
-    const licensed = (input.assignedLicenses?.length ?? 0) > 0;
-    const matched = isShared && lowActivity && licensed;
-    return { matched, reason: matched ? "Shared mailbox candidate is licensed and inactive" : "Mailbox is not a shared conversion candidate", recommendedAction: ["CONVERT_TO_SHARED_MAILBOX", "REMOVE_LICENSE"], estimatedMonthlySaving: input.cost, subject: { type: "USER", id: input.email, displayName: input.displayName, email: input.email }, evidence: { mailboxType: input.mailboxType ?? "user", isSharedMailbox: isShared, lastLoginDaysAgo: input.days, assignedLicenses: input.assignedLicenses ?? [] }, exclusions: commonExclusions(input), requiredSignals: ["mailboxType", "lastLoginDaysAgo", "assignedLicenses", "userPrincipalName"] };
-  },
-};
+export const inactiveUserReclaimPlaybook: BasePlaybook<M365Candidate> = { id:"m365_inactive_user_reclaim_v3", name:"Inactive User Reclaim", description:"Remove paid license from inactive users based on sign-in and service activity.", vendor:"m365", action:"REMOVE_LICENSE", triggerConditions:["no sign-in/activity > 90 days","license assigned"], requiredEvidence:[M365_EVIDENCE_TYPES.LAST_SIGN_IN,M365_EVIDENCE_TYPES.LAST_APP_OR_SERVICE_ACTIVITY,M365_EVIDENCE_TYPES.ASSIGNED_LICENSE], exclusionRules:["admin accounts","service accounts","shared mailboxes"], recommendedAction:"REMOVE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"Full assigned SKU monthly cost", verificationMethod:"Verify no reactivation within post-change window", rollbackConsiderations:"Restore prior license on reactivation" ,evaluate(input){const exclusions=[...commonExclusions(input), ...(input.mailboxType==="shared"?["shared mailbox"]:[])]; const matched=(input.days>90)&&(input.assignedLicenses?.length??0)>0; return result(this, matched, matched?"Inactive licensed user":"No inactivity reclaim opportunity", input.cost, input, {lastLoginDaysAgo:input.days,assignedLicenses:input.assignedLicenses??[]}, exclusions,["lastLoginDaysAgo","assignedLicenses","userPrincipalName"]);}};
 
-export const e5ToE3RightsizingPlaybook: BasePlaybook<M365Candidate> = {
-  id: "m365_e5_to_e3_rightsizing_v1",
-  name: "E5 → E3 Rightsizing",
-  vendor: "m365",
-  action: "DOWNGRADE_LICENSE",
-  riskClass: "B",
-  evaluate(input) {
-    const isE5 = (input.assignedLicenses ?? []).includes("E5") || input.sku === "E5";
-    const lowAdvancedUsage = (input.advancedFeatureUsage ?? 0) <= 0.2;
-    const matched = isE5 && lowAdvancedUsage && input.activityPresent !== false;
-    return { matched, reason: matched ? "E5 assigned but advanced features underused" : "No E5 rightsizing opportunity", recommendedAction: "DOWNGRADE_LICENSE", estimatedMonthlySaving: Math.max(0, input.cost - 36), subject: { type: "USER", id: input.email, displayName: input.displayName, email: input.email }, evidence: { assignedLicenses: input.assignedLicenses ?? [], advancedFeatureUsage: input.advancedFeatureUsage ?? 0, activityPresent: input.activityPresent ?? true }, exclusions: commonExclusions(input), requiredSignals: ["assignedLicenses", "advancedFeatureUsage", "activityPresent", "userPrincipalName"] };
-  },
-};
+export const e3WithoutDesktopAppsRightsizePlaybook: BasePlaybook<M365Candidate> = { id:"m365_e3_without_desktop_apps_rightsize_v1", name:"E3 Without Desktop Apps Rightsize", description:"Rightsize E3 users without desktop app usage.", vendor:"m365", action:"DOWNGRADE_LICENSE", triggerConditions:["E3 assigned","no desktop app usage"], requiredEvidence:[M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.DESKTOP_APP_INSTALL_OR_USE], exclusionRules:["admin/service accounts"], recommendedAction:"DOWNGRADE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"E3 to lower SKU delta", verificationMethod:"Validate no desktop app launch after downgrade", rollbackConsiderations:"Re-upgrade to E3 if desktop demand returns", evaluate(input){const matched=((input.sku==="E3")||(input.assignedLicenses??[]).includes("E3"))&&input.hasDesktopActivity===false; return result(this, matched, matched?"E3 user has no desktop app usage":"No E3 desktop rightsize opportunity", Math.max(0,input.cost-12), input,{sku:input.sku,hasDesktopActivity:input.hasDesktopActivity},commonExclusions(input),["assignedLicenses","hasDesktopActivity","userPrincipalName"]);}};
 
-export const webOnlyF3CandidatePlaybook: BasePlaybook<M365Candidate> = {
-  id: "m365_web_only_f3_candidate_v1",
-  name: "Web-only / F3 Candidate",
-  vendor: "m365",
-  action: "DOWNGRADE_LICENSE",
-  riskClass: "B",
-  evaluate(input) {
-    const noDesktop = input.hasDesktopActivity === false;
-    const lowFeatures = (input.advancedFeatureUsage ?? 0) <= 0.15;
-    const worker = input.isFrontlineWorker === true || input.email.toLowerCase().includes("frontline");
-    const matched = noDesktop && lowFeatures && worker;
-    return { matched, reason: matched ? "User profile aligns with web-only/F3" : "User does not match web-only/F3 profile", recommendedAction: "DOWNGRADE_LICENSE", estimatedMonthlySaving: Math.max(0, input.cost - 8), subject: { type: "USER", id: input.email, displayName: input.displayName, email: input.email }, evidence: { hasDesktopActivity: input.hasDesktopActivity ?? null, advancedFeatureUsage: input.advancedFeatureUsage ?? 0, frontlineIndicator: worker }, exclusions: commonExclusions(input), requiredSignals: ["hasDesktopActivity", "advancedFeatureUsage", "isFrontlineWorker", "userPrincipalName"] };
-  },
-};
+export const e5UnderusedRightsizePlaybook: BasePlaybook<M365Candidate> = { id:"m365_e5_underused_rightsize_v1", name:"E5 Underused Rightsize", description:"Downgrade E5 where advanced capability usage is low.", vendor:"m365", action:"DOWNGRADE_LICENSE", triggerConditions:["E5 assigned","advanced usage below threshold"], requiredEvidence:[M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.LAST_APP_OR_SERVICE_ACTIVITY], exclusionRules:["admin/service accounts"], recommendedAction:"DOWNGRADE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"E5 to E3 price delta", verificationMethod:"Validate required E5 services remain unused", rollbackConsiderations:"Restore E5 if security/compliance dependencies emerge", evaluate(input){const matched=(((input.sku==="E5")||(input.assignedLicenses??[]).includes("E5"))&&(input.advancedFeatureUsage??0)<=0.2&&(input.activityPresent!==false)); return result(this, matched, matched?"E5 assigned but advanced features underused":"No E5 rightsize opportunity", Math.max(0,input.cost-36), input,{advancedFeatureUsage:input.advancedFeatureUsage??0,activityPresent:input.activityPresent??true},commonExclusions(input),["assignedLicenses","advancedFeatureUsage","activityPresent","userPrincipalName"]);}};
 
-export const unusedAddonReclaimPlaybook: BasePlaybook<M365Candidate> = {
-  id: "m365_unused_addon_reclaim_v1",
-  name: "Unused Add-on Reclaim",
-  vendor: "m365",
-  action: "REMOVE_LICENSE",
-  riskClass: "B",
-  evaluate(input) {
-    const isAddon = input.sku.startsWith("ADDON_");
-    const noRecentUsage = (input.addonUsageDaysAgo ?? 999) > 90;
-    const matched = isAddon && noRecentUsage;
-    return { matched, reason: matched ? "Assigned add-on shows no recent usage" : "No add-on reclaim opportunity", recommendedAction: "REMOVE_LICENSE", estimatedMonthlySaving: input.cost, subject: { type: "USER", id: input.email, displayName: input.displayName, email: input.email }, evidence: { sku: input.sku, addonUsageDaysAgo: input.addonUsageDaysAgo ?? null }, exclusions: commonExclusions(input), requiredSignals: ["assignedLicenses", "addonUsageDaysAgo", "userPrincipalName"] };
-  },
-};
+export const addonLicenseReclaimPlaybook: BasePlaybook<M365Candidate> = { id:"m365_addon_license_reclaim_v1", name:"Add-on Licence Reclaim", description:"Reclaim paid add-ons with no recent usage.", vendor:"m365", action:"REMOVE_LICENSE", triggerConditions:["addon SKU assigned","no usage > 90 days"], requiredEvidence:[M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.ADDON_USAGE], exclusionRules:["admin/service accounts"], recommendedAction:"REMOVE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"Full add-on monthly cost", verificationMethod:"Check add-on features remain unused post-removal", rollbackConsiderations:"Reassign add-on if ticketed need validated", evaluate(input){const matched=input.sku.startsWith("ADDON_")&&((input.addonUsageDaysAgo??999)>90); return result(this, matched, matched?"Assigned add-on shows no recent usage":"No add-on reclaim opportunity", input.cost, input,{sku:input.sku,addonUsageDaysAgo:input.addonUsageDaysAgo??null},commonExclusions(input),["assignedLicenses","addonUsageDaysAgo","userPrincipalName"]);}};
+
+export const copilotUnderuseReallocationPlaybook: BasePlaybook<M365Candidate> = { id:"m365_copilot_underuse_reallocation_v1", name:"Copilot Underuse Reallocation", description:"Reallocate Copilot licenses from underused users.", vendor:"m365", action:"REALLOCATE_LICENSE", triggerConditions:["Copilot assigned","low Copilot activity"], requiredEvidence:[M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.COPILOT_ACTIVITY], exclusionRules:["exec exceptions","admin/service accounts"], recommendedAction:"REALLOCATE_LICENSE", riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"Avoid incremental Copilot purchase", verificationMethod:"Confirm reassignee adoption improves", rollbackConsiderations:"Return Copilot license if original user resumes usage", evaluate(input){const hasCopilot=(input.assignedLicenses??[]).some((x)=>x.includes("COPILOT")); const matched=hasCopilot && (input.copilotActivityScore??0)<0.2; return result(this, matched, matched?"Copilot assigned with underuse":"No Copilot reallocation opportunity", input.cost, input,{assignedLicenses:input.assignedLicenses??[],copilotActivityScore:input.copilotActivityScore??0},commonExclusions(input),["assignedLicenses","copilotActivityScore","userPrincipalName"]);}};
+
+export const sharedMailboxLicenseReclaimPlaybook: BasePlaybook<M365Candidate> = { id:"m365_shared_mailbox_license_reclaim_v1", name:"Shared Mailbox Licence Reclaim", description:"Remove unnecessary licenses from shared mailboxes.", vendor:"m365", action:"REMOVE_LICENSE", triggerConditions:["mailbox is shared","license assigned"], requiredEvidence:[M365_EVIDENCE_TYPES.MAILBOX_TYPE,M365_EVIDENCE_TYPES.ASSIGNED_LICENSE], exclusionRules:["active large mailbox exceptions"], recommendedAction:["CONVERT_TO_SHARED_MAILBOX","REMOVE_LICENSE"], riskClass:"B", defaultExecutionMode:"APPROVAL_REQUIRED", expectedSavingsModel:"Full mailbox SKU monthly cost", verificationMethod:"Confirm mailbox remains accessible as shared", rollbackConsiderations:"Re-license and revert mailbox type if access fails", evaluate(input){const isShared=input.mailboxType==="shared"||input.isSharedMailbox===true||input.email.toLowerCase().includes("shared"); const matched=isShared&&(input.assignedLicenses?.length??0)>0; return result(this, matched, matched?"Shared mailbox has paid license":"Not a shared mailbox license reclaim opportunity", input.cost, input,{mailboxType:input.mailboxType??"user",isSharedMailbox:isShared,assignedLicenses:input.assignedLicenses??[]},commonExclusions(input),["mailboxType","assignedLicenses","userPrincipalName"]);}};
+
+export const overlappingSkuCleanupPlaybook: BasePlaybook<M365Candidate> = { id:"m365_overlapping_sku_cleanup_v1", name:"Duplicate / Overlapping SKU Cleanup", description:"Remove duplicate or overlapping entitlements for same user.", vendor:"m365", action:"REMOVE_LICENSE", triggerConditions:["overlapping SKU detected"], requiredEvidence:[M365_EVIDENCE_TYPES.OVERLAPPING_SKU_DETECTION,M365_EVIDENCE_TYPES.ASSIGNED_LICENSE,M365_EVIDENCE_TYPES.SKU_COST], exclusionRules:["complex bundles flagged by governance"], recommendedAction:"REMOVE_LICENSE", riskClass:"C", defaultExecutionMode:"MANUAL", expectedSavingsModel:"Overlapping SKU monthly cost", verificationMethod:"Validate retained SKU covers required capabilities", rollbackConsiderations:"Restore removed SKU bundle if capability gap appears", evaluate(input){const matched=input.overlappingSkuDetected===true; return result(this, matched, matched?"Overlapping SKU assigned":"No overlapping SKU issue", Math.max(0,input.cost/2), input,{overlappingSkuDetected:input.overlappingSkuDetected??false,assignedLicenses:input.assignedLicenses??[]},commonExclusions(input),["overlappingSkuDetected","assignedLicenses","userPrincipalName"]);}};
