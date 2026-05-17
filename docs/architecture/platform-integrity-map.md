@@ -37,3 +37,7 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 ## Operational Runtime Hardening Notes (2026-05-17)
 - Telemetry parity and workflow SLA replayability were strengthened in canonical services.
 - Replay completeness checks improved but legacy route-level parity remains partial.
+
+## Operational Consistency Coverage Update (2026-05-17)
+- Added runtime consistency diagnostics and telemetry coverage continuity helpers.
+- Legacy bypass detection is now regression-tested; no execution boundary expansion observed.

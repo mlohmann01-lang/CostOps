@@ -17,3 +17,6 @@
 ## Operational Runtime Hardening Update (2026-05-17)
 - Extended canonical runtime emissions across trust/reconciliation/arbitration/workflow-SLA/replay paths.
 - Canonical wrapper remains `OperationalTelemetryService` via domain service calls.
+
+## Operational Consistency Coverage Update (2026-05-17)
+- Telemetry authority now includes canonical required M365 runtime event coverage and continuity diagnostics hooks.

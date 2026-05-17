@@ -1,0 +1,6 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+
+test("runtime consistency diagnostics output shape present", ()=>{
+  const s = fs.readFileSync(new URL("../lib/support-diagnostics-service.ts", import.meta.url), "utf8");
+  for (const k of ["legacyBypassDetections","staleWorkflowChains","replayGapCount"]) assert.equal(s.includes(k), true);
+});

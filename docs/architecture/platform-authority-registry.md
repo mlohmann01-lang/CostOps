@@ -102,3 +102,8 @@ Before creating a new service/module:
 ## Operational Runtime Hardening Status (2026-05-17)
 - Runtime hardening recon completed: `docs/architecture/operational-runtime-hardening-recon.md`.
 - Hardening pass extended existing canonical authorities only; no new subsystem introduced.
+
+## Operational Consistency Coverage Update (2026-05-17)
+- OperationalTelemetryService extended with required runtime event catalog and coverage detection.
+- SupportDiagnosticsService extended with runtime consistency diagnostics projection.
+- Status: PARTIALLY_REMEDIATED.
