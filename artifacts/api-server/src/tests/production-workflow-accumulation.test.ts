@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionWorkflowAccumulation } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('workflow accumulation durability',()=>{const r=computeProductionWorkflowAccumulation({backlogAges:[2,15,30,60],staleWorkflowCount:2,unresolvedCriticalCount:1,reassignmentChainDepth:5,historyComplete:true,tenantWorkflowIsolationStatus:'ISOLATED'});assert.equal(r.reassignmentChainRisk,'HIGH');});

@@ -85,3 +85,14 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 - No subsystem fork and no execution expansion introduced.
 - Remaining production persistence depth: DEFERRED_WITH_REASON.
 
+
+## Phase B Runtime Persistence Hardening (2026-05-17)
+- Status: PARTIALLY_REMEDIATED
+- Canonical authority reuse confirmed; no-fork and no-execution-expansion constraints preserved.
+- Remaining deep persistence/storage implementation details DEFERRED_WITH_REASON: this increment focused on runtime hardening diagnostics/test guardrails on existing spine.
+
+## Phase C Sustained Runtime Load Simulation (2026-05-17)
+- Status: PARTIALLY_REMEDIATED
+- Sustained scale simulation implemented as read-only canonical helper extensions.
+- No execution expansion and no subsystem forks introduced.
+- Remaining production empirical calibration and real backfill benchmarking: DEFERRED_WITH_REASON.

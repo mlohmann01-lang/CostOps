@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateGraphGrowthPressure } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('graph growth pressure simulation',()=>{const r=simulateGraphGrowthPressure({entitiesPerTenant:50000,edgesPerEntity:4,duplicateClusterRate:0.18,orphanClusterRate:0.1,lowConfidenceCorrelationRate:0.12,staleSnapshotRate:0.2,tenantCount:30});assert.equal(r.projectedEntityCount,1500000);assert.equal(r.duplicateRisk,'LOW');});

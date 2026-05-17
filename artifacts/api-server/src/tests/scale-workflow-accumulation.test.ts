@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateWorkflowAccumulationPressure } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('workflow accumulation pressure simulation',()=>{const r=simulateWorkflowAccumulationPressure({newReviewsPerDay:1000,approvalCapacityPerDay:600,averageSlaDays:14,criticalReviewRate:0.2,highPriorityReviewRate:0.3,abandonmentRate:0.1,durationDays:20,tenantCount:10});assert.equal(r.projectedOpenBacklog>0,true);assert.equal(r.approvalBottleneckRisk,'MEDIUM');});

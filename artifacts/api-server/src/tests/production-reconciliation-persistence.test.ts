@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionReconciliationPersistence } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('reconciliation persistence continuity',()=>{const r=computeProductionReconciliationPersistence({activeFindingCount:3,resolvedFindingCount:8,suppressedFindingCount:1,criticalBlockerCount:1,historicalBlockerPreserved:true,findingReplayContinuity:true});assert.equal(r.historicalBlockerPreserved,true);});

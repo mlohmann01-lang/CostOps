@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionAppendOnlyIntegrity } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('append-only integrity across critical domains',()=>{const r=computeProductionAppendOnlyIntegrity({domains:[{domain:'rationale',snapshots:2,mutationsDetected:0,latestPointerUpdated:true,deterministicHash:true},{domain:'telemetry',snapshots:5,mutationsDetected:0,latestPointerUpdated:true,deterministicHash:true}]});assert.equal(r.appendOnlyIntegrity,true);});
