@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeHistoricalLineageIntegrity } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('historical lineage integrity chain',()=>{const r=computeHistoricalLineageIntegrity({links:{evidence:true,trust:true,reconciliation:true,recommendation:true,rationale:true,lifecycle:true,workflow:true,simulation:true,outcome:true,telemetry:true,replay:true},brokenCorrelationLinks:[],hashContinuity:'VALID',tenantConsistency:true,replayReady:true});assert.equal(r.lineageCompleteness,true);});

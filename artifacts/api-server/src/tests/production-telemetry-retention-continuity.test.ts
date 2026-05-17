@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionTelemetryContinuity } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('telemetry retention continuity metrics',()=>{const r=computeProductionTelemetryContinuity({retentionCoverageStatus:'FULL',lateEventCount:3,duplicateEventCount:2,missingRequiredEventCount:0,eventOrderingInstability:3,tenantTelemetryContinuity:true});assert.equal(r.eventOrderingRisk,'MEDIUM');});

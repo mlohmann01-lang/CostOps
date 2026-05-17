@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateStorageRetentionGrowth } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('storage retention growth realism',()=>{const r=simulateStorageRetentionGrowth({telemetryRecordBytes:800,traceRecordBytes:600,workflowRecordBytes:500,outcomeRecordBytes:400,simulationRecordBytes:300,recordsPerTenantPerDay:50000,tenantCount:80,retentionDays:180});assert.equal(r.archiveRequired,true);assert.equal(r.retentionPressureLevel,'HIGH');});

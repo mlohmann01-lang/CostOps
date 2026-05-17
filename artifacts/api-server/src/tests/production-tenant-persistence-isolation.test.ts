@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionTenantPersistenceIsolation } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('tenant persistence isolation across history',()=>{const r=computeProductionTenantPersistenceIsolation({domains:[{domain:'telemetry',tenantIdPresent:true,lineageTenantConsistent:true},{domain:'workflow',tenantIdPresent:true,lineageTenantConsistent:true}]});assert.equal(r.tenantPersistenceIsolation,true);});

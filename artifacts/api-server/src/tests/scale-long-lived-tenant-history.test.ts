@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateLongLivedTenantHistory } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('long-lived tenant history simulation',()=>{const r=simulateLongLivedTenantHistory({tenantAgeDays:2200,historicalRecommendationCount:200000,historicalWorkflowCount:90000,historicalOutcomeCount:80000,historicalTelemetryCount:4000000,historicalReplayGapRate:0.18,historicalDriftRate:0.14});assert.equal(r.tenantHistoryMaturity,'LONG_LIVED');assert.equal(r.longLivedTenantRisk,'HIGH');});

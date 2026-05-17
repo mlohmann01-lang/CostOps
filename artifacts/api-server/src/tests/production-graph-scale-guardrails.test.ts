@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeProductionGraphScaleGuardrails } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('graph scale guardrails',()=>{const r=computeProductionGraphScaleGuardrails({entityCount:1000,edgeCount:4500,duplicateClusterCount:4,orphanClusterCount:2,lowConfidenceCorrelationRate:0.12,graphFreshnessMinutes:120,tenantGraphIsolationStatus:'ISOLATED'});assert.equal(r.graphFreshnessStatus,'STALE');});

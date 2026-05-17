@@ -46,3 +46,48 @@ export function computeRuntimeIntegrityDiagnostics(input:{tenantId:string;affect
 export function simulateOperationalChaos(input:{chaosScenario:string;severity:number;}){
   return {chaosScenario:input.chaosScenario,runtimeImpact:input.severity>70?'SEVERE_DEGRADATION':'CONTROLLED_DEGRADATION',affectedAuthorities:['OperationalTelemetryService','WorkflowOperationsService','EvidenceReconciliationService','PolicySimulationService'],degradationSeverity:input.severity>70?'HIGH':'MEDIUM',recoveryConfidence:clamp(100-input.severity)};
 }
+
+export function computeProductionAppendOnlyIntegrity(input:{domains:Array<{domain:string;snapshots:number;mutationsDetected:number;latestPointerUpdated:boolean;deterministicHash:boolean}>}){
+  const mutatedDomains=input.domains.filter((d)=>d.mutationsDetected>0).map((d)=>d.domain);
+  const missingSnapshots=input.domains.filter((d)=>d.snapshots<1).map((d)=>d.domain);
+  return {appendOnlyIntegrity:mutatedDomains.length===0&&missingSnapshots.length===0,mutatedDomains,missingSnapshots,latestPointerCompliance:input.domains.every((d)=>d.latestPointerUpdated),deterministicHashContinuity:input.domains.every((d)=>d.deterministicHash)};
+}
+
+export function computeProductionReplayStorageDurability(input:{historyTypes:Record<string,boolean>;oldestTraceAt:string|null;newestTraceAt:string|null;hashValid:number;hashMismatches:number;}){
+  const missingHistoryTypes=Object.entries(input.historyTypes).filter(([,v])=>!v).map(([k])=>k);
+  const historyDepth=Object.values(input.historyTypes).filter(Boolean).length;
+  const hashContinuityStatus=input.hashMismatches>0?'MISMATCH':input.hashValid===0?'INCOMPLETE':missingHistoryTypes.length>0?'PARTIAL':'VALID';
+  return {durableReplayReady:missingHistoryTypes.length===0&&hashContinuityStatus==='VALID',missingHistoryTypes,oldestTraceAt:input.oldestTraceAt,newestTraceAt:input.newestTraceAt,historyDepth,hashContinuityStatus};
+}
+
+export function computeProductionTelemetryContinuity(input:{retentionCoverageStatus:'FULL'|'PARTIAL'|'INSUFFICIENT';lateEventCount:number;duplicateEventCount:number;missingRequiredEventCount:number;eventOrderingInstability:number;tenantTelemetryContinuity:boolean;}){
+  return {...input,eventOrderingRisk:input.eventOrderingInstability>5?'HIGH':input.eventOrderingInstability>2?'MEDIUM':'LOW'};
+}
+
+export function computeProductionWorkflowAccumulation(input:{backlogAges:number[];staleWorkflowCount:number;unresolvedCriticalCount:number;reassignmentChainDepth:number;historyComplete:boolean;tenantWorkflowIsolationStatus:'ISOLATED'|'LEAK_RISK';}){
+  const max=Math.max(...input.backlogAges,0);
+  return {backlogAgeDistribution:{p50:input.backlogAges.sort((a,b)=>a-b)[Math.floor(input.backlogAges.length/2)]??0,max},staleWorkflowCount:input.staleWorkflowCount,unresolvedCriticalCount:input.unresolvedCriticalCount,reassignmentChainRisk:input.reassignmentChainDepth>4?'HIGH':'LOW',workflowHistoryCompleteness:input.historyComplete,tenantWorkflowIsolationStatus:input.tenantWorkflowIsolationStatus};
+}
+
+export function computeProductionReconciliationPersistence(input:{activeFindingCount:number;resolvedFindingCount:number;suppressedFindingCount:number;criticalBlockerCount:number;historicalBlockerPreserved:boolean;findingReplayContinuity:boolean;}){ return input; }
+
+export function computeProductionGraphScaleGuardrails(input:{entityCount:number;edgeCount:number;duplicateClusterCount:number;orphanClusterCount:number;lowConfidenceCorrelationRate:number;graphFreshnessMinutes:number;tenantGraphIsolationStatus:'ISOLATED'|'CROSS_TENANT_RISK';}){ return {...input,graphFreshnessStatus:input.graphFreshnessMinutes<60?'FRESH':'STALE'}; }
+
+export function computeProductionTenantPersistenceIsolation(input:{domains:Array<{domain:string;tenantIdPresent:boolean;lineageTenantConsistent:boolean}>}){
+  const violations=input.domains.filter((d)=>!d.tenantIdPresent||!d.lineageTenantConsistent).map((d)=>d.domain);
+  return {tenantPersistenceIsolation:violations.length===0,crossTenantHistoryLeakageDetected:violations.length>0,missingTenantIdDomains:input.domains.filter((d)=>!d.tenantIdPresent).map((d)=>d.domain),tenantMismatchDomains:input.domains.filter((d)=>!d.lineageTenantConsistent).map((d)=>d.domain)};
+}
+
+export function computeProductionRuntimeDiagnostics(input:{persistenceIntegrityHealth:string;replayDurabilityHealth:string;telemetryRetentionHealth:string;workflowAccumulationHealth:string;reconciliationPersistenceHealth:string;graphScaleHealth:string;tenantIsolationHealth:string;outcomeCalibrationHealth:string;simulationReliabilityHealth:string;}){
+  const critical=[input.persistenceIntegrityHealth,input.replayDurabilityHealth,input.tenantIsolationHealth].every((v)=>v==='HEALTHY');
+  return {...input,productionRuntimeReadiness:critical?'READY':'HARDENING_REQUIRED'};
+}
+
+export function computeHistoricalLineageIntegrity(input:{links:Record<string,boolean>;brokenCorrelationLinks:string[];hashContinuity:'VALID'|'PARTIAL'|'MISMATCH';tenantConsistency:boolean;replayReady:boolean;}){
+  const missingLineageLinks=Object.entries(input.links).filter(([,v])=>!v).map(([k])=>k);
+  return {lineageCompleteness:missingLineageLinks.length===0,missingLineageLinks,brokenCorrelationLinks:input.brokenCorrelationLinks,hashContinuity:input.hashContinuity,tenantConsistency:input.tenantConsistency,replayReady:input.replayReady};
+}
+
+export function computeProductionRuntimeReadinessGuards(input:{executionExpansionDetected:boolean;subsystemForkDetected:boolean;appendOnlyPreserved:boolean;tenantIsolationPreserved:boolean;telemetryContinuityPreserved:boolean;replayDurabilityPreserved:boolean;workflowDurabilityPreserved:boolean;graphIsolationPreserved:boolean;lineageIntegrityPreserved:boolean;}){
+  return {guardsPassed:!input.executionExpansionDetected&&!input.subsystemForkDetected&&input.appendOnlyPreserved&&input.tenantIsolationPreserved&&input.telemetryContinuityPreserved&&input.replayDurabilityPreserved&&input.workflowDurabilityPreserved&&input.graphIsolationPreserved&&input.lineageIntegrityPreserved,...input};
+}

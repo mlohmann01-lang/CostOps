@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateTelemetryThroughput } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('telemetry throughput simulation',()=>{const r=simulateTelemetryThroughput({tenantCount:50,eventsPerTenantPerDay:2000,durationDays:30,duplicateRate:0.02,lateArrivalRate:0.08,missingEventRate:0.15,orderingInstabilityRate:0.12,burstMultiplier:2});assert.equal(r.telemetryContinuityRisk,'HIGH');assert.equal(r.peakBurstEvents,200000);});

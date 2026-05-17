@@ -14,3 +14,5 @@ test("cross-domain layer remains non-executing", () => {
   assert.equal(content.includes("execution-engine"), false);
   assert.equal(content.includes("execute"), false);
 });
+
+test("scale simulation remains non-executing",()=>{ const scale=read('../lib/runtime-hardening/sustained-runtime-load-phase-c.ts'); assert.equal(scale.includes('execution-engine'), false); assert.equal(scale.includes('auto-approval'), false); assert.equal(scale.includes('workflow-triggered execution'), false); });

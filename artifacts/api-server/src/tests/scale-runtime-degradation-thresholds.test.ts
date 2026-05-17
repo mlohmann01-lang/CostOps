@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateRuntimeDegradationThresholds } from '../lib/runtime-hardening/sustained-runtime-load-phase-c';
+test('runtime degradation threshold classification',()=>{const r=evaluateRuntimeDegradationThresholds({telemetryPressure:75,replayPressure:50,workflowPressure:45,graphPressure:30,lineagePressure:20,storagePressure:80,tenantHistoryPressure:65,multiDomainLoadPressure:35});assert.equal(r.filter((x)=>x.blocksProductionReadiness).length,2);});
