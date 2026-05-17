@@ -60,5 +60,7 @@ test("platform operational flow composes deterministic lifecycle artifacts", () 
   assert.equal(Boolean(telemetry.correlationId && telemetry.traceId), true);
 });
 
+test("platform flow includes atlassian playbooks in registry",()=>{ const reg=fs.readFileSync(new URL("../lib/playbooks/registry.ts", import.meta.url),"utf8"); assert.equal(reg.includes("ATLASSIAN_INACTIVE_JIRA_RECLAIM"), true); assert.equal(reg.includes("ATLASSIAN_MARKETPLACE_REVIEW"), true); });
+
 import fs from "node:fs";
-test("platform flow includes atlassian playbooks in registry",()=>{ const reg=fs.readFileSync(new URL("../lib/playbooks/registry.ts", import.meta.url),"utf8"); assert.equal(reg.includes("ATLASSIAN_INACTIVE_JIRA_RECLAIM"), true); });
+test("platform flow includes hardening intelligence artifact",()=>{ const c=fs.readFileSync(new URL("../lib/runtime-hardening/runtime-hardening-phase-a.ts", import.meta.url),"utf8"); assert.equal(c.includes("modelTrustDegradation"), true); });

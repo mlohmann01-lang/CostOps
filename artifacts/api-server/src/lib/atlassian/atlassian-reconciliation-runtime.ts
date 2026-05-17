@@ -12,5 +12,15 @@ export function buildAtlassianReconciliationFindings(e:AtlassianNormalizedEviden
  if (!e.marketplaceUsageKnown && e.user.marketplaceAssignments.length>0) push('ATLASSIAN_MARKETPLACE_ASSIGNMENT_UNKNOWN','WARNING','NEEDS_EVIDENCE',{marketplaceAssignments:e.user.marketplaceAssignments});
  if (e.recommendationContext.unknownOwner) push('ATLASSIAN_UNKNOWN_COST_OWNER','BLOCKER','GOVERNANCE_REVIEW_REQUIRED',{owner:e.recommendationContext.owner},true);
  if (e.usageSignal.usageConfidence==='UNKNOWN_USAGE_CONFIDENCE') push('ATLASSIAN_USAGE_EVIDENCE_MISSING','WARNING','NEEDS_EVIDENCE',{usageConfidence:e.usageSignal.usageConfidence});
+
+ if ((e as any).marketplaceOverlap) push('ATLASSIAN_MARKETPLACE_OVERLAP','WARNING','GOVERNANCE_REVIEW_REQUIRED',{marketplaceOverlap:true});
+ if ((e as any).marketplaceOwnerUnknown) push('ATLASSIAN_MARKETPLACE_OWNER_UNKNOWN','BLOCKER','GOVERNANCE_REVIEW_REQUIRED',{owner:'UNKNOWN'},true);
+ if ((e as any).marketplaceUsageUnknown) push('ATLASSIAN_MARKETPLACE_USAGE_UNKNOWN','WARNING','NEEDS_EVIDENCE',{usage:'UNKNOWN'});
+ if ((e as any).marketplaceAdminRisk) push('ATLASSIAN_MARKETPLACE_ADMIN_RISK','BLOCKER','GOVERNANCE_REVIEW_REQUIRED',{adminRisk:true},true);
+ if ((e as any).workspaceEntropyHigh) push('ATLASSIAN_WORKSPACE_ENTROPY_HIGH','WARNING','GOVERNANCE_REVIEW_REQUIRED',{workspaceEntropy:'HIGH'});
+ if ((e as any).permissionTopologyConflict) push('ATLASSIAN_PERMISSION_TOPOLOGY_CONFLICT','BLOCKER','GOVERNANCE_REVIEW_REQUIRED',{topologyConflict:true},true);
+ if ((e as any).adminChainRedundancy) push('ATLASSIAN_ADMIN_CHAIN_REDUNDANCY','WARNING','GOVERNANCE_REVIEW_REQUIRED',{adminChainRedundancy:true});
+ if ((e as any).groupInheritanceOverlap) push('ATLASSIAN_GROUP_INHERITANCE_OVERLAP','WARNING','NEEDS_EVIDENCE',{groupInheritanceOverlap:true});
+ if ((e as any).highRiskPermissionCluster) push('ATLASSIAN_HIGH_RISK_PERMISSION_CLUSTER','CRITICAL_BLOCKER','GOVERNANCE_REVIEW_REQUIRED',{highRiskPermissionCluster:true},true);
  return f;
 }

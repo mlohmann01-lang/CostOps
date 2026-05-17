@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { hardenIdentityReconciliation } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('identity ambiguity handled deterministically and collisions quarantined',()=>{ const r=hardenIdentityReconciliation({tenantId:'t1',identityConfidence:0.3,duplicateEmail:true,lineageConfidence:0.4,ownershipConfidence:0.2}); assert.equal(r.identityConflictType,'IDENTITY_COLLISION'); assert.equal(r.governanceAction,'QUARANTINED');});

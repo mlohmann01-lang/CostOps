@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeWorkflowBacklogSurvivability } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('workflow backlog impacts governance pressure',()=>{ const r=computeWorkflowBacklogSurvivability({slaBreaches:10,backlogGrowth:20,staleApprovals:5,staleExceptions:3,reviewAbandonment:4,workflowConcentrationRisk:0.7,operatorOverload:0.8}); assert.equal(r.slaRiskLevel,'CRITICAL'); assert.equal(r.governanceLoadIndex>0,true);});

@@ -8,3 +8,9 @@ test("non-execution routes do not import execution-engine", () => {
     assert.equal(read(route).includes("execution-engine"), false);
   }
 });
+
+test("cross-domain layer remains non-executing", () => {
+  const content = read("../lib/cross-domain/cross-domain-governance-intelligence.ts");
+  assert.equal(content.includes("execution-engine"), false);
+  assert.equal(content.includes("execute"), false);
+});

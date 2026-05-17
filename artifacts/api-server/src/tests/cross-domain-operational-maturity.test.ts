@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { computeCrossDomainOperationalMaturity } from '../lib/cross-domain/cross-domain-governance-intelligence';
+test('enterprise maturity score stable',()=>{ const r=computeCrossDomainOperationalMaturity({tenantId:'t1',domainScores:[{domain:'M365',score:70},{domain:'ADOBE',score:60},{domain:'ATLASSIAN',score:65}],trustMaturity:70,governanceMaturity:65,workflowMaturity:60,telemetryMaturity:75,replayMaturity:70,outcomeMaturity:68,crossDomainCorrelationMaturity:66}); assert.equal(typeof r.enterpriseOperationalMaturityScore,'number'); assert.equal(Array.isArray(r.weakestDomains),true);});

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeRuntimeIntegrityDiagnostics } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('diagnostics persist correctly',()=>{ const r=computeRuntimeIntegrityDiagnostics({tenantId:'t1',affectedDomains:['M365','ADOBE','ATLASSIAN']}); assert.equal(r.length,7); assert.equal(Boolean(r[0].correlationId&&r[0].traceId),true);});

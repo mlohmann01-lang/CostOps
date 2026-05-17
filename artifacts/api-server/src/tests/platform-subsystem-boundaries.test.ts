@@ -20,9 +20,13 @@ test("subsystem boundaries: graph and telemetry are tenant scoped", () => {
   assert.equal(telemetry.includes("tenantId"), true);
 });
 
-test("subsystem boundaries: support diagnostics and ui/backend mapping docs exist", () => {
+test("subsystem boundaries: support diagnostics and boundary docs exist", () => {
   const pilotRoute = read("../routes/pilot.ts");
   const contracts = read("../../../../docs/architecture/subsystem-boundary-contracts.md");
   assert.equal(pilotRoute.includes("support/diagnostics"), true);
   assert.equal(contracts.includes("Route authority"), true);
+  assert.equal(contracts.includes("No execution expansion"), true);
+  assert.equal(contracts.includes("cross-domain execution"), false);
 });
+
+test("subsystem boundaries: runtime hardening remains non-executing",()=>{ const hard=read("../lib/runtime-hardening/runtime-hardening-phase-a.ts"); assert.equal(hard.includes("execution-engine"), false); });

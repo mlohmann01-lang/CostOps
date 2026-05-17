@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeOutcomeRealismHardening } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('partial realization affects calibration',()=>{ const r=computeOutcomeRealismHardening({realizationRate:0.6,reversalRate:0.4,partialRealizationRate:0.5,outcomeAgeDays:200,falsePositiveRate:0.2,staleRecommendationRate:0.3}); assert.equal(r.partialRealizationConfidence,50); assert.equal(r.outcomeAgingPenalty,true);});

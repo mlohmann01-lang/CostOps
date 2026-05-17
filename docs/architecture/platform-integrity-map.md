@@ -57,3 +57,31 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 ## Atlassian Phase A Integrity Mapping
 - Evidence/trust/reconciliation/playbook/telemetry/replay inheritance: PARTIALLY_REMEDIATED.
 - No Atlassian-specific subsystem introduction observed.
+
+## Atlassian Phase B Update
+- Status: PARTIALLY_REMEDIATED.
+- Atlassian governance maturity extended via canonical reconciliation/workflow/telemetry/simulation/outcome/replay/graph authorities only.
+- No execution expansion; execution remains READ_ONLY, RECOMMEND_ONLY, APPROVAL_REQUIRED.
+- Deferred: renewal readiness aggregation and cross-domain governance (Phase C).
+
+
+## Atlassian Phase C Update
+- Status: PARTIALLY_REMEDIATED.
+- Renewal/portfolio/drift/simulation-calibration/outcome-calibration/maturity/reporting implemented via canonical authorities only.
+- Replay/telemetry continuity extended without subsystem forks.
+- Remaining full persistence-backed aggregation: DEFERRED_WITH_REASON.
+
+
+## Cross-Domain Phase A Update
+- Status: PARTIALLY_REMEDIATED.
+- Cross-domain intelligence aggregates canonical domain outputs only; no replacement authority introduced.
+- Cross-domain telemetry/replay events added through canonical telemetry authority.
+- Execution remains READ_ONLY/RECOMMEND_ONLY/APPROVAL_REQUIRED.
+
+
+## Runtime Hardening Phase A Update
+- Status: PARTIALLY_REMEDIATED.
+- Runtime hardening extends canonical telemetry/workflow/reconciliation/simulation/outcome/diagnostics authorities only.
+- No subsystem fork and no execution expansion introduced.
+- Remaining production persistence depth: DEFERRED_WITH_REASON.
+
