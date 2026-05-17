@@ -49,3 +49,11 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 
 ## Adobe Phase B Integrity Mapping
 - Runtime maturity: PARTIALLY_REMEDIATED
+
+## Adobe Phase C Integrity Mapping
+- Renewal/portfolio/drift/maturity/reporting runtime helpers: PARTIALLY_REMEDIATED.
+- No Adobe-specific subsystem introduction observed.
+
+## Atlassian Phase A Integrity Mapping
+- Evidence/trust/reconciliation/playbook/telemetry/replay inheritance: PARTIALLY_REMEDIATED.
+- No Atlassian-specific subsystem introduction observed.

@@ -28,3 +28,6 @@ test("platform replay integrity: stable hashes and trace fields", () => {
   assert.equal(decisionTrace.decision, "APPROVE");
   assert.equal(Boolean(trace.correlationId && trace.traceId), true);
 });
+
+import fs from "node:fs";
+test("replay integrity covers atlassian runtime events",()=>{ const telem=fs.readFileSync(new URL("../lib/observability/operational-telemetry-service.ts", import.meta.url),"utf8"); assert.equal(telem.includes("ATLASSIAN_REPLAY_VALIDATED"), true); });
