@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { REQUIRED_ADOBE_RUNTIME_EVENTS } from '../lib/observability/operational-telemetry-service';
+test('phase c adobe runtime event taxonomy present',()=>{ const required=['ADOBE_RENEWAL_READINESS_COMPUTED','ADOBE_PORTFOLIO_GOVERNANCE_UPDATED','ADOBE_GOVERNANCE_DRIFT_DETECTED','ADOBE_MATURITY_SCORE_UPDATED','ADOBE_EXECUTIVE_REPORT_GENERATED','ADOBE_OUTCOME_CALIBRATION_UPDATED','ADOBE_REPLAY_VALIDATED','ADOBE_REPLAY_MISMATCH']; for (const e of required) assert.equal(REQUIRED_ADOBE_RUNTIME_EVENTS.includes(e as any),true);});

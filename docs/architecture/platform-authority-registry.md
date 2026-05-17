@@ -114,3 +114,11 @@ Before creating a new service/module:
 
 ## Adobe Phase B
 - Added Adobe Phase B playbook and telemetry authority extensions.
+
+## Adobe Phase C Status (2026-05-17)
+- Phase C Adobe governance maturity implemented as canonical authority extensions only (simulation/telemetry/outcome/replay compatible).
+- Status: PARTIALLY_REMEDIATED (full persistence route wiring deferred).
+
+## Atlassian Phase A Status (2026-05-17)
+- Atlassian Phase A extends canonical trust/reconciliation/playbook/telemetry/replay authorities only.
+- Status: PARTIALLY_REMEDIATED (full persistence-backed source wiring deferred).

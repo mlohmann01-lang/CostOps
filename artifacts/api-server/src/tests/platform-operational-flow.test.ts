@@ -59,3 +59,6 @@ test("platform operational flow composes deterministic lifecycle artifacts", () 
   assert.equal(outcomeResolution.status, "RESOLVED");
   assert.equal(Boolean(telemetry.correlationId && telemetry.traceId), true);
 });
+
+import fs from "node:fs";
+test("platform flow includes atlassian playbooks in registry",()=>{ const reg=fs.readFileSync(new URL("../lib/playbooks/registry.ts", import.meta.url),"utf8"); assert.equal(reg.includes("ATLASSIAN_INACTIVE_JIRA_RECLAIM"), true); });

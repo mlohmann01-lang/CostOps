@@ -81,6 +81,20 @@ export async function emitAdobeEvent(eventType: string, metadata: M365TelemetryM
   });
 }
 
+
+
+export async function emitAtlassianEvent(eventType: string, metadata: M365TelemetryMetadata) {
+  return operationalTelemetryService.emitEvent({
+    tenantId: metadata.tenantId,
+    eventCategory: 'ATLASSIAN_OPERATIONAL',
+    eventType,
+    eventStatus: 'SUCCESS',
+    failureCategory: null,
+    eventMetadata: { ...metadata, domain: 'ATLASSIAN', eventTimestamp: new Date().toISOString() },
+    correlationId: String(metadata.correlationId ?? metadata.traceId ?? `${eventType}:${Date.now()}`),
+  });
+}
+
 export const REQUIRED_ADOBE_RUNTIME_EVENTS = [
   "ADOBE_EVIDENCE_NORMALIZED",
   "ADOBE_TRUST_DEGRADED",
@@ -99,6 +113,27 @@ export const REQUIRED_ADOBE_RUNTIME_EVENTS = [
   "ADOBE_OUTCOME_RESOLVED",
   "ADOBE_REPLAY_VALIDATED",
   "ADOBE_REPLAY_MISMATCH",
+  "ADOBE_RENEWAL_READINESS_COMPUTED",
+  "ADOBE_PORTFOLIO_GOVERNANCE_UPDATED",
+  "ADOBE_GOVERNANCE_DRIFT_DETECTED",
+  "ADOBE_RENEWAL_RISK_ESCALATED",
+  "ADOBE_MATURITY_SCORE_UPDATED",
+  "ADOBE_EXECUTIVE_REPORT_GENERATED",
+  "ADOBE_OUTCOME_CALIBRATION_UPDATED",
+ ] as const;
+
+export const REQUIRED_ATLASSIAN_RUNTIME_EVENTS = [
+  "ATLASSIAN_EVIDENCE_NORMALIZED",
+  "ATLASSIAN_TRUST_DEGRADED",
+  "ATLASSIAN_TRUST_QUARANTINED",
+  "ATLASSIAN_RECONCILIATION_FINDING_CREATED",
+  "ATLASSIAN_RECONCILIATION_BLOCKER_CREATED",
+  "ATLASSIAN_RECOMMENDATION_GENERATED",
+  "ATLASSIAN_RECOMMENDATION_SUPPRESSED",
+  "ATLASSIAN_GOVERNANCE_ESCALATED",
+  "ATLASSIAN_WORKFLOW_REVIEW_CREATED",
+  "ATLASSIAN_REPLAY_VALIDATED",
+  "ATLASSIAN_REPLAY_MISMATCH",
 ] as const;
 export const REQUIRED_M365_RUNTIME_EVENTS = [
   "M365_TRUST_DEGRADED",

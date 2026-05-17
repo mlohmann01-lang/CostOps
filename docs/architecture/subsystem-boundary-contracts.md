@@ -169,3 +169,7 @@
 
 ## Adobe Phase B Boundary Notes
 - No Adobe-specific engines introduced; canonical authorities extended only.
+
+## Adobe Phase C Boundary Notes
+- Adobe Phase C remains within recommendation/simulation/outcome/telemetry/replay boundaries.
+- No execution expansion introduced (READ_ONLY/RECOMMEND_ONLY/APPROVAL_REQUIRED retained).

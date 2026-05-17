@@ -70,3 +70,7 @@
 - Adobe Phase A runtime inheritance extension added (telemetry/playbook/trust normalization): PARTIALLY_REMEDIATED.
 
 - Adobe Phase B runtime maturity added: PARTIALLY_REMEDIATED.
+
+- Adobe Phase C commercial governance maturity: PARTIALLY_REMEDIATED (helper and test coverage added; full persistence-backed route integration DEFERRED_WITH_REASON pending broader refactor).
+
+- Atlassian Phase A runtime inheritance: PARTIALLY_REMEDIATED (core helper + test coverage complete; full source-ingestion persistence DEFERRED_WITH_REASON).

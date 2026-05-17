@@ -1,6 +1,7 @@
 import type { BasePlaybook } from "./base-playbook";
 import { m365InactiveUserReclaimPlaybook } from "./m365-inactive-user-reclaim";
 import { adobeContractorCleanupPlaybook, adobeInactiveLicenseReclaimPlaybook } from "./adobe-phase-a-playbooks";
+import { atlassianAdminAccessReview, atlassianGroupAssignmentReview, atlassianInactiveConfluenceReclaim, atlassianInactiveJiraReclaim, atlassianInactiveJsmReclaim, atlassianInactiveOpsgenieReclaim, atlassianMarketplaceReview, atlassianSiteMembershipReview } from "./atlassian-phase-a-playbooks";
 import { adobeAcrobatProRightsize, adobeAllAppsToSingleAppRightsize, adobeFireflyCreditsReview, adobeFrameIoReclaim, adobeLowUsageCreativeCloudRightsize, adobeSignAddonReview, adobeStockAddonReclaim, adobeStorageGovernanceReview, adobeSubstanceReclaim, adobeVideoSuiteRightsize } from "./adobe-phase-b-playbooks";
 import {
   addonLicenseReclaimPlaybook,
@@ -43,4 +44,12 @@ export const PLAYBOOK_REGISTRY: BasePlaybook[] = [
   adobeSubstanceReclaim,
   adobeSignAddonReview,
   adobeStorageGovernanceReview,
+  atlassianInactiveJiraReclaim,
+  atlassianInactiveConfluenceReclaim,
+  atlassianInactiveJsmReclaim,
+  atlassianInactiveOpsgenieReclaim,
+  atlassianAdminAccessReview,
+  atlassianGroupAssignmentReview,
+  atlassianSiteMembershipReview,
+  atlassianMarketplaceReview,
 ];
