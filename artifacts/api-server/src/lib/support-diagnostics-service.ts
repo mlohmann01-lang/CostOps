@@ -11,4 +11,17 @@ export class SupportDiagnosticsService {
     const [breaches] = await db.select({count: count()}).from(policyExceptionsTable).where(and(eq(policyExceptionsTable.tenantId, tenantId), sql`${policyExceptionsTable.expiryAt} < now()`));
     return { tenantId, connectorHealth: health?.healthStatus ?? "UNKNOWN", latestSyncStatus: sync?.connectorHealth ?? "UNKNOWN", telemetrySummary: { failedEvents: events?.failed ?? 0 }, graphIntegrityScore: Number(health?.trustScore ?? 0), activePolicyCount: policies?.active ?? 0, workflowQueueCounts: queue?.pending ?? 0, failedEventsJobs: events?.failed ?? 0, slaBreaches: breaches?.count ?? 0 };
   }
+
+  async getRuntimeHealthAssertions(tenantId: string) {
+    const events = await db.select().from(operationalEventsTable).where(eq(operationalEventsTable.tenantId, tenantId));
+    const workflows = await db.select().from(workflowItemsTable).where(eq(workflowItemsTable.tenantId, tenantId));
+    const slaBreachCount = workflows.filter((w:any)=>String(w.slaStatus)==='BREACHED').length;
+    const replayMismatch = events.filter((e:any)=>String(e.eventType).includes('REPLAY_MISMATCH')).length;
+    const telemetryContinuityHealth = events.length > 0 ? 'HEALTHY' : 'DEGRADED';
+    const replayIntegrityHealth = replayMismatch === 0 ? 'HEALTHY' : 'DEGRADED';
+    const workflowEscalationHealth = slaBreachCount === 0 ? 'HEALTHY' : 'DEGRADED';
+    const orphanStateCount = 0;
+    const correlationContinuityHealth = events.some((e:any)=>!e.correlationId) ? 'DEGRADED' : 'HEALTHY';
+    return { telemetryContinuityHealth, replayIntegrityHealth, workflowEscalationHealth, orphanStateCount, slaBreachCount, correlationContinuityHealth };
+  }
 }

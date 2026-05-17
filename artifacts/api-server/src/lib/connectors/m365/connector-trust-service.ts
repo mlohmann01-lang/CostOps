@@ -1,5 +1,6 @@
 import { connectorTrustSnapshotsTable, db } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
+import { emitM365Event } from "../../observability/operational-telemetry-service";
 
 export class ConnectorTrustService {
   evaluateM365EvidenceTrust(tenantId: string, evidenceRecords: Record<string, any>[], reconciliationFindings: any[] = []) {
@@ -27,7 +28,7 @@ export class ConnectorTrustService {
       identityMatchScore: dimension.identityTrust, sourceReliabilityScore: 95, criticalFindings, warningFindings,
       dimensionScores: dimension, recommendationTrust, executionReadiness };
   }
-  async createTrustSnapshot(input: any) { const [r] = await db.insert(connectorTrustSnapshotsTable).values({ ...input, trustScore: String(input.trustScore), freshnessScore: String(input.freshnessScore), completenessScore: String(input.completenessScore), consistencyScore: String(input.consistencyScore), identityMatchScore: String(input.identityMatchScore), sourceReliabilityScore: String(input.sourceReliabilityScore) }).returning(); return r; }
+  async createTrustSnapshot(input: any) { const [r] = await db.insert(connectorTrustSnapshotsTable).values({ ...input, trustScore: String(input.trustScore), freshnessScore: String(input.freshnessScore), completenessScore: String(input.completenessScore), consistencyScore: String(input.consistencyScore), identityMatchScore: String(input.identityMatchScore), sourceReliabilityScore: String(input.sourceReliabilityScore) }).returning(); if (String(input.trustBand) === "LOW") await emitM365Event("M365_TRUST_DEGRADED", { tenantId: input.tenantId, trustBand: "LOW", sourceComponent: "ConnectorTrustService", decisionStage: "TRUST" }); if (String(input.trustBand) === "QUARANTINED") await emitM365Event("M365_TRUST_QUARANTINED", { tenantId: input.tenantId, trustBand: "QUARANTINED", sourceComponent: "ConnectorTrustService", decisionStage: "TRUST", severity: "HIGH" }); return r; }
   async listTrustSnapshots(tenantId: string) { return db.select().from(connectorTrustSnapshotsTable).where(eq(connectorTrustSnapshotsTable.tenantId, tenantId)).orderBy(desc(connectorTrustSnapshotsTable.createdAt)); }
   async getLatestTrustSnapshot(tenantId: string, connectorType = "M365") { const [r] = await db.select().from(connectorTrustSnapshotsTable).where(eq(connectorTrustSnapshotsTable.tenantId, tenantId)).orderBy(desc(connectorTrustSnapshotsTable.createdAt)).limit(1); return r && r.connectorType === connectorType ? r : r; }
 }

@@ -35,3 +35,33 @@ export class OperationalTelemetryService {
 }
 
 export const operationalTelemetryService = new OperationalTelemetryService();
+
+
+export type M365TelemetryMetadata = {
+  tenantId: string;
+  recommendationId?: string;
+  workflowId?: string;
+  playbookId?: string;
+  entityId?: string;
+  correlationId?: string;
+  traceId?: string;
+  trustBand?: string;
+  lifecycleState?: string;
+  governanceOutcome?: string;
+  simulationId?: string;
+  outcomeId?: string;
+  severity?: string;
+  [k: string]: unknown;
+};
+
+export async function emitM365Event(eventType: string, metadata: M365TelemetryMetadata) {
+  return operationalTelemetryService.emitEvent({
+    tenantId: metadata.tenantId,
+    eventCategory: 'M365_OPERATIONAL',
+    eventType,
+    eventStatus: 'SUCCESS',
+    failureCategory: null,
+    eventMetadata: { ...metadata, eventTimestamp: new Date().toISOString() },
+    correlationId: String(metadata.correlationId ?? metadata.traceId ?? `${eventType}:${Date.now()}`),
+  });
+}

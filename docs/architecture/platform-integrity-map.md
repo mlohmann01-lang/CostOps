@@ -29,3 +29,11 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 - Execution boundary static protections: REMEDIATED.
 
 - M365 Phase A integrity: evidence normalization + trust/reconciliation expansion implemented in canonical M365 connector authorities.
+
+## M365 Phase C Integrity Notes (2026-05-17)
+- Replayability, lifecycle traceability, and telemetry consistency were prioritized for authority-aligned hardening.
+- Remaining gap: uneven canonical telemetry adoption across all route and service edges (tracked as partial remediation).
+
+## Operational Runtime Hardening Notes (2026-05-17)
+- Telemetry parity and workflow SLA replayability were strengthened in canonical services.
+- Replay completeness checks improved but legacy route-level parity remains partial.

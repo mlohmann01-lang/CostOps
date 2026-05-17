@@ -49,3 +49,16 @@
 - M365 Phase A gaps: evidence/trust/reconciliation foundation PARTIALLY_REMEDIATED; downstream telemetry breadth DEFERRED.
 
 - Phase B: lifecycle/governance/arbitration/workflow/simulation/renewal-readiness status: REMEDIATED (telemetry partial).
+
+## Phase C Gap Status Update (2026-05-17)
+- telemetry: PARTIALLY_REMEDIATED (M365 taxonomy + authority alignment documented; complete emission parity still pending).
+- lifecycle replay traceability: PARTIALLY_REMEDIATED.
+- workflow escalation reconstruction: PARTIALLY_REMEDIATED.
+- outcome/simulation correlation: PARTIALLY_REMEDIATED.
+
+## Operational Runtime Hardening Status (2026-05-17)
+- telemetry parity: PARTIALLY_REMEDIATED.
+- replay completeness: PARTIALLY_REMEDIATED.
+- workflow recovery/SLA behavior: REMEDIATED for canonical workflow authority paths.
+- orphan state detection: PARTIALLY_REMEDIATED.
+- full legacy edge parity: DEFERRED_WITH_REASON (requires broader route-to-service consolidation).

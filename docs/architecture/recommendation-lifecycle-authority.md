@@ -16,3 +16,9 @@ Routes are read/delegation boundaries and must not derive lifecycle status indep
 - Phase A lifecycle gating expanded for M365 evidence freshness/trust/reconciliation statuses and suppressions.
 
 - Added M365 deterministic lifecycle state derivation helper for Phase B.
+
+## M365 Phase C lifecycle trace extension (2026-05-17)
+Lifecycle traceability requires deterministic persistence across:
+GENERATED, NEEDS_EVIDENCE, NEEDS_TRUST_REVIEW, GOVERNANCE_REVIEW_REQUIRED,
+READY_FOR_REVIEW, WORKFLOW_REVIEW, ARBITRATED, SIMULATED,
+OUTCOME_PENDING, OUTCOME_RESOLVED, SUPPRESSED.

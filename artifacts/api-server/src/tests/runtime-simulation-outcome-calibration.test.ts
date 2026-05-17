@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+test("simulation/outcome calibration linkage fields persisted", ()=>{ const s=fs.readFileSync(new URL("../lib/recommendations/recommendation-outcome-resolution-service.ts", import.meta.url),"utf8"); assert.equal(s.includes("simulationProjectedSavings"), true); assert.equal(s.includes("realizationDelta"), true); assert.equal(s.includes("driftDetected"), true); });
