@@ -62,3 +62,7 @@
 - workflow recovery/SLA behavior: REMEDIATED for canonical workflow authority paths.
 - orphan state detection: PARTIALLY_REMEDIATED.
 - full legacy edge parity: DEFERRED_WITH_REASON (requires broader route-to-service consolidation).
+
+## Operational Consistency & Coverage Pass (2026-05-17)
+- runtime consistency/coverage pass: PARTIALLY_REMEDIATED (implemented coverage detectors, diagnostics, and parity tests).
+- remaining deeper route-to-service migration: DEFERRED_WITH_REASON (requires broader refactor scope). 

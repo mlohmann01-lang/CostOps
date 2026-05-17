@@ -65,3 +65,37 @@ export async function emitM365Event(eventType: string, metadata: M365TelemetryMe
     correlationId: String(metadata.correlationId ?? metadata.traceId ?? `${eventType}:${Date.now()}`),
   });
 }
+
+
+export const REQUIRED_M365_RUNTIME_EVENTS = [
+  "M365_TRUST_DEGRADED",
+  "M365_TRUST_QUARANTINED",
+  "M365_RECONCILIATION_FINDING_CREATED",
+  "M365_RECONCILIATION_BLOCKER_CREATED",
+  "M365_RECOMMENDATION_GENERATED",
+  "M365_RECOMMENDATION_DOWNGRADED",
+  "M365_RECOMMENDATION_SUPPRESSED",
+  "M365_LIFECYCLE_TRANSITION",
+  "M365_GOVERNANCE_ESCALATED",
+  "M365_ARBITRATION_COMPLETED",
+  "M365_ARBITRATION_CONFLICT_SUPPRESSED",
+  "M365_WORKFLOW_REVIEW_CREATED",
+  "M365_WORKFLOW_ESCALATED",
+  "M365_WORKFLOW_SLA_BREACHED",
+  "M365_SIMULATION_CREATED",
+  "M365_SIMULATION_GATED",
+  "M365_OUTCOME_RESOLVED",
+  "M365_OUTCOME_DRIFT_DETECTED",
+  "M365_OUTCOME_REVERSED",
+  "M365_REPLAY_VALIDATED",
+  "M365_REPLAY_MISMATCH",
+] as const;
+
+export function computeTelemetryCoverage(events: Array<{ eventType: string; correlationId?: string | null; eventMetadata?: any }>) {
+  const seen = new Set(events.map((e) => String(e.eventType)));
+  const missing = REQUIRED_M365_RUNTIME_EVENTS.filter((e) => !seen.has(e));
+  const missingCorrelation = events.filter((e) => !e.correlationId).length;
+  const missingTrace = events.filter((e) => !e.eventMetadata?.traceId).length;
+  const coveragePercent = Math.round(((REQUIRED_M365_RUNTIME_EVENTS.length - missing.length) / REQUIRED_M365_RUNTIME_EVENTS.length) * 100);
+  return { coveragePercent, missingEvents: missing, missingCorrelationCount: missingCorrelation, missingTraceCount: missingTrace };
+}

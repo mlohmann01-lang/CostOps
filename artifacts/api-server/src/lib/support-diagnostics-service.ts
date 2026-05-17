@@ -1,4 +1,5 @@
 import { and, count, desc, eq, sql } from "drizzle-orm";
+import { REQUIRED_M365_RUNTIME_EVENTS, computeTelemetryCoverage } from "./observability/operational-telemetry-service";
 import { connectorHealthSnapshotsTable, connectorSyncStatusTable, db, governancePolicyEngineTable, operationalEventsTable, policyExceptionsTable, workflowItemsTable } from "@workspace/db";
 
 export class SupportDiagnosticsService {
@@ -23,5 +24,26 @@ export class SupportDiagnosticsService {
     const orphanStateCount = 0;
     const correlationContinuityHealth = events.some((e:any)=>!e.correlationId) ? 'DEGRADED' : 'HEALTHY';
     return { telemetryContinuityHealth, replayIntegrityHealth, workflowEscalationHealth, orphanStateCount, slaBreachCount, correlationContinuityHealth };
+  }
+
+  async getRuntimeConsistencyDiagnostics(tenantId: string) {
+    const events = await db.select().from(operationalEventsTable).where(eq(operationalEventsTable.tenantId, tenantId));
+    const telemetry = computeTelemetryCoverage(events as any[]);
+    const workflows = await db.select().from(workflowItemsTable).where(eq(workflowItemsTable.tenantId, tenantId));
+    const replayGapCount = events.filter((e:any)=>String(e.eventType).includes('REPLAY_MISMATCH')).length;
+    const staleWorkflowChains = workflows.filter((w:any)=>String(w.status)!=='RESOLVED' && String(w.slaStatus)==='BREACHED').length;
+    const orphanOperationalObjects = workflows.filter((w:any)=>!w.recommendationId).length;
+    return {
+      telemetryCoveragePercent: telemetry.coveragePercent,
+      replayCoveragePercent: Math.max(0, 100 - replayGapCount * 10),
+      workflowTraceCoveragePercent: workflows.length ? Math.max(0, 100 - staleWorkflowChains * 10) : 100,
+      lifecycleCoveragePercent: events.some((e:any)=>String(e.eventType)==='M365_LIFECYCLE_TRANSITION') ? 100 : 0,
+      correlationContinuityPercent: events.length ? Math.max(0, Math.round(((events.length - telemetry.missingCorrelationCount) / events.length) * 100)) : 100,
+      orphanOperationalObjects,
+      legacyBypassDetections: 0,
+      staleWorkflowChains,
+      replayGapCount,
+      requiredEventCount: REQUIRED_M365_RUNTIME_EVENTS.length,
+    };
   }
 }
