@@ -166,3 +166,6 @@
 ## Operational Consistency Coverage Boundary Confirmation (2026-05-17)
 - Consistency hardening remains within telemetry/workflow/replay diagnostics boundaries.
 - No workflow-triggered or recommendation-triggered execution expansion introduced.
+
+## Adobe Phase B Boundary Notes
+- No Adobe-specific engines introduced; canonical authorities extended only.

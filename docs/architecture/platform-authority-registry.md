@@ -107,3 +107,10 @@ Before creating a new service/module:
 - OperationalTelemetryService extended with required runtime event catalog and coverage detection.
 - SupportDiagnosticsService extended with runtime consistency diagnostics projection.
 - Status: PARTIALLY_REMEDIATED.
+
+## Adobe Domain Runtime Inheritance (Phase A)
+- Canonical telemetry authority extended with Adobe event helper.
+- Canonical playbook authority extended with Adobe inactive reclaim + contractor cleanup playbooks.
+
+## Adobe Phase B
+- Added Adobe Phase B playbook and telemetry authority extensions.

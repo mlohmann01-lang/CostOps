@@ -66,3 +66,7 @@
 ## Operational Consistency & Coverage Pass (2026-05-17)
 - runtime consistency/coverage pass: PARTIALLY_REMEDIATED (implemented coverage detectors, diagnostics, and parity tests).
 - remaining deeper route-to-service migration: DEFERRED_WITH_REASON (requires broader refactor scope). 
+
+- Adobe Phase A runtime inheritance extension added (telemetry/playbook/trust normalization): PARTIALLY_REMEDIATED.
+
+- Adobe Phase B runtime maturity added: PARTIALLY_REMEDIATED.
