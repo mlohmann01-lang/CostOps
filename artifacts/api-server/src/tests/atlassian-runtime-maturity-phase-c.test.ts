@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { REQUIRED_ATLASSIAN_RUNTIME_EVENTS } from '../lib/observability/operational-telemetry-service';
+test('phase c atlassian runtime event taxonomy present',()=>{ for (const e of ['ATLASSIAN_RENEWAL_READINESS_COMPUTED','ATLASSIAN_PORTFOLIO_GOVERNANCE_UPDATED','ATLASSIAN_GOVERNANCE_DRIFT_DETECTED','ATLASSIAN_MATURITY_SCORE_UPDATED','ATLASSIAN_EXECUTIVE_REPORT_GENERATED','ATLASSIAN_OUTCOME_CALIBRATION_UPDATED','ATLASSIAN_REPLAY_VALIDATED','ATLASSIAN_REPLAY_MISMATCH','ATLASSIAN_RENEWAL_RISK_ESCALATED']) assert.equal(REQUIRED_ATLASSIAN_RUNTIME_EVENTS.includes(e as any),true);});

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { modelTrustDegradation } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('trust degradation suppresses recommendations at high degradation',()=>{ const r=modelTrustDegradation({staleEvidence:5,staleTelemetry:5,missingOwnership:5,workflowAbandonment:5,simulationDrift:5,outcomeReversal:5,identityDegradation:5,connectorDegradation:5,reconciliationInstability:5}); assert.equal(r.suppressRecommendations,true);});

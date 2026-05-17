@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeGovernanceDriftRealism } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('long-lived drift accumulates',()=>{ const r=computeGovernanceDriftRealism({slowTrustDecay:0.8,slowOwnershipDecay:0.7,slowWorkflowBacklogAccumulation:0.7,slowAdminConcentrationGrowth:0.6,slowMarketplaceSprawlGrowth:0.6,slowWorkspaceEntropyGrowth:0.6,slowSuppressionGrowth:0.6}); assert.equal(r.driftVelocity>0,true);});

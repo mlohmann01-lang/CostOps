@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeTelemetryPressure } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('telemetry degradation impacts replay confidence',()=>{ const r=computeTelemetryPressure({eventVolume:1000,partialEventLoss:400,delayedTelemetry:10,duplicateTelemetry:10,crossDomainBursts:5,replayBacklog:200,orderingInstability:5}); assert.equal(r.replayConfidenceDowngrade,true);});

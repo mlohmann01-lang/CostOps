@@ -1,0 +1,3 @@
+import test from 'node:test'; import assert from 'node:assert/strict';
+import { computeCrossDomainWorkflowPressure } from '../lib/cross-domain/cross-domain-governance-intelligence';
+test('workflow pressure aggregates across domains',()=>{ const r=computeCrossDomainWorkflowPressure([{tenantId:'t1',domain:'M365',openReviews:25,criticalReviews:3,highPriorityReviews:6,slaBreachedReviews:2,staleReviewCount:2,playbookTypes:['A']},{tenantId:'t1',domain:'ADOBE',openReviews:20,criticalReviews:2,highPriorityReviews:4,slaBreachedReviews:1,staleReviewCount:1,playbookTypes:['A','B']}]); assert.equal(r.reviewLoad.totalOpenGovernanceReviews,45); assert.equal(r.workflowPressureLevel,'HIGH');});

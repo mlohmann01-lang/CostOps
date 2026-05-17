@@ -20,3 +20,17 @@
 
 ## Operational Consistency Coverage Update (2026-05-17)
 - Telemetry authority now includes canonical required M365 runtime event coverage and continuity diagnostics hooks.
+
+## Cross-Domain Phase A Update
+- Status: PARTIALLY_REMEDIATED.
+- Cross-domain intelligence aggregates canonical domain outputs only; no replacement authority introduced.
+- Cross-domain telemetry/replay events added through canonical telemetry authority.
+- Execution remains READ_ONLY/RECOMMEND_ONLY/APPROVAL_REQUIRED.
+
+
+## Runtime Hardening Phase A Update
+- Status: PARTIALLY_REMEDIATED.
+- Runtime hardening extends canonical telemetry/workflow/reconciliation/simulation/outcome/diagnostics authorities only.
+- No subsystem fork and no execution expansion introduced.
+- Remaining production persistence depth: DEFERRED_WITH_REASON.
+

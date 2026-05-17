@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeReplayDurability } from '../lib/runtime-hardening/runtime-hardening-phase-a';
+test('replay gaps detected',()=>{ const r=computeReplayDurability({longLivedRecommendations:10,staleTelemetry:2,partialEvidenceLoss:2,workflowEscalationChains:4,driftEvolution:2,trustDegradation:3,simulationRecalibration:2,outcomeReversals:1}); assert.equal(r.replayGapDetected,true);});

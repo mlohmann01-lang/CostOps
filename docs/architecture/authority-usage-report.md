@@ -1,6 +1,6 @@
 # Authority Usage Report
 
-Generated: 2026-05-17T07:20:57.901Z
+Generated: 2026-05-17T08:07:20.370Z
 
 - Registry exists: true
 - Consolidated checkpoint doc lines: 45
