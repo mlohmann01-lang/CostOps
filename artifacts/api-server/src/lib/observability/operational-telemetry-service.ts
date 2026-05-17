@@ -67,6 +67,39 @@ export async function emitM365Event(eventType: string, metadata: M365TelemetryMe
 }
 
 
+
+
+export async function emitAdobeEvent(eventType: string, metadata: M365TelemetryMetadata) {
+  return operationalTelemetryService.emitEvent({
+    tenantId: metadata.tenantId,
+    eventCategory: 'ADOBE_OPERATIONAL',
+    eventType,
+    eventStatus: 'SUCCESS',
+    failureCategory: null,
+    eventMetadata: { ...metadata, domain: 'ADOBE', eventTimestamp: new Date().toISOString() },
+    correlationId: String(metadata.correlationId ?? metadata.traceId ?? `${eventType}:${Date.now()}`),
+  });
+}
+
+export const REQUIRED_ADOBE_RUNTIME_EVENTS = [
+  "ADOBE_EVIDENCE_NORMALIZED",
+  "ADOBE_TRUST_DEGRADED",
+  "ADOBE_TRUST_QUARANTINED",
+  "ADOBE_RECONCILIATION_FINDING_CREATED",
+  "ADOBE_RECONCILIATION_BLOCKER_CREATED",
+  "ADOBE_RECOMMENDATION_GENERATED",
+  "ADOBE_RIGHTSIZE_RECOMMENDATION_GENERATED",
+  "ADOBE_ADDON_RECOMMENDATION_GENERATED",
+  "ADOBE_STORAGE_REVIEW_RECOMMENDED",
+  "ADOBE_RECOMMENDATION_SUPPRESSED",
+  "ADOBE_GOVERNANCE_ESCALATED",
+  "ADOBE_WORKFLOW_REVIEW_CREATED",
+  "ADOBE_GRAPH_CORRELATION_LOW_CONFIDENCE",
+  "ADOBE_SIMULATION_CREATED",
+  "ADOBE_OUTCOME_RESOLVED",
+  "ADOBE_REPLAY_VALIDATED",
+  "ADOBE_REPLAY_MISMATCH",
+] as const;
 export const REQUIRED_M365_RUNTIME_EVENTS = [
   "M365_TRUST_DEGRADED",
   "M365_TRUST_QUARANTINED",

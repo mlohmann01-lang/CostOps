@@ -41,3 +41,11 @@ Tenant Context → Connector Evidence → Trust + Reconciliation → Governance 
 ## Operational Consistency Coverage Update (2026-05-17)
 - Added runtime consistency diagnostics and telemetry coverage continuity helpers.
 - Legacy bypass detection is now regression-tested; no execution boundary expansion observed.
+
+## Adobe Phase A Integrity Mapping
+- Telemetry parity: PARTIALLY_REMEDIATED
+- Replay continuity: PARTIALLY_REMEDIATED
+- Lifecycle continuity: PARTIALLY_REMEDIATED
+
+## Adobe Phase B Integrity Mapping
+- Runtime maturity: PARTIALLY_REMEDIATED

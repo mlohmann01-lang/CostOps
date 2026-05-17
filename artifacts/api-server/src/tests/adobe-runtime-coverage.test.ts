@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+test("adobe phase b events exist",()=>{ const c=fs.readFileSync(new URL("../lib/observability/operational-telemetry-service.ts", import.meta.url),"utf8"); ["ADOBE_RIGHTSIZE_RECOMMENDATION_GENERATED","ADOBE_ADDON_RECOMMENDATION_GENERATED","ADOBE_STORAGE_REVIEW_RECOMMENDED","ADOBE_GRAPH_CORRELATION_LOW_CONFIDENCE","ADOBE_SIMULATION_CREATED","ADOBE_OUTCOME_RESOLVED"].forEach(e=>assert.equal(c.includes(e),true)); });

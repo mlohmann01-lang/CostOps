@@ -1,5 +1,7 @@
 import type { BasePlaybook } from "./base-playbook";
 import { m365InactiveUserReclaimPlaybook } from "./m365-inactive-user-reclaim";
+import { adobeContractorCleanupPlaybook, adobeInactiveLicenseReclaimPlaybook } from "./adobe-phase-a-playbooks";
+import { adobeAcrobatProRightsize, adobeAllAppsToSingleAppRightsize, adobeFireflyCreditsReview, adobeFrameIoReclaim, adobeLowUsageCreativeCloudRightsize, adobeSignAddonReview, adobeStockAddonReclaim, adobeStorageGovernanceReview, adobeSubstanceReclaim, adobeVideoSuiteRightsize } from "./adobe-phase-b-playbooks";
 import {
   addonLicenseReclaimPlaybook,
   copilotUnderuseReallocationPlaybook,
@@ -29,4 +31,16 @@ export const PLAYBOOK_REGISTRY: BasePlaybook[] = [
   storageCostExposurePlaybook,
   renewalReadinessPackPlaybook,
   overlappingSkuCleanupPlaybook,
+  adobeInactiveLicenseReclaimPlaybook,
+  adobeContractorCleanupPlaybook,
+  adobeAllAppsToSingleAppRightsize,
+  adobeAcrobatProRightsize,
+  adobeVideoSuiteRightsize,
+  adobeLowUsageCreativeCloudRightsize,
+  adobeStockAddonReclaim,
+  adobeFireflyCreditsReview,
+  adobeFrameIoReclaim,
+  adobeSubstanceReclaim,
+  adobeSignAddonReview,
+  adobeStorageGovernanceReview,
 ];
