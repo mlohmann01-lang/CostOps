@@ -5,7 +5,9 @@ import { ExecutionOrchestrationRepository } from "../execution-orchestration/exe
 import { assessTrust } from "../trust-engine";
 import { buildRecommendationExplainability } from "../recommendations/recommendation-explainability";
 import { buildExplainabilityEnvelope } from "../recommendations/explainability-surface";
-import { RecommendationRationalePersistenceService } from "../recommendations/recommendation-rationale-persistence-service";
+import { RecommendationRationalePersistenceService, deterministicHash } from "../recommendations/recommendation-rationale-persistence-service";
+import { emitM365Event } from "../observability/operational-telemetry-service";
+import { recommendationDecisionTracesTable, recommendationOutcomesTable, policySimulationsTable, workflowItemsTable } from "@workspace/db";
 
 export type M365EvidenceRecord = Record<string, any>;
 
@@ -40,6 +42,7 @@ export class PlaybookRecommendationService {
         if (suppression) {
           const row = (await db.insert(suppressedRecommendationsTable).values({ tenantId: input.tenantId, playbookId: playbook.id, targetEntityId: mapped.email, reasonCode: suppression.reasonCode, reasonText: suppression.reasonText, evidenceSnapshot: evaluation.evidence, correlationId }).returning())[0];
           suppressed.push(row);
+          await emitM365Event("M365_RECOMMENDATION_SUPPRESSED", { tenantId: input.tenantId, playbookId: playbook.id, entityId: mapped.email, correlationId, lifecycleState: "SUPPRESSED", trustBand: input.trustBand, severity: "MEDIUM" });
           continue;
         }
 
@@ -92,10 +95,57 @@ export class PlaybookRecommendationService {
             { stage: "GOVERNANCE", stageOrder: 3, outcome: "RECOMMEND_ONLY", reason: "NO_EXECUTION_AUTHORITY", blocking: false, warning: false, sourceEvidenceIds: [] },
           ],
         });
+        await this.persistLifecycleTransition({ tenantId: input.tenantId, recommendationId: String(rec.id), priorState: "GENERATED", nextState: String(rec.recommendationStatus ?? "READY_FOR_REVIEW"), transitionReason: "PLAYBOOK_GENERATION", trustBand: input.trustBand, governanceOutcome: trust.execution_gate, correlationId });
+        await emitM365Event("M365_RECOMMENDATION_GENERATED", { tenantId: input.tenantId, recommendationId: String(rec.id), playbookId: playbook.id, entityId: mapped.email, correlationId, trustBand: input.trustBand, lifecycleState: String(rec.recommendationStatus ?? "READY_FOR_REVIEW"), governanceOutcome: trust.execution_gate, severity: "LOW" });
         recommendations.push(rec);
       }
     }
     return { recommendations, suppressed, evaluationEvents };
+  }
+
+
+  private async persistLifecycleTransition(input: { tenantId: string; recommendationId: string; priorState: string; nextState: string; transitionReason: string; trustBand?: string; governanceOutcome?: string; workflowId?: string; simulationId?: string; correlationId?: string; blockingFindings?: string[] }) {
+    const tracePayload = { ...input, timestamp: new Date().toISOString() };
+    const traceHash = deterministicHash(tracePayload);
+    await db.insert(recommendationDecisionTracesTable).values({
+      tenantId: input.tenantId,
+      recommendationId: input.recommendationId,
+      recommendationRationaleId: '0',
+      stage: 'LIFECYCLE',
+      stageOrder: '900',
+      outcome: input.nextState,
+      reason: JSON.stringify({ priorState: input.priorState, transitionReason: input.transitionReason, governanceOutcome: input.governanceOutcome ?? null, trustBand: input.trustBand ?? null, workflowId: input.workflowId ?? null, simulationId: input.simulationId ?? null, correlationId: input.correlationId ?? null, blockingFindings: input.blockingFindings ?? [], traceHash }),
+      blocking: input.nextState === 'SUPPRESSED',
+      warning: false,
+      sourceEvidenceIds: [],
+      traceHash,
+    } as any);
+    await emitM365Event('M365_LIFECYCLE_STATE_DERIVED', { tenantId: input.tenantId, recommendationId: input.recommendationId, correlationId: input.correlationId, lifecycleState: input.nextState, trustBand: input.trustBand, governanceOutcome: input.governanceOutcome });
+  }
+
+  async getLifecycleTrace(tenantId: string, recommendationId: string) {
+    return db.select().from(recommendationDecisionTracesTable).where(and(eq(recommendationDecisionTracesTable.tenantId, tenantId), eq(recommendationDecisionTracesTable.recommendationId, recommendationId), eq(recommendationDecisionTracesTable.stage, 'LIFECYCLE'))).orderBy(desc(recommendationDecisionTracesTable.id));
+  }
+
+  async getReplayReport(tenantId: string, recommendationId: string) {
+    const [rec] = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.tenantId, tenantId), eq(recommendationsTable.id, Number(recommendationId)))).limit(1);
+    if (!rec) return null;
+    const traces = await this.getLifecycleTrace(tenantId, recommendationId);
+    const outcomes = await db.select().from(recommendationOutcomesTable).where(and(eq(recommendationOutcomesTable.tenantId, tenantId), eq(recommendationOutcomesTable.recommendationId, recommendationId))).orderBy(desc(recommendationOutcomesTable.resolvedAt));
+    const workflows = await db.select().from(workflowItemsTable).where(and(eq(workflowItemsTable.tenantId, tenantId), eq(workflowItemsTable.targetId, String(rec.targetEntityId ?? rec.userEmail ?? ''))));
+    const sims = await db.select().from(policySimulationsTable).where(eq(policySimulationsTable.tenantId, tenantId)).orderBy(desc(policySimulationsTable.createdAt)).limit(50);
+    const missingTransitions = traces.length ? [] : ['LIFECYCLE'];
+    const missingTelemetry: string[] = [];
+    const hashMismatch = traces.some((t:any)=> !String(t.reason ?? '').includes(String(t.traceHash ?? '')));
+    const workflowMismatch = workflows.length === 0 && rec.recommendationStatus === 'WORKFLOW_REVIEW';
+    const outcomeMismatch = outcomes.length === 0 && rec.recommendationStatus === 'OUTCOME_RESOLVED';
+    const simulationMismatch = sims.length === 0 && rec.recommendationStatus === 'SIMULATED';
+    let replayIntegrity = 'VALID';
+    if (missingTransitions.length) replayIntegrity = 'PARTIAL';
+    if (hashMismatch || workflowMismatch || outcomeMismatch || simulationMismatch) replayIntegrity = 'MISMATCH';
+    if (!traces.length && !outcomes.length && !workflows.length) replayIntegrity = 'INCOMPLETE';
+    await emitM365Event(replayIntegrity === 'VALID' ? 'M365_REPLAY_VALIDATED' : 'M365_REPLAY_MISMATCH', { tenantId, recommendationId, lifecycleState: rec.recommendationStatus ?? undefined, correlationId: rec.correlationId ?? undefined, severity: replayIntegrity === 'VALID' ? 'LOW' : 'HIGH' });
+    return { replayIntegrity, missingTransitions, missingTelemetry, hashMismatch, workflowMismatch, simulationMismatch, outcomeMismatch, continuityViolations: traces.filter((t:any)=>t.blocking).map((t:any)=>t.outcome) };
   }
 
   async listRecommendations(tenantId: string){ return db.select().from(recommendationsTable).where(eq(recommendationsTable.tenantId, tenantId)).orderBy(desc(recommendationsTable.createdAt)); }

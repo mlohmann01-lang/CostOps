@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { db, outcomeLedgerTable, recommendationOutcomesTable, recommendationsTable } from "@workspace/db";
 import { and, desc, eq, gte } from "drizzle-orm";
+import { emitM365Event } from "../observability/operational-telemetry-service";
+import { policySimulationsTable } from "@workspace/db";
 
 const WINDOWS: Record<string, number> = { M365_LICENSE_RECLAIM: 7, RIGHTSIZE_ACTION: 14, GROUP_REMOVAL: 3 };
 
@@ -14,6 +16,7 @@ export class RecommendationOutcomeResolutionService {
     const verifyAfter = new Date((recommendation.createdAt ?? new Date()).getTime() + windowDays * 86400000);
     const ledgerRows = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId, tenantId), eq(outcomeLedgerTable.recommendationId, recommendationId), gte(outcomeLedgerTable.createdAt, recommendation.createdAt!)));
     const now = new Date();
+    const [latestSimulation] = await db.select().from(policySimulationsTable).where(eq(policySimulationsTable.tenantId, tenantId)).orderBy(desc(policySimulationsTable.createdAt)).limit(1);
     const hasLedger = ledgerRows.length > 0;
     const realizedMonthlySavings = ledgerRows.reduce((sum, r) => sum + Number(r.monthlySaving ?? 0), 0);
     const driftDetected = ledgerRows.some((r) => String(r.action ?? "").toUpperCase().includes("DRIFT"));
@@ -48,7 +51,7 @@ export class RecommendationOutcomeResolutionService {
       realizationDeltaPercent,
       resolutionConfidence: outcomeStatus === "REALIZED" ? "VERIFIED" : hasLedger ? "HIGH" : "LOW",
       confidenceCalibration,
-      resolutionEvidence: { verificationWindowDays: windowDays, verifiedAfter: verifyAfter.toISOString() },
+      resolutionEvidence: { verificationWindowDays: windowDays, verifiedAfter: verifyAfter.toISOString(), simulationId: latestSimulation ? String((latestSimulation as any).id) : null, simulationProjectedSavings: latestSimulation ? Number((latestSimulation as any).projectedMonthlySavings ?? 0) : 0, simulationProjectedConfidence: latestSimulation ? (latestSimulation as any).predictedRealizationConfidence : null, simulationBlastRadius: latestSimulation ? Number((latestSimulation as any).blastRadiusScore ?? 0) : 0, simulationGovernanceRisk: latestSimulation ? Number((latestSimulation as any).governanceRiskScore ?? 0) : 0, realizedSavings: realizedMonthlySavings, realizationDelta, realizationConfidence: outcomeStatus === "REALIZED" ? "HIGH" : hasLedger ? "MEDIUM" : "LOW" },
       connectorEvidenceSnapshot: recommendation.connectorHealthSnapshot ?? {},
       outcomeLedgerReferences: ledgerRows.map((r) => ({ id: r.id, action: r.action, monthlySaving: r.monthlySaving })),
       postResolutionLineage: { recommendationCreatedAt: recommendation.createdAt?.toISOString() },
@@ -59,6 +62,9 @@ export class RecommendationOutcomeResolutionService {
       deterministicHash,
       resolvedAt: new Date(),
     }).returning();
+    await emitM365Event("M365_OUTCOME_RESOLVED", { tenantId, recommendationId, outcomeId: String((row as any).id), simulationId: latestSimulation ? String((latestSimulation as any).id) : undefined, lifecycleState: outcomeStatus === "REVERSED" ? "OUTCOME_RESOLVED" : undefined, severity: outcomeStatus === "FAILED" ? "HIGH" : "LOW" });
+    if (driftDetected) await emitM365Event("M365_OUTCOME_DRIFT_DETECTED", { tenantId, recommendationId, outcomeId: String((row as any).id), severity: "HIGH" });
+    if (reversalDetected) await emitM365Event("M365_OUTCOME_REVERSED", { tenantId, recommendationId, outcomeId: String((row as any).id), severity: "CRITICAL" });
     return row;
   }
 

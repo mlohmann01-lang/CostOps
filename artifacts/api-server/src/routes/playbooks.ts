@@ -34,6 +34,17 @@ router.get("/recommendations/:id/decision-traces", async (req,res)=>{
   const { tenantId } = scope(req);
   res.json(await rationaleSvc.getDecisionTraces(tenantId, Number(req.params.id)));
 });
+router.get("/recommendations/:id/lifecycle-trace", async (req,res)=>{
+  const { tenantId } = scope(req);
+  res.json(await svc.getLifecycleTrace(tenantId, String(req.params.id)));
+});
+router.get("/recommendations/:id/replay-report", async (req,res)=>{
+  const { tenantId } = scope(req);
+  const report = await svc.getReplayReport(tenantId, String(req.params.id));
+  if (!report) return res.status(404).json({ error: "Not found" });
+  return res.json(report);
+});
+
 router.get("/recommendations/:id/explainability/integrity", async (req,res)=>{
   const { tenantId } = scope(req);
   const rationale = await rationaleSvc.getLatestRationale(tenantId, Number(req.params.id));
@@ -54,7 +65,7 @@ router.get("/recommendations/explainability/surface", async (req,res)=>{
   const { tenantId } = scope(req);
   const rows = await svc.listRecommendations(tenantId);
   const shaped = rows.map((row)=>buildExplainabilityEnvelope(row as Record<string, unknown>));
-  res.json({ tenantId, count: shaped.length, recommendations: shaped });
+  return res.json({ tenantId, count: shaped.length, recommendations: shaped });
 });
 router.get("/suppressed", async (req,res)=>{ const {tenantId}=scope(req); res.json(await svc.listSuppressed(tenantId)); });
 

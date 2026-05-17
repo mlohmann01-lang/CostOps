@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { db, recommendationArbitrationSnapshotsTable, recommendationsTable, operationalEntitiesTable } from "@workspace/db";
+import { emitM365Event } from "../observability/operational-telemetry-service";
 
 export type PriorityBand = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "SUPPRESSED";
 
@@ -56,6 +57,10 @@ export class RecommendationArbitrationService {
       const [saved] = await db.insert(recommendationArbitrationSnapshotsTable).values({ tenantId: row.tenantId,recommendationId: String(row.recommendationId),playbookId: row.playbookId,connectorType: row.connectorType,priorityScore: row.priorityScore,priorityBand: row.priorityBand,projectedSavingsScore: row.projectedSavingsScore,trustScore: row.trustScore,governanceRiskScore: row.governanceRiskScore,blastRadiusScore: row.blastRadiusScore,reversibilityScore: row.reversibilityScore,realizationConfidenceScore: row.realizationConfidenceScore,driftRiskScore: row.driftRiskScore,reversalRiskScore: row.reversalRiskScore,urgencyScore: row.urgencyScore,arbitrationReasons: row.arbitrationReasons,suppressionReasons: row.suppressionReasons,conflictGroupId: row.conflictGroupId,deduplicationGroupId: row.deduplicationGroupId,arbitrationEngineVersion: row.arbitrationEngineVersion,deterministicHash: stableHash(hashInput) }).returning();
       persisted.push(saved);
     }
+    for (const row of rows) {
+      if ((row.suppressionReasons ?? []).includes("SUPPRESSED_BY_HIGHER_PRIORITY_CONFLICT")) await emitM365Event("M365_ARBITRATION_CONFLICT_SUPPRESSED", { tenantId, recommendationId: String(row.recommendationId), playbookId: row.playbookId, entityId: row.entityId, decisionStage: "ARBITRATION", sourceComponent: "RecommendationArbitrationService", severity: "MEDIUM" });
+    }
+    await emitM365Event("M365_ARBITRATION_COMPLETED", { tenantId, decisionStage: "ARBITRATION", sourceComponent: "RecommendationArbitrationService", severity: "LOW" });
     persisted.sort((a, b) => b.priorityScore - a.priorityScore || b.createdAt.getTime() - a.createdAt.getTime());
     return persisted;
   }

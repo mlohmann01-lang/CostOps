@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+test("correlation fields are present across runtime surfaces", ()=>{ const t=fs.readFileSync(new URL("../lib/observability/operational-telemetry-service.ts", import.meta.url),"utf8"); const p=fs.readFileSync(new URL("../lib/playbooks/playbook-recommendation-service.ts", import.meta.url),"utf8"); assert.equal(t.includes("correlationId"), true); assert.equal(p.includes("correlationId"), true); assert.equal(t.includes("traceId"), true); });

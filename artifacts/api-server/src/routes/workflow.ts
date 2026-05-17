@@ -20,6 +20,7 @@ router.post("/policy-exceptions/:id/approve", requireCapability("MANAGE_POLICIES
 router.post("/policy-exceptions/:id/reject", requireCapability("MANAGE_POLICIES"), async (req,res)=>res.json(await workflowOperationsService.setPolicyExceptionStatus(tenant(req), String(req.params.id), "REJECTED", String(req.header("x-user-id") ?? "system"))));
 router.post("/policy-exceptions/:id/revoke", requireCapability("MANAGE_POLICIES"), async (req,res)=>res.json(await workflowOperationsService.setPolicyExceptionStatus(tenant(req), String(req.params.id), "REVOKED", String(req.header("x-user-id") ?? "system"))));
 router.post("/expire-exceptions", requireCapability("MANAGE_POLICIES"), async (req,res)=>res.json({ expired: await workflowOperationsService.expireExceptions(tenant(req)) }));
+router.get("/:id/escalation-history", requireCapability("READ_AUDIT"), async (req,res)=>res.json(await workflowOperationsService.getEscalationHistory(tenant(req), String(req.params.id))));
 router.get("/decisions", requireCapability("READ_AUDIT"), async (req,res)=>res.json(await db.select().from(approvalDecisionsTable).where(eq(approvalDecisionsTable.tenantId, tenant(req)))));
 
 export default router;

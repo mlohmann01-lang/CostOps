@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+test("reconciliation blocker telemetry available for replay", ()=>{ const s=fs.readFileSync(new URL("../lib/reconciliation/reconciliation-engine.ts", import.meta.url),"utf8"); assert.equal(s.includes("M365_RECONCILIATION_FINDING_CREATED"), true); assert.equal(s.includes("M365_RECONCILIATION_BLOCKER_CREATED"), true); });

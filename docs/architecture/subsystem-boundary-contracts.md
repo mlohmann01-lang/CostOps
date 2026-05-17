@@ -158,3 +158,7 @@
 - M365 playbook expansion remains recommendation/simulation only; no execution boundary expansion.
 
 - Phase B confirms no new subsystem; extended existing recommendation/governance/workflow/simulation authorities.
+
+## Runtime Hardening Boundary Confirmation (2026-05-17)
+- Runtime hardening changes remain telemetry/replay/workflow-diagnostics extensions only.
+- No execution boundary expansion was introduced.

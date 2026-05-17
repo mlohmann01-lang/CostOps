@@ -93,3 +93,12 @@ Before creating a new service/module:
 - M365 Phase A: ConnectorTrustService/EvidenceReconciliationService/M365EvidenceNormalizationService extended (no new engines).
 
 - Phase B lifecycle/governance authority extension recorded (May 16, 2026).
+
+## Phase C Status Update (2026-05-17)
+- M365 Phase C recon completed: `docs/m365-domain/m365-phase-c-recon.md`.
+- Telemetry/outcome/lifecycle/replay extensions remain constrained to existing canonical authorities.
+- New subsystem introduction remains prohibited and unobserved in this phase.
+
+## Operational Runtime Hardening Status (2026-05-17)
+- Runtime hardening recon completed: `docs/architecture/operational-runtime-hardening-recon.md`.
+- Hardening pass extended existing canonical authorities only; no new subsystem introduced.

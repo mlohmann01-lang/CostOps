@@ -1,5 +1,6 @@
 import { db, flexeraEntitlementsTable, m365UsersTable, reconciliationFindingsTable, servicenowAssetsTable } from "@workspace/db";
 import { and, eq } from "drizzle-orm";
+import { emitM365Event } from "../observability/operational-telemetry-service";
 
 export type FindingType =
   | "IDENTITY_MATCH_CONFIRMED"
@@ -122,6 +123,10 @@ export async function runReconciliation(tenantId: string) {
 
   await db.delete(reconciliationFindingsTable).where(and(eq(reconciliationFindingsTable.tenantId, tenantId), eq(reconciliationFindingsTable.status, "OPEN")));
   if (findings.length > 0) await db.insert(reconciliationFindingsTable).values(findings);
+  for (const f of findings) {
+    await emitM365Event("M365_RECONCILIATION_FINDING_CREATED", { tenantId, entityId: f.entityKey, severity: f.severity, sourceComponent: "EvidenceReconciliationService", decisionStage: "RECONCILIATION" });
+    if (f.severity === "CRITICAL" || f.severity === "HIGH") await emitM365Event("M365_RECONCILIATION_BLOCKER_CREATED", { tenantId, entityId: f.entityKey, severity: f.severity, sourceComponent: "EvidenceReconciliationService", decisionStage: "RECONCILIATION" });
+  }
 
   return { tenantId, findingsCreated: findings.length, findings };
 }

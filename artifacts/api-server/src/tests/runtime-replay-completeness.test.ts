@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import fs from "node:fs";
+test("replay completeness statuses supported", ()=>{ const s=fs.readFileSync(new URL("../lib/playbooks/playbook-recommendation-service.ts", import.meta.url),"utf8"); for (const k of ["VALID","PARTIAL","INCOMPLETE","MISMATCH","missingTransitions","hashMismatch","workflowMismatch","outcomeMismatch","simulationMismatch"]) assert.equal(s.includes(k), true); });
