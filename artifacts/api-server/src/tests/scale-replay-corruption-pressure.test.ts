@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateReplayCorruptionPressure } from '../lib/runtime-hardening/runtime-resilience-phase-d';
+test('replay corruption pressure simulation',()=>{const r=simulateReplayCorruptionPressure({replayWindowCount:250,corruptionRate:0.2,lineageMismatchRate:0.15,replayGapRate:0.1,validationFailureRate:0.05}); assert.equal(r.replayContinuityClassification,'DEGRADED'); assert.equal(r.requiredAuditCadence,'WEEKLY');});

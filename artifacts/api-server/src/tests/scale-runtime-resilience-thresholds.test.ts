@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateRuntimeResilienceThresholds } from '../lib/runtime-hardening/runtime-resilience-phase-d';
+test('runtime resilience threshold classification',()=>{const r=evaluateRuntimeResilienceThresholds({telemetry:30,replay:70,workflow:55,graph:20,lineage:65,'tenant-isolation':25,drift:40,storage:85,reconciliation:10}); assert.equal(r.filter((x)=>x.blockingStatus).length,3); assert.equal(r.find((x)=>x.category==='storage')?.severity,'CRITICAL');});

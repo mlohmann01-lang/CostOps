@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateWorkflowRecoveryPressure } from '../lib/runtime-hardening/runtime-resilience-phase-d';
+test('workflow recovery pressure simulation',()=>{const r=simulateWorkflowRecoveryPressure({activeWorkflowCount:5000,blockedWorkflowCount:1500,averageApprovalDelay:36,escalationRate:0.2,reconciliationDependencyRate:0.3}); assert.equal(r.operationalContinuityClassification,'DEGRADED');});
