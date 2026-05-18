@@ -34,3 +34,6 @@ test("subsystem boundaries: runtime hardening remains non-executing",()=>{ const
 test("subsystem boundaries: sustained load simulation remains canonical helper only",()=>{ const scale=read('../lib/runtime-hardening/sustained-runtime-load-phase-c.ts'); assert.equal(scale.includes('class '), false); assert.equal(scale.includes('new telemetry subsystem'), false); assert.equal(scale.includes('execute'), false); });
 
 test("decision-intelligence boundary keywords absent",()=>{ const di=read("../lib/decision-intelligence/recommendation-confidence-engine.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","workflow engine","replay engine","telemetry engine"].forEach(k=>assert.equal(di.includes(k), false)); });
+
+
+test("m365 recommendation packaging layer keeps outcome-ledger boundaries",()=>{ const m=read("../lib/decision-intelligence/m365-expansion-pack-1.ts"); ["new outcome ledger system","new replay system","new telemetry system"].forEach(k=>assert.equal(m.includes(k), false)); });

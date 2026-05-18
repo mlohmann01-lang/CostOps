@@ -1,0 +1,3 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateOperationalSensitivity } from "../lib/decision-intelligence"; import { toM365RecommendationCandidate } from "../lib/decision-intelligence/m365-expansion-pack-1.js";
+const pb={id:"p",name:"p",action:"A",defaultExecutionMode:"APPROVAL_REQUIRED",riskClass:"A"} as any;
+test("sensitivity integration escalates privileged recent-activity users",()=>{ const c=toM365RecommendationCandidate("t",pb,{email:"admin@c.com",displayName:"A",sku:"E5",cost:10,days:2,isPrivileged:true}); const s=evaluateOperationalSensitivity(c); assert.equal(["HIGH","CRITICAL"].includes(s.sensitivityClass), true); assert.equal(s.approvalEscalationRequired, true);});

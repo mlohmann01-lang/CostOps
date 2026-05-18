@@ -1,0 +1,3 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeM365ExpansionPack1RecommendationReport, toM365RecommendationCandidate } from "../lib/decision-intelligence/m365-expansion-pack-1.js";
+const pb={id:"p",name:"p",action:"A",defaultExecutionMode:"APPROVAL_REQUIRED",riskClass:"B"} as any;
+test("outcome ledger integration preserves replay/lineage references",()=>{ const c=toM365RecommendationCandidate("t",pb,{email:"u@c.com",displayName:"U",sku:"E3",cost:10,days:100}); const r=computeM365ExpansionPack1RecommendationReport([c]); assert.equal(r.replayReadinessStatus,"READY"); assert.equal(r.lineageIntegrityStatus,"READY");});
