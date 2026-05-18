@@ -5,3 +5,9 @@ test('decision-intelligence remains non-executing',()=>{ const m=fs.readFileSync
 
 
 test("m365 decision integration layer remains non-executing",()=>{ const m=fs.readFileSync(new URL('../lib/decision-intelligence/m365-expansion-pack-1.ts', import.meta.url),'utf8'); ['AUTO_EXECUTE','AUTO_REMEDIATE','graph.microsoft.com','executionPayload'].forEach(k=>assert.equal(m.includes(k), false)); });
+
+
+test("ai-economics boundary keywords absent",()=>{ const ai=fs.readFileSync(new URL("../lib/ai-economics/ai-decision-intelligence-integration.ts", import.meta.url),"utf8")+fs.readFileSync(new URL("../lib/ai-economics/ai-cost-playbooks.ts", import.meta.url),"utf8"); ["AUTO_EXECUTE","AUTO_REMEDIATE","approval bypass","direct vendor API mutation","new execution engine","new replay engine","new telemetry engine","new workflow engine"].forEach(k=>assert.equal(ai.includes(k), false)); });
+
+
+test("cross-domain-economics boundary keywords absent",()=>{ const x=fs.readFileSync(new URL("../lib/cross-domain-economics/cross-domain-recommendation-arbitration.ts", import.meta.url),"utf8")+fs.readFileSync(new URL("../lib/cross-domain-economics/cross-domain-economic-report.ts", import.meta.url),"utf8"); ["AUTO_EXECUTE","AUTO_REMEDIATE","autonomous spend control","autonomous licence changes","autonomous model switching","autonomous procurement actions","direct vendor API mutation","approval bypass","execution engine creation","replay engine fork","telemetry engine fork","workflow engine fork","outcome-ledger fork"].forEach(k=>assert.equal(x.includes(k), false)); });

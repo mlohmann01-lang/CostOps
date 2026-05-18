@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { buildRecommendationCandidate } from "../lib/ai-economics/ai-recommendation-candidates";
+test("candidate structure route",()=>{ const c=buildRecommendationCandidate({recommendationType:"X",priority:"HIGH",title:"t",summary:"s",evidence:{}}); assert.equal(c.route,"DECISION_INTELLIGENCE"); assert.equal("executionPayload" in (c as any),false);});

@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { deriveOutcomeAttribution } from "../lib/ai-economics/ai-outcome-attribution";
+test("outcome attribution shape",()=>{ const r=deriveOutcomeAttribution([{tenantId:"t",userId:"u",toolId:"x",model:"m",mode:"API",timestamp:new Date().toISOString(),tokens:1,estimatedCost:2,operationType:"GEN",productivitySignal:0.4}]); assert.equal(typeof r.ai_cost_delta,"number"); assert.equal("ai_agent_efficiency" in r,true);});

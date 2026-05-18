@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeAIEconomicsRecommendationReport } from "../lib/ai-economics/ai-final-recommendation-report";
+test("final report fields and readiness state",()=>{ const r=computeAIEconomicsRecommendationReport({conflictCount:1,decisions:[{finalDecision:"PROMOTED",confidenceScore:0.8,sensitivityClass:"LOW",annualizedSavingsEstimate:100}]}); assert.equal(r.totalCandidates,1); assert.equal(!!r.domainReadinessStatus,true);});

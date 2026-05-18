@@ -37,3 +37,9 @@ test("decision-intelligence boundary keywords absent",()=>{ const di=read("../li
 
 
 test("m365 recommendation packaging layer keeps outcome-ledger boundaries",()=>{ const m=read("../lib/decision-intelligence/m365-expansion-pack-1.ts"); ["new outcome ledger system","new replay system","new telemetry system"].forEach(k=>assert.equal(m.includes(k), false)); });
+
+
+test("ai-economics boundary keywords absent",()=>{ const ai=read("../lib/ai-economics/ai-decision-intelligence-integration.ts")+read("../lib/ai-economics/ai-cost-playbooks.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","approval bypass","direct vendor API mutation","new execution engine","new replay engine","new telemetry engine","new workflow engine"].forEach(k=>assert.equal(ai.includes(k), false)); });
+
+
+test("cross-domain-economics boundary keywords absent",()=>{ const x=read("../lib/cross-domain-economics/cross-domain-recommendation-arbitration.ts")+read("../lib/cross-domain-economics/cross-domain-economic-report.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","autonomous spend control","autonomous licence changes","autonomous model switching","autonomous procurement actions","direct vendor API mutation","approval bypass","execution engine creation","replay engine fork","telemetry engine fork","workflow engine fork","outcome-ledger fork"].forEach(k=>assert.equal(x.includes(k), false)); });
