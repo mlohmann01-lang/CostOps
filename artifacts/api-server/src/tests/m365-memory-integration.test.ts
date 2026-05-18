@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { summarizeRecommendationMemory } from "../lib/decision-intelligence";
+test("memory integration computes rates and confidence adjustment",()=>{ const m=summarizeRecommendationMemory([{approved:true,savingsRealizedRate:1},{reversed:true,falsePositive:true,savingsRealizedRate:0}]); assert.equal(m.priorRecommendationCount,2); assert.ok(typeof m.overrideRate==="number"); assert.ok(typeof m.confidenceAdjustment==="number");});

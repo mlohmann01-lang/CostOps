@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { rankFinalRecommendations } from "../lib/decision-intelligence";
+test("ranking integration emits score and priority band",()=>{ const ranked=rankFinalRecommendations([{candidateId:"1",finalDecision:"PROMOTED",finalMode:"RECOMMEND_ONLY",arbitrationReasons:[],suppressionReasons:[],approvalEscalationReasons:[],relatedCandidateIds:[],confidenceScore:90,sensitivityClass:"LOW"} as any]); assert.ok((ranked[0] as any).rankingScore>=0); assert.ok((ranked[0] as any).priorityBand);});
