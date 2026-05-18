@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { summarizeAIRecommendationMemory } from "../lib/ai-economics/ai-decision-intelligence-integration";
+test("memory summarization adjusts confidence inputs only",()=>{ const m=summarizeAIRecommendationMemory([{status:"APPROVED",realizedSavings:true},{status:"REVERSED"},{status:"FALSE_POSITIVE"}] as any); assert.equal(m.priorRecommendationCount,3); assert.equal(m.reversalRate>0,true);});

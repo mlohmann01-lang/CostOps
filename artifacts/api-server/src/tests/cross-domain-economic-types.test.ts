@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import type { CrossDomainEconomicReport } from "../lib/cross-domain-economics";
+test("cross domain types compile",()=>{ const r:CrossDomainEconomicReport={tenantId:"t",generatedAt:new Date().toISOString(),correlationSummary:[],duplicationFindings:[],outcomeAttribution:[],governanceRisks:[],recommendations:[],estimatedAnnualSavings:0,estimatedProductivityOpportunity:0,doubleCountRisk:0,readinessStatus:"READY_WITH_LIMITS"}; assert.equal(r.tenantId,"t");});

@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { detectCrossDomainDuplication } from "../lib/cross-domain-economics";
+test("detect overlap",()=>{ const f=detectCrossDomainDuplication({tenantId:"t",tools:[{tool:"copilot",userOrTeam:"team-a",monthlyCost:20},{tool:"cursor",userOrTeam:"team-a",monthlyCost:30}]}); assert.equal(f.some((x)=>x.duplicationType==="COPILOT_AND_CURSOR_OVERLAP"),true);});

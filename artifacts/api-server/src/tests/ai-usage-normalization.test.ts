@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { normalizeAIUsageRecord, aggregateUsageCost } from "../lib/ai-economics/ai-usage-normalization";
+test("usage normalization and aggregation",()=>{ const a=normalizeAIUsageRecord({tenantId:"t",userId:"u",toolId:"copilot",tokens:-1,estimatedCost:2}); const b=normalizeAIUsageRecord({tenantId:"t",userId:"u2",toolId:"copilot",estimatedCost:3}); assert.equal(a.tokens,0); assert.equal(aggregateUsageCost([a,b]),5);});

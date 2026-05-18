@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateAIGovernancePolicy } from "../lib/ai-economics/ai-governance-policy";
+test("governance policy classification",()=>{ const r=evaluateAIGovernancePolicy({approvedModels:["gpt"],blockedModels:["bad"],maxCostPerOperation:5},{tenantId:"t",userId:"u",toolId:"x",model:"bad",mode:"API",timestamp:new Date().toISOString(),tokens:1,estimatedCost:9,operationType:"GEN",productivitySignal:0}); assert.equal(r.compliant,false); assert.equal(r.violations.includes("BLOCKED_MODEL"),true);});

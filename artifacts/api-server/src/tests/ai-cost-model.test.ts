@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeAICostSummary } from "../lib/ai-economics/ai-cost-model";
+test("cost model summary",()=>{ const s=computeAICostSummary([{tenantId:"t",userId:"u",toolId:"x",model:"m",mode:"API",timestamp:new Date().toISOString(),tokens:1000,estimatedCost:2,operationType:"GEN",productivitySignal:0.2}]); assert.equal(s.totalCost,2); assert.equal(s.blendedCostPer1kTokens,2);});

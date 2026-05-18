@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { runAICostPlaybooks } from "../lib/ai-economics/ai-cost-playbooks";
+test("7 playbooks produce recommendation candidates",()=>{ const out=runAICostPlaybooks([{tenantId:"t",userId:"u",toolId:"x",model:"m",mode:"API",timestamp:new Date().toISOString(),tokens:1,estimatedCost:2,operationType:"GEN",productivitySignal:0.1}]); assert.equal(out.length,7); assert.equal(out.every((x)=>x.route==="DECISION_INTELLIGENCE"),true);});

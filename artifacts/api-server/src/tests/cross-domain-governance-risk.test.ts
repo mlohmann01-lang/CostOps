@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateCrossDomainGovernanceRisk } from "../lib/cross-domain-economics";
+test("governance risk evaluation",()=>{ const entityRef={tenantId:"t",entityType:"TOOL" as const,entityId:"chatgpt",displayName:"ChatGPT",sourceDomain:"AI_ECONOMICS" as const}; const r=evaluateCrossDomainGovernanceRisk([{tenantId:"t",entityRef,riskType:"UNAPPROVED_AI_TOOL_WITH_M365_USAGE",severity:"HIGH",confidence:0.8,evidenceRefs:["e"]}]); assert.equal(r[0].recommendedAction,"ESCALATE_APPROVAL");});
