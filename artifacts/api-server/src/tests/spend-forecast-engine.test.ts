@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastEconomicSpend } from '../lib/economic-forecasting';
+test('spend forecast supports windows',()=>{ const r=forecastEconomicSpend({tenantId:'t',forecastWindow:'365D',historicalSaasSpend:[100],historicalAiSpend:[50],aiAdoptionGrowth:0.6,duplicateToolGrowth:0.3,premiumLicenceGrowth:0.2,toolSprawlGrowth:0.2,departmentGrowth:0.1,productivityAdoptionTrend:0.2}); assert.equal(r.projectedSpendTrajectory.length,12); assert.equal(r.projectedMonthlySpend>0,true);});

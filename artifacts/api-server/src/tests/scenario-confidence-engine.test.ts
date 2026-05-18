@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { calculateScenarioConfidence } from '../lib/economic-simulation';
+test('scenario confidence',()=>{const r=calculateScenarioConfidence({historicalDepth:0.7,attributionQuality:0.7,assumptionQuality:0.8,volatility:0.3,governanceQuality:0.7,signalFreshness:0.8,duplicationRisk:0.3,replayIntegrity:0.9});assert.equal(r.confidenceBand==='HIGH'||r.confidenceBand==='VERY_HIGH'||r.confidenceBand==='MODERATE',true);});

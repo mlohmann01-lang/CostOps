@@ -1,0 +1,3 @@
+import type { ScenarioProductivitySimulation } from './economic-simulation-types';
+const c=(n:number)=>Math.max(0,Math.min(1,n));
+export function simulateScenarioProductivity(input:{scenarioId:string;productivityUplift:number;contractorReduction:number;workflowEfficiency:number;supportDeflection:number;}):ScenarioProductivitySimulation{ const op=c((input.productivityUplift+input.workflowEfficiency+input.supportDeflection)/3); return {...input,operationalEfficiency:op,productivityFailureRisk:c((1-input.productivityUplift)*0.5+(1-input.workflowEfficiency)*0.5),confidence:c(op*(1-input.contractorReduction*0.2))}; }

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { simulateScenarioAIAdoption } from '../lib/economic-simulation';
+test('ai adoption simulation',()=>{const r=simulateScenarioAIAdoption({scenarioId:'s',adoptionAcceleration:0.8,rolloutSuccessLikelihood:0.7,toolSprawlGrowth:0.4,productivityRealization:0.6,governanceDeterioration:0.3});assert.equal(r.aiEfficiencyTrajectory>0,true);});

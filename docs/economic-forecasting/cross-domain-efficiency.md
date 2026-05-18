@@ -1,0 +1,1 @@
+# cross domain efficiency\n\nDeterministic forecasting design and governance-safe constraints.

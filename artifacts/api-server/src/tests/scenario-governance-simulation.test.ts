@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { simulateScenarioGovernance } from '../lib/economic-simulation';
+test('governance simulation',()=>{const r=simulateScenarioGovernance({scenarioId:'s',governanceDegradation:0.4,aiSprawlGrowth:0.5,approvalBottlenecks:0.4,shadowAiGrowth:0.3,ownershipDegradation:0.4,governanceTightening:0.5,policyEffectiveness:0.6});assert.equal(r.confidence>0,true);});

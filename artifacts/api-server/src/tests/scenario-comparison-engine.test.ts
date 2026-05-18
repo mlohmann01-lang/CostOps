@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { compareEconomicScenarios } from '../lib/economic-simulation';
+test('scenario comparison',()=>{const r=compareEconomicScenarios([{scenarioId:'a',savings:10,governance:0.5,productivity:0.6,risk:0.5,confidence:0.7,efficiency:0.6},{scenarioId:'b',savings:20,governance:0.7,productivity:0.8,risk:0.4,confidence:0.8,efficiency:0.8}]);assert.equal(r.preferredScenario,'b');});
