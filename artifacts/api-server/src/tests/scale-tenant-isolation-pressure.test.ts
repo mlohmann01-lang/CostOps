@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateTenantIsolationPressure } from '../lib/runtime-hardening/runtime-resilience-phase-d';
+test('tenant isolation pressure simulation',()=>{const r=simulateTenantIsolationPressure({tenantCount:200,concurrentTenantOperations:20000,sharedDependencyPressure:0.2,graphOverlapRisk:0.1,lineageCrossReferenceRisk:0.08}); assert.equal(r.isolationReadinessClassification,'STABLE');});

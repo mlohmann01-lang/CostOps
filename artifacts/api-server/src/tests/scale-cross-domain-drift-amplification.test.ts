@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateCrossDomainDriftAmplification } from '../lib/runtime-hardening/runtime-resilience-phase-d';
+test('cross-domain drift amplification simulation',()=>{const r=simulateCrossDomainDriftAmplification({domainMismatchRate:0.2,staleConnectorRate:0.15,orphanedEntityRate:0.1,reconciliationConflictRate:0.12,trustScoreDecayRate:0.08}); assert.equal(r.operationalReadinessImpact,'STABLE'); assert.equal(r.driftAmplificationRisk>0,true);});
