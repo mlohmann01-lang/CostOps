@@ -16,3 +16,5 @@ test("cross-domain layer remains non-executing", () => {
 });
 
 test("scale simulation remains non-executing",()=>{ const scale=read('../lib/runtime-hardening/sustained-runtime-load-phase-c.ts'); assert.equal(scale.includes('execution-engine'), false); assert.equal(scale.includes('auto-approval'), false); assert.equal(scale.includes('workflow-triggered execution'), false); });
+
+test("decision-intelligence has no direct mutation paths",()=>{ const detector=read("../lib/decision-intelligence/recommendation-conflict-detector.ts"); ["Graph","ServiceNow","license removal execution","approval bypass"].forEach(k=>assert.equal(detector.includes(k), false)); });

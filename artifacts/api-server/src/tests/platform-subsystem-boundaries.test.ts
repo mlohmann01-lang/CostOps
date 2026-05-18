@@ -32,3 +32,5 @@ test("subsystem boundaries: support diagnostics and boundary docs exist", () => 
 test("subsystem boundaries: runtime hardening remains non-executing",()=>{ const hard=read("../lib/runtime-hardening/runtime-hardening-phase-a.ts"); assert.equal(hard.includes("execution-engine"), false); });
 
 test("subsystem boundaries: sustained load simulation remains canonical helper only",()=>{ const scale=read('../lib/runtime-hardening/sustained-runtime-load-phase-c.ts'); assert.equal(scale.includes('class '), false); assert.equal(scale.includes('new telemetry subsystem'), false); assert.equal(scale.includes('execute'), false); });
+
+test("decision-intelligence boundary keywords absent",()=>{ const di=read("../lib/decision-intelligence/recommendation-confidence-engine.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","workflow engine","replay engine","telemetry engine"].forEach(k=>assert.equal(di.includes(k), false)); });
