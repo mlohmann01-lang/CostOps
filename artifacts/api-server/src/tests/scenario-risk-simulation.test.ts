@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { simulateScenarioRisk } from '../lib/economic-simulation';
+test('risk simulation',()=>{const r=simulateScenarioRisk({scenarioId:'s',spendExplosion:0.7,governanceCollapse:0.8,aiSprawlEscalation:0.7,weakRoiRealization:0.6,duplicateToolEscalation:0.6,approvalBottlenecks:0.7,recommendationDegradation:0.6,shadowAiAcceleration:0.8});assert.equal(r.compositeRisk>0.6,true);});

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastAIAdoption } from '../lib/economic-forecasting';
+test('rapid tool growth increases governance risk',()=>{ const r=forecastAIAdoption({tenantId:'t',departmentId:'d',aiToolUsage:0.8,departmentAdoption:0.8,productivitySignal:0.3,spendTrend:0.8,governancePolicyState:0.3,duplicateToolPattern:0.9,rolloutCohortStrength:0.8,pilotCohortStrength:0.8}); assert.equal(r.projectedGovernanceRisk>0.6,true);});

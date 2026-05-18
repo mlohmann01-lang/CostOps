@@ -1,0 +1,3 @@
+import type { ScenarioRiskSimulation } from './economic-simulation-types';
+const c=(n:number)=>Math.max(0,Math.min(1,n));
+export function simulateScenarioRisk(input:{scenarioId:string;spendExplosion:number;governanceCollapse:number;aiSprawlEscalation:number;weakRoiRealization:number;duplicateToolEscalation:number;approvalBottlenecks:number;recommendationDegradation:number;shadowAiAcceleration:number;}):ScenarioRiskSimulation{ const composite=c((input.spendExplosion+input.governanceCollapse+input.aiSprawlEscalation+input.weakRoiRealization+input.duplicateToolEscalation+input.approvalBottlenecks+input.recommendationDegradation+input.shadowAiAcceleration)/8); return {...input,compositeRisk:composite,confidence:c(1-composite*0.4)}; }

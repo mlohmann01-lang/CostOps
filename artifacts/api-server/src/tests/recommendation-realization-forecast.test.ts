@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastRecommendationRealization } from '../lib/economic-forecasting';
+test('recommendation realization provides probabilities',()=>{ const r=forecastRecommendationRealization({tenantId:'t',recommendationId:'r',historicalApprovalRate:0.7,overrideRate:0.2,operationalSensitivity:0.4,governanceRisk:0.3,recommendationConfidence:0.8,departmentFollowThrough:0.7}); assert.equal(r.approvalLikelihood>r.reversalLikelihood,true);});

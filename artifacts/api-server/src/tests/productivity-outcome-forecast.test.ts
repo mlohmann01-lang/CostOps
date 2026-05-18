@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastProductivityOutcomes } from '../lib/economic-forecasting';
+test('productivity outcome forecast deterministic',()=>{ const r=forecastProductivityOutcomes({tenantId:'t',departmentId:'d',productivityAttribution:0.8,aiUsage:0.7,saasUsage:0.6,contractorReductionIndicator:0.5,supportDeflectionIndicator:0.6,workflowEfficiencyIndicator:0.7,historicalRealizationRate:0.8}); assert.equal(r.projectedProductivityGain>0,true);});

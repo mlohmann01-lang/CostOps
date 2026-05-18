@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { computeEconomicScenarioReport } from '../lib/economic-simulation';
+test('scenario report readiness',()=>{const r=computeEconomicScenarioReport({tenantId:'t',scenarioIds:['a','b'],savings:[10,20],productivity:[0.5,0.7],governance:[0.6,0.8],risk:[0.4,0.6],confidenceSummary:0.75,topAssumptionRisks:[],topSimulationRisks:[]});assert.equal(r.readinessStatus,'READY_FOR_EXECUTIVE_SIMULATION');});

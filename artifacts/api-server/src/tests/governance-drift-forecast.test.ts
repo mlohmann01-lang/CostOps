@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastGovernanceDrift } from '../lib/economic-forecasting';
+test('governance drift forecast emits risk',()=>{ const r=forecastGovernanceDrift({tenantId:'t',aiToolSprawlGrowth:0.8,unapprovedAiAdoption:0.8,duplicateSaasGrowth:0.7,governanceDegradation:0.6,ownershipClarityDegradation:0.6,recommendationQualityDegradation:0.5,approvalBottleneckGrowth:0.7,shadowAiGrowth:0.8,spendDriftAcceleration:0.7}); assert.equal(r.projectedDriftRisk>0.6,true);});

@@ -1,0 +1,3 @@
+import type { EconomicScenario, ScenarioAssumption, ScenarioForecastWindow, ScenarioType } from './economic-simulation-types';
+export interface ScenarioDefinitionInput{tenantId:string;scenarioType:ScenarioType;scenarioName:string;description:string;assumptions:ScenarioAssumption[];forecastWindow:ScenarioForecastWindow;createdAt?:string;}
+export function buildEconomicScenario(input:ScenarioDefinitionInput):EconomicScenario{ if(!input.assumptions.length) throw new Error('assumptions required'); const scenarioId=`${input.tenantId}:${input.scenarioType}:${input.scenarioName.toLowerCase().replace(/\s+/g,'-')}:${input.forecastWindow}`; return {...input,scenarioId,createdAt:input.createdAt??new Date(0).toISOString()}; }

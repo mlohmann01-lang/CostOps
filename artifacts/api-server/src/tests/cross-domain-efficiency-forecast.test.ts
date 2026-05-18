@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastCrossDomainEfficiency } from '../lib/economic-forecasting';
+test('cross domain efficiency forecast score bounds',()=>{ const r=forecastCrossDomainEfficiency({tenantId:'t',forecastWindow:'180D',aiSpendVsProductivity:0.7,m365PremiumVsAiUsage:0.6,duplicateAiInefficiency:0.2,consolidationOpportunity:0.7,departmentEfficiencyDivergence:0.3,governanceEfficiencyTrend:0.7}); assert.equal(r.projectedEfficiencyScore<=1&&r.projectedEfficiencyScore>=0,true);});

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { forecastEconomicRisk } from '../lib/economic-forecasting';
+test('economic risk forecast severity',()=>{ const r=forecastEconomicRisk({tenantId:'t',riskType:'SPEND',spendExplosionRisk:0.9,aiSprawlRisk:0.8,duplicateToolEscalation:0.7,governanceDegradation:0.7,weakRoiRealization:0.6,duplicateSavingsRisk:0.8,recommendationDegradation:0.7,approvalBottlenecks:0.7,shadowAiEscalation:0.8}); assert.equal(r.projectedSeverity==='HIGH'||r.projectedSeverity==='CRITICAL',true);});

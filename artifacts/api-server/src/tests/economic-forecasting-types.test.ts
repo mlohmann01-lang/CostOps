@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import type { SpendForecast } from '../lib/economic-forecasting';
+test('economic forecasting types compile',()=>{ const s:SpendForecast={tenantId:'t',forecastWindow:'90D',projectedMonthlySpend:1,projectedAnnualizedSpend:12,spendGrowthRate:0.2,confidence:0.8,evidenceRefs:[],assumptions:[],projectedSpendTrajectory:[1],spendAccelerationRisk:0.2,duplicateSpendRisk:0.2,aiSpendGrowthRisk:0.2,costConcentrationRisk:0.2}; assert.equal(s.tenantId,'t');});

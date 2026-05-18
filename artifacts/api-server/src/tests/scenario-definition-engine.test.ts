@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildEconomicScenario } from '../lib/economic-simulation';
+test('scenario definition deterministic id',()=>{const s=buildEconomicScenario({tenantId:'t',scenarioType:'AI_TRANSFORMATION',scenarioName:'Copilot Growth',description:'d',assumptions:[{assumptionId:'a',assumptionType:'AI_ADOPTION_GROWTH',description:'d',expectedImpact:0.3,confidence:0.8,evidenceRefs:[]}],forecastWindow:'180D'});assert.equal(s.scenarioId.includes('copilot-growth'),true);});
