@@ -1,0 +1,1 @@
+import type { TwinInput } from "./digital-twin-types"; export const buildDataPlatformTwin=(input:TwinInput)=>({id:input.id,snowflakeRuntime:input.runtimeUnits??0,databricksRuntime:input.workload??0,deterministicForecast:true});

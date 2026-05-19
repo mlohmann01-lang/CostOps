@@ -1,0 +1,1 @@
+import type { ElasticityInput } from "./elasticity-types"; export const evaluateAIDemandElasticity=(i:ElasticityInput)=>({tokenDemand:i.base*(1+i.growth*1.5),gpuDemand:i.base*(1+i.growth*1.7),deterministicSimulation:true});

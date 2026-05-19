@@ -1,0 +1,1 @@
+import type { ForecastInput } from "./economic-forecasting-types"; export const forecastDatabricksCost=(i:ForecastInput)=>({cost:i.base*(1+i.growthRate),runtimeLinked:true,assumptions:i.assumptions});

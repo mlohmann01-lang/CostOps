@@ -1,0 +1,1 @@
+import type { TwinInput } from "./digital-twin-types"; export const buildServiceTwin=(input:TwinInput)=>({id:input.id,cost:input.cost??0,governanceState:"governanceReview",deterministicForecast:true});

@@ -1,0 +1,1 @@
+import type { ForecastInput } from "./economic-forecasting-types"; export const forecastAIRuntimeCost=(i:ForecastInput)=>({cost:i.base*(1+i.growthRate*1.2),tokenRuntimeLinked:true,assumptions:i.assumptions});

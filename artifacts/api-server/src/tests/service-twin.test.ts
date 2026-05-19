@@ -1,0 +1,4 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { buildServiceTwin } from "../lib/digital-twin-foundation/service-twin";
+test("service-twin",()=>{const r=buildServiceTwin({id:"x",from:1,to:2,base:1,factor:2,assumptions:[]} as any); assert.ok(r);});

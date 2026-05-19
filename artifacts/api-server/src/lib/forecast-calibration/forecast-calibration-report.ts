@@ -1,0 +1,1 @@
+import { evaluateForecastVsActual } from "./forecast-vs-actual-engine"; import { evaluateForecastDrift } from "./forecast-drift-engine"; export const computeForecastCalibrationReport=(i:any)=>({vsActual:evaluateForecastVsActual(i),drift:evaluateForecastDrift(i),deterministicForecast:true});

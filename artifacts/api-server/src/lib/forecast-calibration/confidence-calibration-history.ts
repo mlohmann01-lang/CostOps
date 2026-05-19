@@ -1,0 +1,1 @@
+export const calibrateConfidenceFromHistory=(i:{history:number[];baseConfidence:number})=>({forecastConfidence:Math.max(0,Math.min(1,i.baseConfidence-(i.history.length>0?Math.max(...i.history)/100:0))),replaySafe:true});

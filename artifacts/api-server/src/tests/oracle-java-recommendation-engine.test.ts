@@ -1,1 +1,4 @@
-import test from 'node:test';import assert from 'node:assert/strict';import { generateOracleJavaRecommendations } from '../lib/oracle-java-governance';test('reco',()=>{const r=generateOracleJavaRecommendations({riskScore:0.9,confidenceScore:0.4,exposureBand:'HIGH',governanceClass:'APPROVAL_REQUIRED',riskReasons:['VMware affinity ambiguity','cloud BYOL ambiguity'],evidenceGaps:['gap'],recommendedReviewMode:'APPROVAL_REQUIRED'});assert.ok(r.length>2);});
+import test from "node:test";
+import assert from "node:assert/strict";
+import { oracleRecommendation } from "../lib/oracle-java-governance-pack/oracle-java-recommendation-engine";
+test("maps recommendation",()=>{assert.equal(typeof oracleRecommendation("JAVA_EMPLOYEE_METRIC_EXPOSURE_REVIEW"),"string");});

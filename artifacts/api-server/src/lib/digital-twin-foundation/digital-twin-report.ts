@@ -1,0 +1,1 @@
+import { buildEnterpriseRuntimeTwin } from "./enterprise-runtime-twin"; import { snapshotTwinState } from "./twin-state-snapshot"; export const computeDigitalTwinReport=(input:any)=>({twin:buildEnterpriseRuntimeTwin(input),snapshot:snapshotTwinState(input),scenarioModel:true});

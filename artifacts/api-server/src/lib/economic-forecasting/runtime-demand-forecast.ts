@@ -1,0 +1,1 @@
+import type { ForecastInput } from "./economic-forecasting-types"; export const forecastRuntimeDemand=(i:ForecastInput)=>({demand:i.base*(1+i.growthRate),assumptions:i.assumptions,deterministicForecast:true});

@@ -1,0 +1,1 @@
+export const forecastOracleJavaRenewal=(i:{base:number;entitlementEvidence:boolean;contractEvidence:boolean;assumptions:string[]})=>({renewal:i.base,confidence:(i.entitlementEvidence&&i.contractEvidence)?0.8:0.4,assumptions:i.assumptions,governanceReview:true});

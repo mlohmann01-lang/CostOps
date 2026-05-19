@@ -1,0 +1,1 @@
+import type { ForecastInput } from "./economic-forecasting-types"; export const forecastWorkloadGrowth=(i:ForecastInput)=>({series:Array.from({length:i.periods},(_,p)=>i.base*(1+i.growthRate*(p+1))),assumptions:i.assumptions,deterministicForecast:true});

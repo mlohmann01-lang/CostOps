@@ -1,0 +1,1 @@
+import type { TwinInput } from "./digital-twin-types"; export const buildCostCenterTwin=(input:TwinInput)=>({id:input.id,budgetBase:input.cost??0,varianceGuard:"deterministicForecast",deterministicForecast:true});

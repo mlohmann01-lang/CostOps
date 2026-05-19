@@ -1,0 +1,1 @@
+import type { ElasticityInput } from "./elasticity-types"; export const evaluateWorkloadElasticity=(i:ElasticityInput)=>({elasticity:i.base*Math.pow(1+i.growth,2),deterministicSimulation:true,propagation:"workload"});

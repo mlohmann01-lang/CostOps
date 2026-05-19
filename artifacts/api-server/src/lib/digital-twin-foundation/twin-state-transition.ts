@@ -1,0 +1,1 @@
+export const evaluateTwinStateTransition=(input:{from:number;to:number;evidenceConfidence?:number})=>({delta:input.to-input.from,replaySafe:true,deterministicForecast:true,confidence:Math.max(0,Math.min(1,input.evidenceConfidence??0.7))});
