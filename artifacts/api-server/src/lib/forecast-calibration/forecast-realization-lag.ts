@@ -1,0 +1,1 @@
+export const evaluateForecastRealizationLag=(i:{expectedDays:number;actualDays:number})=>({lagDays:Math.max(0,i.actualDays-i.expectedDays),realizationConfidence:Math.max(0,1-Math.max(0,i.actualDays-i.expectedDays)/100)});

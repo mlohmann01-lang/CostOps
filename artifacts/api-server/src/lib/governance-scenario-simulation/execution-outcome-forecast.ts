@@ -1,0 +1,1 @@
+import type { ScenarioInput } from "./governance-scenario-types"; export const forecastExecutionOutcome=(i:ScenarioInput)=>({value:i.base*i.factor,simulation:true,replaySafe:true,assumptions:i.assumptions,forecastConfidence:i.evidenceConfidence??0.7});

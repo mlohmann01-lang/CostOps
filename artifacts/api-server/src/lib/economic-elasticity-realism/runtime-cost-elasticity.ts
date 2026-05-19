@@ -1,0 +1,1 @@
+import type { ElasticityInput } from "./elasticity-types"; export const evaluateRuntimeCostElasticity=(i:ElasticityInput)=>({costElasticity:i.base*Math.pow(1+i.growth,1.6),deterministicSimulation:true});

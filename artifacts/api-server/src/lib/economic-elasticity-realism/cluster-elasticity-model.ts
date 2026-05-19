@@ -1,0 +1,1 @@
+import type { ElasticityInput } from "./elasticity-types"; export const evaluateClusterElasticity=(i:ElasticityInput)=>({clusterPressure:(i.intensity??1)*(1+i.growth*1.3),deterministicSimulation:true});

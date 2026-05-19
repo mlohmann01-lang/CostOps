@@ -1,0 +1,1 @@
+import { normalizeOracleJavaSignal } from "./oracle-java-signal-normalizer"; import { employeeMetricExposure } from "./oracle-java-employee-metric-exposure"; export const oracleJavaGovernanceReport=(i:Record<string,unknown>)=>{const s=normalizeOracleJavaSignal(i as any);return {signal:s,employee:employeeMetricExposure(s),governanceReview:true};};

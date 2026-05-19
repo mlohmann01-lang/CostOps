@@ -1,0 +1,1 @@
+import type { ForecastInput } from "./economic-forecasting-types"; export const forecastSnowflakeCost=(i:ForecastInput)=>({cost:i.base*(1+i.growthRate),workloadLinked:true,assumptions:i.assumptions});

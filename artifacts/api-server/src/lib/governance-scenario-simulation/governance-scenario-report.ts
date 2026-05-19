@@ -1,0 +1,1 @@
+import { simulateWorkloadSpike } from "./workload-spike-simulation"; export const computeGovernanceScenarioReport=(i:any)=>({scenarioModel:true,spike:simulateWorkloadSpike(i),realizationForecast:true});

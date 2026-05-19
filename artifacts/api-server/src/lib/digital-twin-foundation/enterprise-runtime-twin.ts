@@ -1,0 +1,1 @@
+import type { TwinInput, TwinState } from "./digital-twin-types"; export const buildEnterpriseRuntimeTwin=(input:TwinInput):TwinState=>({id:input.id,deterministicForecast:true,workload:input.workload??0,cost:input.cost??0,governanceState:"governanceReview",evidenceConfidence:input.governanceEvidenceConfidence??0.7,relationships:input.relationships??["FORECASTS:EAG"]});

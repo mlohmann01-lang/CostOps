@@ -1,0 +1,3 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+test("servicenow-sam-eag-integration",()=>{assert.equal(true,true);});

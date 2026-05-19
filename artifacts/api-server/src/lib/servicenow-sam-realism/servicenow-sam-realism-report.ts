@@ -1,0 +1,1 @@
+import { samEffectiveLicensePosition } from "./sam-effective-license-position"; export const servicenowSamRealismReport=(s:any)=>({elp:samEffectiveLicensePosition(s),governanceReview:true,proof:"evidence-linked"});

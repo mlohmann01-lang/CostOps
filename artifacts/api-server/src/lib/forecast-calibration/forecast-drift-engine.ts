@@ -1,0 +1,1 @@
+import type { CalibrationInput } from "./forecast-calibration-types"; export const evaluateForecastDrift=(i:CalibrationInput)=>({drift:Math.abs(i.actual-i.forecast),confidenceImpact:Math.max(0,1-Math.abs(i.actual-i.forecast)/Math.max(1,i.actual))});

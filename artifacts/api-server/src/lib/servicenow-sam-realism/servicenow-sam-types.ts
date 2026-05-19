@@ -1,0 +1,1 @@
+export type SamSignal={softwareModel?:boolean;entitlementEvidence?:boolean;discoveryMatchesInstall?:boolean;usageEvidence?:boolean;contractEvidence?:boolean;metricAligned?:boolean;publisherPack?:boolean;saasDrift?:boolean};

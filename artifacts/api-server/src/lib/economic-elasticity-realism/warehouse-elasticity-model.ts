@@ -1,0 +1,1 @@
+import type { ElasticityInput } from "./elasticity-types"; export const evaluateWarehouseElasticity=(i:ElasticityInput)=>({warehousePressure:(i.intensity??1)*(1+i.growth*1.2),deterministicSimulation:true});

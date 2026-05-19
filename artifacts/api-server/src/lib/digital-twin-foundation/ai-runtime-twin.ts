@@ -1,0 +1,1 @@
+import type { TwinInput } from "./digital-twin-types"; export const buildAIRuntimeTwin=(input:TwinInput)=>({id:input.id,tokenDemand:input.tokenDemand??0,runtimeUnits:input.runtimeUnits??0,tokenomicsLink:"runtime-economics",deterministicForecast:true});
