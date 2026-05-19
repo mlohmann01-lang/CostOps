@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { trackScenarioRealization } from '../lib/economic-calibration';
+test('tracks scenario realization deltas',()=>{ const r=trackScenarioRealization({tenantId:'t',scenarioId:'s1',scenarioName:'x',simulatedSpendDelta:-10,simulatedSavingsDelta:25,realizedSpendDelta:-5,realizedSavingsDelta:15,simulatedAt:'2026-01-01',realizedAt:'2026-03-01'}); assert.equal(r.spendError,5); assert.equal(r.savingsError,10); });

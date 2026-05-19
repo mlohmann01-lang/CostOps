@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { captureForecastOutcome } from '../lib/economic-calibration';
+test('captures forecast outcome errors',()=>{ const r=captureForecastOutcome({tenantId:'t',forecastId:'f1',metricType:'SPEND',forecastedValue:100,actualValue:80,forecastedAt:'2026-01-01',observedAt:'2026-02-01'}); assert.equal(r.absoluteError,20); assert.equal(r.percentageError,0.2); });

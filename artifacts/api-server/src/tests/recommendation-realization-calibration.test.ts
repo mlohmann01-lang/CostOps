@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { calibrateRecommendationRealization } from '../lib/economic-calibration';
+test('calibrates recommendation realization',()=>{ const x=calibrateRecommendationRealization([{tenantId:'t',recommendationId:'r1',forecastedApprovalProbability:0.8,approved:true,reversed:false,forecastedSavings:100,realizedSavings:90}]); assert.equal(x.results[0].approvalHit,true); assert.ok(x.score>0); });

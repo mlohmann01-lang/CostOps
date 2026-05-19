@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { deriveAttributionMemoryAdjustment } from '../lib/economic-memory';
+test('attribution memory adjustment treatment',()=>{ const x=deriveAttributionMemoryAdjustment({tenantId:'t',totalRecords:4,averageErrorRate:0.4,volatility:0.2,overestimationRate:0.3,underestimationRate:0.6,balancedRate:0.1,lowEvidenceRate:0.2,consistencyClass:'VOLATILE_ACCURACY',biasClass:'UNDER_BIAS'}); assert.equal(x.recommendedAttributionTreatment,'DEMOTE_CONFIDENCE'); });

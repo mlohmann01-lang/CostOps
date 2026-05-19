@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { trackFinOpsSavingsRealization } from '../lib/finops-operationalization';
+test('tracks finops savings realization',()=>{ const x=trackFinOpsSavingsRealization({expectedMonthlySavings:100,forecastedRealizationProbability:0.7},{actualMonthlySavings:80,implementationStatus:'COMPLETED',reversalOccurred:false,recurrenceDetected:false,measurementWindowDays:30}); assert.equal(x.shortfall,20); });

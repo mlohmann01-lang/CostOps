@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { deriveForecastMemoryAdjustment } from '../lib/economic-memory';
+test('forecast memory adjustment treatment',()=>{ const x=deriveForecastMemoryAdjustment({tenantId:'t',totalRecords:20,averageErrorRate:0.1,volatility:0.05,overestimationRate:0.2,underestimationRate:0.2,balancedRate:0.6,lowEvidenceRate:0.1,consistencyClass:'CONSISTENT_ACCURACY',biasClass:'BALANCED_BIAS'}); assert.equal(x.recommendedForecastTreatment,'BOOST_CONFIDENCE'); });

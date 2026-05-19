@@ -1,0 +1,2 @@
+import type { ForecastOutcomeCaptureInput, ForecastOutcomeRecord } from './calibration-types';
+export function captureForecastOutcome(input:ForecastOutcomeCaptureInput):ForecastOutcomeRecord { const absoluteError=Math.abs(input.actualValue-input.forecastedValue); const denominator=Math.abs(input.forecastedValue)<1e-9?1:Math.abs(input.forecastedValue); const percentageError=absoluteError/denominator; return { ...input, confidenceScore:input.confidenceScore??0.5, evidenceRefs:input.evidenceRefs??[], absoluteError, percentageError }; }
