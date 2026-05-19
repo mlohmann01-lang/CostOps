@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateGovernanceCitations } from '../lib/explainability-citations';test('citation validator',()=>{assert.equal(validateGovernanceCitations({evidenceRefs:[],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['f'],escalationReasons:['r'],claims:[]}).valid,false);});

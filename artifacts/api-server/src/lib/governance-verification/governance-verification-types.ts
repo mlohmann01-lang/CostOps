@@ -1,0 +1,1 @@
+export interface GovernanceVerificationInput{replayHash:string;recomputedReplayHash:string;lineageRefs:string[];evidenceRefs:string[];policyValid:boolean;arbitrationConsistent:boolean;benchmarkConsistent:boolean;graphBoundaryValid:boolean;payload:string;}

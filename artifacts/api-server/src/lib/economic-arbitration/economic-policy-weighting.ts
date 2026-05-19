@@ -1,0 +1,1 @@
+export const evaluateEconomicPolicyWeighting=(x:{savings:number;risk:number;confidence:number})=>({weightedScore:Number((x.savings*(1-x.risk)*x.confidence).toFixed(4)),approvalRequired:x.risk>0.6||x.confidence<0.6});

@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const commitmentWeightProfile:WeightProfile={auditExposure:0.06,savingsMagnitude:0.22,volatilityRisk:0.26,evidenceQuality:0.18,governanceRisk:0.2};

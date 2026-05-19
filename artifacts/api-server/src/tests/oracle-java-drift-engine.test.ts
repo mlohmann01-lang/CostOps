@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluateOracleJavaDrift } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evaluateOracleJavaDrift',()=>{const r=evaluateOracleJavaDrift(buildOracleJavaSignalFixture());assert.ok(r.confidence<=1);});

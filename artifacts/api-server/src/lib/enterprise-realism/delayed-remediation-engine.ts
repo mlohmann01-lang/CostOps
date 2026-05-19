@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateDelayedRemediation=(input:EnterpriseRealismInput)=>Number((input.delayedEscalation*0.7+input.unresolvedRecommendations*0.3).toFixed(4));

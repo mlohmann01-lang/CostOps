@@ -1,0 +1,1 @@
+export interface ContradictionInput{policyState:string;arbitrationState:string;hasEvidence:boolean;hasLineage:boolean;graphExposure:number;governancePosture:string;executiveMateriality:number;volatilityRisk:number;arbitrationVolatilityWeight:number;}

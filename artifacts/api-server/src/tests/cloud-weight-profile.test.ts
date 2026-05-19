@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { cloudWeightProfile } from '../lib/calibration-weighting/cloud-weight-profile';test('cloud',()=>{assert.ok(cloudWeightProfile.governanceRisk>=0);});

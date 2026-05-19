@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { kubernetesWeightProfile } from '../lib/calibration-weighting/kubernetes-weight-profile';test('kubernetes',()=>{assert.ok(kubernetesWeightProfile.governanceRisk>=0);});

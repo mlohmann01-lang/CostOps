@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGovernancePrecedence } from '../lib/governance-precedence';test('precedence',()=>{assert.equal(computeGovernancePrecedence(['RECOMMEND_ONLY','BLOCKED']),'BLOCKED');});

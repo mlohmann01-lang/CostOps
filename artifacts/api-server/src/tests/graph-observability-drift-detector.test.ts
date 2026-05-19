@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { detectObservabilityDrift } from '../lib/economic-graph-constraints';test('observability drift',()=>{assert.equal(detectObservabilityDrift({labels:['trace-span']}).drift,true);});

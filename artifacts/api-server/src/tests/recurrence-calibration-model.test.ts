@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateRecurrenceCalibration } from '../lib/calibration-weighting';test('recurrence',()=>{assert.equal(evaluateRecurrenceCalibration({recurrenceRisk:0.8,governanceRisk:0.1}).escalate,true);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { certifyGovernanceProof } from '../lib/governance-certification';test('proof level',()=>{assert.equal(certifyGovernanceProof({replayDeterministic:true,lineageComplete:true,benchmarkConsistent:true,arbitrationConsistent:true,policyConsistent:true,graphBoundaryIntegrity:true,mutationAbsent:true,executionAbsent:true,explanationIntegrity:true,evidenceIntegrity:0.9}),'EXECUTIVE_DEFENSIBLE');});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGovernanceVerificationReport } from '../lib/governance-verification';test('verification report',()=>{const r=computeGovernanceVerificationReport({replayHash:'h1',recomputedReplayHash:'h1',lineageRefs:['l'],evidenceRefs:['e'],policyValid:true,arbitrationConsistent:true,benchmarkConsistent:true,graphBoundaryValid:true,payload:'safe'});assert.equal(r.verificationStatus,'PASS');});

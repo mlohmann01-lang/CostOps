@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { getOracleJavaBenchmarkPack } from '../lib/scenario-benchmarks';test('getOracleJavaBenchmarkPack',()=>{assert.ok(getOracleJavaBenchmarkPack().length>0);});

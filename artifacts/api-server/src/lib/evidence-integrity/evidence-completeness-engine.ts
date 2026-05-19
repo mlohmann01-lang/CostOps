@@ -1,0 +1,1 @@
+import type { EvidenceIntegrityInput } from './evidence-integrity-types';export const evaluateEvidenceCompleteness=(input:EvidenceIntegrityInput)=>Number(((input.completeness+input.lineageCoverage)/2).toFixed(4));

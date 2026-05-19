@@ -1,0 +1,1 @@
+import type { CitationInput } from './explainability-citation-types';export const detectUnsupportedClaims=(i:CitationInput)=>i.claims.filter((c)=>c.includes('certain compliance')||c.includes('guaranteed outcome'));

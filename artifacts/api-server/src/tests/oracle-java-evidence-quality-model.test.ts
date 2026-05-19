@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { computeOracleJavaEvidenceQuality } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evidence quality',()=>{assert.ok(computeOracleJavaEvidenceQuality(buildOracleJavaSignalFixture())<1);});

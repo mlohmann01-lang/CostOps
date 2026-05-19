@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeContradictionSeverity } from '../lib/governance-contradictions';test('severity',()=>{assert.equal(computeContradictionSeverity(['a','b','c']).forceBlocked,true);});

@@ -1,0 +1,1 @@
+export type GovernanceState='READ_ONLY'|'RECOMMEND_ONLY'|'APPROVAL_REQUIRED'|'BLOCKED';export interface DSLRule{domain:string;conditions:string[];action:'ESCALATE'|'BLOCK';target:string;}export interface DSLAst{rules:DSLRule[];}

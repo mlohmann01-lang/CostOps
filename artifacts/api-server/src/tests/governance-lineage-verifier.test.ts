@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyLineageIntegrity } from '../lib/governance-verification';test('lineage verifier',()=>{assert.equal(verifyLineageIntegrity({lineageRefs:[],evidenceRefs:['e']}).ok,false);});

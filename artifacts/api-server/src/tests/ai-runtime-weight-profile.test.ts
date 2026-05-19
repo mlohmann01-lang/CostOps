@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { aiRuntimeWeightProfile } from '../lib/calibration-weighting/ai-runtime-weight-profile';test('ai-runtime',()=>{assert.ok(aiRuntimeWeightProfile.governanceRisk>=0);});

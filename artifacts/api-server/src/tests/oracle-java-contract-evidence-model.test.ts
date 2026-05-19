@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { computeOracleJavaContractEvidence } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('contract evidence gaps',()=>{const x=computeOracleJavaContractEvidence(buildOracleJavaSignalFixture());assert.ok(x.evidenceGaps.length>0);});

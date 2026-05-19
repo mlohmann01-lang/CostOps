@@ -1,0 +1,1 @@
+export interface EvidenceIntegrityInput{freshness:number;completeness:number;lineageCoverage:number;sourceReliability:number;attributionConfidence:number;ownershipConfidence:number;replayCompatibility:number;evidenceConflictSeverity:number;historicalTrust:number;governanceTrustworthiness:number;}

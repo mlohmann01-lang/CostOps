@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const evaluateReasoningConsistency=(input:ExecutiveReasoningInput)=>({consistent:input.evidenceRefs.length>0&&input.lineageRefs.length>0&&!input.causalClaims.some((c)=>c.includes('certainty')||c.includes('legal compliance'))});

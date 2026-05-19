@@ -1,0 +1,1 @@
+export const detectObservabilityDrift=(input:{labels:string[]})=>({drift:input.labels.some((l)=>l.toLowerCase().includes('telemetry')||l.toLowerCase().includes('trace')||l.toLowerCase().includes('metric'))});

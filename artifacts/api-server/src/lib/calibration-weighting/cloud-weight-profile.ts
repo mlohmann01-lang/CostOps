@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const cloudWeightProfile:WeightProfile={auditExposure:0.04,savingsMagnitude:0.3,volatilityRisk:0.14,evidenceQuality:0.2,governanceRisk:0.18};

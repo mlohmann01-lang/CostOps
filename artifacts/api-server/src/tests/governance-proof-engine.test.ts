@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyGovernanceProof } from '../lib/governance-verification';test('proof deterministic',()=>{assert.equal(verifyGovernanceProof({payload:'x'}),verifyGovernanceProof({payload:'x'}));});

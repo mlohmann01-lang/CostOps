@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { proveGoldenPathBoundaryIntegrity } from '../lib/golden-path/golden-path-boundary-proof';test('boundary proof',()=>{assert.equal(proveGoldenPathBoundaryIntegrity({a:1}).ok,true);});

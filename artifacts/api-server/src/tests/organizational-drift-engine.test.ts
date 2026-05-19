@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { simulateOrganizationalDrift } from '../lib/enterprise-realism';test('org drift',()=>{assert.ok(simulateOrganizationalDrift({unresolvedRecommendations:0.5,ownershipDecay:0.8,evidenceFreshnessDegradation:0.5,delayedEscalation:0.5,volatilitySpikes:0.5,organizationalDrift:0.9,benchmarkDivergence:0.5,auditExposurePersistence:0.5,confidenceDegradation:0.5})>0.8);});

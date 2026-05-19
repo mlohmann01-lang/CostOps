@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeEconomicPolicyReport } from '../lib/economic-policy-language';test('report',()=>{const r=computeEconomicPolicyReport({policy:'{"domain":"ORACLE","condition":"x","threshold":1,"governanceClass":"APPROVAL_REQUIRED","escalationReason":"r","evidenceRequirement":"e","approvalRequirement":true}',context:{auditExposure:0.8,evidenceConfidence:0.3,evidenceGapSeverity:0.1,recurrenceRisk:0.2,businessCriticality:0.2,hasLineage:true,volatilityRisk:0.2}});assert.ok(r.explanation.includes('Policy'));});

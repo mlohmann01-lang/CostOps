@@ -1,0 +1,1 @@
+import type { GovernancePrecedenceInput, GovernanceState } from './governance-precedence-types';export const evaluateArbitrationPrecedence=(input:GovernancePrecedenceInput):GovernanceState=>input.auditExposure>0.65||input.recurrenceRisk>0.7||input.volatilityRisk>0.7?'APPROVAL_REQUIRED':input.savingsMagnitude>0.6&&input.governanceRisk<0.4?'RECOMMEND_ONLY':'READ_ONLY';

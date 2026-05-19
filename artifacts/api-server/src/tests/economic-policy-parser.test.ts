@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { parseEconomicPolicy } from '../lib/economic-policy-language';test('parser',()=>{assert.equal(parseEconomicPolicy('{"domain":"ORACLE","condition":"x","threshold":1,"governanceClass":"APPROVAL_REQUIRED","escalationReason":"r","evidenceRequirement":"e","approvalRequirement":true}').domain,'ORACLE');});

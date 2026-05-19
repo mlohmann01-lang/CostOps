@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { runGoldenPathEconomicReplay } from '../lib/golden-path';test('runner',()=>{const r=runGoldenPathEconomicReplay(); assert.equal(r.boundaryPosture,'APPROVAL_REQUIRED');});

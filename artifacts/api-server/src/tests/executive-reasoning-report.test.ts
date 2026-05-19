@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeExecutiveReasoningReport } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('report',()=>{assert.equal(computeExecutiveReasoningReport(input).consistency.consistent,true);});

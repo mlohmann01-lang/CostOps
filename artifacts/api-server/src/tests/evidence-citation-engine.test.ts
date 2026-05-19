@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildEvidenceCitation } from '../lib/explainability-citations';test('evidence citation',()=>{assert.ok(buildEvidenceCitation({evidenceRefs:['e1'],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['f'],escalationReasons:['r'],claims:[]}).includes('e1'));});

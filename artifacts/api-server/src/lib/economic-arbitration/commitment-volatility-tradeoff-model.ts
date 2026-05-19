@@ -1,0 +1,1 @@
+export const evaluateCommitmentVolatilityTradeoff=(x:{commitmentSavings:number;volatility:number})=>({deferCommitmentOptimization:x.volatility>0.6,adjustedSavings:x.volatility>0.6?0:x.commitmentSavings});

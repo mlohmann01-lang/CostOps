@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGoldenPathReport } from '../lib/golden-path';test('report',()=>{assert.ok(computeGoldenPathReport().deterministicHash.length>10);});

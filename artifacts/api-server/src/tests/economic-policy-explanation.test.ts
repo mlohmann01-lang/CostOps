@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainEconomicPolicyEvaluation } from '../lib/economic-policy-language';test('explain deterministic',()=>{assert.equal(explainEconomicPolicyEvaluation({governanceClass:'APPROVAL_REQUIRED',reasons:['x'],policyDomain:'d'}),explainEconomicPolicyEvaluation({governanceClass:'APPROVAL_REQUIRED',reasons:['x'],policyDomain:'d'}));});

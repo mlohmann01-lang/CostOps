@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluateJavaRuntimeGovernance } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evaluateJavaRuntimeGovernance',()=>{const r=evaluateJavaRuntimeGovernance(buildOracleJavaSignalFixture());assert.ok(r.confidence<=1);});

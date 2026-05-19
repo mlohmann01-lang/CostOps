@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEvidenceGapCalibration } from '../lib/calibration-weighting';test('evidence gap',()=>{assert.equal(evaluateEvidenceGapCalibration({evidenceQuality:0.2,evidenceGapSeverity:0.9}).blocked,true);});

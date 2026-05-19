@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainArbitrationDecision } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('arb explain',()=>{assert.ok(explainArbitrationDecision(input).includes('dominant_conflicts'));});

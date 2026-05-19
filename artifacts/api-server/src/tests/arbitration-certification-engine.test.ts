@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { certifyArbitrationIntegrity } from '../lib/governance-certification';test('arb cert',()=>{assert.equal(certifyArbitrationIntegrity({replayDeterministic:true,lineageComplete:true,benchmarkConsistent:true,arbitrationConsistent:false,policyConsistent:true,graphBoundaryIntegrity:true,mutationAbsent:true,executionAbsent:true,explanationIntegrity:true,evidenceIntegrity:0.8}).ok,false);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEvidenceCompleteness } from '../lib/evidence-integrity';test('completeness',()=>{assert.equal(evaluateEvidenceCompleteness({freshness:1,completeness:0.6,lineageCoverage:0.4,sourceReliability:1,attributionConfidence:1,ownershipConfidence:1,replayCompatibility:1,evidenceConflictSeverity:0,historicalTrust:1,governanceTrustworthiness:1}),0.5);});

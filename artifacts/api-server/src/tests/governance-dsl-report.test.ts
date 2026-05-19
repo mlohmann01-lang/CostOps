@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGovernanceDSLReport } from '../lib/governance-dsl';test('report',()=>{const r=computeGovernanceDSLReport('DOMAIN ORACLE_JAVA IF AUDIT_EXPOSURE = HIGH AND EVIDENCE_CONFIDENCE < 0.6 ESCALATE APPROVAL_REQUIRED');assert.equal(r.validation.valid,true);});

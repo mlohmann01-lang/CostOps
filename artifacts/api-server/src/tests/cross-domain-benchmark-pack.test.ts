@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { getCrossDomainBenchmarkPack } from '../lib/scenario-benchmarks';test('getCrossDomainBenchmarkPack',()=>{assert.ok(getCrossDomainBenchmarkPack().length>0);});

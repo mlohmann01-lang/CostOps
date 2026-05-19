@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const explainExposureAssessment=(input:ExecutiveReasoningInput)=>`exposure=${input.exposure.toFixed(4)} evidence_refs=${input.evidenceRefs.length}`;

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { normalizeEconomicGraphNodes } from '../lib/economic-graph';test('normalizeEconomicGraphNodes',()=>{assert.equal(normalizeEconomicGraphNodes([{id:'a',type:'JAVA_RUNTIME',risk:2}] as any)[0].risk,1);});

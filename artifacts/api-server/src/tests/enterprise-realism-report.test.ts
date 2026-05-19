@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeEnterpriseRealismReport } from '../lib/enterprise-realism';test('realism report',()=>{assert.ok(['RECOMMEND_ONLY','APPROVAL_REQUIRED','BLOCKED'].includes(computeEnterpriseRealismReport({unresolvedRecommendations:0.9,ownershipDecay:0.8,evidenceFreshnessDegradation:0.8,delayedEscalation:0.9,volatilitySpikes:0.9,organizationalDrift:0.8,benchmarkDivergence:0.7,auditExposurePersistence:0.9,confidenceDegradation:0.8}).governanceClass));});

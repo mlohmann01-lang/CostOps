@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeExplainabilityCitationReport } from '../lib/explainability-citations';test('citation report',()=>{const r=computeExplainabilityCitationReport({evidenceRefs:['e1'],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['f'],escalationReasons:['r'],claims:[]});assert.equal(r.validation.valid,true);});

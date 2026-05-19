@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { getAIRuntimeBenchmarkPack } from '../lib/scenario-benchmarks';test('getAIRuntimeBenchmarkPack',()=>{assert.ok(getAIRuntimeBenchmarkPack().length>0);});

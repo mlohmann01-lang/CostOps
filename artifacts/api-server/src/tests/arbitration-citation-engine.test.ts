@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildArbitrationCitation } from '../lib/explainability-citations';test('arbitration citation',()=>{assert.ok(buildArbitrationCitation({evidenceRefs:['e1'],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['volatility'],escalationReasons:['r'],claims:[]}).includes('volatility'));});

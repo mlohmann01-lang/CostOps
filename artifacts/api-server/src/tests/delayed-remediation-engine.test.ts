@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { simulateDelayedRemediation } from '../lib/enterprise-realism';test('delayed',()=>{assert.ok(simulateDelayedRemediation({unresolvedRecommendations:0.8,ownershipDecay:0.5,evidenceFreshnessDegradation:0.5,delayedEscalation:0.9,volatilitySpikes:0.5,organizationalDrift:0.5,benchmarkDivergence:0.5,auditExposurePersistence:0.5,confidenceDegradation:0.5})>0.8);});

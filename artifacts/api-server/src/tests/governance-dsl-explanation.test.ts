@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainGovernanceDSL } from '../lib/governance-dsl';test('explain deterministic',()=>{const a=explainGovernanceDSL({rules:[{domain:'d',conditions:['x'],action:'ESCALATE',target:'APPROVAL_REQUIRED'}]});const c=explainGovernanceDSL({rules:[{domain:'d',conditions:['x'],action:'ESCALATE',target:'APPROVAL_REQUIRED'}]});assert.equal(a,c);});

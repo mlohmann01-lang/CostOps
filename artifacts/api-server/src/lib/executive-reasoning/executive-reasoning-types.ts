@@ -1,0 +1,1 @@
+export interface ExecutiveReasoningInput{decision:string;evidenceRefs:string[];lineageRefs:string[];dominantConflicts:string[];recurrenceRisk:number;evidenceGap:number;exposure:number;executiveMateriality:number;causalClaims:string[];}

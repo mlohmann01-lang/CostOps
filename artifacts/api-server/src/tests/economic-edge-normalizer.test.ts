@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { normalizeEconomicGraphEdges } from '../lib/economic-graph';test('normalizeEconomicGraphEdges',()=>{assert.equal(normalizeEconomicGraphEdges([{from:'a',to:'b',type:'EXPOSES',weight:2}] as any)[0].weight,1);});

@@ -1,0 +1,1 @@
+export const evaluateGovernanceRiskOverride=(x:{savings:number;governanceRisk:number;confidence:number})=>({blocked:x.governanceRisk>0.65||x.confidence<0.55,finalMode:x.governanceRisk>0.65?'APPROVAL_REQUIRED':'RECOMMEND_ONLY',effectiveSavings:x.governanceRisk>0.65?0:x.savings});

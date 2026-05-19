@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { executiveWeightProfile } from '../lib/calibration-weighting/executive-weight-profile';test('executive',()=>{assert.ok(executiveWeightProfile.governanceRisk>=0);});

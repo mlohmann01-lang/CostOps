@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateResilienceTradeoff } from '../lib/economic-arbitration/resilience-tradeoff-model';test('evaluateResilienceTradeoff',()=>{assert.ok(evaluateResilienceTradeoff({savings:1,risk:0.2,confidence:0.9,materiality:0.8,kubernetesSavings:1,resilienceRisk:0.1,cloudSavings:1,burstElasticityRisk:0.1,commitmentSavings:1,volatility:0.1,governanceRisk:0.1} as any));});

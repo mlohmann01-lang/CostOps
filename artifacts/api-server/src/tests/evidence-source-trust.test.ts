@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEvidenceSourceTrust } from '../lib/evidence-integrity';test('source trust',()=>{assert.ok(evaluateEvidenceSourceTrust({freshness:1,completeness:1,lineageCoverage:1,sourceReliability:0.3,attributionConfidence:0.3,ownershipConfidence:0.3,replayCompatibility:1,evidenceConflictSeverity:0,historicalTrust:1,governanceTrustworthiness:1})<0.4);});

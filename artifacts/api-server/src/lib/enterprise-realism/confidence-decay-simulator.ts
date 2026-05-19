@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateConfidenceDecay=(input:EnterpriseRealismInput)=>Number((input.confidenceDegradation*0.7+input.evidenceFreshnessDegradation*0.3).toFixed(4));

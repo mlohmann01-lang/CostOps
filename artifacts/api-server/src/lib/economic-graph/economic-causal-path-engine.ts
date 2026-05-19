@@ -1,0 +1,1 @@
+import type { EEdge } from './economic-graph-types';export const evaluateEconomicCausalPaths=(input:{edges:EEdge[]})=>input.edges.filter((e)=>e.type==='CAUSES'||e.type==='CONTRIBUTES_TO').map((e)=>`${e.from}->${e.to}`);

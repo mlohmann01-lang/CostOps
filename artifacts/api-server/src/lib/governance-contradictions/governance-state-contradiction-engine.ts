@@ -1,0 +1,1 @@
+import type { ContradictionInput } from './governance-contradiction-types';export const detectGovernanceStateContradictions=(i:ContradictionInput)=>i.executiveMateriality>0.8&&i.governancePosture==='RECOMMEND_ONLY'?['missing-executive-escalation']:[ ];

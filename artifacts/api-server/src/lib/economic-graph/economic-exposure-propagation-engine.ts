@@ -1,0 +1,1 @@
+import type { EEdge, ENode } from './economic-graph-types';export const evaluateEconomicExposurePropagation=(input:{nodes:ENode[];edges:EEdge[]})=>{const map:Record<string,number>={}; input.nodes.forEach((n)=>map[n.id]=n.risk); input.edges.forEach((e)=>{map[e.to]=Number(Math.max(map[e.to]??0,(map[e.from]??0)*e.weight).toFixed(4));}); return map;};

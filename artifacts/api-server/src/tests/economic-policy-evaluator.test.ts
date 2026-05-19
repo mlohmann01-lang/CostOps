@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEconomicPolicy } from '../lib/economic-policy-language';test('block when lineage missing',()=>{const r=evaluateEconomicPolicy({domain:'x',condition:'c',threshold:1,governanceClass:'RECOMMEND_ONLY',escalationReason:'r',evidenceRequirement:'e',approvalRequirement:false},{auditExposure:0.9,evidenceConfidence:0.4,evidenceGapSeverity:0.2,recurrenceRisk:0.1,businessCriticality:0.1,hasLineage:false,volatilityRisk:0.2});assert.equal(r.governanceClass,'BLOCKED');});

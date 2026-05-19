@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { oracleJavaWeightProfile } from '../lib/calibration-weighting/oracle-java-weight-profile';test('oracle-java',()=>{assert.ok(oracleJavaWeightProfile.governanceRisk>=0);});

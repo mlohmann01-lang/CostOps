@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateGraphReasoningScope } from '../lib/economic-graph-constraints';test('scope',()=>{assert.equal(evaluateGraphReasoningScope({purpose:['EXPOSURE','GOVERNANCE']}).economicOnly,true);});

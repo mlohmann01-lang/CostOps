@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEconomicCausalPaths } from '../lib/economic-graph';test('evaluateEconomicCausalPaths',()=>{assert.equal(evaluateEconomicCausalPaths({edges:[{from:'a',to:'b',type:'CAUSES',weight:1}] as any})[0],'a->b');});

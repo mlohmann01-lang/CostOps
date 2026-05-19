@@ -1,0 +1,1 @@
+export const validateGraphDomainBoundary=(input:{nodes:string[]})=>({valid:input.nodes.every((n)=>!['SERVICE_TOPOLOGY','CMDB_CI','TRACE_SPAN'].includes(n)),violations:input.nodes.filter((n)=>['SERVICE_TOPOLOGY','CMDB_CI','TRACE_SPAN'].includes(n))});

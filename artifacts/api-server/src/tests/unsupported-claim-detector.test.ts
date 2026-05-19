@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { detectUnsupportedClaims } from '../lib/explainability-citations';test('unsupported claims',()=>{assert.equal(detectUnsupportedClaims({evidenceRefs:['e1'],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['f'],escalationReasons:['r'],claims:['certain compliance']}).length,1);});

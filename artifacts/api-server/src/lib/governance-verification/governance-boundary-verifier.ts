@@ -1,0 +1,1 @@
+export const verifyBoundaryIntegrity=(input:{graphBoundaryValid:boolean;payload:string})=>({ok:input.graphBoundaryValid&&!['mutationPayload','executeAws','kubectl'].some((k)=>input.payload.includes(k))});

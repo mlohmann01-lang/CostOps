@@ -1,0 +1,1 @@
+import type { CitationInput } from './explainability-citation-types';export const buildArbitrationCitation=(i:CitationInput)=>`arbitration:${i.arbitrationRefs.join(',')} factors:${i.dominantFactors.join('|')}`;

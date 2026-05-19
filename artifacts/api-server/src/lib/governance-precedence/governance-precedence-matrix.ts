@@ -1,0 +1,1 @@
+import type { GovernanceState } from './governance-precedence-types';export const precedence:GovernanceState[]=['BLOCKED','APPROVAL_REQUIRED','RECOMMEND_ONLY','READ_ONLY'];export const computeGovernancePrecedence=(states:GovernanceState[]):GovernanceState=>precedence.find((p)=>states.includes(p))??'READ_ONLY';

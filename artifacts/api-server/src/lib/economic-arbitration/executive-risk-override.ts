@@ -1,0 +1,1 @@
+export const evaluateExecutiveRiskOverride=(x:{materiality:number;confidence:number})=>({override:x.materiality>0.7&&x.confidence<0.7,governanceClass:x.materiality>0.7?'APPROVAL_REQUIRED':'RECOMMEND_ONLY'});

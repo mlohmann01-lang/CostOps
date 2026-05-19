@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeScenarioBenchmarkReport,getOracleJavaBenchmarkPack } from '../lib/scenario-benchmarks';test('report deterministic',()=>{const r=computeScenarioBenchmarkReport({scenarios:getOracleJavaBenchmarkPack()});assert.ok(Array.isArray(r.deviations));});

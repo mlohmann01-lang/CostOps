@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainGovernanceDecision } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('gov explain',()=>{assert.ok(explainGovernanceDecision(input).includes('evidence'));});

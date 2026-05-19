@@ -1,0 +1,1 @@
+export const evaluateExposureBandCalibration=(input:{auditExposure:number;executiveMateriality:number})=>({band:input.auditExposure>0.8||input.executiveMateriality>0.8?'CRITICAL':input.auditExposure>0.6?'HIGH':input.auditExposure>0.3?'MEDIUM':'LOW'} as const);

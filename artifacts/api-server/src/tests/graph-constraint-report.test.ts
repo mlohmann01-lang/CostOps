@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGraphConstraintReport } from '../lib/economic-graph-constraints';test('constraint report',()=>{const r=computeGraphConstraintReport({nodes:['JAVA_RUNTIME'],edges:['EXPOSES'],purpose:['EXPOSURE'],labels:['economic'],hash:'x',replayHash:'x'});assert.equal(r.determinism.deterministic,true);});

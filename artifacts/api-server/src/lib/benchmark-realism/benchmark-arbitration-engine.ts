@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkArbitration=(input:BenchmarkRealismInput)=>Number((input.arbitrationInstability*0.7+input.volatilityPersistence*0.3).toFixed(4));

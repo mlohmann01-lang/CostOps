@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEconomicPathRisk } from '../lib/economic-graph';test('evaluateEconomicPathRisk',()=>{assert.ok(evaluateEconomicPathRisk({nodes:[{id:'a',type:'JAVA_RUNTIME',risk:0.5}] as any,edges:[{from:'a',to:'b',type:'EXPOSES',weight:0.8}] as any})>0);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateExposureBandCalibration } from '../lib/calibration-weighting';test('exposure band',()=>{assert.equal(evaluateExposureBandCalibration({auditExposure:0.9,executiveMateriality:0.2}).band,'CRITICAL');});

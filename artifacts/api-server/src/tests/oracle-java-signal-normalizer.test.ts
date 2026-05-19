@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { normalizeOracleJavaSignal } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('normalize',()=>{const x=normalizeOracleJavaSignal(buildOracleJavaSignalFixture());assert.ok(x.entitlement.entitlementEvidenceQuality<=1);});

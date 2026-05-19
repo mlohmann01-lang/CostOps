@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateEscalationChains=(input:EnterpriseRealismInput)=>Number((input.unresolvedRecommendations*0.3+input.delayedEscalation*0.3+input.volatilitySpikes*0.4).toFixed(4));

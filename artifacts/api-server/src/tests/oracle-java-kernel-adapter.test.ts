@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { adaptOracleJavaToKernel } from '../lib/cross-layer-integration/oracle-java-kernel-adapter';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('adapter',()=>{const r=adaptOracleJavaToKernel(buildOracleJavaSignalFixture());assert.equal(r.governance,'APPROVAL_REQUIRED');});

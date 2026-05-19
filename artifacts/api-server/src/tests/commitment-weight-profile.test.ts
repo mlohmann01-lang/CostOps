@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { commitmentWeightProfile } from '../lib/calibration-weighting/commitment-weight-profile';test('commitment',()=>{assert.ok(commitmentWeightProfile.governanceRisk>=0);});

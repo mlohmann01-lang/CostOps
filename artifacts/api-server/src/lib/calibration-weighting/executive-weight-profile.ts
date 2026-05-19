@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const executiveWeightProfile:WeightProfile={auditExposure:0.2,savingsMagnitude:0.1,volatilityRisk:0.1,evidenceQuality:0.2,governanceRisk:0.4};

@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { proveGoldenPathArbitrationIntegrity } from '../lib/golden-path/golden-path-arbitration-proof';test('arbitration proof',()=>{assert.equal(proveGoldenPathArbitrationIntegrity({governanceRiskOverride:true,finalGovernanceClass:'APPROVAL_REQUIRED'}).ok,true);});
