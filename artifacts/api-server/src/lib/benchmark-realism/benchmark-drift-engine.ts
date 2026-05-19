@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkDrift=(input:BenchmarkRealismInput)=>Number((input.confidenceDegradation*0.6+(1-input.deviationTolerance)*0.4).toFixed(4));

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { simulateEscalationChains } from '../lib/enterprise-realism';test('escalation chain',()=>{assert.ok(simulateEscalationChains({unresolvedRecommendations:0.7,ownershipDecay:0.5,evidenceFreshnessDegradation:0.5,delayedEscalation:0.7,volatilitySpikes:0.8,organizationalDrift:0.5,benchmarkDivergence:0.5,auditExposurePersistence:0.5,confidenceDegradation:0.5})>0.7);});

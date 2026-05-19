@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const oracleJavaWeightProfile:WeightProfile={auditExposure:0.35,savingsMagnitude:0.12,volatilityRisk:0.08,evidenceQuality:0.2,governanceRisk:0.25};

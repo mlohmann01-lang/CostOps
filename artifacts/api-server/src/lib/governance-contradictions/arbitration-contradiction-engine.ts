@@ -1,0 +1,1 @@
+import type { ContradictionInput } from './governance-contradiction-types';export const detectArbitrationContradictions=(i:ContradictionInput)=>i.volatilityRisk>0.7&&i.arbitrationVolatilityWeight<0.3?['volatility-ignored-in-arbitration']:[ ];

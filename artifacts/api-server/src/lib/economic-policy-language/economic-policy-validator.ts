@@ -1,0 +1,1 @@
+import type { EconomicPolicy } from './economic-policy-types';const allowed=['READ_ONLY','RECOMMEND_ONLY','APPROVAL_REQUIRED','BLOCKED'];export const validateEconomicPolicy=(policy:EconomicPolicy)=>({valid:allowed.includes(policy.governanceClass),errors:allowed.includes(policy.governanceClass)?[]:['unknown governance class']});

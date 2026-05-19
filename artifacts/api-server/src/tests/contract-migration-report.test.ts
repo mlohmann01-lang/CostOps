@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeContractMigrationReport, migrateCloudContracts } from '../lib/contract-migration';test('computeContractMigrationReport',()=>{ const a=migrateCloudContracts({domain:'x',recommendations:[{id:'r1',title:'t1'}],replayId:'r',lineageId:'l',sourceSystem:'s',timestamp:'2026-01-01T00:00:00.000Z'}); const rep=computeContractMigrationReport([a]); assert.equal(rep.totalEvidence,1);});

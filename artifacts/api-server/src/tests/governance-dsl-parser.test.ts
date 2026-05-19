@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { parseGovernanceDSL } from '../lib/governance-dsl';test('parser',()=>{const ast=parseGovernanceDSL(['DOMAIN','ORACLE_JAVA','IF','AUDIT_EXPOSURE','=','HIGH','ESCALATE','APPROVAL_REQUIRED']);assert.equal(ast.rules[0].domain,'ORACLE_JAVA');});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeArbitrationRealismReport } from '../lib/economic-arbitration/arbitration-realism-report';test('arbitration report',()=>{const x=computeArbitrationRealismReport({cloudSavings:1,burstElasticityRisk:0.8,commitmentSavings:1,volatility:0.8,kubernetesSavings:1,resilienceRisk:0.7,governanceRisk:0.8,confidence:0.4,materiality:0.9});assert.equal(x.finalMode,'APPROVAL_REQUIRED');});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { runScenarioBenchmark,getOracleJavaBenchmarkPack } from '../lib/scenario-benchmarks';test('runner',()=>{assert.equal(runScenarioBenchmark({scenarios:getOracleJavaBenchmarkPack()}).length,2);});

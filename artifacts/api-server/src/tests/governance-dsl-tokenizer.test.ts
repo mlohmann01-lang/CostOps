@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { tokenizeGovernanceDSL } from '../lib/governance-dsl';test('tokenizer',()=>{assert.ok(tokenizeGovernanceDSL('DOMAIN ORACLE_JAVA').length>1);});

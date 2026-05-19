@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { proveGoldenPathLineageIntegrity } from '../lib/golden-path/golden-path-lineage-proof';test('lineage proof',()=>{assert.equal(proveGoldenPathLineageIntegrity([{id:'l1',path:['a','b']}]).ok,true);});

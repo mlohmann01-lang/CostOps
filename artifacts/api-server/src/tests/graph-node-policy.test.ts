@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateGraphNodePolicy } from '../lib/economic-graph-constraints';test('node policy',()=>{assert.equal(validateGraphNodePolicy({nodes:['HOST_AGENT']}).valid,false);});

@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const explainArbitrationDecision=(input:ExecutiveReasoningInput)=>`dominant_conflicts=${input.dominantConflicts.join('|')}`;

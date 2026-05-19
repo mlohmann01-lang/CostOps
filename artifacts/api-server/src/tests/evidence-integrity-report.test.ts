@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeEvidenceIntegrityReport } from '../lib/evidence-integrity';test('integrity report',()=>{assert.equal(computeEvidenceIntegrityReport({freshness:1,completeness:1,lineageCoverage:0.1,sourceReliability:1,attributionConfidence:1,ownershipConfidence:1,replayCompatibility:0.1,evidenceConflictSeverity:0,historicalTrust:1,governanceTrustworthiness:1}).unsupportedChain,true);});

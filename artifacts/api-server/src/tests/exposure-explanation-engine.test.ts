@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainExposureAssessment } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('exp explain',()=>{assert.ok(explainExposureAssessment(input).includes('exposure'));});

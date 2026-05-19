@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluateOracleVmwareAffinityRisk } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evaluateOracleVmwareAffinityRisk',()=>{const r=evaluateOracleVmwareAffinityRisk(buildOracleJavaSignalFixture());assert.ok(r.confidence<=1);});

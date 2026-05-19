@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyBenchmarkIntegrity } from '../lib/governance-verification';test('benchmark verifier',()=>{assert.equal(verifyBenchmarkIntegrity({benchmarkConsistent:true}).ok,true);});

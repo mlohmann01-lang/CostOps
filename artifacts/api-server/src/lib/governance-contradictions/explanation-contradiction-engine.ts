@@ -1,0 +1,1 @@
+import type { ContradictionInput } from './governance-contradiction-types';export const detectExplanationContradictions=(i:ContradictionInput)=>!i.hasLineage&&i.hasEvidence?['evidence-claimed-without-lineage']:[ ];

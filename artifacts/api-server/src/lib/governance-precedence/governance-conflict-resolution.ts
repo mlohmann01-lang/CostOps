@@ -1,0 +1,1 @@
+import type { GovernanceState } from './governance-precedence-types';import { computeGovernancePrecedence } from './governance-precedence-matrix';export const resolveGovernanceConflict=(input:{policyState:GovernanceState;arbitrationState:GovernanceState;evidenceState:GovernanceState})=>computeGovernancePrecedence([input.policyState,input.arbitrationState,input.evidenceState]);

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildEconomicGraph } from '../lib/economic-graph';test('buildEconomicGraph',()=>{assert.equal(buildEconomicGraph({nodes:[{id:'a',type:'JAVA_RUNTIME',risk:0.5}] as any,edges:[] as any}).nodes.length,1);});

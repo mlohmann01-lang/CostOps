@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyBoundaryIntegrity } from '../lib/governance-verification';test('boundary verifier',()=>{assert.equal(verifyBoundaryIntegrity({graphBoundaryValid:true,payload:'mutationPayload'}).ok,false);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { detectGraphContradictions } from '../lib/governance-contradictions';test('graph contradictions',()=>{assert.equal(detectGraphContradictions({policyState:'READ_ONLY',arbitrationState:'READ_ONLY',hasEvidence:true,hasLineage:true,graphExposure:0.9,governancePosture:'READ_ONLY',executiveMateriality:0.1,volatilityRisk:0.1,arbitrationVolatilityWeight:0.1}).length,1);});

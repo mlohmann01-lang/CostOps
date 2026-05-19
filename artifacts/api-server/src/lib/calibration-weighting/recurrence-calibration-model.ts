@@ -1,0 +1,1 @@
+export const evaluateRecurrenceCalibration=(input:{recurrenceRisk:number;governanceRisk:number})=>({severityBoost:Number((input.recurrenceRisk*0.4).toFixed(4)),escalate:input.recurrenceRisk>0.6||input.governanceRisk>0.7});

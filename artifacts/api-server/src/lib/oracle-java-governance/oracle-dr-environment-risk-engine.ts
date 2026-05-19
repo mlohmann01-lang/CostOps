@@ -1,0 +1,2 @@
+import type { OracleJavaSignal } from './oracle-java-types';
+export const evaluateOracleDREnvironmentRisk=(signal:OracleJavaSignal)=>({score:Number(((signal.entitlement.processorMetricExposure+signal.infrastructure.vmwareAffinityAmbiguity+signal.java.unsupportedRuntimeRisk)/3).toFixed(4)),confidence:Number(((signal.entitlement.entitlementEvidenceQuality+signal.infrastructure.physicalCoreAttributionConfidence+signal.java.runtimeOwnershipConfidence)/3).toFixed(4))});

@@ -1,0 +1,1 @@
+export const input={decision:'APPROVAL_REQUIRED',evidenceRefs:['e1'],lineageRefs:['l1'],dominantConflicts:['AUDIT_EXPOSURE_VS_SAVINGS'],recurrenceRisk:0.8,evidenceGap:0.6,exposure:0.9,executiveMateriality:0.85,causalClaims:['economic causality chain']};

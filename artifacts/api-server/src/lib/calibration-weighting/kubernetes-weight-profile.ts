@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const kubernetesWeightProfile:WeightProfile={auditExposure:0.05,savingsMagnitude:0.24,volatilityRisk:0.18,evidenceQuality:0.18,governanceRisk:0.2,resilienceRisk:0.15};

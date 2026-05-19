@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildGoldenPathOracleJavaFixture } from '../lib/golden-path/golden-path-oracle-java-fixture';test('oracle java fixture',()=>{assert.equal(buildGoldenPathOracleJavaFixture().tenantId,'tenant-golden');});

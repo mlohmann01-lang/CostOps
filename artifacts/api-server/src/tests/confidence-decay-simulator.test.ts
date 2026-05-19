@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { simulateConfidenceDecay } from '../lib/enterprise-realism';test('confidence decay',()=>{assert.ok(simulateConfidenceDecay({unresolvedRecommendations:0.5,ownershipDecay:0.5,evidenceFreshnessDegradation:0.9,delayedEscalation:0.5,volatilitySpikes:0.5,organizationalDrift:0.5,benchmarkDivergence:0.5,auditExposurePersistence:0.5,confidenceDegradation:0.9})>0.8);});

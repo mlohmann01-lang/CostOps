@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { runGoldenPathEconomicReplay } from '../lib/golden-path';test('deterministic',()=>{const a=runGoldenPathEconomicReplay(); const b=runGoldenPathEconomicReplay(); assert.equal(a.deterministicHash,b.deterministicHash);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { resolveGovernanceConflict } from '../lib/governance-precedence';test('conflict resolution',()=>{assert.equal(resolveGovernanceConflict({policyState:'RECOMMEND_ONLY',arbitrationState:'APPROVAL_REQUIRED',evidenceState:'READ_ONLY'}),'APPROVAL_REQUIRED');});

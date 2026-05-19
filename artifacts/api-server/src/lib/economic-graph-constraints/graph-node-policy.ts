@@ -1,0 +1,1 @@
+export const validateGraphNodePolicy=(input:{nodes:string[]})=>({valid:input.nodes.every((n)=>!['HOST_AGENT','METRIC_STREAM','TOPOLOGY_NODE'].includes(n)),violations:input.nodes.filter((n)=>['HOST_AGENT','METRIC_STREAM','TOPOLOGY_NODE'].includes(n))});

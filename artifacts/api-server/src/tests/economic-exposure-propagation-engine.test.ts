@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateEconomicExposurePropagation } from '../lib/economic-graph';test('evaluateEconomicExposurePropagation',()=>{const m=evaluateEconomicExposurePropagation({nodes:[{id:'a',type:'JAVA_RUNTIME',risk:0.8},{id:'b',type:'KUBERNETES_WORKLOAD',risk:0.1}] as any,edges:[{from:'a',to:'b',type:'EXPOSES',weight:0.9}] as any});assert.ok(m.b>=0.72);});

@@ -1,0 +1,1 @@
+import type { CitationInput } from './explainability-citation-types';export const validateGovernanceCitations=(i:CitationInput)=>({valid:i.evidenceRefs.length>0&&i.lineageRefs.length>0&&i.arbitrationRefs.length>0,missing:[i.evidenceRefs.length===0?'evidence':null,i.lineageRefs.length===0?'lineage':null,i.arbitrationRefs.length===0?'arbitration':null].filter(Boolean)});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateReasoningConsistency } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('consistency',()=>{assert.equal(evaluateReasoningConsistency(input).consistent,true);});

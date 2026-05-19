@@ -1,0 +1,1 @@
+import type { EEdge, ENode } from './economic-graph-types';export const evaluateEconomicPathRisk=(input:{nodes:ENode[];edges:EEdge[]})=>Number((input.edges.reduce((a,e)=>a+e.weight,0)/(input.edges.length||1)*0.6+input.nodes.reduce((a,n)=>a+n.risk,0)/(input.nodes.length||1)*0.4).toFixed(4));

@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const explainGovernanceDecision=(input:ExecutiveReasoningInput)=>`decision=${input.decision};evidence=${input.evidenceRefs.join(',')};lineage=${input.lineageRefs.join(',')}`;

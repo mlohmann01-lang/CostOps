@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeEconomicGraphReport } from '../lib/economic-graph';test('computeEconomicGraphReport',()=>{assert.ok(computeEconomicGraphReport({nodes:[{id:'a',type:'JAVA_RUNTIME',risk:0.8}] as any,edges:[] as any}).pathRisk>=0);});

@@ -1,0 +1,1 @@
+import type { ContradictionInput } from './governance-contradiction-types';export const detectPolicyContradictions=(i:ContradictionInput)=>i.policyState==='BLOCKED'&&i.arbitrationState==='RECOMMEND_ONLY'?['policy-blocked-vs-arbitration-recommend']:[ ];

@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkHistory=(input:BenchmarkRealismInput)=>Number((input.repeatedGovernanceViolations*0.5+input.historicalRecurrence*0.5).toFixed(4));

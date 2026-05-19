@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluateOracleAuditRisk } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evaluateOracleAuditRisk',()=>{const r=evaluateOracleAuditRisk(buildOracleJavaSignalFixture());assert.ok(r.confidence<=1);});

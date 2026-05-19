@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateGraphDeterminism } from '../lib/economic-graph-constraints';test('determinism',()=>{assert.equal(evaluateGraphDeterminism({hash:'a',replayHash:'a'}).deterministic,true);});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateGovernanceDSL } from '../lib/governance-dsl';test('validator',()=>{assert.equal(validateGovernanceDSL({rules:[{domain:'d',conditions:[],action:'ESCALATE',target:'UNKNOWN'} as any]}).valid,false);});

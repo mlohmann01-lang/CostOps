@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { explainExecutiveMateriality } from '../lib/executive-reasoning';import { input } from './_exec-fixture';test('mat explain',()=>{assert.ok(explainExecutiveMateriality(input).includes('executive_materiality'));});

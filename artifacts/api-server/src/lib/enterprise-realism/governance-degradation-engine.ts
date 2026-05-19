@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateGovernanceDegradation=(input:EnterpriseRealismInput)=>Number((input.unresolvedRecommendations*0.4+input.auditExposurePersistence*0.6).toFixed(4));

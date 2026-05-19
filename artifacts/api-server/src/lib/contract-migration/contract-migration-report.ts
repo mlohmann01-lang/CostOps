@@ -1,0 +1,2 @@
+import type { DomainContractMigrationOutput } from './contract-migration-types';
+export const computeContractMigrationReport=(migrations:DomainContractMigrationOutput[])=>({domains:migrations.map((m)=>m.domain).sort(),totalEvidence:migrations.reduce((a,m)=>a+m.evidence.length,0),totalRecommendations:migrations.reduce((a,m)=>a+m.recommendations.length,0),deterministicSignature:migrations.map((m)=>`${m.domain}:${m.evidence.length}:${m.recommendations.length}`).sort().join('|')});

@@ -1,0 +1,1 @@
+import type { EvidenceIntegrityInput } from './evidence-integrity-types';export const evaluateLineageConfidence=(input:EvidenceIntegrityInput)=>Number(((input.lineageCoverage+input.replayCompatibility)/2).toFixed(4));

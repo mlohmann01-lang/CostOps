@@ -1,0 +1,1 @@
+import type { GovernancePrecedenceInput } from './governance-precedence-types';export const validateGovernancePrecedence=(input:GovernancePrecedenceInput)=>({valid:input.savingsMagnitude>=0&&input.savingsMagnitude<=1&&input.governanceRisk>=0&&input.governanceRisk<=1,ambiguity:input.auditExposure>0.7&&input.savingsMagnitude>0.8});

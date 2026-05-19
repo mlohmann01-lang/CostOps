@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateGovernanceEscalationOrder } from '../lib/governance-precedence';test('escalation order',()=>{assert.equal(evaluateGovernanceEscalationOrder({governanceRisk:0.2,auditExposure:0.2,executiveMateriality:0.2,recurrenceRisk:0.2,evidenceGapSeverity:0.95,volatilityRisk:0.1,resilienceRisk:0.1,businessCriticality:0.1,lineageIntegrity:true,policyIntegrity:true,savingsMagnitude:0.9}),'BLOCKED');});

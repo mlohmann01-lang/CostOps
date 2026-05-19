@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkCalibration=(input:BenchmarkRealismInput)=>Number((input.volatilityPersistence*0.5+input.ownershipAmbiguity*0.5).toFixed(4));

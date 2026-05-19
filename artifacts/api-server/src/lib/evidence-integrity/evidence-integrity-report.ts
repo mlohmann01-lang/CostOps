@@ -1,0 +1,1 @@
+import type { EvidenceIntegrityInput } from './evidence-integrity-types';import { computeEvidenceIntegrityScore } from './evidence-integrity-score';export const computeEvidenceIntegrityReport=(input:EvidenceIntegrityInput)=>({integrity:computeEvidenceIntegrityScore(input),unsupportedChain:input.lineageCoverage<0.2||input.replayCompatibility<0.2});

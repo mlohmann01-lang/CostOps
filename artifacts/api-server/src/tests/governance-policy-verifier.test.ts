@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyPolicyIntegrity } from '../lib/governance-verification';test('policy verifier',()=>{assert.equal(verifyPolicyIntegrity({policyValid:true,arbitrationConsistent:false}).ok,false);});

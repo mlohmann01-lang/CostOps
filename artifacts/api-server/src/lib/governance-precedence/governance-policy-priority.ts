@@ -1,0 +1,1 @@
+import type { GovernancePrecedenceInput } from './governance-precedence-types';export const governancePolicyPriority=(input:GovernancePrecedenceInput)=>({lineagePriority:!input.lineageIntegrity,policyPriority:!input.policyIntegrity,auditPriority:input.auditExposure>0.7});

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { verifyDeterminism } from '../lib/governance-verification';test('determinism verifier',()=>{assert.equal(verifyDeterminism({proofHash:'a',replayHash:'b'}).ok,true);});

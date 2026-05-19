@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkWeighting=(input:BenchmarkRealismInput)=>Number((input.historicalRecurrence*0.2+input.auditExposurePersistence*0.3+input.executiveEscalation*0.2+input.arbitrationInstability*0.3).toFixed(4));

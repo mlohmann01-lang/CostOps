@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildGoldenPathFixture } from '../lib/golden-path';test('fixture',()=>{assert.equal(buildGoldenPathFixture().replayId,'golden-replay-001');});

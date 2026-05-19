@@ -1,0 +1,1 @@
+export const evaluateAIElasticityTradeoff=(x:{cloudSavings:number;burstElasticityRisk:number})=>({deferCloudReduction:x.burstElasticityRisk>0.6,adjustedSavings:x.burstElasticityRisk>0.6?0:x.cloudSavings});

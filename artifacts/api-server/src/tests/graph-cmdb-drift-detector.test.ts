@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { detectCMDBDrift } from '../lib/economic-graph-constraints';test('cmdb drift',()=>{assert.equal(detectCMDBDrift({labels:['cmdb-topology']}).drift,true);});

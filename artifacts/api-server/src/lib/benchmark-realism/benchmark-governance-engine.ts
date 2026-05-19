@@ -1,0 +1,1 @@
+import type { BenchmarkRealismInput } from './benchmark-realism-types';export const evaluateBenchmarkGovernance=(input:BenchmarkRealismInput)=>Number((input.delayedRemediation*0.4+input.repeatedGovernanceViolations*0.6).toFixed(4));

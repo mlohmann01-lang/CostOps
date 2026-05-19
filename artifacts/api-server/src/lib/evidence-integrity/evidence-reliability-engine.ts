@@ -1,0 +1,1 @@
+import type { EvidenceIntegrityInput } from './evidence-integrity-types';export const evaluateEvidenceReliability=(input:EvidenceIntegrityInput)=>Number(((input.sourceReliability+input.historicalTrust)/2).toFixed(4));

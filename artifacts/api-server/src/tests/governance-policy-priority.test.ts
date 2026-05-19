@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { governancePolicyPriority } from '../lib/governance-precedence';test('priority',()=>{assert.equal(governancePolicyPriority({governanceRisk:0.1,auditExposure:0.1,executiveMateriality:0.1,recurrenceRisk:0.1,evidenceGapSeverity:0.1,volatilityRisk:0.1,resilienceRisk:0.1,businessCriticality:0.1,lineageIntegrity:false,policyIntegrity:true,savingsMagnitude:0.9}).lineagePriority,true);});

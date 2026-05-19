@@ -1,0 +1,1 @@
+import type { DSLAst } from './governance-dsl-types';export const explainGovernanceDSL=(ast:DSLAst)=>ast.rules.map((r)=>`DOMAIN ${r.domain}: ${r.action} ${r.target} when ${r.conditions.join(' AND ')||'UNCONDITIONAL'}`).join(' | ');

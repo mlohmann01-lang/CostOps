@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildGovernanceCertificationPack } from '../lib/governance-certification';test('pack',()=>{assert.equal(buildGovernanceCertificationPack({replayDeterministic:true,lineageComplete:true,benchmarkConsistent:true,arbitrationConsistent:true,policyConsistent:true,graphBoundaryIntegrity:true,mutationAbsent:true,executionAbsent:true,explanationIntegrity:true,evidenceIntegrity:0.8}).replayDeterministic,true);});

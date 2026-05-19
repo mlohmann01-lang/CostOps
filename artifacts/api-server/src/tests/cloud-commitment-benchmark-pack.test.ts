@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { getCloudCommitmentBenchmarkPack } from '../lib/scenario-benchmarks';test('getCloudCommitmentBenchmarkPack',()=>{assert.ok(getCloudCommitmentBenchmarkPack().length>0);});

@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateEnterpriseVolatility=(input:EnterpriseRealismInput)=>Number((input.volatilitySpikes*0.7+input.benchmarkDivergence*0.3).toFixed(4));

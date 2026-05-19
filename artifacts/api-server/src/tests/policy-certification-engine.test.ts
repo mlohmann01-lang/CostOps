@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { certifyPolicyIntegrity } from '../lib/governance-certification';test('policy cert',()=>{assert.equal(certifyPolicyIntegrity({replayDeterministic:true,lineageComplete:true,benchmarkConsistent:true,arbitrationConsistent:true,policyConsistent:true,graphBoundaryIntegrity:true,mutationAbsent:true,executionAbsent:true,explanationIntegrity:true,evidenceIntegrity:0.8}).ok,true);});

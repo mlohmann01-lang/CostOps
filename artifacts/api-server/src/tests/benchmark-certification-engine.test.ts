@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { certifyBenchmarkIntegrity } from '../lib/governance-certification';test('benchmark cert',()=>{assert.equal(certifyBenchmarkIntegrity({replayDeterministic:true,lineageComplete:true,benchmarkConsistent:false,arbitrationConsistent:true,policyConsistent:true,graphBoundaryIntegrity:true,mutationAbsent:true,executionAbsent:true,explanationIntegrity:true,evidenceIntegrity:0.8}).ok,false);});

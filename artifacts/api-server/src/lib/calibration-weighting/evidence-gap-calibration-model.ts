@@ -1,0 +1,1 @@
+export const evaluateEvidenceGapCalibration=(input:{evidenceQuality:number;evidenceGapSeverity:number})=>({requiresApproval:input.evidenceQuality<0.5||input.evidenceGapSeverity>0.7,blocked:input.evidenceQuality<0.3&&input.evidenceGapSeverity>0.8});

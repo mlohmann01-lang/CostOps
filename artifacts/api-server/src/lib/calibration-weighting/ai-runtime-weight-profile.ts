@@ -1,0 +1,1 @@
+import type { WeightProfile } from './calibration-weighting-types';export const aiRuntimeWeightProfile:WeightProfile={auditExposure:0.08,savingsMagnitude:0.2,volatilityRisk:0.28,evidenceQuality:0.2,governanceRisk:0.24};

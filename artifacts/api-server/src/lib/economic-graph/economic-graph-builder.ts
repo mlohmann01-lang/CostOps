@@ -1,0 +1,1 @@
+import { normalizeEconomicGraphNodes } from './economic-node-normalizer';import { normalizeEconomicGraphEdges } from './economic-edge-normalizer';import type { ENode,EEdge } from './economic-graph-types';export const buildEconomicGraph=(input:{nodes:ENode[];edges:EEdge[]})=>({nodes:normalizeEconomicGraphNodes(input.nodes),edges:normalizeEconomicGraphEdges(input.edges)});

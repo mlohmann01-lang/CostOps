@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluateOracleEntitlement } from '../lib/oracle-java-governance';import { buildOracleJavaSignalFixture } from './_oracle-java-test-fixture';test('evaluateOracleEntitlement',()=>{const r=evaluateOracleEntitlement(buildOracleJavaSignalFixture());assert.ok(r.confidence<=1);});

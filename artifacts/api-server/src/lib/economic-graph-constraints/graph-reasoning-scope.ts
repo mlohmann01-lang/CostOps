@@ -1,0 +1,1 @@
+export const evaluateGraphReasoningScope=(input:{purpose:string[]})=>({economicOnly:input.purpose.every((p)=>['EXPOSURE','ATTRIBUTION','CAUSALITY','GOVERNANCE','ARBITRATION','RECURRENCE'].includes(p)),scope:input.purpose});

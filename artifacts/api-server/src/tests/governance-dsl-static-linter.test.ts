@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { lintGovernanceDSL } from '../lib/governance-dsl';test('linter contradictory',()=>{const l=lintGovernanceDSL({rules:[{domain:'d',conditions:['EVIDENCE_CONFIDENCE < 0.6'],action:'BLOCK',target:'BLOCKED'},{domain:'d',conditions:['AUDIT_EXPOSURE = LOW'],action:'ESCALATE',target:'READ_ONLY'}]});assert.equal(l.ok,false);});

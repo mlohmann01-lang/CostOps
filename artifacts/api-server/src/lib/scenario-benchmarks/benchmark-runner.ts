@@ -1,0 +1,1 @@
+import type { Scenario } from './scenario-benchmark-types';export const runScenarioBenchmark=(input:{scenarios:Scenario[]})=>input.scenarios.map((s)=>({id:s.id,actualGovernanceClass:s.risk>0.65?'APPROVAL_REQUIRED':'RECOMMEND_ONLY',actualDominantRisk:s.risk>0.65?'GOVERNANCE_RISK':'SAVINGS_RISK',actualArbitrationResult:s.risk>0.65?'DEFER':'REVIEW'}));

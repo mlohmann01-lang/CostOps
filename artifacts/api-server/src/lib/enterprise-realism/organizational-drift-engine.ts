@@ -1,0 +1,1 @@
+import type { EnterpriseRealismInput } from './enterprise-realism-types';export const simulateOrganizationalDrift=(input:EnterpriseRealismInput)=>Number((input.organizationalDrift*0.6+input.ownershipDecay*0.4).toFixed(4));

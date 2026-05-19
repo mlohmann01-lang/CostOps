@@ -1,0 +1,1 @@
+export interface EnterpriseRealismInput{unresolvedRecommendations:number;ownershipDecay:number;evidenceFreshnessDegradation:number;delayedEscalation:number;volatilitySpikes:number;organizationalDrift:number;benchmarkDivergence:number;auditExposurePersistence:number;confidenceDegradation:number;}

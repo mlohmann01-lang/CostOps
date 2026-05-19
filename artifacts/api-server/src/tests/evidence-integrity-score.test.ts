@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeEvidenceIntegrityScore } from '../lib/evidence-integrity';test('integrity score',()=>{const r=computeEvidenceIntegrityScore({freshness:0.1,completeness:0.1,lineageCoverage:0.1,sourceReliability:0.1,attributionConfidence:0.1,ownershipConfidence:0.1,replayCompatibility:0.1,evidenceConflictSeverity:0.9,historicalTrust:0.1,governanceTrustworthiness:0.1});assert.equal(r.governancePosture,'BLOCKED');});

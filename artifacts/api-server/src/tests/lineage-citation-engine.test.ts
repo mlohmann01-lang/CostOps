@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { buildLineageCitation } from '../lib/explainability-citations';test('lineage citation',()=>{assert.ok(buildLineageCitation({evidenceRefs:['e1'],lineageRefs:['l1'],arbitrationRefs:['a1'],dominantFactors:['f'],escalationReasons:['r'],claims:[]}).includes('l1'));});

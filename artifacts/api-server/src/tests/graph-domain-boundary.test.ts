@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateGraphDomainBoundary } from '../lib/economic-graph-constraints';test('domain boundary',()=>{assert.equal(validateGraphDomainBoundary({nodes:['CMDB_CI']}).valid,false);});

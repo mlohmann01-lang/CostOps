@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateEconomicPolicy } from '../lib/economic-policy-language';test('validator rejects unknown actions',()=>{assert.equal(validateEconomicPolicy({domain:'x',condition:'y',threshold:1,governanceClass:'UNKNOWN' as any,escalationReason:'r',evidenceRequirement:'e',approvalRequirement:true}).valid,false);});

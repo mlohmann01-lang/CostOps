@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { classifyEconomicConflict } from '../lib/economic-arbitration/economic-conflict-matrix';test('conflict matrix',()=>{assert.equal(classifyEconomicConflict('audit'),'LICENCE_REDUCTION_VS_AUDIT_RISK');});

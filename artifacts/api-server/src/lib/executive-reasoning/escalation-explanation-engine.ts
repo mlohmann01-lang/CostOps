@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const explainEscalationDecision=(input:ExecutiveReasoningInput)=>`recurrence=${input.recurrenceRisk.toFixed(4)} evidence_gap=${input.evidenceGap.toFixed(4)}`;

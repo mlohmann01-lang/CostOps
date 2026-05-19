@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { validateGraphEdgePolicy } from '../lib/economic-graph-constraints';test('edge policy',()=>{assert.equal(validateGraphEdgePolicy({edges:['DEPENDS_ON']}).valid,false);});

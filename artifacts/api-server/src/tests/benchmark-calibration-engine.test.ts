@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { evaluateBenchmarkCalibration } from '../lib/benchmark-realism';test('evaluateBenchmarkCalibration',()=>{assert.ok(evaluateBenchmarkCalibration({historicalRecurrence:0.8,volatilityPersistence:0.7,ownershipAmbiguity:0.6,executiveEscalation:0.7,auditExposurePersistence:0.8,delayedRemediation:0.9,repeatedGovernanceViolations:0.8,confidenceDegradation:0.5,deviationTolerance:0.4,arbitrationInstability:0.6})>0);});

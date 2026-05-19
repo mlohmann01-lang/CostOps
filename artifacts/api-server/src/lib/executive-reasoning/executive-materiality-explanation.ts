@@ -1,0 +1,1 @@
+import type { ExecutiveReasoningInput } from './executive-reasoning-types';export const explainExecutiveMateriality=(input:ExecutiveReasoningInput)=>`executive_materiality=${input.executiveMateriality.toFixed(4)}`;

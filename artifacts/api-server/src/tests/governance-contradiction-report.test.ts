@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { computeGovernanceContradictionReport } from '../lib/governance-contradictions';test('contradiction report',()=>{const r=computeGovernanceContradictionReport({policyState:'BLOCKED',arbitrationState:'RECOMMEND_ONLY',hasEvidence:true,hasLineage:false,graphExposure:0.9,governancePosture:'READ_ONLY',executiveMateriality:0.9,volatilityRisk:0.9,arbitrationVolatilityWeight:0.1});assert.equal(r.governanceClass,'BLOCKED');});

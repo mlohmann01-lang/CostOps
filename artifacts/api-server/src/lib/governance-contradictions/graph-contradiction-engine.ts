@@ -1,0 +1,1 @@
+import type { ContradictionInput } from './governance-contradiction-types';export const detectGraphContradictions=(i:ContradictionInput)=>i.graphExposure>0.7&&i.governancePosture==='READ_ONLY'?['graph-exposure-ignored-by-governance']:[ ];

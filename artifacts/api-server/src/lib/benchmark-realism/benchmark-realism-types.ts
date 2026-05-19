@@ -1,0 +1,1 @@
+export interface BenchmarkRealismInput{historicalRecurrence:number;volatilityPersistence:number;ownershipAmbiguity:number;executiveEscalation:number;auditExposurePersistence:number;delayedRemediation:number;repeatedGovernanceViolations:number;confidenceDegradation:number;deviationTolerance:number;arbitrationInstability:number;}

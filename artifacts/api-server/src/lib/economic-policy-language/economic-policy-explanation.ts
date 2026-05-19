@@ -1,0 +1,1 @@
+export const explainEconomicPolicyEvaluation=(result:{governanceClass:string;reasons:string[];policyDomain:string})=>`Policy ${result.policyDomain} => ${result.governanceClass}; reasons=${result.reasons.join('|')}`;

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import { getDomainWeightProfile } from '../lib/calibration-weighting';test('domain profile',()=>{assert.ok(getDomainWeightProfile('ORACLE_JAVA').auditExposure>getDomainWeightProfile('ORACLE_JAVA').savingsMagnitude);});

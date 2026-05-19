@@ -1,0 +1,1 @@
+export const validateGraphEdgePolicy=(input:{edges:string[]})=>({valid:input.edges.every((e)=>!['DEPENDS_ON','CALLS','EMITS_METRIC','ORCHESTRATES'].includes(e)),violations:input.edges.filter((e)=>['DEPENDS_ON','CALLS','EMITS_METRIC','ORCHESTRATES'].includes(e))});
