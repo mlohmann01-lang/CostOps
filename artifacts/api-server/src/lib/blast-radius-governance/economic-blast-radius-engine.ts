@@ -1,0 +1,1 @@
+import type {BlastRadiusInput,BlastRadiusCategory} from './blast-radius-types';export const evaluateEconomicBlastRadius=(i:BlastRadiusInput):BlastRadiusCategory=>i.economicImpact>=85?'CRITICAL_PLATFORM_SCOPE':i.economicImpact>=70?'ENTERPRISE_SCOPE':i.economicImpact>=50?'BUSINESS_UNIT_SCOPE':i.economicImpact>=25?'TEAM_SCOPE':'LOCALIZED';

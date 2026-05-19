@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const normalizeSnowflakeSignals=(i:SnowflakeInput)=>({score:Math.round((i.warehouseIdle+i.scanAmplification+i.materializationWaste)/3)});

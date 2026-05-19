@@ -1,0 +1,1 @@
+import type {RuntimeCalibrationInput} from './runtime-calibration-types';export const evaluateWorkloadSensitivity=(i:RuntimeCalibrationInput)=>({score:i.workloadSensitivity,requiresApproval:i.workloadSensitivity>70});

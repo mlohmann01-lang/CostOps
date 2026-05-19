@@ -1,0 +1,1 @@
+import type {ConnectorContractInput,ConnectorExecutionMode} from './connector-execution-types';export const evaluateConnectorPermissionScope=(i:ConnectorContractInput):ConnectorExecutionMode=>i.prohibited?'PROHIBITED':i.requiresApproval?'APPROVAL_REQUIRED_EXECUTION':'DRY_RUN_ONLY';

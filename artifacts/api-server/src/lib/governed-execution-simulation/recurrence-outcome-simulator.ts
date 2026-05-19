@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const simulateRecurrenceOutcome=(i:GovernedExecutionSimulationInput)=>({likelyRecurrence:i.recurrenceRisk>60,risk:i.recurrenceRisk});

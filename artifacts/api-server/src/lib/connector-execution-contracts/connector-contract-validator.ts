@@ -1,0 +1,1 @@
+import type {ConnectorContractInput} from './connector-execution-types';import {evaluateConnectorExecutionBoundary} from './connector-execution-boundary';export const validateConnectorContract=(i:ConnectorContractInput)=>{const mode=evaluateConnectorExecutionBoundary(i);return{valid:!(mode==='GOVERNED_EXECUTION'&&!i.reversible),mode};};

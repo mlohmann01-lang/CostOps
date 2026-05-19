@@ -1,0 +1,1 @@
+import type {ExecutionRuntimeBoundaryInput} from './execution-runtime-boundary-types';export const evaluateExecutionRuntimeReadiness=(i:ExecutionRuntimeBoundaryInput)=>({ready:i.certified&&i.reversible&&i.approvalPresent&&i.connectorScoped&&i.proofRequired});

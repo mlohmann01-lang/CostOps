@@ -1,0 +1,1 @@
+import type {ExecutionPlanInput} from './execution-plan-types';import {evaluateApprovalRequirement} from './approval-requirement-engine';export const modelApprovalChain=(i:ExecutionPlanInput)=>({required:evaluateApprovalRequirement(i),chainId:i.approvalChainId??null});

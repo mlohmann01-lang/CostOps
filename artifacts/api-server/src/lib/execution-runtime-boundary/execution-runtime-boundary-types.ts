@@ -1,0 +1,1 @@
+export interface ExecutionRuntimeBoundaryInput{certified:boolean;reversible:boolean;approvalPresent:boolean;connectorScoped:boolean;proofRequired:boolean;}

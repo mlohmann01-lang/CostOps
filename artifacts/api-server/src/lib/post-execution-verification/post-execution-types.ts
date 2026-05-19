@@ -1,0 +1,1 @@
+export interface PostExecutionInput{outcomeScore:number;governanceDrift:number;recurrencePersistence:number;blastContainment:number;rollbackIntegrity:number;evidenceUpdated:boolean;lineageUpdated:boolean;contradictionEmergence:boolean;}

@@ -1,0 +1,1 @@
+import type {RollbackInput,RollbackClass} from './rollback-compensation-types';export const classifyRollbackRisk=(i:RollbackInput):RollbackClass=>!i.reversible?'ROLLBACK_NOT_AVAILABLE':i.rollbackConfidence>=75?'ROLLBACK_AVAILABLE':i.rollbackConfidence>=50?'ROLLBACK_UNCERTAIN':'COMPENSATION_AVAILABLE';

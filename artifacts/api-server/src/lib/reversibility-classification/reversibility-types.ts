@@ -1,0 +1,1 @@
+export type ReversibilityClass='FULLY_REVERSIBLE'|'CONDITIONALLY_REVERSIBLE'|'LOW_CONFIDENCE_REVERSIBLE'|'NON_REVERSIBLE';export interface ReversibilityInput{rollbackCoverage:number;rollbackConfidence:number;recoveryUncertainty:number;evidenceIntegrity:number;lineageIntegrity:number;}

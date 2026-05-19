@@ -1,0 +1,1 @@
+import type {AIAgentRuntimeInput} from './ai-agent-runtime-types';export const evaluateTokenomicsAttribution=(i:AIAgentRuntimeInput)=>({mapped:i.workflowMapped,cost:i.tokenCost,confidence:i.workflowMapped?100:45});

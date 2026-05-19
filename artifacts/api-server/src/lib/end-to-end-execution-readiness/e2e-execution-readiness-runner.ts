@@ -1,0 +1,1 @@
+import type {E2EExecutionReadinessInput} from './e2e-execution-readiness-types';export const runE2EExecutionReadiness=(i:E2EExecutionReadinessInput)=>{if(!i.recommendation||!i.evidence||!i.lineage||i.contradiction||!i.connectorSafe||!i.rollbackReady)return'BLOCKED';return i.approvalEvaluated?'GOVERNED_EXECUTION_READY':'PLAN_REQUIRES_APPROVAL';};

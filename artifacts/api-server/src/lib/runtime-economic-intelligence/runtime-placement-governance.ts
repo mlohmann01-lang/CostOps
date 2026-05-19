@@ -1,0 +1,1 @@
+import type {RuntimeEconomicInput} from './runtime-economic-types';export const evaluateRuntimePlacementGovernance=(i:RuntimeEconomicInput)=>({risk:Math.round((i.queuePressure+i.workloadContention+(100-i.autoscalingEfficiency))/3),requiresApproval:i.workloadContention>60||i.queuePressure>60});

@@ -1,0 +1,1 @@
+import type {ReversibilityInput} from './reversibility-types';import {evaluateReversibility} from './reversibility-engine';export const evaluateReversibilityGovernance=(i:ReversibilityInput)=>({class:evaluateReversibility(i),requiresApproval:evaluateReversibility(i)!=='FULLY_REVERSIBLE'||i.rollbackConfidence<70});

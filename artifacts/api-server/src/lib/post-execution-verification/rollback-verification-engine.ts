@@ -1,0 +1,1 @@
+import type {PostExecutionInput} from './post-execution-types';export const verifyRollbackIntegrity=(i:PostExecutionInput)=>i.rollbackIntegrity>=70;

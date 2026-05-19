@@ -1,0 +1,1 @@
+import type {RuntimeCalibrationInput} from './runtime-calibration-types';export const evaluateRollbackOutcomeMemory=(i:RuntimeCalibrationInput)=>Math.min(100,50+i.priorRollbackSuccess*10);

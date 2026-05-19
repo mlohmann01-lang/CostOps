@@ -1,0 +1,1 @@
+import type {RollbackInput} from './rollback-compensation-types';export const buildRollbackPlan=(i:RollbackInput)=>({available:i.reversible&&i.rollbackConfidence>=60,steps:i.reversible?['capture-state-hash','define-compensation']:[]});

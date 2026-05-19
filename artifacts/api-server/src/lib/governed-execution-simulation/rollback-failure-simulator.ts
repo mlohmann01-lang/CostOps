@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const simulateRollbackFailure=(i:GovernedExecutionSimulationInput)=>i.rollbackFailureRisk;

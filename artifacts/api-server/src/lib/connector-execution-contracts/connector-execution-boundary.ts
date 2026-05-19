@@ -1,0 +1,1 @@
+import type {ConnectorContractInput,ConnectorExecutionMode} from './connector-execution-types';export const evaluateConnectorExecutionBoundary=(i:ConnectorContractInput):ConnectorExecutionMode=>{if(i.prohibited)return'PROHIBITED';if(!i.reversible)return'APPROVAL_REQUIRED_EXECUTION';return i.requiresApproval?'APPROVAL_REQUIRED_EXECUTION':'GOVERNED_EXECUTION';};

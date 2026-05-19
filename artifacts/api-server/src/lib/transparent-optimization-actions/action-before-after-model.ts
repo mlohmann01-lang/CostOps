@@ -1,0 +1,1 @@
+import type {TransparentActionInput} from './transparent-action-types';export const modelActionBeforeAfter=(i:TransparentActionInput)=>({before:i.before,after:i.after,delta:i.before-i.after});

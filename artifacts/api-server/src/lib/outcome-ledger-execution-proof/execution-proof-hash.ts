@@ -1,0 +1,1 @@
+import {createHash} from 'node:crypto';import type {OutcomeLedgerExecutionProofInput} from './outcome-ledger-execution-types';export const computeExecutionProofHash=(i:OutcomeLedgerExecutionProofInput)=>createHash('sha256').update(JSON.stringify(i)).digest('hex');

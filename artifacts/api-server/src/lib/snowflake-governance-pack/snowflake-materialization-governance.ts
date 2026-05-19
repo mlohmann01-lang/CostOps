@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeMaterializationGovernance=(i:SnowflakeInput)=>({waste:i.materializationWaste>50});

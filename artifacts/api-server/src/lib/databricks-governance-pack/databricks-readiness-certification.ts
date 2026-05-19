@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const certifyDatabricksReadiness=(i:DatabricksInput)=>({ready:i.evidence>=70&&i.lineage>=70&&i.ownershipMapped&&i.clusterPolicyCoverage>=70,state:i.evidence>=70&&i.lineage>=70&&i.ownershipMapped&&i.clusterPolicyCoverage>=70?'GOVERNED_DRY_RUN_READY':'APPROVAL_OR_REVIEW_REQUIRED'});

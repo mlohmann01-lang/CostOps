@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksClusterEconomics=(i:DatabricksInput)=>({idle:i.idleCluster>40,allPurposeMisuse:i.allPurposeShare>60});

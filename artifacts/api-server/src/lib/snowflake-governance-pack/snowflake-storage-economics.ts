@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeStorageEconomics=(i:SnowflakeInput)=>({retentionWaste:i.storageWaste>50});

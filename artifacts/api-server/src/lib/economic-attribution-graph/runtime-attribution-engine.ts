@@ -1,0 +1,1 @@
+export const evaluateRuntimeAttribution=(input:{runtimeId?:string;evidenceId?:string})=>({linked:Boolean(input.runtimeId&&input.evidenceId),confidence:input.runtimeId&&input.evidenceId?100:55});

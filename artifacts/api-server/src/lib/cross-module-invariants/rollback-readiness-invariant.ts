@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyRollbackReadinessInvariant=(i:CrossModuleInvariantInput)=>!(i.rollbackPresent===false&&i.readiness==='GOVERNED_EXECUTION_READY');

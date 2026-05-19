@@ -1,0 +1,1 @@
+export const evaluateOutcomeAttribution=(input:{outcomeId?:string;executionProofId?:string})=>({linked:Boolean(input.outcomeId&&input.executionProofId),confidence:input.outcomeId&&input.executionProofId?100:30});

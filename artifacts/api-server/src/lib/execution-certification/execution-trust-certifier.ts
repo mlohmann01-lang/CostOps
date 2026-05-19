@@ -1,0 +1,1 @@
+import type {ExecutionCertificationInput} from './execution-certification-types';export const certifyExecutionTrust=(i:ExecutionCertificationInput)=>i.trustScore>=70&&i.evidenceIntegrity>=70&&i.lineageIntegrity>=70;

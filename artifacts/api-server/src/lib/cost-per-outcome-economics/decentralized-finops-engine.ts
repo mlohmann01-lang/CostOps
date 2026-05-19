@@ -1,0 +1,1 @@
+import type {CostPerOutcomeInput} from './cost-per-outcome-types';export const evaluateDecentralizedFinOps=(i:CostPerOutcomeInput)=>({actionability:i.ownershipDistributed?90:55});

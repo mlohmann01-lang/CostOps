@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyAttributionProofInvariant=(i:CrossModuleInvariantInput)=>!(i.attributionPresent===false&&i.proofClass==='EXECUTIVE_DEFENSIBLE');

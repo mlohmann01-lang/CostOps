@@ -1,0 +1,1 @@
+import type {FinanceGradeTBMInput} from './finance-grade-tbm-types';export const evaluateInvestmentGovernance=(i:FinanceGradeTBMInput)=>({governed:i.evidenceRefs.length>0,owner:i.owner});

@@ -1,0 +1,1 @@
+import type {GovernanceTrustInput} from './governance-trust-types';export const evaluateGovernanceTrust=(i:GovernanceTrustInput)=>Math.max(0,Math.min(100,Math.round((i.evidenceIntegrity+i.lineageIntegrity+i.certificationStatus+i.recurrencePrevention+i.reversibility)/5-(i.contradictionSeverity+i.governanceDriftRisk+i.executiveMateriality+i.volatilityRisk+i.blastRadius)/10)));

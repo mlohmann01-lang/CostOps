@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const simulateExecutionImpactPropagation=(i:GovernedExecutionSimulationInput)=>Math.min(100,Math.round(i.impact+i.blastRadius/4));

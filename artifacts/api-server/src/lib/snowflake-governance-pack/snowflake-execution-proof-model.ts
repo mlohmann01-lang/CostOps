@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const buildSnowflakeExecutionProof=(i:SnowflakeInput)=>({evidence:i.evidence,lineage:i.lineage,proofReady:i.evidence>=70&&i.lineage>=70,executionPayload:null});

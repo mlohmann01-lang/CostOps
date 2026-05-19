@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const normalizeDatabricksSignals=(i:DatabricksInput)=>({score:Math.round((i.dbuSpike+i.idleCluster+i.gpuIdle)/3)});

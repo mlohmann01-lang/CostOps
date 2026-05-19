@@ -1,0 +1,1 @@
+import type {ExecutionEligibilityInput} from './execution-eligibility-types';export const evaluateExecutionPolicyCompliance=(input:ExecutionEligibilityInput)=>({compliant:input.policyIntegrity>=70&&input.governanceCertification>=70,violations:[input.policyIntegrity<70?'POLICY_INTEGRITY_LOW':'',input.governanceCertification<70?'GOVERNANCE_CERTIFICATION_LOW':''].filter(Boolean)});

@@ -1,0 +1,1 @@
+import type {E2EExecutionReadinessInput} from './e2e-execution-readiness-types';export const buildE2EExecutionReadinessFixture=():E2EExecutionReadinessInput=>({recommendation:true,evidence:true,lineage:true,contradiction:false,connectorSafe:true,rollbackReady:true,approvalEvaluated:true});

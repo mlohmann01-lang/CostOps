@@ -1,0 +1,1 @@
+import type {TransparentActionInput} from './transparent-action-types';export const evaluateActionRiskTransparency=(i:TransparentActionInput)=>({risk:i.risk,governanceReason:i.risk==='HIGH'?'APPROVAL_REQUIRED':'REVIEW_ONLY'});

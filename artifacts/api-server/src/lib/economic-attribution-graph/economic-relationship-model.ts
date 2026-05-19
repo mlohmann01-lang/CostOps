@@ -1,0 +1,1 @@
+import type {EconomicRelationship} from './economic-attribution-graph-types';export const buildEconomicRelationship=(input:EconomicRelationship)=>input;

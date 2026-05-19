@@ -1,0 +1,1 @@
+import type {GovernedDryRunInput} from './governed-dry-run-types';export const simulateDryRunImpact=(i:GovernedDryRunInput)=>({risk:Math.min(100,Math.round((i.blastRadius+(i.production?30:0)+(i.reversible?0:25))/1.6)),confidence:Math.round((i.evidenceIntegrity+i.lineageIntegrity)/2)});

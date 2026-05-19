@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const simulatePolicyConflict=(i:GovernedExecutionSimulationInput)=>({blocked:i.policyConflictRisk>70,risk:i.policyConflictRisk});

@@ -1,0 +1,1 @@
+export const evaluateDatabricksTransformationCostGovernance=(input:{inefficiency:number})=>({recommendation:input.inefficiency>50});

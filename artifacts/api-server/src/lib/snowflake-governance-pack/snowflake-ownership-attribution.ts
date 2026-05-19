@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeOwnershipAttribution=(i:SnowflakeInput)=>({mapped:i.ownershipMapped,confidence:i.ownershipMapped?100:45});

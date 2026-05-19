@@ -1,0 +1,1 @@
+import type {AIAgentRuntimeInput} from './ai-agent-runtime-types';export const evaluateAgentLoopRisk=(i:AIAgentRuntimeInput)=>({risk:i.retryLoops>3?'HIGH':'LOW'});

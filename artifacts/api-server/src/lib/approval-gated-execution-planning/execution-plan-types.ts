@@ -1,0 +1,1 @@
+export type ExecutionPlanState='PLAN_REJECTED'|'PLAN_REVIEW_ONLY'|'PLAN_REQUIRES_APPROVAL'|'PLAN_DRY_RUN_READY'|'PLAN_GOVERNED_EXECUTION_READY';export interface ExecutionPlanInput{action:string;approvalChainId?:string;blastRadius:number;reversible:boolean;domain:'M365'|'SAAS'|'CLOUD'|'KUBERNETES'|'ORACLE_JAVA';eligible:boolean;certified:boolean;}

@@ -1,0 +1,1 @@
+import type {RollbackInput} from './rollback-compensation-types';export const modelCompensationAction=(i:RollbackInput)=>({required:!i.reversible||i.rollbackConfidence<60,type:'RECOMMEND_ONLY_COMPENSATION_PLAN'});

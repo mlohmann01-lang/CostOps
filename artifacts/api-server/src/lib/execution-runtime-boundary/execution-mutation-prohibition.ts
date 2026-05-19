@@ -1,0 +1,1 @@
+export const enforceMutationProhibition=(input:{liveMutationRequested:boolean})=>({allowed:!input.liveMutationRequested});

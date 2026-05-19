@@ -1,0 +1,1 @@
+import type {EconomicEntity} from './economic-attribution-graph-types';export const evaluateOwnershipAttribution=(input:EconomicEntity)=>({confidence:input.ownerId?100:40,owned:Boolean(input.ownerId)});

@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeDrift=(i:SnowflakeInput)=>({drift:i.warehouseIdle+i.scanAmplification>120});

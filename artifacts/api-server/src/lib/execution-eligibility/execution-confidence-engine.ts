@@ -1,0 +1,1 @@
+import type {ExecutionEligibilityInput} from './execution-eligibility-types';export const evaluateExecutionConfidence=(input:ExecutionEligibilityInput)=>Math.max(0,Math.min(100,Math.round((input.evidenceIntegrity+input.lineageIntegrity+input.governanceCertification+input.policyIntegrity)/4-(input.volatilityRisk+input.recurrenceRisk)/6)));

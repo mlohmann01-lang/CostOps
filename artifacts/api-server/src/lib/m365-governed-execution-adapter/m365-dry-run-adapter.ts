@@ -1,0 +1,1 @@
+import type {M365ActionInput} from './m365-governed-execution-types';export const simulateM365DryRun=(i:M365ActionInput)=>({action:i.action,mode:'DRY_RUN_ONLY',noApiCalls:true});

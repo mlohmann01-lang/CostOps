@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeResourceMonitorGovernance=(i:SnowflakeInput)=>({gap:!i.resourceMonitorConfigured});

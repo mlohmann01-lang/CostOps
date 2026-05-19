@@ -1,0 +1,1 @@
+import type {BlastRadiusInput,BlastRadiusCategory} from './blast-radius-types';export const evaluateOrganizationalBlastRadius=(i:BlastRadiusInput):BlastRadiusCategory=>i.organizationalImpact>=80?'ENTERPRISE_SCOPE':i.organizationalImpact>=55?'BUSINESS_UNIT_SCOPE':i.organizationalImpact>=30?'TEAM_SCOPE':'LOCALIZED';

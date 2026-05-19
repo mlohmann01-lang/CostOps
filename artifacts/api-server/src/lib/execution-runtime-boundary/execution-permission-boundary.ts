@@ -1,0 +1,1 @@
+import type {ExecutionRuntimeBoundaryInput} from './execution-runtime-boundary-types';export const evaluateExecutionPermissionBoundary=(i:ExecutionRuntimeBoundaryInput)=>i.certified&&i.reversible&&i.approvalPresent&&i.connectorScoped;

@@ -1,0 +1,1 @@
+import type {PostExecutionInput} from './post-execution-types';export const verifyRecurrencePrevention=(i:PostExecutionInput)=>i.recurrencePersistence<=40;

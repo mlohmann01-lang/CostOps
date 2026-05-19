@@ -1,0 +1,1 @@
+import type {RecurrencePreventionInput} from './recurrence-prevention-types';export const evaluatePolicyCoverage=(i:RecurrencePreventionInput)=>i.policyCoverage>=70;

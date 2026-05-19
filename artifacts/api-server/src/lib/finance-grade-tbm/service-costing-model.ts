@@ -1,0 +1,1 @@
+import type {FinanceGradeTBMInput} from './finance-grade-tbm-types';export const evaluateServiceCosting=(i:FinanceGradeTBMInput)=>({service:i.service,unitCost:Math.max(0,Math.round(i.spend/10))});

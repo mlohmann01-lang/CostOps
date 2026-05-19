@@ -1,0 +1,1 @@
+import type {ExecutionCertificationInput} from './execution-certification-types';export const certifyExecutionGovernance=(i:ExecutionCertificationInput)=>i.governanceDrift<=40&&!i.contradictionPresent;

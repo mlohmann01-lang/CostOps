@@ -1,0 +1,1 @@
+export const evaluateSnowflakeQueryProfileGovernance=(input:{profileRisk:number})=>({recommendation:input.profileRisk>60});

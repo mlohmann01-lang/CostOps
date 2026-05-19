@@ -1,0 +1,1 @@
+export const evaluateExecutionAttribution=(input:{recommendationId?:string;executionPlanId?:string;evidenceId?:string})=>({linked:Boolean(input.recommendationId&&input.executionPlanId&&input.evidenceId),confidence:input.recommendationId&&input.executionPlanId&&input.evidenceId?100:35});

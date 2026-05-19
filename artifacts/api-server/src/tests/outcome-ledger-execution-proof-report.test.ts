@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';test('scenario check',()=>{assert.equal(1,1);});

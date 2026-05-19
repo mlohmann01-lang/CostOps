@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksJobEconomics=(i:DatabricksInput)=>({policyGap:i.clusterPolicyCoverage<70});

@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeQueryEconomics=(i:SnowflakeInput)=>({scanAmplification:i.scanAmplification,review:i.scanAmplification>50});

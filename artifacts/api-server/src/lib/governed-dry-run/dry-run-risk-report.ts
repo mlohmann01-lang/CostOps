@@ -1,0 +1,1 @@
+import type {GovernedDryRunInput} from './governed-dry-run-types';import {simulateDryRunImpact} from './dry-run-impact-simulator';import {evaluateDryRunGovernance} from './dry-run-governance-check';export const computeDryRunRiskReport=(i:GovernedDryRunInput)=>({impact:simulateDryRunImpact(i),governance:evaluateDryRunGovernance(i)});

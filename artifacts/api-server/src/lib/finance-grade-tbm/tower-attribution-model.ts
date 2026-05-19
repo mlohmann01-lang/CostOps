@@ -1,0 +1,1 @@
+import type {FinanceGradeTBMInput} from './finance-grade-tbm-types';export const evaluateTowerAttribution=(i:FinanceGradeTBMInput)=>({tower:i.tower,confidence:i.owner?100:50});

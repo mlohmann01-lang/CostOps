@@ -1,0 +1,1 @@
+import {createHash} from 'node:crypto';import type {E2EExecutionReadinessInput} from './e2e-execution-readiness-types';export const computeE2EExecutionReadinessProof=(i:E2EExecutionReadinessInput)=>createHash('sha256').update(JSON.stringify(i)).digest('hex');

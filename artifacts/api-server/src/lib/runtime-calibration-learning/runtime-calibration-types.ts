@@ -1,0 +1,1 @@
+export interface RuntimeCalibrationInput{priorExecutionFailures:number;priorRollbackSuccess:number;recurrenceCount:number;baseConfidence:number;workloadSensitivity:number;}

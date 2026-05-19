@@ -1,0 +1,1 @@
+import type {RuntimeCalibrationInput} from './runtime-calibration-types';export const evaluateExecutionOutcomeMemory=(i:RuntimeCalibrationInput)=>Math.max(0,100-i.priorExecutionFailures*20);

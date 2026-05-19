@@ -1,0 +1,1 @@
+import type {ConnectorContractInput} from './connector-execution-types';export const modelConnectorCapability=(i:ConnectorContractInput)=>i.capabilities.filter(Boolean);

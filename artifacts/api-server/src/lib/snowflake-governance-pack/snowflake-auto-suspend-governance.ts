@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeAutoSuspendGovernance=(i:SnowflakeInput)=>({gap:!i.autoSuspendConfigured});

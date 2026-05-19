@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksNotebookEconomics=(i:DatabricksInput)=>({ownershipGap:!i.ownershipMapped});

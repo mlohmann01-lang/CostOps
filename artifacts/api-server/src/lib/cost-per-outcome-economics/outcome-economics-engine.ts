@@ -1,0 +1,1 @@
+import type {CostPerOutcomeInput} from './cost-per-outcome-types';export const evaluateOutcomeEconomics=(i:CostPerOutcomeInput)=>({name:i.outcome,costShare:Math.round(i.cost/4),confidence:i.attributionMapped?100:45});

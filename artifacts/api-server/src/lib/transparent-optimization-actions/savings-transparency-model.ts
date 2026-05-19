@@ -1,0 +1,1 @@
+import type {TransparentActionInput} from './transparent-action-types';export const evaluateSavingsTransparency=(i:TransparentActionInput)=>({estimatedSavings:i.before-i.after,confidence:i.confidence,assumptions:i.assumptions});

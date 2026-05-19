@@ -1,0 +1,1 @@
+import type {PostExecutionInput} from './post-execution-types';export const verifyExecutionOutcome=(i:PostExecutionInput)=>i.outcomeScore>=70;

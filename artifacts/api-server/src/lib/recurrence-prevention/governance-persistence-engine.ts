@@ -1,0 +1,1 @@
+import type {RecurrencePreventionInput} from './recurrence-prevention-types';export const evaluateGovernancePersistence=(i:RecurrencePreventionInput)=>i.governancePersistence-i.ownershipPersistence<20;

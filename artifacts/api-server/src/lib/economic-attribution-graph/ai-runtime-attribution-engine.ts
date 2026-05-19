@@ -1,0 +1,1 @@
+export const evaluateAIRuntimeAttribution=(input:{linked:boolean})=>({linked:input.linked,confidence:input.linked?100:45});

@@ -1,0 +1,1 @@
+import type {M365ActionInput} from './m365-governed-execution-types';export const modelM365ExecutionProof=(i:M365ActionInput)=>({action:i.action,evidenceIntegrity:i.evidenceIntegrity,lineageIntegrity:i.lineageIntegrity,proofReady:i.evidenceIntegrity>=70&&i.lineageIntegrity>=70});

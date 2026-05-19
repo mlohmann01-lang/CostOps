@@ -1,0 +1,1 @@
+import type {RuntimeCalibrationInput} from './runtime-calibration-types';export const evaluateRecurrenceLearning=(i:RuntimeCalibrationInput)=>Math.max(0,100-i.recurrenceCount*15);

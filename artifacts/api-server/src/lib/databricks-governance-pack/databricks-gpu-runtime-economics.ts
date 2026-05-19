@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksGPURuntimeEconomics=(i:DatabricksInput)=>({waste:i.gpuIdle>40});

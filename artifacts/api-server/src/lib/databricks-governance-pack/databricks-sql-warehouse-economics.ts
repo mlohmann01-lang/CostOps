@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksSQLWarehouseEconomics=(i:DatabricksInput)=>({rightsizeCandidate:i.sqlWarehouseIdle>45});

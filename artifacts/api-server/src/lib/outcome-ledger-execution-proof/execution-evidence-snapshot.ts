@@ -1,0 +1,1 @@
+import type {OutcomeLedgerExecutionProofInput} from './outcome-ledger-execution-types';export const buildExecutionEvidenceSnapshot=(i:OutcomeLedgerExecutionProofInput)=>({evidenceSnapshot:i.evidenceSnapshot,lineageSnapshot:i.lineageSnapshot,beforeStateHash:i.beforeStateHash,afterStateHash:i.afterStateHash});

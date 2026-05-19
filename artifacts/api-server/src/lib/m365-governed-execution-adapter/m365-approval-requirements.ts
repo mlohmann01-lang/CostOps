@@ -1,0 +1,1 @@
+import type {M365ActionInput} from './m365-governed-execution-types';export const evaluateM365ApprovalRequirements=(i:M365ActionInput)=>i.action!=='REMOVE_INACTIVE_LICENSE';

@@ -1,0 +1,1 @@
+import type {AIAgentRuntimeInput} from './ai-agent-runtime-types';export const evaluateAIAgentCostObservability=(i:AIAgentRuntimeInput)=>({observable:i.tokenCost>=0});

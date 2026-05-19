@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksOwnershipAttribution=(i:DatabricksInput)=>({mapped:i.ownershipMapped,confidence:i.ownershipMapped?100:40});

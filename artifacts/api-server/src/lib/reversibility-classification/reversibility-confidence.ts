@@ -1,0 +1,1 @@
+import type {ReversibilityInput} from './reversibility-types';export const evaluateReversibilityConfidence=(i:ReversibilityInput)=>Math.max(0,Math.min(100,Math.round((i.rollbackConfidence+i.evidenceIntegrity+i.lineageIntegrity)/3)));

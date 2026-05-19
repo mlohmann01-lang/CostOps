@@ -1,0 +1,1 @@
+export type BlastRadiusCategory='LOCALIZED'|'TEAM_SCOPE'|'BUSINESS_UNIT_SCOPE'|'ENTERPRISE_SCOPE'|'CRITICAL_PLATFORM_SCOPE';export interface BlastRadiusInput{economicImpact:number;organizationalImpact:number;infrastructureImpact:number;resilienceRisk:number;uncertainty:number;recurrenceRisk:number;volatilityRisk:number;}

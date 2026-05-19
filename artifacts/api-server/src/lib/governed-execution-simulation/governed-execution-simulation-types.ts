@@ -1,0 +1,1 @@
+export interface GovernedExecutionSimulationInput{impact:number;rollbackFailureRisk:number;blastRadius:number;recurrenceRisk:number;policyConflictRisk:number;baseConfidence:number;}
