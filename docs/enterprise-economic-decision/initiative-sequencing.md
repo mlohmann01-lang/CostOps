@@ -1,0 +1,2 @@
+# initiative-sequencing
+Deterministic, replayable, explainable design with governance-aware economic decision outputs and evidence-linked reasoning.
