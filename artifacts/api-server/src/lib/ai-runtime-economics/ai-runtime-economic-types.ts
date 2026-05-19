@@ -1,0 +1,3 @@
+import type { EconomicDomain } from '../economic-intelligence-kernel';
+export type AIRuntimeWorkloadType='INFERENCE'|'TRAINING'|'FINE_TUNING'|'EMBEDDING'|'BATCH_JOB'|'AGENT_RUNTIME'|'RAG_PIPELINE'|'EVALUATION'|'SYNTHETIC_DATA'|'GPU_NOTEBOOK';
+export interface AIRuntimeEconomicSignal{domain:EconomicDomain;workloadType:AIRuntimeWorkloadType;tokenVolume:number;promptTokenCost:number;completionTokenCost:number;modelUnitCost:number;gpuHours:number;cpuHours:number;memoryGbHours:number;requestVolume:number;latencySensitivity:number;retryRate:number;cacheHitRate:number;batchability:number;concurrency:number;idleCapacity:number;burstVolatility:number;businessCriticality:number;}

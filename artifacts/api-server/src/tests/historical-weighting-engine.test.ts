@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateHistoricalWeighting } from '../lib/calibration-realism'; test('historical weighting',()=>{assert.ok(evaluateHistoricalWeighting([0.8,0.6])>0.6);});

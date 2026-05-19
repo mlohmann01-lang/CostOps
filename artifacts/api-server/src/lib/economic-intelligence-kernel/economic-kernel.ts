@@ -1,0 +1,6 @@
+import { evaluateEconomicConfidence } from './economic-confidence-model';
+import { evaluateEconomicSeverity } from './economic-severity-model';
+import { evaluateEconomicVolatility } from './economic-volatility-model';
+import { classifyEconomicGovernance } from './economic-governance-classifier';
+import type { EconomicKernelAssessment, EconomicConfidenceInput, EconomicSeverityInput, EconomicVolatilityInput, EconomicEvidenceReference } from './economic-kernel-types';
+export function evaluateEconomicKernel(input:{domain:EconomicConfidenceInput['domain'];confidence:Omit<EconomicConfidenceInput,'domain'>;severity:Omit<EconomicSeverityInput,'domain'>;volatility:Omit<EconomicVolatilityInput,'domain'>;evidenceReferences:EconomicEvidenceReference[]}):EconomicKernelAssessment{const confidence=evaluateEconomicConfidence({domain:input.domain,...input.confidence}); const severity=evaluateEconomicSeverity({domain:input.domain,...input.severity}); const volatility=evaluateEconomicVolatility({domain:input.domain,...input.volatility}); const governance=classifyEconomicGovernance({confidence:confidence.score,severity:severity.score,hasEvidence:input.evidenceReferences.length>0}); return {domain:input.domain,confidence,severity,volatility,governance};}

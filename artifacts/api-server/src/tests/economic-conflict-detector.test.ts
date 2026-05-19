@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { detectEconomicConflicts } from '../lib/economic-arbitration'; test('conflicts detected',()=>{assert.equal(detectEconomicConflicts([{id:'a',savings:1,governanceRisk:0.9,volatilityRisk:0.1,recurrenceRisk:0.1,confidence:0.8,severity:0.7}]).length,1);});

@@ -1,0 +1,2 @@
+import type { EconomicGovernanceClassification } from './economic-kernel-types';
+export function classifyEconomicGovernance(input:{confidence:number;severity:number;hasEvidence:boolean;}):EconomicGovernanceClassification{if(!input.hasEvidence)return 'BLOCKED'; if(input.confidence<0.4)return 'BLOCKED'; if(input.confidence<0.65)return 'READ_ONLY'; if(input.severity>=0.8)return 'APPROVAL_REQUIRED'; return 'RECOMMEND_ONLY';}

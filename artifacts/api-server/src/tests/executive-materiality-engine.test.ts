@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateExecutiveMateriality } from '../lib/calibration-realism'; test('exec materiality affects escalation',()=>{assert.ok(evaluateExecutiveMateriality(1,1)>0.9);});

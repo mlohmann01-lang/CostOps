@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeEconomicArbitrationReport } from '../lib/economic-arbitration'; test('arbitration report status',()=>{assert.equal(computeEconomicArbitrationReport([{id:'a',savings:1,governanceRisk:0.1,volatilityRisk:0.1,recurrenceRisk:0,confidence:0.9,severity:0.5}]).status,'ARBITRATION_FOUNDATION_READY');});

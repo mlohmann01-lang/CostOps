@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateEconomicVolatility } from '../lib/economic-intelligence-kernel'; test('volatility scored',()=>{assert.equal(evaluateEconomicVolatility({domain:'CLOUD',volatility:1,forecastStability:0}).band,'UNSTABLE');});

@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { assertEvidenceIntegrity } from '../lib/semantic-hardening'; test('evidence integrity',()=>{assert.doesNotThrow(()=>assertEvidenceIntegrity([{id:'1',source:'x',capturedAt:'t',confidence:1,lineage:{lineageId:'l',sourceSystem:'s',entityId:'e'},replay:{replayId:'r',timestamp:'t',version:'1'}}]));});

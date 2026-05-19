@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { scoreEconomicCausalConfidence } from '../lib/economic-causality'; test('low evidence low confidence',()=>{assert.ok(scoreEconomicCausalConfidence([{category:'USAGE_DECLINE',strength:0.2,evidenceReferences:[],domains:['CLOUD']} as any])<0.3);});
