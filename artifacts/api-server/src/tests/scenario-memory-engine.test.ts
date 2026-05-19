@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { deriveScenarioMemoryAdjustment } from '../lib/economic-memory';
+test('scenario memory adjustment treatment',()=>{ const x=deriveScenarioMemoryAdjustment({tenantId:'t',totalRecords:6,averageErrorRate:0.4,volatility:0.3,overestimationRate:0.7,underestimationRate:0.1,balancedRate:0.2,lowEvidenceRate:0.2,consistencyClass:'VOLATILE_ACCURACY',biasClass:'OVER_BIAS'}); assert.equal(x.recommendedScenarioTreatment,'REDUCE_CONFIDENCE'); });

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import type { FinOpsSourceRecommendation } from '../lib/finops-operationalization';
+test('finops types compile',()=>{ const rec:FinOpsSourceRecommendation={tenantId:'t',sourceSystem:'FLEXERA',sourceRecommendationId:'1',cloudProvider:'AWS',recommendationCategory:'IDLE_RESOURCE',recommendationSummary:'idle',estimatedMonthlySavings:100,savingsConfidence:0.8,sourceCreatedAt:'a',sourceUpdatedAt:'b',lineageCorrelationId:'l',replayCorrelationId:'r'}; assert.equal(rec.tenantId,'t'); });

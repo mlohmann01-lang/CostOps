@@ -1,0 +1,12 @@
+export type CalibrationMetricType='SPEND'|'SAVINGS'|'PRODUCTIVITY'|'GOVERNANCE_DRIFT'|'RISK'|'CUSTOM';
+export interface ForecastOutcomeCaptureInput { tenantId:string; forecastId:string; metricType:CalibrationMetricType; forecastedValue:number; actualValue:number; confidenceScore?:number; forecastedAt:string; observedAt:string; evidenceRefs?:string[]; }
+export interface ForecastOutcomeRecord extends ForecastOutcomeCaptureInput { absoluteError:number; percentageError:number; }
+export interface ScenarioRealizationInput { tenantId:string; scenarioId:string; scenarioName:string; simulatedSpendDelta:number; simulatedSavingsDelta:number; realizedSpendDelta:number; realizedSavingsDelta:number; simulatedProductivityDelta?:number; realizedProductivityDelta?:number; simulatedGovernanceDriftDelta?:number; realizedGovernanceDriftDelta?:number; simulatedAt:string; realizedAt:string; evidenceRefs?:string[]; }
+export interface ScenarioRealizationRecord extends ScenarioRealizationInput { spendError:number; savingsError:number; }
+export interface AccuracySummary { sampleSize:number; meanAbsoluteError:number; meanAbsolutePercentageError:number; bias:number; overEstimationRate:number; underEstimationRate:number; }
+export interface ConfidenceCalibrationBucket { minConfidence:number; maxConfidence:number; sampleSize:number; predictedHitRate:number; actualHitRate:number; calibrationGap:number; }
+export interface AttributionCalibrationInput { tenantId:string; attributionId:string; predictedContribution:number; actualContribution:number; domain:'LICENSE'|'INFRA'|'WORKFLOW'|'GOVERNANCE'|'AI'|'OTHER'; }
+export interface AttributionCalibrationResult extends AttributionCalibrationInput { absoluteError:number; directionMatch:boolean; }
+export interface RecommendationRealizationInput { tenantId:string; recommendationId:string; forecastedApprovalProbability:number; approved:boolean; reversed:boolean; forecastedSavings:number; realizedSavings:number; }
+export interface RecommendationRealizationResult extends RecommendationRealizationInput { approvalHit:boolean; reversalMiss:boolean; savingsError:number; }
+export interface EconomicCalibrationReport { tenantId:string; generatedAt:string; forecastAccuracy:AccuracySummary; scenarioAccuracy:AccuracySummary; confidenceCalibrationScore:number; attributionAccuracyScore:number; recommendationAccuracyScore:number; systemicBias:'OVER_ESTIMATING'|'UNDER_ESTIMATING'|'BALANCED'; keyPatterns:string[]; }

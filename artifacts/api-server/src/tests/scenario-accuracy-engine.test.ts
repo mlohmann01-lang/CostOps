@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { calculateScenarioAccuracy, trackScenarioRealization } from '../lib/economic-calibration';
+test('computes scenario accuracy summary',()=>{ const x=calculateScenarioAccuracy([trackScenarioRealization({tenantId:'t',scenarioId:'s',scenarioName:'n',simulatedSpendDelta:-20,simulatedSavingsDelta:20,realizedSpendDelta:-10,realizedSavingsDelta:10,simulatedAt:'a',realizedAt:'b'})]); assert.equal(x.sampleSize,1); assert.equal(x.meanAbsoluteError,10); });
