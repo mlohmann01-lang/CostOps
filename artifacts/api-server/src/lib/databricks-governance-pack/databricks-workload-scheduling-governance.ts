@@ -1,0 +1,1 @@
+export const evaluateDatabricksWorkloadSchedulingGovernance=(input:{scheduleWaste:number})=>({waste:input.scheduleWaste>50});

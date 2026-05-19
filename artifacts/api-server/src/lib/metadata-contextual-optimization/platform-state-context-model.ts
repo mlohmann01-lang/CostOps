@@ -1,0 +1,1 @@
+import type {MetadataContextInput} from './metadata-contextual-types';export const evaluatePlatformStateContext=(i:MetadataContextInput)=>({stability:i.platformStability});

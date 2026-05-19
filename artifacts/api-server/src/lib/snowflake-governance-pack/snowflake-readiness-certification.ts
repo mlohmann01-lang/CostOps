@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const certifySnowflakeReadiness=(i:SnowflakeInput)=>({ready:i.evidence>=70&&i.lineage>=70&&i.ownershipMapped,state:i.evidence>=70&&i.lineage>=70&&i.ownershipMapped?'GOVERNED_DRY_RUN_READY':'REVIEW_REQUIRED'});

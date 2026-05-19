@@ -1,0 +1,1 @@
+import type {TransparentActionInput} from './transparent-action-types';export const explainOptimizationAction=(i:TransparentActionInput)=>`${i.action}: ${i.before} -> ${i.after}`;

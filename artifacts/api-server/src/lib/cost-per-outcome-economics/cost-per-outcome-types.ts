@@ -1,0 +1,1 @@
+export interface CostPerOutcomeInput{product:string;team:string;feature:string;outcome:string;cost:number;attributionMapped:boolean;ownershipDistributed:boolean;}

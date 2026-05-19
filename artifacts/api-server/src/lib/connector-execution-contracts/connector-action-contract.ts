@@ -1,0 +1,1 @@
+import type {ConnectorContractInput} from './connector-execution-types';export const defineConnectorActionContract=(i:ConnectorContractInput)=>({connector:i.connector,allowsExecution:i.reversible&&!i.prohibited,capabilities:i.capabilities});

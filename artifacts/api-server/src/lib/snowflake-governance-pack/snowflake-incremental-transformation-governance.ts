@@ -1,0 +1,1 @@
+export const evaluateSnowflakeIncrementalTransformationGovernance=(input:{inefficiency:number})=>({recommendation:input.inefficiency>50});

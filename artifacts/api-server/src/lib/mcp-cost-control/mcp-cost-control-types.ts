@@ -1,0 +1,1 @@
+export interface MCPCostControlInput{action:'getCostOpportunities'|'getExecutionReadiness'|'simulateGovernedAction'|'requestApprovalPlan'|'getRollbackPlan'|'getOutcomeProof'|'listGovernedActions';safe:boolean;evidenceRefs:string[];proofRef?:string;governanceStatus:'BLOCKED'|'APPROVAL_REQUIRED'|'READY';}

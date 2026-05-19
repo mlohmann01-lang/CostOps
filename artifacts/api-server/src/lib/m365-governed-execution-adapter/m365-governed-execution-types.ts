@@ -1,0 +1,1 @@
+export type M365Action='REMOVE_INACTIVE_LICENSE'|'DOWNGRADE_LICENSE'|'REASSIGN_LICENSE_REVIEW'|'REMOVE_DISABLED_USER_LICENSE'|'COPILOT_REALLOCATION_REVIEW';export interface M365ActionInput{action:M365Action;evidenceIntegrity:number;lineageIntegrity:number;reversible:boolean;disabledUserEvidence?:boolean;}

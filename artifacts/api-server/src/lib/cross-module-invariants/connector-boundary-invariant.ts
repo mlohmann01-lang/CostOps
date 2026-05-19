@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyConnectorBoundaryInvariant=(i:CrossModuleInvariantInput)=>!(i.connectorAllows===false&&i.readiness==='GOVERNED_EXECUTION_READY');

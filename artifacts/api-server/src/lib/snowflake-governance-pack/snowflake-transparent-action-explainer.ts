@@ -1,0 +1,1 @@
+export const explainSnowflakeTransparentAction=(input:{action:string})=>({action:input.action,mode:'DRY_RUN_ONLY'});

@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksDrift=(i:DatabricksInput)=>({drift:i.dbuSpike+i.idleCluster>120});

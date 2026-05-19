@@ -1,0 +1,1 @@
+import type {AIAgentRuntimeInput} from './ai-agent-runtime-types';export const evaluateAIInfrastructureEconomics=(i:AIAgentRuntimeInput)=>({infraCost:i.infraCost,pressure:i.infraCost>80});

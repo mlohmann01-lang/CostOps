@@ -1,0 +1,1 @@
+export const modelM365PermissionScope=(input:{scopes:string[]})=>({modeled:true,hasRequiredScopes:input.scopes.includes('User.Read.All')&&input.scopes.includes('Directory.Read.All')});

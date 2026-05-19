@@ -1,0 +1,1 @@
+import type {MCPCostControlInput} from './mcp-cost-control-types';export const buildMCPResponseProof=(i:MCPCostControlInput)=>({evidenceRefs:i.evidenceRefs,proofRef:i.proofRef??'UNAVAILABLE',governanceStatus:i.governanceStatus});

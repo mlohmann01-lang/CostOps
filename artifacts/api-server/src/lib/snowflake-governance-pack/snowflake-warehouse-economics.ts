@@ -1,0 +1,1 @@
+import type {SnowflakeInput} from './snowflake-governance-types';export const evaluateSnowflakeWarehouseEconomics=(i:SnowflakeInput)=>({idleWaste:i.warehouseIdle>40,rightsizeCandidate:i.warehouseIdle>30});

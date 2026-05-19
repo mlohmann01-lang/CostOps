@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const buildDatabricksExecutionProof=(i:DatabricksInput)=>({evidence:i.evidence,lineage:i.lineage,proofReady:i.evidence>=70&&i.lineage>=70,executionPayload:null});

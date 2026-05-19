@@ -1,0 +1,1 @@
+import type {ExecutionPlanInput} from './execution-plan-types';export const evaluateChangeWindow=(i:ExecutionPlanInput)=>({window:i.blastRadius>60?'CONTROLLED_CHANGE_WINDOW':'STANDARD_WINDOW'});

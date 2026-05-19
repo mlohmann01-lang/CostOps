@@ -1,0 +1,1 @@
+import type {ExecutionPlanInput} from './execution-plan-types';export const evaluateApprovalRequirement=(i:ExecutionPlanInput)=>i.blastRadius>60||i.domain==='KUBERNETES'||i.domain==='ORACLE_JAVA';

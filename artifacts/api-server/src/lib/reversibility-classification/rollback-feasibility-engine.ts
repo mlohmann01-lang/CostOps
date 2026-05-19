@@ -1,0 +1,1 @@
+import type {ReversibilityInput} from './reversibility-types';export const evaluateRollbackFeasibility=(i:ReversibilityInput)=>Math.max(0,Math.min(100,Math.round((i.rollbackCoverage+i.rollbackConfidence-i.recoveryUncertainty)/2)));

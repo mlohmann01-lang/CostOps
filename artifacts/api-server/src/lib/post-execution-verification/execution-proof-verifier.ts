@@ -1,0 +1,1 @@
+import type {PostExecutionInput} from './post-execution-types';export const verifyExecutionProof=(i:PostExecutionInput)=>i.evidenceUpdated&&i.lineageUpdated&&!i.contradictionEmergence;

@@ -1,0 +1,1 @@
+export interface FinanceGradeTBMInput{costPool:string;tower:string;service:string;owner:string;spend:number;evidenceRefs:string[];runtimeRef?:string;}

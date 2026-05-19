@@ -1,0 +1,1 @@
+import type {RecurrencePreventionInput} from './recurrence-prevention-types';export const evaluateRecurrenceRiskDecay=(i:RecurrencePreventionInput)=>Math.max(0,100-Math.round((i.historicalRecurrenceDensity+i.volatilityPersistence+i.contradictionPersistence)/3));

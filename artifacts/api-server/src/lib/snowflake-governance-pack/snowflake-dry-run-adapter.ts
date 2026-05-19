@@ -1,0 +1,1 @@
+import type {SnowflakeActionBlueprint} from './snowflake-governance-types';export const simulateSnowflakeGovernedAction=(action:SnowflakeActionBlueprint)=>({action,mode:'DRY_RUN_ONLY',readyForLiveMutation:false});

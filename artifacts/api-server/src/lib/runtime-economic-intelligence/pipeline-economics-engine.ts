@@ -1,0 +1,1 @@
+import type {RuntimeEconomicInput} from './runtime-economic-types';export const evaluatePipelineEconomics=(i:RuntimeEconomicInput)=>({score:Math.max(0,100-Math.round((i.warehouseIdleTime+i.clusterIdleTime+i.materializationWaste+i.workloadContention)/4))});

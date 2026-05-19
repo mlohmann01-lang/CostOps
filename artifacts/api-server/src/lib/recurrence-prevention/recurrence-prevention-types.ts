@@ -1,0 +1,1 @@
+export interface RecurrencePreventionInput{governancePersistence:number;policyCoverage:number;evidenceFreshness:number;ownershipPersistence:number;automationDependencyRisk:number;volatilityPersistence:number;historicalRecurrenceDensity:number;contradictionPersistence:number;}

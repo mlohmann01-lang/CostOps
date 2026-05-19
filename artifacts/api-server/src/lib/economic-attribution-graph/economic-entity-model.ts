@@ -1,0 +1,1 @@
+import type {EconomicEntity} from './economic-attribution-graph-types';export const buildEconomicEntity=(input:EconomicEntity)=>input;

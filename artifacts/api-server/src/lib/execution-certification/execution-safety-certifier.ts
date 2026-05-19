@@ -1,0 +1,1 @@
+import type {ExecutionCertificationInput} from './execution-certification-types';export const certifyExecutionSafety=(i:ExecutionCertificationInput)=>i.reversibility>=60&&i.blastRadius<=60;

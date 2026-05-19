@@ -1,0 +1,1 @@
+export interface RuntimeEconomicInput{costPerQuery:number;costPerJob:number;costPerPipeline:number;costPerTransformation:number;costPerNotebook:number;warehouseIdleTime:number;clusterIdleTime:number;scanAmplification:number;materializationWaste:number;queuePressure:number;autoscalingEfficiency:number;runtimeUtilization:number;workloadContention:number;scheduleEfficiency:number;}

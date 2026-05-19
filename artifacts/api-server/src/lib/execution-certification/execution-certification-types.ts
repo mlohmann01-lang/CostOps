@@ -1,0 +1,1 @@
+export type ExecutionCertificationClass='EXECUTION_PROHIBITED'|'GOVERNANCE_REVIEW_REQUIRED'|'GOVERNANCE_APPROVAL_REQUIRED'|'GOVERNANCE_EXECUTION_CERTIFIED';export interface ExecutionCertificationInput{contradictionPresent:boolean;reversibility:number;governanceDrift:number;blastRadius:number;evidenceIntegrity:number;lineageIntegrity:number;trustScore:number;}

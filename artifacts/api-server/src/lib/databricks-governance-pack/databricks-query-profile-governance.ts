@@ -1,0 +1,1 @@
+export const evaluateDatabricksQueryProfileGovernance=(input:{profileRisk:number})=>({recommendation:input.profileRisk>60});

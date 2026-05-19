@@ -1,0 +1,1 @@
+export interface TransparentActionInput{action:string;before:number;after:number;assumptions:string[];risk:string;confidence:number;}

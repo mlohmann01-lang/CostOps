@@ -1,0 +1,1 @@
+import type {BlastRadiusInput,BlastRadiusCategory} from './blast-radius-types';export const evaluateInfrastructureBlastRadius=(i:BlastRadiusInput):BlastRadiusCategory=>i.infrastructureImpact>=85?'CRITICAL_PLATFORM_SCOPE':i.infrastructureImpact>=65?'ENTERPRISE_SCOPE':i.infrastructureImpact>=40?'BUSINESS_UNIT_SCOPE':i.infrastructureImpact>=20?'TEAM_SCOPE':'LOCALIZED';

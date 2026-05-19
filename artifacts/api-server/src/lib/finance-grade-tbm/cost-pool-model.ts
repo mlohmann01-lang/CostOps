@@ -1,0 +1,1 @@
+import type {FinanceGradeTBMInput} from './finance-grade-tbm-types';export const modelCostPool=(i:FinanceGradeTBMInput)=>({costPool:i.costPool,spend:i.spend});

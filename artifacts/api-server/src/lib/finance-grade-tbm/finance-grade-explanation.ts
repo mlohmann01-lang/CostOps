@@ -1,0 +1,1 @@
+import type {FinanceGradeTBMInput} from './finance-grade-tbm-types';export const buildFinanceGradeExplanation=(i:FinanceGradeTBMInput)=>`Spend in ${i.costPool}/${i.tower}/${i.service} is owned by ${i.owner} with ${i.evidenceRefs.length} evidence refs.`;

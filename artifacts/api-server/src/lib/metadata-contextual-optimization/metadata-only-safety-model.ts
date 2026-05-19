@@ -1,0 +1,1 @@
+import type {MetadataContextInput} from './metadata-contextual-types';export const evaluateMetadataOnlySafety=(i:MetadataContextInput)=>({safe:i.metadataOnly,confidence:i.metadataOnly?100:40});

@@ -1,0 +1,1 @@
+import type {PostExecutionInput} from './post-execution-types';export const verifyGovernanceDrift=(i:PostExecutionInput)=>({preserved:i.governanceDrift<=30,drift:i.governanceDrift});

@@ -1,0 +1,1 @@
+import type {DatabricksActionBlueprint} from './databricks-governance-types';export const simulateDatabricksGovernedAction=(action:DatabricksActionBlueprint)=>({action,mode:'DRY_RUN_ONLY',readyForLiveMutation:false});

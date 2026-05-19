@@ -1,0 +1,1 @@
+import type {MetadataContextInput} from './metadata-contextual-types';export const evaluateContextualRoutingReadiness=(i:MetadataContextInput)=>({ready:i.metadataOnly&&i.platformStability>=60});

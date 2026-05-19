@@ -1,0 +1,1 @@
+import type {MetadataContextInput} from './metadata-contextual-types';export const evaluateBusinessPriorityContext=(i:MetadataContextInput)=>({priority:i.businessPriority,governanceClass:i.businessPriority>70?'APPROVAL_REQUIRED':'RECOMMEND_ONLY'});

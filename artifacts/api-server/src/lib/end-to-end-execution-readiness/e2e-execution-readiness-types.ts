@@ -1,0 +1,1 @@
+export interface E2EExecutionReadinessInput{recommendation:boolean;evidence:boolean;lineage:boolean;contradiction:boolean;connectorSafe:boolean;rollbackReady:boolean;approvalEvaluated:boolean;}

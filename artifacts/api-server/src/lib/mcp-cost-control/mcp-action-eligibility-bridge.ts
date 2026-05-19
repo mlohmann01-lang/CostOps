@@ -1,0 +1,1 @@
+import type {MCPCostControlInput} from './mcp-cost-control-types';export const bridgeMCPActionEligibility=(i:MCPCostControlInput)=>({eligible:i.safe&&i.evidenceRefs.length>0,reason:i.safe?'EVIDENCE_LINKED':'UNSAFE_ACTION'});

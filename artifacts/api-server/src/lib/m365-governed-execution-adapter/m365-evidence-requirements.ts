@@ -1,0 +1,1 @@
+export const evaluateM365EvidenceRequirements=(input:{userStatusEvidence:boolean;licenseAssignmentEvidence:boolean})=>({satisfied:input.userStatusEvidence&&input.licenseAssignmentEvidence});

@@ -1,0 +1,1 @@
+import type {ReversibilityInput,ReversibilityClass} from './reversibility-types';export const evaluateReversibility=(i:ReversibilityInput):ReversibilityClass=>i.rollbackCoverage<20?'NON_REVERSIBLE':i.rollbackCoverage<50?'LOW_CONFIDENCE_REVERSIBLE':i.rollbackCoverage<80?'CONDITIONALLY_REVERSIBLE':'FULLY_REVERSIBLE';

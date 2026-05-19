@@ -1,0 +1,3 @@
+# economic-attribution-graph recon
+
+Deterministic governance-bounded modeling only; no live mutation or external IO.

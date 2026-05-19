@@ -1,0 +1,1 @@
+import type {ExecutionEligibilityClass} from './execution-eligibility-types';export const executionTrustThresholds:Record<ExecutionEligibilityClass,number>={NEVER_ELIGIBLE:0,MANUAL_ONLY:40,APPROVAL_REQUIRED:60,GOVERNED_EXECUTION_ELIGIBLE:75};

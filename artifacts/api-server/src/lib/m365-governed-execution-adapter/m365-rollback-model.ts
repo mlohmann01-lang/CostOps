@@ -1,0 +1,1 @@
+import type {M365ActionInput} from './m365-governed-execution-types';export const modelM365Rollback=(i:M365ActionInput)=>({required:true,possible:i.reversible});

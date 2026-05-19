@@ -1,0 +1,1 @@
+import type {GovernedDryRunInput} from './governed-dry-run-types';export const validateDryRunInput=(i:GovernedDryRunInput)=>({valid:i.evidenceIntegrity>0&&i.lineageIntegrity>0,errors:[i.evidenceIntegrity<=0?'MISSING_EVIDENCE':'',i.lineageIntegrity<=0?'MISSING_LINEAGE':''].filter(Boolean)});

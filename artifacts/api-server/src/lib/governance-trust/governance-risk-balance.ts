@@ -1,0 +1,1 @@
+import type {GovernanceTrustInput} from './governance-trust-types';export const evaluateGovernanceRiskBalance=(i:GovernanceTrustInput)=>Math.round((i.contradictionSeverity+i.governanceDriftRisk+i.volatilityRisk+i.blastRadius)/4);

@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const calibrateExecutionConfidence=(i:GovernedExecutionSimulationInput)=>Math.max(0,Math.round(i.baseConfidence-(i.rollbackFailureRisk+i.recurrenceRisk+i.policyConflictRisk)/3));

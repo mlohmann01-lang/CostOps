@@ -1,0 +1,1 @@
+export type RollbackClass='ROLLBACK_NOT_REQUIRED'|'ROLLBACK_AVAILABLE'|'COMPENSATION_AVAILABLE'|'ROLLBACK_UNCERTAIN'|'ROLLBACK_NOT_AVAILABLE';export interface RollbackInput{reversible:boolean;rollbackConfidence:number;evidenceIntegrity:number;businessCriticality:number;}

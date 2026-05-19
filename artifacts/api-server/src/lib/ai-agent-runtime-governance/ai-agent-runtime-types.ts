@@ -1,0 +1,1 @@
+export interface AIAgentRuntimeInput{tokenCost:number;workflowMapped:boolean;retryLoops:number;modelEfficiency:number;infraCost:number;}

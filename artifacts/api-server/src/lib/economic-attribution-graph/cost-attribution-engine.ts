@@ -1,0 +1,1 @@
+export const evaluateCostAttribution=(input:{cost:number;mapped:boolean})=>({attributedCost:input.mapped?input.cost:0,confidence:input.mapped?100:50});

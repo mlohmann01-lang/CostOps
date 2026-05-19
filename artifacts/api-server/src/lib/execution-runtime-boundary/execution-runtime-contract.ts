@@ -1,0 +1,1 @@
+import type {ExecutionRuntimeBoundaryInput} from './execution-runtime-boundary-types';export const defineExecutionRuntimeContract=(i:ExecutionRuntimeBoundaryInput)=>({certified:i.certified,reversible:i.reversible,approval:i.approvalPresent});

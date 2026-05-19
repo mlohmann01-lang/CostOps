@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyGovernanceTrustInvariant=(i:CrossModuleInvariantInput)=>!((i.trust==='UNTRUSTED'||i.trust==='LOW_TRUST')&&i.readiness==='GOVERNED_EXECUTION_READY');

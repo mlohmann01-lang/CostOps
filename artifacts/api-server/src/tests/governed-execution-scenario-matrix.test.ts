@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {governedExecutionScenarioMatrix as m} from './_governed-execution-scenario-matrix';test('matrix deterministic',()=>{assert.equal(m.m365Inactive.eligible,true);assert.equal(m.missingEvidence.blocked,true);assert.equal(m.nonReversibleDb.blocked,true);});

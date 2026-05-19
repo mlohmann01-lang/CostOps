@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksUnityCatalogGovernance=(i:DatabricksInput)=>({gap:i.unityCatalogCoverage<70});

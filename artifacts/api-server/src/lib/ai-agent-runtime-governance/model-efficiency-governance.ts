@@ -1,0 +1,1 @@
+import type {AIAgentRuntimeInput} from './ai-agent-runtime-types';export const evaluateModelEfficiencyGovernance=(i:AIAgentRuntimeInput)=>({inefficient:i.modelEfficiency<60,recommendation:i.modelEfficiency<60?'MODEL_EFFICIENCY_REVIEW':'NONE'});

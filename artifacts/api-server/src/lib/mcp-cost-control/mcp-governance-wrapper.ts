@@ -1,0 +1,1 @@
+import type {MCPCostControlInput} from './mcp-cost-control-types';export const wrapMCPActionWithGovernance=(i:MCPCostControlInput)=>({allowed:i.safe&&i.governanceStatus!=='BLOCKED',governanceStatus:i.governanceStatus});

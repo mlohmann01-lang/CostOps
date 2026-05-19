@@ -1,0 +1,1 @@
+import type {GovernedDryRunInput} from './governed-dry-run-types';export const modelDryRunAction=(i:GovernedDryRunInput)=>({mode:'DRY_RUN_ONLY',reviewOnly:i.domain==='ORACLE_JAVA',category:i.actionCategory,executable:false});

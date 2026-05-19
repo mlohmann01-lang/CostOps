@@ -1,0 +1,1 @@
+export const evaluateSnowflakeWorkloadSchedulingGovernance=(input:{scheduleWaste:number})=>({waste:input.scheduleWaste>50});

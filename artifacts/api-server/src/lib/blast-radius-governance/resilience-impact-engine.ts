@@ -1,0 +1,1 @@
+import type {BlastRadiusInput} from './blast-radius-types';export const evaluateResilienceImpact=(i:BlastRadiusInput)=>({requiresApproval:i.resilienceRisk>=60||i.uncertainty>=70,score:Math.min(100,Math.round((i.resilienceRisk+i.uncertainty+i.volatilityRisk+i.recurrenceRisk)/4))});

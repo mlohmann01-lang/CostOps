@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksDBUEconomics=(i:DatabricksInput)=>({waste:i.dbuSpike>50});

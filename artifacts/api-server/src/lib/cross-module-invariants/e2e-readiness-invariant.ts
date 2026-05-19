@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyE2EReadinessInvariant=(i:CrossModuleInvariantInput)=>!(i.lineagePresent===false&&i.readiness==='GOVERNED_EXECUTION_READY');

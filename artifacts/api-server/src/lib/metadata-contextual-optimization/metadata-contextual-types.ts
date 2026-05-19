@@ -1,0 +1,1 @@
+export interface MetadataContextInput{metadataOnly:boolean;workloadRisk:number;platformStability:number;businessPriority:number;}

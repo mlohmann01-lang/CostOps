@@ -1,0 +1,1 @@
+export const buildMCPCostActionCatalog=()=>['getCostOpportunities','getExecutionReadiness','simulateGovernedAction','requestApprovalPlan','getRollbackPlan','getOutcomeProof','listGovernedActions','simulateSnowflakeGovernedAction','simulateDatabricksGovernedAction'];

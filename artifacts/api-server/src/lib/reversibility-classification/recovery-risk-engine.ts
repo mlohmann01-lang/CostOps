@@ -1,0 +1,1 @@
+import type {ReversibilityInput} from './reversibility-types';export const evaluateRecoveryRisk=(i:ReversibilityInput)=>Math.max(0,Math.min(100,Math.round(i.recoveryUncertainty+(100-i.rollbackConfidence)/2)));

@@ -1,0 +1,1 @@
+import type {DatabricksInput} from './databricks-governance-types';export const evaluateDatabricksClusterPolicyGovernance=(i:DatabricksInput)=>({gap:i.clusterPolicyCoverage<70});

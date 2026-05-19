@@ -1,0 +1,1 @@
+import type {MetadataContextInput} from './metadata-contextual-types';export const evaluateWorkloadContext=(i:MetadataContextInput)=>({risk:i.workloadRisk});

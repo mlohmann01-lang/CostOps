@@ -1,0 +1,1 @@
+import type {GovernedExecutionSimulationInput} from './governed-execution-simulation-types';export const simulateBlastRadiusPropagation=(i:GovernedExecutionSimulationInput)=>({escalated:i.blastRadius>70,class:i.blastRadius>70?'APPROVAL_REQUIRED':'RECOMMEND_ONLY'});

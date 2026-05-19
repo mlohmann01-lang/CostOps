@@ -1,0 +1,1 @@
+import type {OutcomeLedgerExecutionProofInput} from './outcome-ledger-execution-types';import {computeExecutionProofHash} from './execution-proof-hash';export const modelExecutionOutcomeLedgerEntry=(i:OutcomeLedgerExecutionProofInput)=>({...i,deterministicProofHash:computeExecutionProofHash(i),instructions:[] as string[]});

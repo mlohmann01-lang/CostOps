@@ -1,0 +1,1 @@
+import type {CrossModuleInvariantInput} from './cross-module-invariant-types';export const verifyEligibilityCertificationInvariant=(i:CrossModuleInvariantInput)=>!(i.executionEligibility==='NEVER_ELIGIBLE'&&i.certification==='GOVERNANCE_EXECUTION_CERTIFIED');

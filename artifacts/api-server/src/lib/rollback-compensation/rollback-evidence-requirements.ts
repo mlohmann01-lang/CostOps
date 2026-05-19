@@ -1,0 +1,1 @@
+import type {RollbackInput} from './rollback-compensation-types';export const evaluateRollbackEvidenceRequirements=(i:RollbackInput)=>({satisfied:i.evidenceIntegrity>=70,minimum:70});

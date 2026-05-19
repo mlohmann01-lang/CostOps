@@ -1,0 +1,1 @@
+import type {RecurrencePreventionInput} from './recurrence-prevention-types';export const evaluateRecurrenceControls=(i:RecurrencePreventionInput)=>Math.round((i.governancePersistence+i.policyCoverage+i.ownershipPersistence)/3);
