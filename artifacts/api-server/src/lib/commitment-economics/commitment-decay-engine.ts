@@ -1,0 +1,3 @@
+import type { CommitmentDecayResult } from './commitment-economics-types';
+import type { NormalizedCommitmentEconomicSignal } from './commitment-normalizer';
+export function evaluateCommitmentDecay(c:NormalizedCommitmentEconomicSignal):CommitmentDecayResult { const days=Math.max(0,Math.floor((Date.parse(c.endDate)-Date.now())/86400000)); const drift=c.tags.workloadDrift==='true'?0.3:0; const decay=Math.min(1,(days<90?0.5:days<180?0.3:0.1)+drift+Math.max(0,0.4-c.utilizationPercentage)); return { decayRiskScore:decay, daysUntilExpiration:days, expectedDecayTrajectory:decay>0.7?'HIGH':decay>0.4?'RISING':'STABLE', renewalReviewRecommended:days<180||decay>0.6, confidence:0.75 }; }

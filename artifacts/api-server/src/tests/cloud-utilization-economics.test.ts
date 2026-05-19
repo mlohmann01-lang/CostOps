@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateCloudUtilizationEconomics } from '../lib/cloud-economic-intelligence';
+test('evaluates utilization economics',()=>{ const r=evaluateCloudUtilizationEconomics({tenantId:'t',resourceId:'r',monthlyCost:100,cpuUtilization:0.2,idleHours:120,activeHours:40,environmentType:'DEV'}); assert.ok(r.shutdownPotential>0.5); });
