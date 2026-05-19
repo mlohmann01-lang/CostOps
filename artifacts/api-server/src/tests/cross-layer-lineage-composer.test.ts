@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { composeCrossLayerLineage } from '../lib/cross-layer-integration'; test('lineage composable',()=>{assert.equal(composeCrossLayerLineage([{lineageId:'2',sourceSystem:'s',entityId:'e'},{lineageId:'1',sourceSystem:'s',entityId:'e'}])[0].lineageId,'1');});

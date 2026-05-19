@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { buildEconomicCausalGraph } from '../lib/economic-causality'; test('graph builds',()=>{const out=buildEconomicCausalGraph([{category:'USAGE_DECLINE',strength:0.8,evidenceReferences:[],domains:['CLOUD']} as any]); assert.equal(out.nodes[0],'USAGE_DECLINE');});

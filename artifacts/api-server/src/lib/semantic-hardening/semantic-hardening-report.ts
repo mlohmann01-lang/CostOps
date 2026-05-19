@@ -1,0 +1,2 @@
+import type { EconomicRecommendationReference } from './shared-economic-dtos'; import { assertRecommendationIntegrity } from './shared-recommendation-contracts';
+export function computeSemanticHardeningReport(recommendations:EconomicRecommendationReference[]){ recommendations.forEach(assertRecommendationIntegrity); return {recommendationCount:recommendations.length,status:'SEMANTIC_HARDENING_ACTIVE' as const}; }

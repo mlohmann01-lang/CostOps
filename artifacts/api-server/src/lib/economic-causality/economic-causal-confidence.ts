@@ -1,0 +1,2 @@
+import type { EconomicCausalSignal } from './economic-causality-types';
+export function scoreEconomicCausalConfidence(input:EconomicCausalSignal[]):number{if(input.length===0)return 0; const ev=input.reduce((a,s)=>a+s.evidenceReferences.length,0); const strength=input.reduce((a,s)=>a+s.strength,0)/input.length; return Number(Math.max(0,Math.min(1,(strength*0.7)+(Math.min(1,ev/(input.length*2))*0.3))).toFixed(4));}

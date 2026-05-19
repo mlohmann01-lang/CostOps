@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateEconomicRiskBalance } from '../lib/economic-arbitration'; test('governance risk override',()=>{assert.equal(evaluateEconomicRiskBalance({id:'a',savings:10,governanceRisk:0.9,volatilityRisk:0.1,recurrenceRisk:0,confidence:1,severity:0.2}),'BLOCKED');});

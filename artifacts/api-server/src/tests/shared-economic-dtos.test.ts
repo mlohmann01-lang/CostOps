@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { assertDeterministicEconomicContract } from '../lib/semantic-hardening'; test('score deterministic bounds',()=>{assert.doesNotThrow(()=>assertDeterministicEconomicContract(0.5));});

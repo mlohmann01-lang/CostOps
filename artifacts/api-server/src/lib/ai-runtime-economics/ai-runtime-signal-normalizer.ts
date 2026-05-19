@@ -1,0 +1,2 @@
+import type { AIRuntimeEconomicSignal } from './ai-runtime-economic-types';
+export function normalizeAIRuntimeEconomicSignal(input:AIRuntimeEconomicSignal):AIRuntimeEconomicSignal{const c=(n:number)=>Math.max(0,Math.min(1,n)); return {...input,retryRate:c(input.retryRate),cacheHitRate:c(input.cacheHitRate),batchability:c(input.batchability),idleCapacity:c(input.idleCapacity),burstVolatility:c(input.burstVolatility),businessCriticality:c(input.businessCriticality)};}

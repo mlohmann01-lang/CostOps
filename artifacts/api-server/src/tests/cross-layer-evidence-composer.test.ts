@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { composeCrossLayerEvidence } from '../lib/cross-layer-integration'; test('evidence composable',()=>{assert.equal(composeCrossLayerEvidence([[{id:'2'},{id:'1'}] as any]).length,2);});

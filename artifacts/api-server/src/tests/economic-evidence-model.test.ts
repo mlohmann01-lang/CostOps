@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { normalizeEconomicEvidence } from '../lib/economic-intelligence-kernel'; test('evidence normalized',()=>{assert.equal(normalizeEconomicEvidence([{id:'2',source:'a',lineageId:'l',replayId:'r',confidence:2,capturedAt:'x'}])[0].confidence,1);});

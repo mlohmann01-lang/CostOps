@@ -1,0 +1,2 @@
+export type EconomicDriftEvent='SAVINGS_DECAY'|'WASTE_RECURRED'|'POLICY_BYPASS'|'APPROVAL_DELAY'|'OWNERSHIP_DECAY'|'DATA_FRESHNESS_DECAY'|'UTILIZATION_REGRESSION'|'COMMITMENT_COVERAGE_DECAY'|'WORKLOAD_VOLATILITY_INCREASE'|'GPU_IDLE_RECURRENCE'|'LICENCE_REASSIGNMENT_DRIFT';
+export interface SavingsDegradationSignal{degradation:number;} export interface GovernanceDriftSignal{approvalDelay:number;bypassRate:number;}

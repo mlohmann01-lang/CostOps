@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateRecurrenceWeighting } from '../lib/calibration-realism'; test('recurring waste increases severity input',()=>{assert.ok(evaluateRecurrenceWeighting(0.7)>0.7);});

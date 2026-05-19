@@ -1,0 +1,3 @@
+import type { EconomicSeverityInput, EconomicSeverityResult } from './economic-kernel-types';
+const clamp=(n:number)=>Math.max(0,Math.min(1,n));
+export function evaluateEconomicSeverity(input:EconomicSeverityInput):EconomicSeverityResult{const impact=Math.min(1,input.annualizedImpact>0?input.monthlyImpact*12/Math.max(1,input.annualizedImpact):0);const score=Number(((impact+clamp(input.recurrenceRisk)+clamp(input.blastRadius)+clamp(input.volatility)+clamp(input.executiveMateriality)+clamp(input.governanceExposure))/6).toFixed(4)); const tier=score>=0.85?'CRITICAL':score>=0.65?'HIGH':score>=0.4?'MEDIUM':'LOW'; return {domain:input.domain,score,tier};}

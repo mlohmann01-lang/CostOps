@@ -1,0 +1,2 @@
+import type { EconomicMemoryRecord, EconomicRecurrencePattern } from './economic-memory-types';
+export function detectEconomicRecurrence(input:EconomicMemoryRecord[]):EconomicRecurrencePattern[]{const map=new Map<string,number>(); input.forEach((x)=>map.set(x.category,(map.get(x.category)??0)+1)); return [...map].filter(([,c])=>c>1).map(([category,count])=>({category,count,recurrenceRisk:Math.min(1,count/5)}));}

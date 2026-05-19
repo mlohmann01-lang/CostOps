@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateEconomicPriority } from '../lib/economic-arbitration'; test('priority model ranks',()=>{assert.ok(evaluateEconomicPriority({id:'a',savings:100,governanceRisk:0.1,volatilityRisk:0.1,recurrenceRisk:0,confidence:1,severity:0.2})>0);});

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateEconomicConfidence } from '../lib/economic-intelligence-kernel';
+test('deterministic confidence',()=>{const i={domain:'CLOUD' as const,dataCompleteness:1,dataFreshness:0.9,signalConsistency:0.8,ownershipClarity:0.8,costTraceability:0.9,usageSignalQuality:0.7,reversibility:0.8,policyFit:1,forecastStability:0.8,replayConfidence:1};assert.deepEqual(evaluateEconomicConfidence(i),evaluateEconomicConfidence(i));});

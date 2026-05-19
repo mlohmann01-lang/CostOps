@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateConfidenceDecay } from '../lib/calibration-realism'; test('repeated failures reduce confidence',()=>{assert.ok(evaluateConfidenceDecay(0.8,3)<0.8);});

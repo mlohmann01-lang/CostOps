@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { classifyEconomicGovernance } from '../lib/economic-intelligence-kernel'; test('low confidence degrades governance class',()=>{assert.equal(classifyEconomicGovernance({confidence:0.3,severity:0.9,hasEvidence:true}),'BLOCKED');});

@@ -1,0 +1,3 @@
+import { normalizeEconomicEvidence } from './economic-evidence-model';
+import type { EconomicRecommendationContract } from './economic-kernel-types';
+export function buildEconomicRecommendationContract(input:EconomicRecommendationContract):EconomicRecommendationContract{const evidence=normalizeEconomicEvidence(input.evidenceReferences); if(evidence.length===0) throw new Error('Evidence references are required'); const txt=JSON.stringify(input).toLowerCase(); ['mutationpayload','mutate','execute','remediate'].forEach((x)=>{ if(txt.includes(x)) throw new Error('Mutation or execution semantics are forbidden');}); return {...input,evidenceReferences:evidence};}

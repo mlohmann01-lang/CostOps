@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { assertLineageIntegrity } from '../lib/semantic-hardening'; test('lineage integrity',()=>{assert.doesNotThrow(()=>assertLineageIntegrity({lineageId:'l',sourceSystem:'s',entityId:'e'}));});

@@ -1,0 +1,3 @@
+import type { EconomicKernelAssessment, EconomicDomain } from '../economic-intelligence-kernel'; import type { EconomicEvidenceReference, EconomicLineageReference } from '../semantic-hardening';
+export interface CrossLayerDomainSignal{domain:EconomicDomain;monthlyImpact:number;annualizedImpact:number;volatility:number;confidence:number;evidence:EconomicEvidenceReference[];lineage:EconomicLineageReference;recurrenceRisk:number;}
+export interface CrossLayerAssessment{assessments:EconomicKernelAssessment[];sharedConfidence:number;sharedSeverity:number;sharedGovernance:string;sharedReplayReferences:string[];sharedRecurrenceMetadata:number;sharedCausalityMetadata:string[];}

@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { computeSemanticHardeningReport } from '../lib/semantic-hardening'; test('hardening report',()=>{assert.equal(computeSemanticHardeningReport([]).status,'SEMANTIC_HARDENING_ACTIVE');});

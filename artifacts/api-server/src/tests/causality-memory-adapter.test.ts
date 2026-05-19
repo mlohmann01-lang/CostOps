@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { adaptCausalityMemoryMetadata } from '../lib/cross-layer-integration'; test('causality memory adaptation',()=>{assert.equal(adaptCausalityMemoryMetadata({primaryCause:'USAGE_DECLINE',recurrenceRisk:0.4}).sharedRecurrenceMetadata,0.4);});

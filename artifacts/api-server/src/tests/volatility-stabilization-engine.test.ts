@@ -1,0 +1,1 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateVolatilityStabilization } from '../lib/calibration-realism'; test('volatility stabilizes',()=>{assert.ok(evaluateVolatilityStabilization([0.1,0.1,0.1])>evaluateVolatilityStabilization([0.9,0.9,0.9]));});
