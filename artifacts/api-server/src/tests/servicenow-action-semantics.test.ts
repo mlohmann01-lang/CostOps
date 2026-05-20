@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { servicenow_action_semantics } from '../lib/connector-action-semantics/servicenow-action-semantics';
+test('servicenow cmdb/cab realism modeled',()=>{ const a=servicenow_action_semantics[1]; assert.equal(a.cabDelayRisk,'HIGH'); assert.ok(a.preflightChecks.includes('duplicate_change_collision_check')); assert.equal(a.orphanedCIRisk,'HIGH'); });

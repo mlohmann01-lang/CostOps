@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { m365_action_semantics } from '../lib/connector-action-semantics/m365-action-semantics';
+test('nested-group conflicts escalate m365 risk',()=>{ const a=m365_action_semantics[0]; assert.ok(a.preflightChecks.includes('nested_group_conflict_check')); assert.equal(a.riskClass,'HIGH'); assert.equal(a.syncConsistencyRisk,'HIGH');});

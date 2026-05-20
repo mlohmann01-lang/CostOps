@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { concurrent_execution_lock } from '../lib/execution-concurrency-realism/concurrent-execution-lock';test('concurrent-execution-lock deterministic',()=>assert.equal(concurrent_execution_lock.deterministic,true));

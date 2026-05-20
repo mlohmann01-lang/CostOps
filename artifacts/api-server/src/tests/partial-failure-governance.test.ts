@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { governanceSeverity } from '../lib/partial-failure-semantics/partial-failure-governance';
+test('provider failure severity escalates',()=>{ assert.equal(governanceSeverity('ORACLE_ENTITLEMENT_AMBIGUOUS'),'HIGH'); assert.equal(governanceSeverity('ENTRA_SYNC_PENDING'),'MEDIUM'); assert.equal(governanceSeverity('ROLLBACK_FAILED'),'CRITICAL');});

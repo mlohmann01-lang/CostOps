@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { databricks_action_semantics } from '../lib/connector-action-semantics/databricks-action-semantics';
+test('databricks gpu/unity risks modeled',()=>{ const a=databricks_action_semantics[0]; assert.equal(a.gpuRuntimeSensitivity,'HIGH'); assert.equal(a.unityCatalogDependencyRisk,'HIGH'); assert.ok(a.preflightChecks.includes('cluster_policy_inheritance_checked')); });

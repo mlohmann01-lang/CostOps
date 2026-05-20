@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { multi_step_certification } from '../lib/multi-step-governed-execution/multi-step-certification';test('multi-step-certification deterministic',()=>assert.equal(multi_step_certification.deterministic,true));

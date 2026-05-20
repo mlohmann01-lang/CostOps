@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_race_condition_detector } from '../lib/execution-concurrency-realism/execution-race-condition-detector';test('execution-race-condition-detector deterministic',()=>assert.equal(execution_race_condition_detector.deterministic,true));

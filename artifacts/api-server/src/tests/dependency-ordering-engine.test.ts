@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildDependencyOrder } from '../lib/execution-dependency-graph/dependency-ordering-engine';
+test('ordering honors dependencies',()=>{ const order=buildDependencyOrder([{id:'A',risk:'LOW'},{id:'B',risk:'LOW'}],[{from:'A',to:'B',type:'APPROVAL_DEPENDENCY'}]); assert.equal(order[0],'A'); assert.equal(order[1],'B'); assert.equal(order.length,2);});

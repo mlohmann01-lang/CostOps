@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { computeSavingsImpact } from '../lib/partial-failure-semantics/partial-outcome-impact';
+test('propagation delays reduce savings confidence',()=>{ assert.equal(computeSavingsImpact(100,'ENTRA_SYNC_PENDING'),70); assert.equal(computeSavingsImpact(100,'ORACLE_ENTITLEMENT_AMBIGUOUS'),20); assert.equal(computeSavingsImpact(100,'NONE'),100);});

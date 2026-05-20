@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_concurrency_report } from '../lib/execution-concurrency-realism/execution-concurrency-report';test('execution-concurrency-report deterministic',()=>assert.equal(execution_concurrency_report.deterministic,true));

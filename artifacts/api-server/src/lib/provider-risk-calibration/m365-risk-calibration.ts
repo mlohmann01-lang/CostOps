@@ -1,0 +1,1 @@
+import { ProviderRiskCalibration } from './provider-risk-calibration-types'; export const m365RiskCalibration:ProviderRiskCalibration={provider:'M365',propagationRisk:0.8,verificationRisk:0.7,rollbackRisk:0.6,dependencyRisk:0.8,approvalFriction:0.7,blastRadius:0.7,securitySensitivity:0.9,ambiguityRisk:0.6,recurrenceRisk:0.6,confidence:0.9};

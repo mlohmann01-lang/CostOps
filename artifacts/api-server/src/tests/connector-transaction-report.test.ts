@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildTransactionReport } from '../lib/connector-transaction-realism/connector-transaction-report';
+test('transaction report aggregates readiness',()=>{ const r=buildTransactionReport([{connector:'AWS',actionId:'A',requestedAt:1,stateTimestamp:1,hasPermission:true,duplicateRequest:false},{connector:'AWS',actionId:'B',requestedAt:1000,stateTimestamp:1,hasPermission:false,duplicateRequest:true}]); assert.equal(r.total,2); assert.equal(r.ready,1); assert.equal(r.blocked,1);});

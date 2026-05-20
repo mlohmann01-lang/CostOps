@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { isActionIdempotent } from '../lib/connector-capability-model/connector-idempotency-model';test('idempotency modeled',()=>assert.equal(isActionIdempotent('STOP_APPROVED_NON_PROD_RESOURCE'),true));

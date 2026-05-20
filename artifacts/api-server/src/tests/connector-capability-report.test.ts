@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildConnectorCapabilityReport } from '../lib/connector-capability-model/connector-capability-report';test('report deterministic',()=>assert.equal(buildConnectorCapabilityReport().deterministic,true));

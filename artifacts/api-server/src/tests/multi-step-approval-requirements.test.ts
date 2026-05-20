@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { multi_step_approval_requirements } from '../lib/multi-step-governed-execution/multi-step-approval-requirements';test('multi-step-approval-requirements deterministic',()=>assert.equal(multi_step_approval_requirements.deterministic,true));

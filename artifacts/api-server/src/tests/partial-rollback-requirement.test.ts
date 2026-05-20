@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { partial_rollback_requirement } from '../lib/partial-failure-semantics/partial-rollback-requirement';test('partial-rollback-requirement deterministic',()=>assert.equal(partial_rollback_requirement.deterministic,true));

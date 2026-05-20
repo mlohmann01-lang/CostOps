@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { connector_concurrency_limit } from '../lib/execution-concurrency-realism/connector-concurrency-limit';test('connector-concurrency-limit deterministic',()=>assert.equal(connector_concurrency_limit.deterministic,true));

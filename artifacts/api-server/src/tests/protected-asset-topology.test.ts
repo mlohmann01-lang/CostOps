@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { protected_asset_topology } from '../lib/execution-topology-realism/protected-asset-topology';test('protected-asset-topology deterministic',()=>assert.equal(protected_asset_topology.deterministic,true));

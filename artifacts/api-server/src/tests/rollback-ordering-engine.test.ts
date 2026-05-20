@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { rollback_ordering_engine } from '../lib/rollback-dependency-chains/rollback-ordering-engine';test('rollback-ordering-engine deterministic',()=>assert.equal(rollback_ordering_engine.deterministic,true));

@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_topology_risk } from '../lib/execution-topology-realism/execution-topology-risk';test('execution-topology-risk deterministic',()=>assert.equal(execution_topology_risk.deterministic,true));

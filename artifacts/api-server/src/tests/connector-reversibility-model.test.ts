@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { isActionReversible } from '../lib/connector-capability-model/connector-reversibility-model';test('reversible modeled',()=>assert.equal(isActionReversible('STOP_APPROVED_NON_PROD_RESOURCE'),true));

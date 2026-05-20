@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { dependency_risk_propagation } from '../lib/execution-dependency-graph/dependency-risk-propagation';test('dependency-risk-propagation deterministic',()=>assert.equal(dependency_risk_propagation.deterministic,true));

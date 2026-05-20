@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { rollback_blocker_detector } from '../lib/rollback-dependency-chains/rollback-blocker-detector';test('rollback-blocker-detector deterministic',()=>assert.equal(rollback_blocker_detector.deterministic,true));

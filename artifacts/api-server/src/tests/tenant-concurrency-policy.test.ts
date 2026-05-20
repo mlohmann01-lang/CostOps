@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { tenant_concurrency_policy } from '../lib/execution-concurrency-realism/tenant-concurrency-policy';test('tenant-concurrency-policy deterministic',()=>assert.equal(tenant_concurrency_policy.deterministic,true));

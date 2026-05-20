@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { multi_step_plan_builder } from '../lib/multi-step-governed-execution/multi-step-plan-builder';test('multi-step-plan-builder deterministic',()=>assert.equal(multi_step_plan_builder.deterministic,true));

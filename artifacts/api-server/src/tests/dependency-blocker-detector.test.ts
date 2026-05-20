@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { findBlockedDownstream } from '../lib/execution-dependency-graph/dependency-blocker-detector';
+test('blocked upstream blocks downstream',()=>{ const b=findBlockedDownstream([{id:'A',risk:'LOW',blocked:true},{id:'B',risk:'LOW'}],[{from:'A',to:'B',type:'POLICY_DEPENDENCY'}]); assert.ok(b.includes('A')); assert.ok(b.includes('B')); assert.equal(b.length,2);});

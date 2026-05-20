@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { oracle_governance_action_semantics } from '../lib/connector-action-semantics/oracle-governance-action-semantics';
+test('oracle ambiguity elevates manual governance',()=>{ const a=oracle_governance_action_semantics[0]; assert.equal(a.capabilityClass,'MANUAL_ONLY'); assert.equal(a.contractualAmbiguityRisk,'HIGH'); assert.ok(a.blockedWhen.includes('entitlement_confidence_low')); });

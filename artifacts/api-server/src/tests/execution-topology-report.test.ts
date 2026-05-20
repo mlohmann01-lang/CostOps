@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_topology_report } from '../lib/execution-topology-realism/execution-topology-report';test('execution-topology-report deterministic',()=>assert.equal(execution_topology_report.deterministic,true));

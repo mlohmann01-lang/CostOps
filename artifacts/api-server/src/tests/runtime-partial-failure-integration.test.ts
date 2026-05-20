@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { classifyFailure } from '../lib/partial-failure-semantics/partial-failure-classifier';import { governanceSeverity } from '../lib/partial-failure-semantics/partial-failure-governance';
+test('provider propagation failures escalate runtime verify',()=>{ const c=classifyFailure({preflight:true,provider:'DATABRICKS_POLICY_PROPAGATION_DELAY',postflight:true,verified:true}); assert.equal(c,'DATABRICKS_POLICY_PROPAGATION_DELAY'); assert.equal(governanceSeverity(c),'MEDIUM'); assert.notEqual(c,'NONE');});

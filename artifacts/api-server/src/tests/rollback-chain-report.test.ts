@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { rollback_chain_report } from '../lib/rollback-dependency-chains/rollback-chain-report';test('rollback-chain-report deterministic',()=>assert.equal(rollback_chain_report.deterministic,true));

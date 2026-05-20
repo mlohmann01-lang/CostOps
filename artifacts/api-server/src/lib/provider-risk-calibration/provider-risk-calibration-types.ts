@@ -1,0 +1,1 @@
+export interface ProviderRiskCalibration{provider:string;propagationRisk:number;verificationRisk:number;rollbackRisk:number;dependencyRisk:number;approvalFriction:number;blastRadius:number;securitySensitivity:number;ambiguityRisk:number;recurrenceRisk:number;confidence:number;}
