@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { type OperationalState, stateTone } from "@/lib/ops-state";
+import { EXECUTION_INTENTS, type ExecutionIntentType } from "@/lib/economic-operations-client";
+import { OPERATIONAL_STATE_REGISTRY } from "@/lib/ops-state";
 
 export function StatusPill({ state }: { state: OperationalState }) {
   return <Badge className={cn("border font-medium", stateTone[state])}>{state}</Badge>;
@@ -50,4 +52,23 @@ export function SavingsEvidencePanel({ value, proof }: { value: string; proof: s
       <p className="mt-1 text-sm text-emerald-800">{proof}</p>
     </div>
   );
+}
+
+export function OperatorActionBar({ state, disabledReasons, onAction }: { state: OperationalState; disabledReasons: Partial<Record<ExecutionIntentType, string>>; onAction: (action: ExecutionIntentType) => void }) {
+  const rule = OPERATIONAL_STATE_REGISTRY[state];
+  const allowed = new Set(rule.allowedNextActions as ExecutionIntentType[]);
+  const blocked = new Set(rule.blockedActions as ExecutionIntentType[]);
+  const actions = EXECUTION_INTENTS.filter((action) => allowed.has(action) || blocked.has(action));
+  return <div className="rounded-lg border p-3"><p className="mb-2 text-xs text-slate-600">Operator actions</p><div className="flex flex-wrap gap-2">{actions.map((action) => { const disabledReason = disabledReasons[action] ?? (blocked.has(action) ? "Blocked by canonical state policy" : undefined); const disabled = Boolean(disabledReason); return <button key={action} onClick={() => onAction(action)} disabled={disabled} className="rounded border px-2 py-1 text-xs disabled:cursor-not-allowed disabled:opacity-50" title={disabledReason}>{action}</button>; })}</div></div>;
+}
+
+export function ExecutionConfirmationDrawer({ open, action, onConfirm, onCancel, confirmationPhrase }: { open: boolean; action: ExecutionIntentType | null; onConfirm: () => void; onCancel: () => void; confirmationPhrase: string }) {
+  const [typed, setTyped] = useState("");
+  if (!open || !action) return null;
+  return <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm"><p className="font-medium">Confirm {action}</p><p>Business impact and controls reviewed. Type confirmation phrase to continue.</p><p className="mt-2 rounded bg-white px-2 py-1 font-mono text-xs">{confirmationPhrase}</p><input className="mt-2 w-full rounded border px-2 py-1" value={typed} onChange={(e) => setTyped(e.target.value)} /><div className="mt-3 flex gap-2"><button className="rounded border px-3 py-1" onClick={onCancel}>Cancel</button><button className="rounded border bg-slate-900 px-3 py-1 text-white disabled:opacity-40" disabled={typed !== confirmationPhrase} onClick={onConfirm}>Confirm action</button></div></div>;
+}
+
+export function ActionHistoryPanel({ entries }: { entries: Array<{ action: string; actor: string; sourceSurface: string; reason: string; result: string; previousState: string; nextState: string; timestamp: string; proofIds: string[]; ledgerEntryId: string | null; idempotencyKey: string }> }) {
+  if (entries.length === 0) return <div className="rounded border p-3 text-sm text-slate-500">No action history yet.</div>;
+  return <div className="space-y-2">{entries.map((entry) => <div key={entry.idempotencyKey} className="rounded border p-3 text-xs"><p className="font-medium">{entry.action} · {entry.result}</p><p>{entry.actor} via {entry.sourceSurface} · {entry.timestamp}</p><p>{entry.previousState} → {entry.nextState}</p><p>Reason: {entry.reason}</p><p>Proofs: {entry.proofIds.join(", ") || "none"} · Ledger: {entry.ledgerEntryId ?? "none"}</p><p>Idempotency: {entry.idempotencyKey}</p></div>)}</div>;
 }
