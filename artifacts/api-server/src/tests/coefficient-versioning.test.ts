@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateCoefficientVersioning } from "../lib/quantitative-depth";
+test("semantic version validation",()=>{ assert.equal(evaluateCoefficientVersioning({coefficient:{id:'a',coefficientClass:'QUERY_INTENSITY',value:1,range:{min:0,max:1},source:'s',confidence:1,version:'bad',explanation:'',assumptions:[],evidenceRefs:['e']}}).valid,false);});

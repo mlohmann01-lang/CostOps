@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildDatabricksGovernedIntent=(action:string):GovernedIntent=>({connector:"databricks",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/savings-persistence-benchmarking/savings-persistence-report";test("savings-persistence-report",()=>{assert.ok(Object.values(m).length>0);});

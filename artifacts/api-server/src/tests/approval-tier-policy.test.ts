@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-policy-engine/approval-tier-policy"; test("approval-tier-policy",()=>{ assert.equal(Object.values(m).length>0,true); });

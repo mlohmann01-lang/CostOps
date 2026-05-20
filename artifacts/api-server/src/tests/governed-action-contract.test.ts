@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-contracts/governed-action-contract"; test("governed-action-contract",()=>{ assert.equal(Object.values(m).length>0,true); });

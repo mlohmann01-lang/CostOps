@@ -1,0 +1,1 @@
+import type { TransactionState } from "./live-execution-types"; export const evaluateExecutionTransactionState=(i:{approved:boolean;expired:boolean;executed:boolean;blocked:boolean}):TransactionState=>i.blocked?"BLOCKED":i.expired?"EXPIRED":i.executed?"EXECUTED":i.approved?"APPROVED":"AWAITING_APPROVAL";

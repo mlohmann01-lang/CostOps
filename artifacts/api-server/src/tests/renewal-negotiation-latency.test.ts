@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/organizational-timing-benchmarks/renewal-negotiation-latency";test("renewal-negotiation-latency",()=>{assert.ok(Object.values(m).length>0);});

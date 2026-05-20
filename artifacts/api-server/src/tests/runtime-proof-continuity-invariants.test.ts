@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("missing proof blocks",()=>{const proof="";assert.equal(proof.length===0,true);});

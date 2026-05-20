@@ -1,0 +1,1 @@
+import type { UnitEconomicResult } from "./unit-economics-types"; export const ratio=(n:number,d:number|null,unit:string,c:number,a:string[],e:string[],k:string[]):UnitEconomicResult=>({numerator:n,denominator:d,value:!d?null:n/d,unit,confidence:c,assumptions:a,evidenceRefs:e,coefficients:k});

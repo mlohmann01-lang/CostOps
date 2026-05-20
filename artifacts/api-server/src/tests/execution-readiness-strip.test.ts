@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-ux-contracts/execution-readiness-strip"; test("execution-readiness-strip",()=>{ assert.equal(Object.values(m).length>0,true); });

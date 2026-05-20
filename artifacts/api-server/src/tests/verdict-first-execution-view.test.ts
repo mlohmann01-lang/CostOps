@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-ux-contracts/verdict-first-execution-view"; test("verdict-first-execution-view",()=>{ assert.equal(Object.values(m).length>0,true); });

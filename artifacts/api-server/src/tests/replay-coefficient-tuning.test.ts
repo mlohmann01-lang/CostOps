@@ -1,0 +1,2 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/replay-calibration/replay-coefficient-tuning";
+test("replay-coefficient-tuning",()=>{assert.equal(Object.values(m).length>0,true);});

@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateExecutionStateMachine } from "../lib/execution-ux-contracts"; test("execution-state-machine",()=>{ assert.equal(evaluateExecutionStateMachine({eligible:true,approval:false,manual:false,rollback:true}),"GOVERNED_EXECUTION_ELIGIBLE"); });

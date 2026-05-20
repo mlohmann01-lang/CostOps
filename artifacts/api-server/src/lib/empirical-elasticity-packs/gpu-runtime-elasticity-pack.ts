@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getGpuRuntimeElasticityPack=():ElasticityPack=>({name:"gpu-runtime",range:{min:1.2,max:1.7},provenance:"BENCHMARK_DERIVED",confidence:0.7});

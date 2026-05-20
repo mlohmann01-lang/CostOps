@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-connectors/governed-snowflake-execution"; test("governed-snowflake-execution",()=>{ assert.equal(Object.values(m).length>0,true); });

@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-verdict-continuity/verdict-change-explainer"; test("verdict-change-explainer",()=>{ assert.equal(Object.values(m).length>0,true); });

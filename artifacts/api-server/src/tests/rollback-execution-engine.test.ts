@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/rollback-enforcement/rollback-execution-engine"; test("rollback-execution-engine",()=>{ assert.equal(Object.values(x).length>0,true); });

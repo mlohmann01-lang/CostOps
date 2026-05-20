@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateExecutionKillSwitch } from "../lib/execution-runtime-guardrails/execution-kill-switch";test("kill switch overrides",()=>{assert.equal(evaluateExecutionKillSwitch({enabled:true}),false);});

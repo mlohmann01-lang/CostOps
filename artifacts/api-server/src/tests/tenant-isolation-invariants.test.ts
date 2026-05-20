@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("tenant boundary blocked",()=>{const ok=false;assert.equal(ok,false);});

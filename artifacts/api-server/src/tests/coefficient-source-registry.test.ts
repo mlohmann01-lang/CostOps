@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { registerCoefficientSource } from "../lib/coefficient-provenance";test("registry",()=>{const r=registerCoefficientSource({id:"c",provenance:"SYNTHETIC",evidenceGrade:"LOW",confidence:0.5,validUntil:"2099-01-01",sources:["s"]});assert.equal(r.id,"c");});

@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateValidityWindow } from "../lib/coefficient-provenance";test("stale",()=>{assert.equal(evaluateValidityWindow({id:"c",provenance:"SYNTHETIC",evidenceGrade:"LOW",confidence:0.5,validUntil:"2020-01-01",sources:["s"]},"2026-01-01").stale,true);});

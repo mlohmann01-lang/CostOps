@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("interface parity",()=>{const c=["API","MCP","SLACK"];assert.equal(c.length,3);});

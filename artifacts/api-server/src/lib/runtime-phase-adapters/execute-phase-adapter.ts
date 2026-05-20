@@ -1,0 +1,1 @@
+import type { PhaseResult } from "./runtime-phase-adapter-types"; export const runExecutePhaseAdapter=(i:{certified:boolean;approved:boolean}):PhaseResult=>({phase:"EXECUTE",proofRef:"proof-execute",verdict:i.certified&&i.approved?"EXECUTION_ELIGIBLE":"EXECUTION_BLOCKED",blocked:!(i.certified&&i.approved)});

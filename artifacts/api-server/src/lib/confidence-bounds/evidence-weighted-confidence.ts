@@ -1,0 +1,1 @@
+export const computeEvidenceWeightedConfidence=(i:{baseConfidence:number;evidenceConfidence:number;missingEvidenceCount?:number;conflictCount?:number;})=>({confidence:Math.max(0,Math.min(i.baseConfidence,i.evidenceConfidence)-((i.missingEvidenceCount??0)*0.05)-((i.conflictCount??0)*0.08))});

@@ -1,0 +1,1 @@
+import type { ActionContract } from "./execution-contract-types"; export const evaluateExecutionPreconditions=(c:ActionContract,i:{evidence:number;confidence:number})=>({ok:i.evidence>=c.requiredEvidence&&i.confidence>=c.requiredConfidence});

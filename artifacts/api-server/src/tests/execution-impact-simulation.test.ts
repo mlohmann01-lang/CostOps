@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-simulation/execution-impact-simulation"; test("execution-impact-simulation",()=>{ assert.equal(Object.values(m).length>0,true); });

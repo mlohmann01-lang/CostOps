@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/enterprise-benchmark-fixtures/organizational-behavior-fixtures";test("organizational-behavior-fixtures",()=>{const fn=Object.values(m)[0] as any; const r=fn(); assert.equal(r.assumptions.length>0,true);});

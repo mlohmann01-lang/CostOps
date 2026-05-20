@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeExecutionConfidenceBounds } from "../lib/confidence-bounds";
+test("execution bounds numeric",()=>{ const r=computeExecutionConfidenceBounds({base:50,variance:5,baseConfidence:0.8,evidenceConfidence:0.6,assumptions:['a'],evidenceRefs:['e'],coefficients:['c']}); assert.equal(r.lower<r.base && r.base<r.upper,true); assert.equal(r.confidence<=0.6,true);});

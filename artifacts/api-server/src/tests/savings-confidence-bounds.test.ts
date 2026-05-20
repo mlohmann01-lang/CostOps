@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeSavingsConfidenceBounds } from "../lib/confidence-bounds";
+test("savings bounds numeric",()=>{ const r=computeSavingsConfidenceBounds({base:50,variance:5,baseConfidence:0.8,evidenceConfidence:0.6,assumptions:['a'],evidenceRefs:['e'],coefficients:['c']}); assert.equal(r.lower<r.base && r.base<r.upper,true); assert.equal(r.confidence<=0.6,true);});

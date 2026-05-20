@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getAiTokenElasticityPack=():ElasticityPack=>({name:"ai-token",range:{min:1.4,max:1.9},provenance:"BENCHMARK_DERIVED",confidence:0.7});

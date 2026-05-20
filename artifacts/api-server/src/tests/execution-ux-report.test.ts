@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeExecutionUxReport } from "../lib/execution-ux-contracts"; test("execution-ux-report",()=>{ assert.equal(computeExecutionUxReport({eligible:false,approval:true,manual:false,rollback:true}).state,"APPROVAL_REQUIRED"); });

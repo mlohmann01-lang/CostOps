@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeEvidenceWeightedConfidence } from "../lib/confidence-bounds";
+test("missing/conflicting evidence lowers confidence",()=>{ const high=computeEvidenceWeightedConfidence({baseConfidence:0.9,evidenceConfidence:0.9}); const low=computeEvidenceWeightedConfidence({baseConfidence:0.9,evidenceConfidence:0.9,missingEvidenceCount:2,conflictCount:1}); assert.equal(low.confidence<high.confidence,true);});

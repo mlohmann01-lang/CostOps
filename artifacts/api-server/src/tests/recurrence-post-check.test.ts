@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/post-execution-verification/recurrence-post-check"; test("recurrence-post-check",()=>{ assert.equal(Object.values(x).length>0,true); });

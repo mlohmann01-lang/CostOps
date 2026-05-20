@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeElasticityPackReport } from "../lib/empirical-elasticity-packs";test("elasticity report",()=>{assert.equal(computeElasticityPackReport().packs.length>0,true);});

@@ -1,0 +1,1 @@
+import type { VolatilityClass } from "./workload-volatility-types"; export const classifyWorkloadVolatility=(s:number):VolatilityClass=>s>0.9?"EXTREME_AI_BURST":s>0.7?"BURSTY":s>0.5?"HIGH":s>0.3?"MODERATE":"STABLE";

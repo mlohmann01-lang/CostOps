@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("mcp contract",()=>{const payload={provenance:true,calibrationConfidence:true,profiles:true,lineage:true,hiddenCoefficient:false};assert.equal(payload.hiddenCoefficient,false);});

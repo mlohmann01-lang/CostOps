@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeReplayCalibrationReport } from "../lib/replay-calibration";test("replay miss",()=>{const r=computeReplayCalibrationReport({forecast:100,actual:120,lineage:["r1"]});assert.equal(r.comparison.miss,20);});

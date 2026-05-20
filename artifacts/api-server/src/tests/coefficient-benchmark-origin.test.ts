@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateBenchmarkOrigin } from "../lib/coefficient-provenance";test("origin",()=>{assert.equal(evaluateBenchmarkOrigin({id:"c",provenance:"BENCHMARK_DERIVED",evidenceGrade:"HIGH",confidence:0.8,validUntil:"2099-01-01",sources:["b"]}).hasOrigin,true);});

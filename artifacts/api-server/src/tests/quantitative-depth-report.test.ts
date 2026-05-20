@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeQuantitativeDepthReport } from "../lib/quantitative-depth";
+test("report includes capped confidence",()=>{ const r=computeQuantitativeDepthReport({baseConfidence:0.8,coefficients:[{id:'a',coefficientClass:'EVIDENCE_CONFIDENCE',value:1,range:{min:0,max:1},source:'s',confidence:0.5,version:'1.0.0',explanation:'',assumptions:['a'],evidenceRefs:['e']}]}); assert.equal(r.confidence.cappedConfidence,0.5);});

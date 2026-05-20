@@ -1,0 +1,1 @@
+import type { RuntimePhase } from "./canonical-runtime-types"; const order:[RuntimePhase,...RuntimePhase[]]=["DISCOVER","ANALYZE","FORECAST","CALIBRATE","CERTIFY","APPROVE","EXECUTE","VERIFY","REPLAY","LEARN"]; export const isRuntimeTransitionAllowed=(a:RuntimePhase,b:RuntimePhase)=>order.indexOf(b)-order.indexOf(a)===1;

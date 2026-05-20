@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeGovernedExecutionVerdict } from "../lib/execution-verdict-engine";test("no rollback no live",()=>{assert.equal(computeGovernedExecutionVerdict({eligible:true,approved:true,rollback:false,manual:false}),"ROLLBACK_REQUIRED");});

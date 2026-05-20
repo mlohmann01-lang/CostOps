@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getOrganizationalDelayElasticityPack=():ElasticityPack=>({name:"organizational-delay",range:{min:0.45,max:0.95},provenance:"BENCHMARK_DERIVED",confidence:0.7});

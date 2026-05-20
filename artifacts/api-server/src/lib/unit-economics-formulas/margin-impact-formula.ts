@@ -1,0 +1,1 @@
+export const computeMarginImpact=(i:{cost:number;revenue?:number;confidence:number;assumptions:string[];evidenceRefs:string[];coefficients:string[];})=>({marginImpact:i.revenue===undefined?null:(i.revenue-i.cost),revenue:i.revenue??null,cost:i.cost,confidence:i.confidence,assumptions:i.assumptions,evidenceRefs:i.evidenceRefs,coefficients:i.coefficients});

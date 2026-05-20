@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-narrative-engine/verification-summary-builder"; test("verification-summary-builder",()=>{ assert.equal(Object.values(m).length>0,true); });

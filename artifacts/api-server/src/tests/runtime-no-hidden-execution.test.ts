@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { runExecutePhaseAdapter } from "../lib/runtime-phase-adapters";test("no hidden exec",()=>{assert.equal(runExecutePhaseAdapter({certified:true,approved:false}).verdict,"EXECUTION_BLOCKED");});

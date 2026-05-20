@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeScenarioChainReport } from "../lib/scenario-chain-explainability";
+test("scenario report carries trails and bounds",()=>{ const r=computeScenarioChainReport({steps:['s1'],assumptions:['a1'],coefficients:['c1'],evidenceRefs:['e1'],bounds:{lower:1,base:2,upper:3}}); assert.equal(r.assumptionTrail.length,1); assert.equal(r.coefficientTrail.length,1); assert.equal(r.evidenceTrail.length,1); assert.equal(r.bounds.upper,3);});

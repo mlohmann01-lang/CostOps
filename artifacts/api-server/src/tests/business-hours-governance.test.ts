@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/execution-window-enforcement/business-hours-governance"; test("business-hours-governance",()=>{ assert.equal(Object.values(x).length>0,true); });

@@ -1,1 +1,1 @@
-import test from 'node:test';import assert from 'node:assert/strict';test('smoke',()=>{assert.equal(1,1);});
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-certification/execution-certification-report"; test("execution-certification-report",()=>{ assert.equal(Object.values(m).length>0,true); });

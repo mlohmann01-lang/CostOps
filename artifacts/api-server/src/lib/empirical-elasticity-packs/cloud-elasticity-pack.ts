@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getCloudElasticityPack=():ElasticityPack=>({name:"cloud",range:{min:0.3,max:0.8},provenance:"BENCHMARK_DERIVED",confidence:0.7});

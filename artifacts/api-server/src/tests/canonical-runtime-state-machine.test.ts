@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/canonical-runtime-orchestration/canonical-runtime-state-machine"; test("canonical-runtime-state-machine",()=>{ assert.equal(Object.values(m).length>0,true); });

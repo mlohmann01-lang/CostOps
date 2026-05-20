@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-connectors/governed-m365-execution"; test("governed-m365-execution",()=>{ assert.equal(Object.values(m).length>0,true); });

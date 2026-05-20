@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-simulation/dry-run-execution-engine"; test("dry-run-execution-engine",()=>{ assert.equal(Object.values(m).length>0,true); });

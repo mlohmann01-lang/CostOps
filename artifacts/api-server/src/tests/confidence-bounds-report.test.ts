@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { computeConfidenceBoundsReport } from "../lib/confidence-bounds";
+test("report computes all sections",()=>{ const i={base:10,variance:1,baseConfidence:0.8,evidenceConfidence:0.8,assumptions:['a'],evidenceRefs:['e'],coefficients:['c']}; const r=computeConfidenceBoundsReport({forecast:i,savings:i,execution:i,attribution:i}); assert.equal(r.forecast.base,10); assert.equal(r.savings.upper>r.savings.lower,true);});

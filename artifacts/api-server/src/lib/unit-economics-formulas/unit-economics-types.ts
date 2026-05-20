@@ -1,0 +1,1 @@
+export interface UnitEconomicResult { numerator:number; denominator:number|null; value:number|null; unit:string; confidence:number; assumptions:string[]; evidenceRefs:string[]; coefficients:string[]; }

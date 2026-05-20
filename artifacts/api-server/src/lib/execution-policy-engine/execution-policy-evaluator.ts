@@ -1,0 +1,1 @@
+import { evaluateRollbackMandatePolicy } from "./rollback-mandate-policy"; export const evaluateExecutionPolicies=(i:any)=>({allowed:evaluateRollbackMandatePolicy(i)&&i.confidence>=0.5&&i.insideWindow&&!i.expiredApproval});

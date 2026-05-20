@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateCoefficientDrift } from "../lib/coefficient-provenance";test("drift",()=>{assert.equal(evaluateCoefficientDrift({baseline:1,current:1.3}).conflicting,true);});

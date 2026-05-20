@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-verdict-continuity/phase-verdict-aggregator"; test("phase-verdict-aggregator",()=>{ assert.equal(Object.values(m).length>0,true); });

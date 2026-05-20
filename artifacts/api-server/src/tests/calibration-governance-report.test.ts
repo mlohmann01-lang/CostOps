@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/calibration-drift-governance/calibration-governance-report";test("calibration-governance-report",()=>{assert.ok(Object.values(m).length>0);});

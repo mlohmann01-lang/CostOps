@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeGovernedExecutionVerdict } from "../lib/execution-verdict-engine";test("protected asset manual",()=>{assert.equal(computeGovernedExecutionVerdict({eligible:true,approved:true,rollback:true,manual:true}),"MANUAL_ONLY");});

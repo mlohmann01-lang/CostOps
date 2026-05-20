@@ -1,0 +1,1 @@
+import { computeCostPerUser } from "./cost-per-user-formula"; import { computeMarginImpact } from "./margin-impact-formula"; export const computeUnitEconomicsReport=(i:any)=>({costPerUser:computeCostPerUser(i.user),costPerTransaction:i.transaction? i.transaction.cost/(i.transaction.transaction||1):null,margin:computeMarginImpact(i.margin)});

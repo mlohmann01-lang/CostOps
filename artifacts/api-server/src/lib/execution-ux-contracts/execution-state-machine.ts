@@ -1,0 +1,1 @@
+import type { ExecutionUxState } from "./execution-ux-types"; export const evaluateExecutionStateMachine=(i:{eligible:boolean;approval:boolean;manual:boolean;rollback:boolean}):ExecutionUxState=>!i.rollback?"ROLLBACK_REQUIRED":i.manual?"MANUAL_ONLY":i.approval?"APPROVAL_REQUIRED":i.eligible?"GOVERNED_EXECUTION_ELIGIBLE":"DRY_RUN_ONLY";

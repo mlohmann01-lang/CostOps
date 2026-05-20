@@ -1,0 +1,3 @@
+export type CoefficientClass = "WORKLOAD_ELASTICITY"|"QUERY_INTENSITY"|"WAREHOUSE_UTILIZATION"|"CLUSTER_UTILIZATION"|"TOKEN_BURN_RATE"|"GPU_UTILIZATION"|"APPROVAL_DELAY"|"PROCUREMENT_DELAY"|"RENEWAL_WINDOW_PRESSURE"|"SAVINGS_DECAY"|"RECURRENCE_PRESSURE"|"ROLLBACK_FAILURE"|"EXECUTION_SUCCESS"|"EVIDENCE_CONFIDENCE"|"ATTRIBUTION_CONFIDENCE";
+export interface CoefficientInput { id:string; coefficientClass:CoefficientClass; value:number; range:{min:number;max:number}; source:string; confidence:number; version:string; explanation:string; assumptions:string[]; evidenceRefs:string[]; }
+export interface QuantitativeDepthReportInput { coefficients:CoefficientInput[]; baseConfidence:number; }

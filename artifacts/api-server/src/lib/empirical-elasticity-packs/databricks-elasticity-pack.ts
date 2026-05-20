@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getDatabricksElasticityPack=():ElasticityPack=>({name:"databricks",range:{min:0.6,max:1.1},provenance:"BENCHMARK_DERIVED",confidence:0.7});

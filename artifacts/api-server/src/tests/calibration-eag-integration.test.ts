@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("eag entities",()=>{const entities=["CALIBRATION_PROFILE","BENCHMARK_FIXTURE","COEFFICIENT_PROVENANCE","VOLATILITY_PROFILE","PERSISTENCE_PROFILE","TIMING_PROFILE"];assert.equal(entities.length,6);});

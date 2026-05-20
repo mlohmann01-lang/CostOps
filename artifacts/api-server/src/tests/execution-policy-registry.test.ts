@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-policy-engine/execution-policy-registry"; test("execution-policy-registry",()=>{ assert.equal(Object.values(m).length>0,true); });
