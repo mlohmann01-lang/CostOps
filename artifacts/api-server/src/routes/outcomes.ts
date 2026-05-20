@@ -1,35 +1,28 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { outcomeLedgerTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { desc } from "drizzle-orm";
 
 const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const limitParam = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
-    const limit = isNaN(limitParam) ? 50 : limitParam;
-
-    const rows = (await db
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+    const rows = await db
       .select()
       .from(outcomeLedgerTable)
       .orderBy(desc(outcomeLedgerTable.createdAt))
-      .limit(limit)) as any[];
-
+      .limit(limit);
     return res.json(
-      rows.map((o: (typeof rows)[number]) => ({
+      rows.map((o) => ({
         id: o.id,
         recommendationId: o.recommendationId,
         userEmail: o.userEmail,
         displayName: o.displayName,
         action: o.action,
         licenceSku: o.licenceSku,
-        beforeCost: o.beforeCost,
-        afterCost: o.afterCost,
         monthlySaving: o.monthlySaving,
         annualisedSaving: o.annualisedSaving,
-        approved: o.approved,
-        executed: o.executed,
         executionMode: o.executionMode,
         evidence: o.evidence,
         approvedAt: o.approvedAt ? o.approvedAt.toISOString() : null,
@@ -45,13 +38,9 @@ router.get("/", async (req, res) => {
 
 router.get("/summary", async (req, res) => {
   try {
-    const outcomes = (await db
-      .select()
-      .from(outcomeLedgerTable)
-      .where(eq((outcomeLedgerTable as any).executed, true))) as any[];
-
-    const totalMonthlySaving = outcomes.reduce((acc: number, o) => acc + o.monthlySaving, 0);
-    const totalAnnualisedSaving = outcomes.reduce((acc: number, o) => acc + o.annualisedSaving, 0);
+    const outcomes = await db.select().from(outcomeLedgerTable);
+    const totalMonthlySaving = outcomes.reduce((acc, o) => acc + (o.monthlySaving ?? 0), 0);
+    const totalAnnualisedSaving = outcomes.reduce((acc, o) => acc + (o.annualisedSaving ?? 0), 0);
     const totalActionsExecuted = outcomes.length;
 
     const playbookCounts: Record<string, number> = {};
@@ -59,8 +48,7 @@ router.get("/summary", async (req, res) => {
       playbookCounts[o.action] = (playbookCounts[o.action] || 0) + 1;
     }
     const topPlaybook =
-      Object.entries(playbookCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ?? "inactive_user_licence_reclaim";
-
+      Object.entries(playbookCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ?? "INACTIVE_USER_LICENCE_RECLAIM";
     const avgMonthlySavingPerAction = totalActionsExecuted > 0 ? totalMonthlySaving / totalActionsExecuted : 0;
 
     return res.json({

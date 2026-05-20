@@ -1,112 +1,100 @@
-import { authMiddleware } from "../middleware/auth";
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { recommendationsTable, outcomeLedgerTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { runExecutionEngine } from "../lib/execution/execution-engine";
-import { createLedgerEntry } from "../lib/outcome-ledger/create-ledger-entry";
-import { assertNotAlreadyExecuted } from "../lib/execution/idempotency";
-import { rollbackOutcome } from "../lib/execution/rollback-engine";
+import { eq, desc } from "drizzle-orm";
 
 const router = Router();
-router.use(authMiddleware);
+
+router.get("/", async (req, res) => {
+  try {
+    const rows = await db
+      .select()
+      .from(outcomeLedgerTable)
+      .orderBy(desc(outcomeLedgerTable.createdAt))
+      .limit(100);
+    return res.json(
+      rows.map((o) => ({
+        id: o.id,
+        recommendationId: o.recommendationId,
+        userEmail: o.userEmail,
+        displayName: o.displayName,
+        action: o.action,
+        licenceSku: o.licenceSku,
+        monthlySaving: o.monthlySaving,
+        annualisedSaving: o.annualisedSaving,
+        executionMode: o.executionMode,
+        executedAt: o.executedAt ? o.executedAt.toISOString() : null,
+        createdAt: o.createdAt.toISOString(),
+      }))
+    );
+  } catch (err) {
+    req.log.error({ err }, "Error listing execution events");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 router.post("/approve/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
-
   try {
     const [rec] = await db.select().from(recommendationsTable).where(eq(recommendationsTable.id, id));
     if (!rec) return res.status(404).json({ error: "Recommendation not found" });
     if (rec.status !== "pending") return res.status(400).json({ error: "Recommendation is not pending" });
 
-    const actorId = req.body?.actorId as string | undefined;
-    const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
+    const [updated] = await db
+      .update(recommendationsTable)
+      .set({ status: "executed" })
+      .where(eq(recommendationsTable.id, id))
+      .returning();
 
-    const engineResult = await runExecutionEngine({ recommendation: rec, actorId, tenantId, mode: "APPROVAL_EXECUTE", mvpMode: true });
-    if (!engineResult.allowed) return res.status(400).json(engineResult);
+    const [outcome] = await db
+      .insert(outcomeLedgerTable)
+      .values({
+        recommendationId: rec.id,
+        userEmail: rec.userEmail,
+        displayName: rec.displayName,
+        action: "REMOVE_LICENSE",
+        licenceSku: rec.licenceSku,
+        beforeCost: rec.monthlyCost,
+        afterCost: 0,
+        monthlySaving: rec.monthlyCost,
+        annualisedSaving: rec.annualisedCost,
+        approved: true,
+        executed: true,
+        executionMode: "SIMULATED",
+        evidence: { trustScore: rec.trustScore, executionStatus: rec.executionStatus },
+        approvedAt: new Date(),
+        executedAt: new Date(),
+      })
+      .returning();
 
-    const action = "REMOVE_LICENSE";
-    const idempotencyCheck = await assertNotAlreadyExecuted(String(rec.id), action);
-    if (!idempotencyCheck.allowed) {
-      return res.status(409).json({
-        error: "DUPLICATE_EXECUTION",
-        duplicateExecution: true,
-        idempotencyKey: idempotencyCheck.idempotencyKey,
-        existingExecution: idempotencyCheck.existing,
-      });
-    }
-    const trustSnapshot = {
-      entity_trust_score: rec.entityTrustScore,
-      recommendation_trust_score: rec.recommendationTrustScore,
-      execution_readiness_score: rec.executionReadinessScore,
-      execution_gate: rec.executionStatus,
-      critical_blockers: rec.criticalBlockers,
-      warnings: rec.warnings,
-      score_breakdown: rec.scoreBreakdown,
-    };
-
-    const ledgerEntry = createLedgerEntry({
-      tenantId,
-      recommendation: rec,
-      recommendationId: String(rec.id),
-      action,
-      idempotencyKey: idempotencyCheck.idempotencyKey,
-      trustSnapshot,
-      actionRiskProfile: engineResult.actionRiskProfile,
-      beforeState: (engineResult.dryRunResult as any)?.before ?? { hasLicense: true, licenceSku: rec.licenceSku, monthlyCost: rec.monthlyCost },
-      afterState: (engineResult.dryRunResult as any)?.after ?? { hasLicense: false, licenceSku: null, monthlyCost: 0 },
-      dryRunResult: engineResult.dryRunResult,
-      executionEvidence: { ...engineResult.evidence, authorizationResult: engineResult.evidence.authorizationResult },
-      actorId: actorId ?? "",
-      executionMode: (engineResult as any).executionMode ?? "SIMULATED",
-      executionStatus: "EXECUTED",
-      pricingSnapshot: {
-        skuId: rec.licenceSku,
-        monthlyCost: rec.monthlyCost,
-        annualisedCost: rec.annualisedCost,
-        currency: "USD",
-      },
-      pricingConfidence: rec.pricingConfidence,
-      pricingSource: rec.pricingSource,
-    });
-
-    const [outcome] = await db.insert(outcomeLedgerTable).values(ledgerEntry).returning();
-
-    const [updated] = await db.update(recommendationsTable).set({ status: "executed" }).where(eq(recommendationsTable.id, id)).returning();
-    return res.json({ recommendation: updated, outcome, engineResult });
+    return res.json({ recommendation: updated, outcome });
   } catch (err) {
     req.log.error({ err }, "Error approving recommendation");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
 
-router.post("/dry-run/:id", async (req, res) => {
+router.post("/reject/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
   if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
-  const [rec] = await db.select().from(recommendationsTable).where(eq(recommendationsTable.id, id));
-  if (!rec) return res.status(404).json({ error: "Recommendation not found" });
-  const actorId = req.body?.actorId as string | undefined;
-  const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
-  const engineResult = await runExecutionEngine({ recommendation: rec, actorId, tenantId, mode: "DRY_RUN", mvpMode: true });
-  return res.json(engineResult);
-});
+  try {
+    const [rec] = await db.select().from(recommendationsTable).where(eq(recommendationsTable.id, id));
+    if (!rec) return res.status(404).json({ error: "Recommendation not found" });
+    if (rec.status !== "pending") return res.status(400).json({ error: "Recommendation is not pending" });
 
-router.post("/rollback/:outcomeLedgerId", async (req, res) => {
-  const actorId = req.body?.actorId as string | undefined;
-  const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
-  const result = await rollbackOutcome({ outcomeLedgerId: req.params.outcomeLedgerId, actorId, tenantId, dryRun: false });
-  if (!result.allowed && (result as any).status === 409) return res.status(409).json(result);
-  if (!result.allowed) return res.status(400).json(result);
-  return res.json(result);
-});
+    const reason = req.body?.reason as string | undefined;
+    const [updated] = await db
+      .update(recommendationsTable)
+      .set({ status: "rejected", rejectionReason: reason ?? null })
+      .where(eq(recommendationsTable.id, id))
+      .returning();
 
-router.post("/rollback/:outcomeLedgerId/dry-run", async (req, res) => {
-  const actorId = req.body?.actorId as string | undefined;
-  const tenantId = (req.body?.tenantId as string | undefined) ?? "default";
-  const result = await rollbackOutcome({ outcomeLedgerId: req.params.outcomeLedgerId, actorId, tenantId, dryRun: true });
-  if (!result.allowed) return res.status(400).json(result);
-  return res.json(result);
+    return res.json({ recommendation: updated });
+  } catch (err) {
+    req.log.error({ err }, "Error rejecting recommendation");
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 export default router;

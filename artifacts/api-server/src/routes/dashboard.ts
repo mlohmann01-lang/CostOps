@@ -1,31 +1,30 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { recommendationsTable, outcomeLedgerTable, connectorsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 
 const router = Router();
 
 router.get("/summary", async (req, res) => {
   try {
-    const outcomes = (await db.select().from(outcomeLedgerTable).where(eq((outcomeLedgerTable as any).executed, true))) as any[];
-    const totalMonthlySavings = outcomes.reduce((acc: number, o) => acc + o.monthlySaving, 0);
-    const totalAnnualisedSavings = outcomes.reduce((acc: number, o) => acc + o.annualisedSaving, 0);
+    const outcomes = await db.select().from(outcomeLedgerTable);
+    const totalMonthlySavings = outcomes.reduce((acc, o) => acc + (o.monthlySaving ?? 0), 0);
+    const totalAnnualisedSavings = outcomes.reduce((acc, o) => acc + (o.annualisedSaving ?? 0), 0);
 
-    const recs = (await db.select().from(recommendationsTable)) as any[];
+    const recs = await db.select().from(recommendationsTable);
     const pendingRecommendations = recs.filter((r) => r.status === "pending").length;
     const executedActions = recs.filter((r) => r.status === "executed").length;
     const blockedActions = recs.filter((r) => r.executionStatus === "BLOCKED").length;
 
-    const connectors = (await db.select().from(connectorsTable)) as any[];
+    const connectors = await db.select().from(connectorsTable);
     const activeConnectors = connectors.filter((c) => c.status === "connected" || c.status === "syncing").length;
     const avgTrustScore =
-      connectors.length > 0 ? connectors.reduce((acc: number, c) => acc + c.trustScore, 0) / connectors.length : 0;
+      connectors.length > 0 ? connectors.reduce((acc, c) => acc + c.trustScore, 0) / connectors.length : 0;
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const savingsThisMonth = outcomes
-            .filter((o) => o.executedAt && new Date(o.executedAt) >= startOfMonth)
-            .reduce((acc: number, o) => acc + o.monthlySaving, 0);
+      .filter((o) => o.executedAt && new Date(o.executedAt) >= startOfMonth)
+      .reduce((acc, o) => acc + (o.monthlySaving ?? 0), 0);
 
     return res.json({
       totalMonthlySavings: Math.round(totalMonthlySavings * 100) / 100,
@@ -45,7 +44,7 @@ router.get("/summary", async (req, res) => {
 
 router.get("/savings-trend", async (req, res) => {
   try {
-    const outcomes = (await db.select().from(outcomeLedgerTable).where(eq((outcomeLedgerTable as any).executed, true))) as any[];
+    const outcomes = await db.select().from(outcomeLedgerTable);
 
     const byMonth: Record<string, { savings: number; actions: number }> = {};
     for (const o of outcomes) {
@@ -53,7 +52,7 @@ router.get("/savings-trend", async (req, res) => {
       const d = new Date(o.executedAt);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       if (!byMonth[key]) byMonth[key] = { savings: 0, actions: 0 };
-      byMonth[key].savings += o.monthlySaving;
+      byMonth[key].savings += o.monthlySaving ?? 0;
       byMonth[key].actions += 1;
     }
 
@@ -67,7 +66,7 @@ router.get("/savings-trend", async (req, res) => {
 
     if (trend.length === 0) {
       const months = ["2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06"];
-      trend.push(...months.map((m, i) => ({ month: m, savings: 0, actions: 0 })));
+      trend.push(...months.map((m) => ({ month: m, savings: 0, actions: 0 })));
     }
 
     return res.json(trend);
@@ -79,7 +78,7 @@ router.get("/savings-trend", async (req, res) => {
 
 router.get("/action-breakdown", async (req, res) => {
   try {
-    const recs = (await db.select().from(recommendationsTable)) as any[];
+    const recs = await db.select().from(recommendationsTable);
 
     const groups: Record<string, { count: number; value: number }> = {};
     for (const r of recs) {
