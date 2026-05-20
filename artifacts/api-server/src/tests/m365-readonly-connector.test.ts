@@ -25,3 +25,10 @@ test("evaluate-playbooks uses persisted evidence and does not execute", () => {
   assert.equal(src.includes("m365EvidenceRecordsTable"), true);
   assert.equal(src.includes("executionTriggered: false"), true);
 });
+
+
+test("recommendation generation endpoint exists and remains read-only", () => {
+  const src = fs.readFileSync(path.resolve(process.cwd(), "src/routes/connectors.ts"), "utf8");
+  assert.equal(src.includes("/m365/recommendations/generate"), true);
+  assert.equal(src.includes("persisted: false"), true);
+});

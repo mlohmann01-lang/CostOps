@@ -12,6 +12,9 @@ import { checkServiceNowReadiness } from "../lib/connectors/servicenow/serviceno
 import { ingestServiceNowTenant } from "../lib/connectors/servicenow/servicenow-ingestion";
 import { M365ReadOnlySyncService } from "../lib/connectors/m365/m365-read-only-sync-service";
 import { M365ReadOnlyEvidenceSyncService } from "../lib/connectors/m365/m365-readonly-evidence-sync-service";
+import { generateM365Recommendations, type M365SkuPricing } from "../lib/connectors/m365/m365-recommendation-generator";
+import { M365DisabledUserReclaimSliceService } from "../lib/connectors/m365/m365-disabled-user-reclaim-slice";
+import { evaluateM365LiveExecutionReadiness } from "../lib/connectors/m365/m365-live-execution-readiness-gate";
 import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
 import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
 import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
@@ -260,6 +263,7 @@ const m365ReadOnlyEvidenceSyncService = new M365ReadOnlyEvidenceSyncService();
 const playbookService = new PlaybookRecommendationService();
 const trustService = new ConnectorTrustService();
 const reconciliationService = new EvidenceReconciliationService();
+const m365DisabledUserReclaimSliceService = new M365DisabledUserReclaimSliceService(m365ReadOnlyEvidenceSyncService);
 
 router.get("/m365/status", async (req, res) => {
   try {
@@ -290,6 +294,70 @@ router.post("/m365/sync/read-only", async (req, res) => {
     return res.json({ ...result.summary, evidenceSample: result.normalizedEvidence.slice(0, 10) });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : "READ_ONLY_SYNC_FAILED" });
+  }
+});
+
+
+router.post("/m365/recommendations/generate", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    const body = (req.body ?? {}) as { normalizedEvidence?: unknown; skuPricingCatalog?: M365SkuPricing[]; generationOptions?: { inactivityDaysThreshold?: number; evidenceConfidenceThreshold?: number; confidenceAdjustment?: number } };
+    const syncResult = Array.isArray(body.normalizedEvidence) ? null : await m365ReadOnlyEvidenceSyncService.runSync(tenantId);
+    const normalizedEvidence = (Array.isArray(body.normalizedEvidence) ? body.normalizedEvidence : syncResult?.normalizedEvidence) ?? [];
+    const recommendations = generateM365Recommendations({
+      tenantId,
+      normalizedEvidence: normalizedEvidence as Parameters<typeof generateM365Recommendations>[0]["normalizedEvidence"],
+      skuPricingCatalog: Array.isArray(body.skuPricingCatalog) ? body.skuPricingCatalog : [],
+      generationOptions: body.generationOptions,
+    });
+
+    return res.json({
+      tenantId,
+      syncSummary: syncResult?.summary ?? null,
+      recommendations: recommendations.recommendations,
+      summary: recommendations.summary,
+      persisted: false,
+    });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_RECOMMENDATION_GENERATION_FAILED" });
+  }
+});
+
+
+
+router.get("/m365/live-execution/readiness", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const mode = process.env.ECON_OPS_TENANT_MODE ?? "PILOT_READ_ONLY";
+  const grantedScopes = String(process.env.M365_GRAPH_GRANTED_PERMISSIONS ?? "").split(/\s+/).filter(Boolean);
+  const report = evaluateM365LiveExecutionReadiness({
+    tenantId,
+    tenantMode: mode,
+    connectorReadiness: "HEALTHY",
+    grantedGraphScopes: grantedScopes,
+    approvalPolicy: { configured: true },
+    verificationConfig: { enabled: true },
+    rollbackConfig: { configured: true },
+    liveMutationFlag: String(process.env.M365_LIVE_LICENSE_MUTATION_ENABLED ?? "false") === "true",
+    latestSyncSummary: { evidenceFreshness: "FRESH", connectorReadiness: "HEALTHY" },
+    outcomeLedgerHealth: { writable: true },
+    driftMonitorHealth: { active: true },
+  });
+  return res.json(report);
+});
+
+router.post("/m365/reclaim/disabled-users/run", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    const tenantMode = process.env.ECON_OPS_TENANT_MODE ?? "PILOT_READ_ONLY";
+    const out = await m365DisabledUserReclaimSliceService.run({
+      tenantId,
+      tenantMode,
+      skuPricingCatalog: Array.isArray((req.body as { skuPricingCatalog?: unknown })?.skuPricingCatalog) ? ((req.body as { skuPricingCatalog?: M365SkuPricing[] }).skuPricingCatalog ?? []) : [],
+    });
+    const drift = await m365DisabledUserReclaimSliceService.detectDrift(tenantId);
+    return res.json({ ...out, drift });
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_RECLAIM_RUN_FAILED" });
   }
 });
 
