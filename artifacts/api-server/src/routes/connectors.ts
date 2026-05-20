@@ -11,6 +11,7 @@ import { ingestFlexeraTenant } from "../lib/connectors/flexera/flexera-ingestion
 import { checkServiceNowReadiness } from "../lib/connectors/servicenow/servicenow-readiness";
 import { ingestServiceNowTenant } from "../lib/connectors/servicenow/servicenow-ingestion";
 import { M365ReadOnlySyncService } from "../lib/connectors/m365/m365-read-only-sync-service";
+import { M365ReadOnlyEvidenceSyncService } from "../lib/connectors/m365/m365-readonly-evidence-sync-service";
 import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
 import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
 import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
@@ -255,6 +256,7 @@ router.post("/m365/smoke-test", async (_req, res) => {
 });
 
 const m365ReadOnlySyncService = new M365ReadOnlySyncService();
+const m365ReadOnlyEvidenceSyncService = new M365ReadOnlyEvidenceSyncService();
 const playbookService = new PlaybookRecommendationService();
 const trustService = new ConnectorTrustService();
 const reconciliationService = new EvidenceReconciliationService();
@@ -284,8 +286,8 @@ router.post("/m365/validate", async (req, res) => {
 router.post("/m365/sync/read-only", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
-    const summary = await m365ReadOnlySyncService.runReadOnlySync(tenantId);
-    return res.json(summary);
+    const result = await m365ReadOnlyEvidenceSyncService.runSync(tenantId);
+    return res.json({ ...result.summary, evidenceSample: result.normalizedEvidence.slice(0, 10) });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : "READ_ONLY_SYNC_FAILED" });
   }
