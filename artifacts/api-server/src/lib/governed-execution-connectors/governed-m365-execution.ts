@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildM365GovernedIntent=(action:string):GovernedIntent=>({connector:"m365",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

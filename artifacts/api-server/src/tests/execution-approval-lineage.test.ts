@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-lineage/execution-approval-lineage"; test("execution-approval-lineage",()=>{ assert.equal(Object.values(m).length>0,true); });

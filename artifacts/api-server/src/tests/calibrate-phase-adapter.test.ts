@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-phase-adapters/calibrate-phase-adapter"; test("calibrate-phase-adapter",()=>{ assert.equal(Object.values(m).length>0,true); });

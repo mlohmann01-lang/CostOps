@@ -1,0 +1,3 @@
+import type { CurveResult, CurveType } from "./nonlinear-propagation-types";
+export const applyCurve=(input:number,base:number,m:number,t:CurveType)=> t==="convex"?base*Math.pow(input,m):t==="step"?base*(input>=m?2:1):t==="capped"?Math.min(base*input,m):t==="threshold"?base*(input>m?input*1.5:input):t==="saturation"?base*(1+Math.min(input,m)):base*input*m;
+export const computeWorkloadCostCurve=(i:any):CurveResult=>({input:i.input,cost:applyCurve(i.input,i.baseCost,i.multiplier,i.curveType),curveType:i.curveType,confidence:i.confidence,source:i.source,assumptions:i.assumptions,coefficients:i.coefficients,evidenceRefs:i.evidenceRefs});

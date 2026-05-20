@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildSnowflakeGovernedIntent=(action:string):GovernedIntent=>({connector:"snowflake",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

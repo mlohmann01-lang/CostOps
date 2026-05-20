@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateRollbackMandatePolicy } from "../lib/execution-policy-engine";test("rollback policy",()=>{assert.equal(evaluateRollbackMandatePolicy({rollbackAvailable:false}),false);});

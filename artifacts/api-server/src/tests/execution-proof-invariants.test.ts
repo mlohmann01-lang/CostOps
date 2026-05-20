@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { buildExecutionProofBundle } from "../lib/execution-lineage";test("proof bundle required",()=>{assert.equal(!!buildExecutionProofBundle({x:1}).bundle,true);});

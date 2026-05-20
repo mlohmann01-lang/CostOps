@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/organizational-timing-benchmarks/governance-adoption-benchmark";test("governance-adoption-benchmark",()=>{assert.ok(Object.values(m).length>0);});

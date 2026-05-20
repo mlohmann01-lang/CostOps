@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/organizational-timing-benchmarks/approval-latency-benchmark";test("approval-latency-benchmark",()=>{assert.ok(Object.values(m).length>0);});

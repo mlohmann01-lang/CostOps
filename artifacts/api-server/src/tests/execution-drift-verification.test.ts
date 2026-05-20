@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-replay-governance/execution-drift-verification"; test("execution-drift-verification",()=>{ assert.equal(Object.values(m).length>0,true); });

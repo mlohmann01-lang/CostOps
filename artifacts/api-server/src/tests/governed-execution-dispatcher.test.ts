@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-connectors/governed-execution-dispatcher"; test("governed-execution-dispatcher",()=>{ assert.equal(Object.values(m).length>0,true); });

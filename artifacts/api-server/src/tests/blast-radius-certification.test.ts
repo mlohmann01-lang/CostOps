@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-certification/blast-radius-certification"; test("blast-radius-certification",()=>{ assert.equal(Object.values(m).length>0,true); });

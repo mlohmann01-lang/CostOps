@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/calibration-drift-governance/coefficient-drift-governance";test("coefficient-drift-governance",()=>{assert.ok(Object.values(m).length>0);});

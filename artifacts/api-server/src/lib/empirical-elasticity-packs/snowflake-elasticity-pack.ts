@@ -1,0 +1,1 @@
+import type { ElasticityPack } from "./elasticity-pack-types"; export const getSnowflakeElasticityPack=():ElasticityPack=>({name:"snowflake",range:{min:0.5,max:1.0},provenance:"BENCHMARK_DERIVED",confidence:0.7});

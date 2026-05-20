@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/canonical-runtime-pipeline/runtime-pipeline-failure-handler"; test("runtime-pipeline-failure-handler",()=>{ assert.equal(Object.values(m).length>0,true); });

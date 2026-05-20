@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/empirical-elasticity-packs/procurement-delay-elasticity-pack";test("procurement-delay-elasticity-pack",()=>{const v=(Object.values(m)[0] as any)(); assert.equal(v.range.max>v.range.min,true);});

@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateEvidenceGrade } from "../lib/coefficient-provenance";test("grade order",()=>{assert.equal(evaluateEvidenceGrade("VERIFIED")>evaluateEvidenceGrade("LOW"),true);});

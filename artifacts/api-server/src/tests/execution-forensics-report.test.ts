@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/execution-forensics/execution-forensics-report"; test("execution-forensics-report",()=>{ assert.equal(Object.values(x).length>0,true); });

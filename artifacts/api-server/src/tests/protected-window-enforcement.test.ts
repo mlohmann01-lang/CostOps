@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/execution-window-enforcement/protected-window-enforcement"; test("protected-window-enforcement",()=>{ assert.equal(Object.values(x).length>0,true); });

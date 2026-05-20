@@ -1,0 +1,1 @@
+import { evaluateExecutionEligibility } from "./execution-eligibility-engine"; export const computeGovernedExecutionContractReport=(i:any)=>({state:evaluateExecutionEligibility(i.contract,i.inputs)});

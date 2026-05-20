@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeGovernedExecutionVerdict } from "../lib/execution-verdict-engine";test("approval required",()=>{assert.equal(computeGovernedExecutionVerdict({eligible:true,approved:false,rollback:true,manual:false}),"APPROVAL_REQUIRED");});

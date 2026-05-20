@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildCloudGovernedIntent=(action:string):GovernedIntent=>({connector:"cloud",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

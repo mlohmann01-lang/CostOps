@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as x from "../lib/execution-window-enforcement/maintenance-window-governance"; test("maintenance-window-governance",()=>{ assert.equal(Object.values(x).length>0,true); });

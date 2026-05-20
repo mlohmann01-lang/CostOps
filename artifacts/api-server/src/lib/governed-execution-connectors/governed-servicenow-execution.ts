@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildServicenowGovernedIntent=(action:string):GovernedIntent=>({connector:"servicenow",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

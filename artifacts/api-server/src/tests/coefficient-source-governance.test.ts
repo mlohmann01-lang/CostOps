@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateCoefficientSourceGovernance } from "../lib/quantitative-depth";
+test("governance requires source and evidence",()=>{ assert.equal(evaluateCoefficientSourceGovernance({coefficient:{id:'a',coefficientClass:'QUERY_INTENSITY',value:1,range:{min:0,max:1},source:'',confidence:1,version:'1.0.0',explanation:'',assumptions:[],evidenceRefs:[]}}).governed,false);});

@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-interface-contracts/runtime-interface-report"; test("runtime-interface-report",()=>{ assert.equal(Object.values(m).length>0,true); });

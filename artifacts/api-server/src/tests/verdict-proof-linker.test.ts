@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-proof-continuity/verdict-proof-linker"; test("verdict-proof-linker",()=>{ assert.equal(Object.values(m).length>0,true); });

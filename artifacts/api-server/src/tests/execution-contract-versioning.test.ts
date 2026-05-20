@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-contracts/execution-contract-versioning"; test("execution-contract-versioning",()=>{ assert.equal(Object.values(m).length>0,true); });

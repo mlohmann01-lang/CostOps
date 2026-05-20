@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/organizational-timing-benchmarks/executive-escalation-delay";test("executive-escalation-delay",()=>{assert.ok(Object.values(m).length>0);});

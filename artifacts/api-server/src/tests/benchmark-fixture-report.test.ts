@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { computeBenchmarkFixtureReport } from "../lib/enterprise-benchmark-fixtures";test("fixture report",()=>{assert.equal(computeBenchmarkFixtureReport().fixtures.length>0,true);});

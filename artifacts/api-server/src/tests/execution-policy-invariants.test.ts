@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateExecutionPolicies } from "../lib/execution-policy-engine";test("expired approval invalid",()=>{assert.equal(evaluateExecutionPolicies({rollbackAvailable:true,confidence:1,insideWindow:true,expiredApproval:true}).allowed,false);});

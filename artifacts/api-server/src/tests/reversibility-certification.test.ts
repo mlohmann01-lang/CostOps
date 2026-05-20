@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-certification/reversibility-certification"; test("reversibility-certification",()=>{ assert.equal(Object.values(m).length>0,true); });

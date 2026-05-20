@@ -1,0 +1,1 @@
+import { compareReplayVsForecast } from "./replay-vs-forecast-engine"; export const adjustConfidenceFromReplay=(i:{forecast:number;actual:number;baseConfidence:number})=>({confidence:Math.max(0,i.baseConfidence-Math.abs(compareReplayVsForecast(i).missRate))});

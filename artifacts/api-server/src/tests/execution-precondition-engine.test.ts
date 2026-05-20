@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/governed-execution-contracts/execution-precondition-engine"; test("execution-precondition-engine",()=>{ assert.equal(Object.values(m).length>0,true); });

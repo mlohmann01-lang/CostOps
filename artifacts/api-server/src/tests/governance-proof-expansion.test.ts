@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/execution-ux-contracts/governance-proof-expansion"; test("governance-proof-expansion",()=>{ assert.equal(Object.values(m).length>0,true); });

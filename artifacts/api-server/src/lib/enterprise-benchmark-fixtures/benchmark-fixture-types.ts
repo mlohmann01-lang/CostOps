@@ -1,0 +1,1 @@
+export type FixtureClass="SMALL_ENTERPRISE"|"MID_ENTERPRISE"|"LARGE_ENTERPRISE"|"GLOBAL_ENTERPRISE"|"AI_HEAVY_ENTERPRISE"|"RETAIL_PEAK_ENTERPRISE"|"GOVERNANCE_MATURE"|"GOVERNANCE_FRAGMENTED"; export interface Fixture {name:FixtureClass; workload:number; governance:number; assumptions:string[];}

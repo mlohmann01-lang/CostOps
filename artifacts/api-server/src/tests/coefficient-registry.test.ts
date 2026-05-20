@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { registerCoefficient } from "../lib/quantitative-depth";
+test("coefficient registry",()=>{ const c=registerCoefficient({id:"a",coefficientClass:"WORKLOAD_ELASTICITY",value:1,range:{min:0,max:2},source:"src",confidence:0.8,version:"1.0.0",explanation:"x",assumptions:["a"],evidenceRefs:["e"]}); assert.equal(c.id,"a");});

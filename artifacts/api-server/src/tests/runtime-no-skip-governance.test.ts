@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { isRuntimeTransitionAllowed } from "../lib/canonical-runtime-orchestration";test("no skip",()=>{assert.equal(isRuntimeTransitionAllowed("DISCOVER","FORECAST"),false);});

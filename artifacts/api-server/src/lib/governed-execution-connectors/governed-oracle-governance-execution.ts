@@ -1,0 +1,1 @@
+import type { GovernedIntent } from "./governed-connector-types"; export const buildOracleGovernedIntent=(action:string):GovernedIntent=>({connector:"oracle",dryRun:true,rollbackDescriptor:"required",blastRadius:0.4,action});

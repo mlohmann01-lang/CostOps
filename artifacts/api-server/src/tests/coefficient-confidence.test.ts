@@ -1,0 +1,2 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { evaluateCoefficientConfidence } from "../lib/quantitative-depth";
+test("low confidence caps downstream",()=>{ const r=evaluateCoefficientConfidence({requestedConfidence:0.9,coefficients:[{id:'a',coefficientClass:'WORKLOAD_ELASTICITY',value:1,range:{min:0,max:2},source:'s',confidence:0.4,version:'1.0.0',explanation:'e',assumptions:[],evidenceRefs:['x']}]}); assert.equal(r.cappedConfidence,0.4);});

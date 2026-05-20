@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/workload-volatility-benchmarking/concurrency-volatility-engine";test("concurrency-volatility-engine",()=>{assert.ok(Object.values(m).length>0);});

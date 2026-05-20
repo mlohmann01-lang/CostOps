@@ -1,0 +1,1 @@
+import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/canonical-runtime-orchestration/canonical-runtime-context"; test("canonical-runtime-context",()=>{ assert.equal(Object.values(m).length>0,true); });

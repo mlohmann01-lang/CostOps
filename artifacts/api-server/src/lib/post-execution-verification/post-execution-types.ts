@@ -1,1 +1,2 @@
-export interface PostExecutionInput{outcomeScore:number;governanceDrift:number;recurrencePersistence:number;blastContainment:number;rollbackIntegrity:number;evidenceUpdated:boolean;lineageUpdated:boolean;contradictionEmergence:boolean;}
+export interface Payload { value:number; }
+export interface PostExecutionInput { expected:number; actual:number; rollbackIntegrity:number; governanceDrift:number; recurrenceRisk:number; proofIntegrity:number; outcomeScore:number; evidenceUpdated:boolean; lineageUpdated:boolean; contradictionEmergence:number; recurrencePersistence:number; }

@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { evaluateApprovalTierPolicy } from "../lib/execution-policy-engine";test("blast radius high requires exec tier",()=>{assert.equal(evaluateApprovalTierPolicy({blastRadius:0.9}),true);});

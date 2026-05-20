@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import * as m from "../lib/organizational-timing-benchmarks/organizational-timing-report";test("organizational-timing-report",()=>{assert.ok(Object.values(m).length>0);});

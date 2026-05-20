@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";import { runExecutePhaseAdapter } from "../lib/runtime-phase-adapters";test("execute blocked without certify+approve",()=>{assert.equal(runExecutePhaseAdapter({certified:false,approved:true}).blocked,true);});

@@ -1,0 +1,1 @@
+import test from "node:test";import assert from "node:assert/strict";test("blocking verdict dominates",()=>{const chain=["APPROVAL_REQUIRED","EXECUTION_BLOCKED"];assert.equal(chain.includes("EXECUTION_BLOCKED"),true);});

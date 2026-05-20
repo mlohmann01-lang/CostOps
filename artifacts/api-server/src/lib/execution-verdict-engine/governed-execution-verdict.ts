@@ -1,0 +1,1 @@
+import type { ExecutionVerdict } from "./execution-verdict-types"; export const computeGovernedExecutionVerdict=(i:{eligible:boolean;approved:boolean;rollback:boolean;manual:boolean}):ExecutionVerdict=>!i.rollback?"ROLLBACK_REQUIRED":i.manual?"MANUAL_ONLY":!i.eligible?"DRY_RUN_ONLY":!i.approved?"APPROVAL_REQUIRED":"LIVE_EXECUTION_ELIGIBLE";
