@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { regulatory_boundary_constraint } from '../lib/enterprise-operational-constraints/regulatory-boundary-constraint';test('regulatory-boundary-constraint deterministic',()=>assert.equal(regulatory_boundary_constraint.deterministic,true));

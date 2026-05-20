@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { asset_execution_lock } from '../lib/execution-concurrency-realism/asset-execution-lock';test('asset-execution-lock deterministic',()=>assert.equal(asset_execution_lock.deterministic,true));

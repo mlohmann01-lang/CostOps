@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { m365_action_semantics } from '../lib/connector-action-semantics/m365-action-semantics';
+test('manual only and sync delay influence runtime eligibility',()=>{ const copilot=m365_action_semantics.find(a=>a.actionId==='REALLOCATE_COPILOT_LICENSE')!; assert.equal(copilot.capabilityClass,'MANUAL_ONLY'); assert.equal(copilot.propagationDelayRisk,'HIGH'); assert.equal(copilot.approvalTier,'SECURITY_REVIEW');});

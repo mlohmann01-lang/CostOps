@@ -1,0 +1,2 @@
+export type SemanticDomain='PROVIDER_PROPAGATION'|'PROVIDER_VERIFICATION'|'PROVIDER_ROLLBACK'|'PROVIDER_APPROVAL_FRICTION'|'PROVIDER_DEPENDENCY'|'PROVIDER_BLAST_RADIUS'|'PROVIDER_ENTITLEMENT_AMBIGUITY'|'PROVIDER_LATENCY'|'PROVIDER_RECURRENCE'|'PROVIDER_SECURITY_SENSITIVITY';
+export interface SemanticWeight{weightId:string;provider:string;semanticDomain:SemanticDomain;value:number;lowerBound:number;upperBound:number;evidenceGrade:'A'|'B'|'C';provenance:string;validityWindow:{from:number;to:number};version:string;explanation:string;}

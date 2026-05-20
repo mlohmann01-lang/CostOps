@@ -1,1 +1,1 @@
-export const runtimestorybuilder=(i:any)=>i;
+export const operationsstorybuilder=(i:{provider:string;propagationRisk:string;dependencyRisk:string;verificationDelay:string;rollbackTiming:string;sharedService:boolean;approval:string;blastRadius:string;})=>`WHY ${i.provider}: propagation ${i.propagationRisk}; dependency ${i.dependencyRisk}; verification delay ${i.verificationDelay}; rollback timing ${i.rollbackTiming}; shared-service ${i.sharedService}; approval ${i.approval}; blast-radius ${i.blastRadius}`;

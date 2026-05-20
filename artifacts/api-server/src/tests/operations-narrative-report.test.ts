@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { operationsnarrativereport } from '../lib/runtime-narrative-engine/runtime-narrative-report';
+test('narrative report contains stories and summary',()=>{ const r=operationsnarrativereport([{provider:'CLOUD',risk:'HIGH',propagationRisk:'HIGH',dependencyRisk:'HIGH',verificationDelay:'MEDIUM',rollbackTiming:'DELAYED',sharedService:true,approval:'DIRECTOR',blastRadius:'HIGH'}]); assert.equal(r.stories.length,1); assert.equal(r.summary.high,1); assert.equal(r.summary.withDelay,1);});

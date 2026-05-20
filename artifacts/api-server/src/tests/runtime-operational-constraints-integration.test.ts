@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { servicenow_action_semantics } from '../lib/connector-action-semantics/servicenow-action-semantics';
+test('servicenow stale cmdb affects operational readiness',()=>{ const a=servicenow_action_semantics[0]; assert.equal(a.cmdbFreshnessRisk,'HIGH'); assert.ok(a.blockedWhen.includes('stale_cmdb')); assert.equal(a.approvalTier,'TEAM_LEAD');});

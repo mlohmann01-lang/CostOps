@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { business_criticality_constraint } from '../lib/enterprise-operational-constraints/business-criticality-constraint';test('business-criticality-constraint deterministic',()=>assert.equal(business_criticality_constraint.deterministic,true));

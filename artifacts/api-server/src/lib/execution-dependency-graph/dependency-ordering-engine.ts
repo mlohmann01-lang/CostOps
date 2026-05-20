@@ -1,0 +1,2 @@
+import { DependencyEdge, DependencyNode } from './execution-dependency-types';
+export const buildDependencyOrder=(nodes:DependencyNode[],edges:DependencyEdge[])=>{ const indeg=new Map(nodes.map(n=>[n.id,0])); edges.forEach(e=>indeg.set(e.to,(indeg.get(e.to)??0)+1)); const q=[...nodes.filter(n=>(indeg.get(n.id)??0)===0).map(n=>n.id)]; const out:string[]=[]; while(q.length){ const n=q.shift()!; out.push(n); edges.filter(e=>e.from===n).forEach(e=>{indeg.set(e.to,(indeg.get(e.to)??1)-1); if((indeg.get(e.to)??0)===0) q.push(e.to);}); } return out; };

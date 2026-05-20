@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { evaluatePreflight } from '../lib/connector-transaction-realism/connector-preflight-check';
+test('preflight detects permission drift and duplicate',()=>{ const r=evaluatePreflight({connector:'AWS',actionId:'A',requestedAt:1,stateTimestamp:1,hasPermission:false,duplicateRequest:true}); assert.equal(r.ready,false); assert.ok(r.blocked.includes('permission_drift')); assert.ok(r.blocked.includes('duplicate_request'));});

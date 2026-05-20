@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { change_freeze_constraint } from '../lib/enterprise-operational-constraints/change-freeze-constraint';test('change-freeze-constraint deterministic',()=>assert.equal(change_freeze_constraint.deterministic,true));

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { databricks_action_semantics } from '../lib/connector-action-semantics/databricks-action-semantics';
+test('databricks gpu/shared clusters escalate governance',()=>{ const a=databricks_action_semantics[0]; assert.equal(a.gpuRuntimeSensitivity,'HIGH'); assert.ok(a.blockedWhen.includes('shared_workspace_prod_conflict')); assert.equal(a.approvalTier,'DIRECTOR');});

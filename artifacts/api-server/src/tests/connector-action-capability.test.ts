@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { getActionCapability } from '../lib/connector-capability-model/connector-action-capability';test('unknown action never allowed',()=>assert.equal(getActionCapability('X'),'NEVER_ALLOWED'));

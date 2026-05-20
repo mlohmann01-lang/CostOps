@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { partial_execution_state } from '../lib/partial-failure-semantics/partial-execution-state';test('partial-execution-state deterministic',()=>assert.equal(partial_execution_state.deterministic,true));

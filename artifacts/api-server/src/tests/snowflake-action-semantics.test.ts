@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { snowflake_action_semantics } from '../lib/connector-action-semantics/snowflake-action-semantics';
+test('snowflake queued workload risks modeled',()=>{ const a=snowflake_action_semantics[0]; assert.equal(a.queryConcurrencyImpact,'HIGH'); assert.ok(a.preflightChecks.includes('scheduled_task_dependency_check')); assert.equal(a.warehouseWarmupRisk,'HIGH'); });

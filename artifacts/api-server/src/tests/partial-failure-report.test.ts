@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { partial_failure_report } from '../lib/partial-failure-semantics/partial-failure-report';test('partial-failure-report deterministic',()=>assert.equal(partial_failure_report.deterministic,true));

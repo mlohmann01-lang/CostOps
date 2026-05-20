@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { shared_asset_impact_model } from '../lib/execution-topology-realism/shared-asset-impact-model';test('shared-asset-impact-model deterministic',()=>assert.equal(shared_asset_impact_model.deterministic,true));

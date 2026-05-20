@@ -1,0 +1,2 @@
+import { DependencyEdge, DependencyNode } from './execution-dependency-types';
+export const findBlockedDownstream=(nodes:DependencyNode[],edges:DependencyEdge[])=>{ const blocked=new Set(nodes.filter(n=>n.blocked).map(n=>n.id)); let changed=true; while(changed){changed=false; edges.forEach(e=>{ if(blocked.has(e.from)&&!blocked.has(e.to)){blocked.add(e.to);changed=true;} });} return [...blocked]; };

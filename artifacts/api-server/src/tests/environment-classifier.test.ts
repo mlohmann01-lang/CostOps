@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { environment_classifier } from '../lib/execution-topology-realism/environment-classifier';test('environment-classifier deterministic',()=>assert.equal(environment_classifier.deterministic,true));

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { m365_action_semantics } from '../lib/connector-action-semantics/m365-action-semantics';
+test('m365 provider realism modeled',()=>{ const a=m365_action_semantics[0]; assert.ok(a.preflightChecks.includes('nested_group_conflict_check')); assert.equal(a.syncConsistencyRisk,'HIGH'); assert.ok(a.rollbackPlan.includes('wait_hybrid_identity_repropagation')); });

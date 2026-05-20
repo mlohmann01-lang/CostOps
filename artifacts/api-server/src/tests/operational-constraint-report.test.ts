@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { operational_constraint_report } from '../lib/enterprise-operational-constraints/operational-constraint-report';test('operational-constraint-report deterministic',()=>assert.equal(operational_constraint_report.deterministic,true));

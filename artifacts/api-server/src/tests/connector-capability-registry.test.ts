@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { connectorCapabilityRegistry } from '../lib/connector-capability-model/connector-capability-registry';test('registry has entries',()=>assert.ok(connectorCapabilityRegistry.length>0));

@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildVerdictCard } from '../lib/economic-operations-productization';
+test('observability maps verdict statuses',()=>{ const s=['DRIFT_DETECTED','VERIFICATION_PENDING','PARTIAL_FAILURE'] as const; const cards=s.map(v=>buildVerdictCard('t','M365','x',v)); assert.equal(cards.length,3); assert.ok(cards.some(c=>c.verdict==='DRIFT_DETECTED')); assert.ok(cards.every(c=>c.confidence>0));});

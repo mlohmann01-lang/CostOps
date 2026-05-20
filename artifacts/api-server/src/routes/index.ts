@@ -26,6 +26,7 @@ import simulationsRouter from "./simulations";
 import graphRouter from "./graph";
 import workflowRouter from "./workflow";
 import pilotRouter from "./pilot";
+import economicOperationsRouter from "./economic-operations";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 
 const router: IRouter = Router();
@@ -56,6 +57,7 @@ router.use("/demo", demoRouter);
 router.use("/simulations", requireTenantContext(), requireCapability("CREATE_SIMULATIONS"), simulationsRouter);
 router.use("/graph", requireTenantContext(), requireCapability("READ_GRAPH"), graphRouter);
 router.use("/workflow", workflowRouter);
+router.use('/economic-operations', economicOperationsRouter);
 router.use("/", pilotRouter);
 
 export default router;

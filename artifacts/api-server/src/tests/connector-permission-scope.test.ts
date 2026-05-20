@@ -1,1 +1,1 @@
-import test from 'node:test';import assert from 'node:assert/strict';test('scenario check',()=>{assert.equal(1,1);});
+import test from 'node:test';import assert from 'node:assert/strict';import { getPermissionScope } from '../lib/connector-capability-model/connector-permission-scope';test('permission required',()=>assert.equal(typeof getPermissionScope('REMOVE_INACTIVE_LICENSE'),'string'));

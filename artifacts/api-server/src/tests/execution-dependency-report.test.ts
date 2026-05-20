@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_dependency_report } from '../lib/execution-dependency-graph/execution-dependency-report';test('execution-dependency-report deterministic',()=>assert.equal(execution_dependency_report.deterministic,true));

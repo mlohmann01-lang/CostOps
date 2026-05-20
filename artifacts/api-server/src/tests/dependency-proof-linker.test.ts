@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { dependency_proof_linker } from '../lib/execution-dependency-graph/dependency-proof-linker';test('dependency-proof-linker deterministic',()=>assert.equal(dependency_proof_linker.deterministic,true));

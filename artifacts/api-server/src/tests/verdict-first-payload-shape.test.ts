@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildVerdictCard } from '../lib/economic-operations-productization';
+test('verdict payload shape',()=>{ const c=buildVerdictCard('t1','M365','Inactive User Reclaim','APPROVAL_REQUIRED'); assert.equal(c.verdict,'APPROVAL_REQUIRED'); assert.ok(c.proofLink.startsWith('proof://')); assert.ok(c.nextOperatorAction.length>0);});

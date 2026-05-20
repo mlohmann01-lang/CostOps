@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { rollback_risk_propagation } from '../lib/rollback-dependency-chains/rollback-risk-propagation';test('rollback-risk-propagation deterministic',()=>assert.equal(rollback_risk_propagation.deterministic,true));

@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { cloud_action_semantics } from '../lib/connector-action-semantics/cloud-action-semantics';
+test('cloud shared network and propagation risks modeled',()=>{ const a=cloud_action_semantics[3]; assert.equal(a.sharedNetworkRisk,'HIGH'); assert.equal(a.autoscalingPropagationRisk,'HIGH'); assert.ok(a.manualOnlyWhen.includes('environment_drift_detected')); });

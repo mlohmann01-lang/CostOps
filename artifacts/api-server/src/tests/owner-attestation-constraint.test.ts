@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { owner_attestation_constraint } from '../lib/enterprise-operational-constraints/owner-attestation-constraint';test('owner-attestation-constraint deterministic',()=>assert.equal(owner_attestation_constraint.deterministic,true));

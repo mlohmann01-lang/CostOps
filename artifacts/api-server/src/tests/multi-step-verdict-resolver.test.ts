@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { multi_step_verdict_resolver } from '../lib/multi-step-governed-execution/multi-step-verdict-resolver';test('multi-step-verdict-resolver deterministic',()=>assert.equal(multi_step_verdict_resolver.deterministic,true));

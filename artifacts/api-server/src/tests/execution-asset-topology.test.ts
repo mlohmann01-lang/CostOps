@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { execution_asset_topology } from '../lib/execution-topology-realism/execution-asset-topology';test('execution-asset-topology deterministic',()=>assert.equal(execution_asset_topology.deterministic,true));

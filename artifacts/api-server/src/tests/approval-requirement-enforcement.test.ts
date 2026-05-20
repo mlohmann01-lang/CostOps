@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { buildVerdictCard } from '../lib/economic-operations-productization';
+test('approval requirement enforced',()=>{ const c=buildVerdictCard('t','M365','x','APPROVAL_REQUIRED'); assert.equal(c.approvalRequirement,'DIRECTOR'); assert.equal(c.nextOperatorAction,'APPROVE_OR_REJECT'); assert.equal(c.verdict,'APPROVAL_REQUIRED');});

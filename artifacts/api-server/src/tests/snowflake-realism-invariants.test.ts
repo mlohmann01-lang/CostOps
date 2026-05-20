@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { snowflake_action_semantics } from '../lib/connector-action-semantics/snowflake-action-semantics';
+test('shared snowflake warehouses elevate blast radius',()=>{ const a=snowflake_action_semantics[0]; assert.ok(a.blockedWhen.includes('shared_warehouse_contention_critical')); assert.equal(a.workloadContentionRisk,'HIGH'); assert.equal(a.dashboardDependencyRisk,'HIGH');});

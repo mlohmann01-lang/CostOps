@@ -1,1 +1,1 @@
-export const risksummarybuilder=(i:any)=>i;
+export const operationsrisksummarybuilder=(items:{provider:string;risk:string;propagationRisk:string;verificationDelay:string;}[])=>({providers:items.length,high:items.filter(i=>i.risk==='HIGH').length,withDelay:items.filter(i=>i.verificationDelay!=='LOW').length,propagationHotspots:items.filter(i=>i.propagationRisk==='HIGH').map(i=>i.provider)});

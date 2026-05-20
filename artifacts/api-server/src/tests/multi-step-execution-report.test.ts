@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { multi_step_execution_report } from '../lib/multi-step-governed-execution/multi-step-execution-report';test('multi-step-execution-report deterministic',()=>assert.equal(multi_step_execution_report.deterministic,true));

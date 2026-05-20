@@ -1,0 +1,1 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { data_residency_constraint } from '../lib/enterprise-operational-constraints/data-residency-constraint';test('data-residency-constraint deterministic',()=>assert.equal(data_residency_constraint.deterministic,true));

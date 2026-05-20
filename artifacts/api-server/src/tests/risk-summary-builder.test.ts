@@ -1,1 +1,2 @@
-import test from "node:test"; import assert from "node:assert/strict"; import * as m from "../lib/runtime-narrative-engine/risk-summary-builder"; test("risk-summary-builder",()=>{ assert.equal(Object.values(m).length>0,true); });
+import test from 'node:test';import assert from 'node:assert/strict';import { operationsrisksummarybuilder } from '../lib/runtime-narrative-engine/risk-summary-builder';
+test('risk summary aggregates propagation hotspots',()=>{ const r=operationsrisksummarybuilder([{provider:'M365',risk:'HIGH',propagationRisk:'HIGH',verificationDelay:'MEDIUM'},{provider:'SNOWFLAKE',risk:'MEDIUM',propagationRisk:'LOW',verificationDelay:'LOW'}]); assert.equal(r.providers,2); assert.equal(r.high,1); assert.deepEqual(r.propagationHotspots,['M365']);});
