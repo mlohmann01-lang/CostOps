@@ -30,7 +30,7 @@ export async function verifyOutcome(outcomeLedgerRow: OutcomeLedger) {
   const varianceAmount = verifiedMonthlySaving === null ? null : verifiedMonthlySaving - projectedMonthlySaving;
   const variancePct = verifiedMonthlySaving === null || projectedMonthlySaving === 0 ? null : (varianceAmount! / projectedMonthlySaving) * 100;
 
-  const [record] = await db.insert(outcomeVerificationsTable).values({ tenantId, outcomeLedgerId: outcomeLedgerRow.id, recommendationId: outcomeLedgerRow.recommendationId, verificationStatus, verificationConfidence, verificationSource, projectedMonthlySaving, verifiedMonthlySaving, varianceAmount, variancePct, evidence: { pricingConfidence: outcomeLedgerRow.pricingConfidence, pricingSource: outcomeLedgerRow.pricingSource, driftEvent: openDrift ?? null, pricingConflict: pricingConflict ?? null, ledgerCreatedAt: outcomeLedgerRow.createdAt } }).returning();
+  const [record] = await db.insert(outcomeVerificationsTable).values({ tenantId, outcomeLedgerId: outcomeLedgerRow.id, recommendationId: String(outcomeLedgerRow.recommendationId), verificationStatus, verificationConfidence, verificationSource, projectedMonthlySaving, verifiedMonthlySaving, varianceAmount, variancePct, evidence: { pricingConfidence: outcomeLedgerRow.pricingConfidence, pricingSource: outcomeLedgerRow.pricingSource, driftEvent: openDrift ?? null, pricingConflict: pricingConflict ?? null, ledgerCreatedAt: outcomeLedgerRow.createdAt } }).returning();
 
   return record;
 }

@@ -14,7 +14,7 @@ export class RecommendationOutcomeResolutionService {
     const projectedAnnualizedSavings = Number(recommendation.annualisedCost ?? projectedMonthlySavings * 12);
     const windowDays = WINDOWS[recommendation.playbookId ?? ""] ?? 7;
     const verifyAfter = new Date((recommendation.createdAt ?? new Date()).getTime() + windowDays * 86400000);
-    const ledgerRows = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId, tenantId), eq(outcomeLedgerTable.recommendationId, recommendationId), gte(outcomeLedgerTable.createdAt, recommendation.createdAt!)));
+    const ledgerRows = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.tenantId, tenantId), eq(outcomeLedgerTable.recommendationId, parseInt(recommendationId, 10)), gte(outcomeLedgerTable.createdAt, recommendation.createdAt!)));
     const now = new Date();
     const [latestSimulation] = await db.select().from(policySimulationsTable).where(eq(policySimulationsTable.tenantId, tenantId)).orderBy(desc(policySimulationsTable.createdAt)).limit(1);
     const hasLedger = ledgerRows.length > 0;

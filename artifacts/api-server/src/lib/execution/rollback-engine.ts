@@ -50,7 +50,7 @@ export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?
   const [event] = await db.insert(rollbackEventsTable).values({
     tenantId: input.tenantId,
     originalOutcomeLedgerId: String(outcome.id),
-    recommendationId: outcome.recommendationId,
+    recommendationId: String(outcome.recommendationId),
     rollbackAction: rollbackPayload.action,
     actorId: input.actorId ?? "",
     status: "EXECUTED",

@@ -11,7 +11,25 @@ function requestedTenant(req: Request): string | null {
 export function requireTenantContext() {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = buildAuthContext(req);
-    const tenantId = requestedTenant(req) ?? auth.tenantId;
+    const tenantId = requestedTenant(req);
+
+    if (!tenantId) {
+      const isDevFallbackAllowed =
+        process.env.NODE_ENV !== "production" || process.env.ALLOW_DEFAULT_TENANT === "true";
+      if (isDevFallbackAllowed) {
+        (req as any).tenantId = auth.tenantId ?? "default";
+        next();
+        return;
+      }
+      res.status(400).json({ error: "TENANT_CONTEXT_REQUIRED" });
+      return;
+    }
+
+    if (auth.role !== "PLATFORM_ADMIN" && auth.tenantId !== tenantId) {
+      res.status(403).json({ error: "TENANT_ACCESS_DENIED" });
+      return;
+    }
+
     (req as any).tenantId = tenantId;
     next();
     return;
@@ -21,17 +39,26 @@ export function requireTenantContext() {
 export function requireCapability(capability: Capability) {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = buildAuthContext(req);
-    if (!authorizationService.hasCapability(auth.role, capability)) { res.status(403).json({ error: "CAPABILITY_FORBIDDEN", capability }); return; }
+    if (!authorizationService.hasCapability(auth.role, capability)) {
+      res.status(403).json({ error: "CAPABILITY_FORBIDDEN", capability });
+      return;
+    }
     next();
     return;
   };
 }
 
-export function requireTenantResourceAccess(_resourceType: string, resourceTenantIdResolver: (req: Request) => string) {
+export function requireTenantResourceAccess(
+  _resourceType: string,
+  resourceTenantIdResolver: (req: Request) => string,
+) {
   return (req: Request, res: Response, next: NextFunction) => {
     const auth = buildAuthContext(req);
     const tenantId = resourceTenantIdResolver(req);
-    if (auth.role !== "PLATFORM_ADMIN" && auth.tenantId !== tenantId) { res.status(403).json({ error: "RESOURCE_TENANT_ACCESS_DENIED" }); return; }
+    if (auth.role !== "PLATFORM_ADMIN" && auth.tenantId !== tenantId) {
+      res.status(403).json({ error: "RESOURCE_TENANT_ACCESS_DENIED" });
+      return;
+    }
     next();
     return;
   };

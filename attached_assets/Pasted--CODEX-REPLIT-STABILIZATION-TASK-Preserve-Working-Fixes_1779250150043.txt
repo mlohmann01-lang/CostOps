@@ -1,0 +1,227 @@
+# CODEX/REPLIT STABILIZATION TASK: Preserve Working Fixes Without Regressing Architecture
+
+## Context
+
+Replit created commit:
+
+`0807a9f Refactor API to streamline data handling and improve security`
+
+It made the app work, but the commit is too destructive to push as-is.
+
+Observed changes:
+
+* `connectors.ts`: 272 lines heavily deleted
+* `routes/index.ts`: most routes removed
+* `lib/db/src/schema/index.ts`: 60 lines deleted
+* `recommendations.ts`: heavily rewritten
+* `outcomeLedger.ts` and `recommendations.ts` schemas reverted to match current DB
+* `App.tsx`: ~25 ghost routes removed
+* navigation trimmed
+* approve/reject fixed
+* tenant fallback added
+
+Goal:
+
+Keep the live app working, but do not regress the economic operations architecture, connectors, schemas, or route registry.
+
+---
+
+# Required Approach
+
+Do not continue from commit `0807a9f` as final.
+
+Create a stabilization branch from current state, then perform a reconciliation.
+
+## Preserve These Useful Fixes
+
+Keep or re-implement safely:
+
+1. `requireTenantContext` no-header fallback for local/dev only
+2. dashboard/outcomes fix removing invalid `.executed` column reference
+3. approve/reject endpoints compatibility:
+
+   * `POST /api/execution/approve/:id`
+   * `POST /api/execution/reject/:id`
+4. UI route/nav simplification only if routes are genuinely broken
+5. generated hook compatibility
+6. app no longer crashes
+7. end-to-end approve/reject/ledger flow passes
+
+---
+
+# Critical Guardrails
+
+Do NOT:
+
+* delete advanced connector routes
+* delete economic operations routes
+* delete route registry entries wholesale
+* revert DB schema to match stale DB as the long-term fix
+* remove architecture modules just because current DB lacks columns
+* bypass tenant isolation in production
+* make `default` tenant fallback active in production
+* simplify governed execution into a basic approve/reject app
+* delete advanced schema columns without migration review
+
+---
+
+# Correct Fix Strategy
+
+## 1. Tenant Fallback
+
+`requireTenantContext` may fallback to `default` only when:
+
+```ts
+NODE_ENV !== "production"
+```
+
+or explicit env flag:
+
+```ts
+ALLOW_DEFAULT_TENANT=true
+```
+
+In production, missing tenant header must still reject.
+
+Add test coverage.
+
+---
+
+## 2. Schema Mismatch
+
+Do not permanently delete advanced schema fields.
+
+Instead:
+
+* identify actual DB columns
+* identify schema columns
+* create migration plan
+* add compatibility adapter if needed
+* avoid selecting non-existent columns in live routes until migration is applied
+
+Preferred interim fix:
+
+* route-level explicit column select for current live pages
+* keep schema model intact if needed by future modules
+* add migration backlog doc
+
+Do not use schema deletion as the default fix.
+
+---
+
+## 3. Route Registry
+
+Restore route registry entries unless they are provably broken.
+
+If routes crash due to schema mismatch, gate them safely with:
+
+* readiness response
+* 501 not enabled
+* degraded mode
+* feature flag
+* clear JSON error
+
+Do not remove them silently.
+
+---
+
+## 4. Connectors Route
+
+Restore connector route functionality.
+
+If DB-backed connector tables do not exist yet, return deterministic readiness/degraded responses.
+
+Do not delete connector surface area.
+
+Connector UX depends on this.
+
+---
+
+## 5. App Ghost Pages
+
+It is acceptable to remove broken nav exposure.
+
+But do not delete page imports/routes permanently without replacing them with:
+
+* stable placeholder
+* “not enabled yet”
+* feature-flag guard
+* safe route shell
+
+The app should not crash, but future product surfaces should not disappear from codebase blindly.
+
+---
+
+## 6. Recommendations / Execution Compatibility
+
+Keep simple working endpoints for:
+
+* list recommendations
+* get recommendation by id
+* approve
+* reject
+* ledger write/update
+
+But preserve governed execution compatibility and economic operations direction.
+
+---
+
+# Required Inspection
+
+Compare commit `0807a9f` against previous main:
+
+```bash
+git diff 217496d..0807a9f --stat
+git diff 217496d..0807a9f -- artifacts/api-server/src/routes/connectors.ts
+git diff 217496d..0807a9f -- artifacts/api-server/src/routes/index.ts
+git diff 217496d..0807a9f -- lib/db/src/schema/index.ts
+git diff 217496d..0807a9f -- lib/db/src/schema/recommendations.ts
+git diff 217496d..0807a9f -- lib/db/src/schema/outcomeLedger.ts
+```
+
+Then produce a reconciliation patch.
+
+---
+
+# Acceptance Criteria
+
+Final state must satisfy:
+
+```bash
+pnpm typecheck
+pnpm test
+```
+
+And specifically:
+
+```bash
+COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --filter @workspace/api-server typecheck
+COREPACK_ENABLE_PROJECT_SPEC=0 pnpm --filter @workspace/api-server test -- recommendations execution connectors dashboard outcomes economic-operations
+cd artifacts/mockup-sandbox && pnpm typecheck && pnpm ux:enforce && pnpm build
+```
+
+App-level manual checks:
+
+* dashboard loads
+* recommendations load
+* approve works
+* reject works
+* ledger/outcome view works
+* connectors route responds safely
+* economic operations route remains mounted
+* no missing tenant header crash in local/dev
+* production tenant isolation remains enforced
+
+---
+
+# Deliverable
+
+Create a new commit that:
+
+* keeps live app working
+* restores/protects architecture
+* avoids destructive schema simplification
+* preserves future economic operations/control surfaces
+* documents any DB migration gap
+
+Do not push until reviewed.

@@ -1,22 +1,73 @@
-import { pgTable, serial, text, real, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, integer, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const recommendationsTable = pgTable("recommendations", {
   id: serial("id").primaryKey(),
+
+  tenantId: text("tenant_id").notNull().default("default"),
+
   userEmail: text("user_email").notNull(),
   displayName: text("display_name").notNull(),
   licenceSku: text("licence_sku").notNull(),
   monthlyCost: real("monthly_cost").notNull(),
   annualisedCost: real("annualised_cost").notNull(),
+
+  pricingConfidence: text("pricing_confidence").notNull().default("UNKNOWN"),
+  pricingSource: text("pricing_source").notNull().default(""),
+
   trustScore: real("trust_score").notNull(),
+  entityTrustScore: real("entity_trust_score").notNull().default(0),
+  recommendationTrustScore: real("recommendation_trust_score").notNull().default(0),
+  executionReadinessScore: real("execution_readiness_score").notNull().default(0),
   executionStatus: text("execution_status").notNull(),
+
+  criticalBlockers: jsonb("critical_blockers").notNull().default([]),
+  warnings: jsonb("warnings").notNull().default([]),
+  scoreBreakdown: jsonb("score_breakdown").notNull().default({}),
+
   status: text("status").notNull().default("pending"),
+
   playbook: text("playbook").notNull(),
+  playbookId: text("playbook_id").notNull().default(""),
+  playbookName: text("playbook_name").notNull().default(""),
+  playbookEvidence: jsonb("playbook_evidence").notNull().default({}),
+  playbookRequiredSignals: jsonb("playbook_required_signals").notNull().default([]),
+  playbookExclusions: jsonb("playbook_exclusions").notNull().default([]),
+
+  evaluationEventId: text("evaluation_event_id").notNull().default(""),
+
   connector: text("connector").notNull(),
+  ingestionRunId: text("ingestion_run_id").notNull().default(""),
+  sourceTimestamp: timestamp("source_timestamp", { withTimezone: true }),
+  connectorHealth: text("connector_health").notNull().default("HEALTHY"),
+  dataFreshnessScore: real("data_freshness_score").notNull().default(1.0),
+  freshnessBand: text("freshness_band").notNull().default("0_7"),
+  partialData: text("partial_data").notNull().default("false"),
+  connectorHealthSnapshot: jsonb("connector_health_snapshot").notNull().default({}),
+
   lastActivity: timestamp("last_activity", { withTimezone: true }),
   daysSinceActivity: integer("days_since_activity"),
   rejectionReason: text("rejection_reason"),
+
+  actionType: text("action_type").notNull().default(""),
+  targetEntityId: text("target_entity_id").notNull().default(""),
+  targetEntityType: text("target_entity_type").notNull().default("USER"),
+
+  evidenceSummary: jsonb("evidence_summary").notNull().default({}),
+  trustRequirements: jsonb("trust_requirements").notNull().default([]),
+
+  expectedMonthlySaving: real("expected_monthly_saving").notNull().default(0),
+  expectedAnnualSaving: real("expected_annual_saving").notNull().default(0),
+
+  recommendationRiskClass: text("recommendation_risk_class").notNull().default("B"),
+  recommendationExecutionMode: text("recommendation_execution_mode").notNull().default("APPROVAL_REQUIRED"),
+  recommendationVerificationMethod: text("recommendation_verification_method").notNull().default(""),
+  rollbackNotes: text("rollback_notes").notNull().default(""),
+  recommendationStatus: text("recommendation_status").notNull().default("CANDIDATE"),
+  latestRationaleId: text("latest_rationale_id").notNull().default(""),
+  correlationId: text("correlation_id").notNull().default(""),
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

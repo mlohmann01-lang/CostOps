@@ -11,7 +11,7 @@ export async function checkExistingExecution(recommendationId: string, action: s
   const [existing] = await db
     .select()
     .from(outcomeLedgerTable)
-    .where(and(eq(outcomeLedgerTable.idempotencyKey, idempotencyKey), eq(outcomeLedgerTable.recommendationId, recommendationId), eq(outcomeLedgerTable.action, action)));
+    .where(and(eq(outcomeLedgerTable.idempotencyKey, idempotencyKey), eq(outcomeLedgerTable.recommendationId, parseInt(recommendationId, 10)), eq(outcomeLedgerTable.action, action)));
 
   return { idempotencyKey, existing };
 }
