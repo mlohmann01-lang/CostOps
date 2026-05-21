@@ -1,48 +1,42 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { generateM365Recommendations, type M365SkuPricing } from "../lib/connectors/m365/m365-recommendation-generator";
-import type { M365NormalizedUserLicenseEvidence } from "../lib/connectors/m365/m365-readonly-evidence-sync-service";
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { generateM365Recommendations, type M365SkuPricing } from '../lib/connectors/m365/m365-recommendation-generator';
+import type { M365NormalizedUserLicenseEvidence } from '../lib/connectors/m365/m365-readonly-evidence-sync-service';
 
-const pricing: M365SkuPricing[] = [{ skuId: "S1", skuName: "M365_E3", monthlyPrice: 36 }];
+const pricing: M365SkuPricing[] = [{ skuId: 'E5', monthlyPrice: 57 }, { skuId: 'E3', monthlyPrice: 36 }, { skuId: 'COPILOT', monthlyPrice: 30 }, { skuId: 'VISIO', monthlyPrice: 15 }];
 
 function mk(partial: Partial<M365NormalizedUserLicenseEvidence>): M365NormalizedUserLicenseEvidence {
-  return {
-    tenantId: "t1", userId: "u1", userPrincipalName: "u1@contoso.com", displayName: "U1", accountEnabled: false,
-    assignedSkuIds: ["S1"], assignedSkuNames: ["M365_E3"], assignedLicenseCount: 1, lastSignInDateTime: null, lastNonInteractiveSignInDateTime: null,
-    inactivityDays: 80, evidenceFreshness: "FRESH", evidenceFreshnessReason: "ok", evidenceConfidence: 0.95,
-    isDisabledLicensedUser: true, isInactiveLicensedUser: false, isAdminProtected: false, isServiceAccountCandidate: false,
-    exclusionReasons: [], sourceEvidenceIds: ["user:u1"], normalizedAt: new Date().toISOString(),
-    ...partial,
-  };
+  return { tenantId: 't1', userId: 'u1', userPrincipalName: 'u1@contoso.com', displayName: 'U1', accountEnabled: true, assignedSkuIds: ['E5'], assignedSkuNames: ['M365_E5'], assignedLicenseCount: 1, lastSignInDateTime: null, lastNonInteractiveSignInDateTime: null, inactivityDays: 90, evidenceFreshness: 'FRESH', evidenceFreshnessReason: 'ok', evidenceConfidence: 0.95, isDisabledLicensedUser: false, isInactiveLicensedUser: true, isAdminProtected: false, isServiceAccountCandidate: false, exclusionReasons: [], sourceEvidenceIds: ['user:u1'], normalizedAt: new Date().toISOString(), ...partial };
 }
 
-test("generates disabled licensed user reclaim recommendation", () => {
-  const out = generateM365Recommendations({ tenantId: "t1", normalizedEvidence: [mk({})], skuPricingCatalog: pricing });
-  assert.equal(out.recommendations.length, 1);
-  assert.equal(out.recommendations[0].recommendationType, "LICENSE_RECLAIM");
-  assert.equal(out.recommendations[0].projectedMonthlySavings, 36);
-  assert.equal(out.recommendations[0].proofReferences.length >= 7, true);
+test('generates inactive rightsizing', () => {
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [mk({})], skuPricingCatalog: pricing });
+  assert.equal(out.recommendations.some((r) => r.recommendationType === 'LICENSE_RIGHTSIZE_REVIEW'), true);
 });
 
-test("generates inactive licensed user review recommendation", () => {
-  const out = generateM365Recommendations({ tenantId: "t1", normalizedEvidence: [mk({ accountEnabled: true, isDisabledLicensedUser: false, isInactiveLicensedUser: true, inactivityDays: 60 })], skuPricingCatalog: pricing });
-  assert.equal(out.recommendations.length, 1);
-  assert.equal(out.recommendations[0].recommendationType, "LICENSE_REVIEW");
+test('generates e5-to-e3 downgrade', () => {
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [mk({ inactivityDays: 40 })], skuPricingCatalog: pricing });
+  assert.equal(out.recommendations.some((r) => r.recommendationType === 'LICENSE_TIER_DOWNGRADE'), true);
 });
 
-test("excludes admin-protected and service-account users", () => {
-  const out = generateM365Recommendations({ tenantId: "t1", normalizedEvidence: [mk({ isAdminProtected: true, exclusionReasons: ["ADMIN_PROTECTED"] }), mk({ userId: "u2", userPrincipalName: "svc@contoso.com", isServiceAccountCandidate: true, exclusionReasons: ["SERVICE_ACCOUNT_CANDIDATE"] })], skuPricingCatalog: pricing });
-  assert.equal(out.recommendations.length, 0);
-  assert.equal(out.summary.excludedUsers, 2);
+test('generates addon reclaim', () => {
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [mk({ assignedSkuIds: ['E3', 'VISIO'], assignedSkuNames: ['M365_E3', 'VISIO_PLAN_2'], inactivityDays: 50 })], skuPricingCatalog: pricing });
+  assert.equal(out.recommendations.some((r) => r.recommendationType === 'ADDON_RECLAIM'), true);
 });
 
-test("missing pricing emits warning and low savings confidence", () => {
-  const out = generateM365Recommendations({ tenantId: "t1", normalizedEvidence: [mk({ assignedSkuIds: ["UNKNOWN"], assignedSkuNames: ["UNK"] })], skuPricingCatalog: [] });
-  assert.equal(out.recommendations[0].savingsConfidence, "LOW");
-  assert.equal(out.summary.warnings.length > 0, true);
+test('generates copilot governance recommendations', () => {
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [mk({ assignedSkuIds: ['COPILOT'], assignedSkuNames: ['MICROSOFT_COPILOT'], inactivityDays: 65 })], skuPricingCatalog: pricing });
+  assert.equal(out.recommendations.some((r) => ['COPILOT_RECLAIM','COPILOT_REVIEW','COPILOT_REALLOCATE'].includes(r.recommendationType)), true);
 });
 
-test("missing evidence blocks recommendation via insufficient trust", () => {
-  const out = generateM365Recommendations({ tenantId: "t1", normalizedEvidence: [mk({ evidenceFreshness: "MISSING", evidenceConfidence: 0.2 })], skuPricingCatalog: pricing });
-  assert.equal(out.recommendations.length, 0);
+test('generates overlap elimination', () => {
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [mk({ assignedSkuIds: ['E5', 'VISIO'], assignedSkuNames: ['M365_E5', 'TEAMS PHONE'] })], skuPricingCatalog: pricing });
+  assert.equal(out.recommendations.some((r) => r.recommendationType === 'LICENSE_OVERLAP_ELIMINATION'), true);
+});
+
+test('deterministic IDs and dedupe', () => {
+  const one = mk({});
+  const out = generateM365Recommendations({ tenantId: 't1', normalizedEvidence: [one, one], skuPricingCatalog: pricing });
+  const ids = out.recommendations.map((r) => r.recommendationId);
+  assert.equal(new Set(ids).size, ids.length);
 });

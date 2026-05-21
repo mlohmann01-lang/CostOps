@@ -1,158 +1,86 @@
-import type { EvidenceFreshnessState, M365NormalizedUserLicenseEvidence } from "./m365-readonly-evidence-sync-service";
+import { createHash } from 'node:crypto';
+import type { EvidenceFreshnessState, M365NormalizedUserLicenseEvidence } from './m365-readonly-evidence-sync-service';
+import { M365_FEATURE_UTILIZATION_CLASSIFIER, M365_LICENSE_PRICING_CATALOG, M365_PLAYBOOK_REGISTRY, type M365EconomicRecommendationType } from './m365-economic-operations-registry';
 
-export type M365SavingsConfidence = "HIGH" | "MEDIUM" | "LOW";
-export type M365TrustScore = "HIGH" | "MEDIUM" | "LOW" | "INSUFFICIENT";
-
+export type M365SavingsConfidence = 'HIGH' | 'MEDIUM' | 'LOW';
+export type M365TrustScore = 'HIGH' | 'MEDIUM' | 'LOW' | 'INSUFFICIENT';
 export type M365SkuPricing = { skuId: string; skuName?: string; monthlyPrice: number; currency?: string };
-export type M365RecommendationType = "LICENSE_RECLAIM" | "LICENSE_REVIEW";
 
-export type M365GeneratedRecommendation = {
-  tenantId: string;
-  provider: "Microsoft 365";
-  playbookId: "m365-disabled-licensed-user-reclaim" | "m365-inactive-licensed-user-review";
-  recommendationType: M365RecommendationType;
-  affectedUserId: string;
-  affectedUserPrincipalName: string;
-  affectedDisplayName: string;
-  assignedSkuIds: string[];
-  assignedSkuNames: string[];
-  assignedLicenseCount: number;
+export type M365OperationalRecommendation = {
+  recommendationId: string;
+  playbookId: string;
+  recommendationType: M365EconomicRecommendationType;
+  provider: 'Microsoft 365';
+  affectedUser: { userId: string; userPrincipalName: string; displayName: string; department?: string };
+  affectedLicenses: string[];
   projectedMonthlySavings: number;
   projectedAnnualSavings: number;
-  savingsConfidence: M365SavingsConfidence;
-  trustScore: M365TrustScore;
+  trustLevel: M365TrustScore;
+  confidenceReasoning: string;
+  utilizationReasoning: string;
   evidenceFreshness: EvidenceFreshnessState;
   evidenceConfidence: number;
-  approvalRequirement: "REQUIRED" | "RECOMMENDED";
-  rollbackFeasibility: "HIGH" | "MEDIUM" | "LOW";
-  blastRadius: "LOW" | "MEDIUM";
-  verificationStrategy: string;
+  simulationSupport: boolean;
+  rollbackSupport: boolean;
+  approvalRequirement: 'REQUIRED' | 'RECOMMENDED';
+  blastRadiusClass: 'LOW' | 'MEDIUM' | 'HIGH';
   proofReferences: string[];
-  exclusionReasons: string[];
-  currentState: string;
   recommendedAction: string;
+  verificationStrategy: string;
+  driftStrategy: string;
+  currentState: string;
+  exclusionReasons: string[];
   createdAt: string;
-  calculationExplanation: string;
 };
 
-export type M365RecommendationGenerationSummary = {
-  usersEvaluated: number;
-  recommendationsGenerated: number;
-  disabledLicensedUserRecommendations: number;
-  inactiveLicensedUserRecommendations: number;
-  excludedUsers: number;
-  totalProjectedMonthlySavings: number;
-  totalProjectedAnnualSavings: number;
-  averageTrustScore: number;
-  warnings: string[];
-};
-
-export type M365RecommendationGenerationOptions = {
-  inactivityDaysThreshold?: number;
-  evidenceConfidenceThreshold?: number;
-  confidenceAdjustment?: number;
-};
-
-const trustNumeric: Record<M365TrustScore, number> = { HIGH: 1, MEDIUM: 0.7, LOW: 0.4, INSUFFICIENT: 0.1 };
-
-function computeTrustScore(user: M365NormalizedUserLicenseEvidence): M365TrustScore {
-  if (user.evidenceFreshness === "MISSING" || user.assignedLicenseCount <= 0) return "INSUFFICIENT";
-  if (user.exclusionReasons.length > 0) return "LOW";
-  if (user.evidenceFreshness === "FRESH" && user.evidenceConfidence >= 0.85) return "HIGH";
-  if (user.evidenceConfidence >= 0.6) return "MEDIUM";
-  return "LOW";
-}
-
-function calculateSavings(input: { assignedSkuIds: string[]; assignedSkuNames: string[]; pricing: M365SkuPricing[]; confidenceAdjustment: number; freshness: EvidenceFreshnessState }): { monthly: number; annual: number; confidence: M365SavingsConfidence; explanation: string; warnings: string[] } {
-  const warnings: string[] = [];
-  const pricingById = new Map(input.pricing.map((p) => [p.skuId, p]));
-  const prices = input.assignedSkuIds.map((id) => pricingById.get(id)?.monthlyPrice ?? null);
-  const missing = input.assignedSkuIds.filter((id, idx) => prices[idx] == null);
-  const base = prices.reduce<number>((sum, p) => sum + (p ?? 0), 0);
-  const freshnessMultiplier = input.freshness === "FRESH" ? 1 : input.freshness === "STALE" ? 0.85 : 0.7;
-  const adjusted = Math.max(0, base * freshnessMultiplier * input.confidenceAdjustment);
-  const confidence: M365SavingsConfidence = missing.length > 0 ? "LOW" : input.freshness === "FRESH" ? "HIGH" : "MEDIUM";
-  if (missing.length > 0) warnings.push(`Missing pricing for SKU IDs: ${missing.join(",")}`);
-  const explanation = `baseMonthly=${base.toFixed(2)} freshnessMultiplier=${freshnessMultiplier} confidenceAdjustment=${input.confidenceAdjustment.toFixed(2)} missingPricing=${missing.length}`;
-  return { monthly: Number(adjusted.toFixed(2)), annual: Number((adjusted * 12).toFixed(2)), confidence, explanation, warnings };
-}
-
-export function generateM365Recommendations(input: { tenantId: string; normalizedEvidence: M365NormalizedUserLicenseEvidence[]; skuPricingCatalog: M365SkuPricing[]; generationOptions?: M365RecommendationGenerationOptions }): { recommendations: M365GeneratedRecommendation[]; summary: M365RecommendationGenerationSummary } {
-  const options = input.generationOptions ?? {};
-  const inactivityThreshold = options.inactivityDaysThreshold ?? 45;
-  const evidenceThreshold = options.evidenceConfidenceThreshold ?? 0.6;
-  const confidenceAdjustment = options.confidenceAdjustment ?? 1;
-
+export function generateM365Recommendations(input: { tenantId: string; normalizedEvidence: M365NormalizedUserLicenseEvidence[]; skuPricingCatalog: M365SkuPricing[]; generationOptions?: { inactivityDaysThreshold?: number } }): { recommendations: M365OperationalRecommendation[]; summary: { usersEvaluated: number; recommendationsGenerated: number; warnings: string[] } } {
+  const inactivityThreshold = input.generationOptions?.inactivityDaysThreshold ?? 45;
+  const bySku = new Map(input.skuPricingCatalog.map((p) => [p.skuId.toUpperCase(), p.monthlyPrice]));
+  const recs: M365OperationalRecommendation[] = [];
   const warnings = new Set<string>();
-  const recommendations: M365GeneratedRecommendation[] = [];
+  const mkId = (u: M365NormalizedUserLicenseEvidence, playbookId: string, kind: string) => createHash('sha256').update(`${input.tenantId}|${u.userId}|${playbookId}|${kind}|${u.assignedSkuIds.sort().join(',')}`).digest('hex').slice(0, 24);
+  const trust = (u: M365NormalizedUserLicenseEvidence): M365TrustScore => u.evidenceFreshness === 'FRESH' ? 'HIGH' : u.evidenceFreshness === 'STALE' ? 'MEDIUM' : 'LOW';
+  const price = (sku: string) => bySku.get(sku.toUpperCase()) ?? M365_LICENSE_PRICING_CATALOG[sku.toUpperCase() as keyof typeof M365_LICENSE_PRICING_CATALOG] ?? 0;
 
-  for (const user of input.normalizedEvidence) {
-    const trustScore = computeTrustScore(user);
-    if (user.exclusionReasons.length > 0 || trustScore === "INSUFFICIENT") continue;
+  for (const u of input.normalizedEvidence) {
+    if (u.exclusionReasons.length > 0 || u.assignedLicenseCount === 0) continue;
+    const isInactive = u.accountEnabled && (u.inactivityDays ?? 0) >= inactivityThreshold;
+    const hasE5 = u.assignedSkuNames.some((s) => /E5/i.test(s));
+    const hasCopilot = u.assignedSkuNames.some((s) => /COPILOT/i.test(s));
+    const addOns = u.assignedSkuNames.filter((s) => /(POWER BI|TEAMS PHONE|AUDIO|VISIO|PROJECT|DEFENDER|FABRIC|COPILOT)/i.test(s));
+    const overlap = u.assignedSkuNames.some((s) => /E5/i.test(s)) && addOns.some((s) => /(TEAMS PHONE|POWER BI|DEFENDER)/i.test(s));
+    const tier = M365_FEATURE_UTILIZATION_CLASSIFIER.classifyTierNeed(Math.max(0, Math.min(1, ((u.inactivityDays ?? 0) / 120))));
 
-    const disabledEligible = user.accountEnabled === false && user.assignedLicenseCount > 0 && user.isAdminProtected === false && user.isServiceAccountCandidate === false && user.exclusionReasons.length === 0 && user.evidenceFreshness !== "MISSING" && user.evidenceConfidence >= evidenceThreshold;
-    const inactiveEligible = user.accountEnabled === true && user.assignedLicenseCount > 0 && (user.inactivityDays ?? 0) >= inactivityThreshold && user.isAdminProtected === false && user.isServiceAccountCandidate === false && user.evidenceFreshness !== "MISSING";
+    const push = (playbookId: string, recommendationType: M365EconomicRecommendationType, affected: string[], util: string, action: string, monthly: number) => {
+      const reg = M365_PLAYBOOK_REGISTRY[playbookId];
+      recs.push({ recommendationId: mkId(u, playbookId, recommendationType), playbookId, recommendationType, provider: 'Microsoft 365', affectedUser: { userId: u.userId, userPrincipalName: u.userPrincipalName, displayName: u.displayName }, affectedLicenses: affected, projectedMonthlySavings: Number(monthly.toFixed(2)), projectedAnnualSavings: Number((monthly * 12).toFixed(2)), trustLevel: trust(u), confidenceReasoning: `freshness=${u.evidenceFreshness};confidence=${u.evidenceConfidence.toFixed(2)}`, utilizationReasoning: util, evidenceFreshness: u.evidenceFreshness, evidenceConfidence: u.evidenceConfidence, simulationSupport: reg.simulationSupport, rollbackSupport: reg.rollbackSupport, approvalRequirement: reg.approvalRequirement, blastRadiusClass: reg.blastRadiusClass, proofReferences: [`m365:user:${u.userId}`, `m365:licenses:${u.userId}`, `m365:activity:${u.userId}`, `m365:playbook:${playbookId}`], recommendedAction: action, verificationStrategy: reg.verificationStrategy, driftStrategy: reg.driftStrategy, currentState: util, exclusionReasons: [], createdAt: new Date().toISOString() });
+    };
 
-    if (!disabledEligible && !inactiveEligible) continue;
-
-    const savings = calculateSavings({ assignedSkuIds: user.assignedSkuIds, assignedSkuNames: user.assignedSkuNames, pricing: input.skuPricingCatalog, confidenceAdjustment, freshness: user.evidenceFreshness });
-    for (const w of savings.warnings) warnings.add(`${user.userPrincipalName}: ${w}`);
-    const recommendationType: M365RecommendationType = disabledEligible ? "LICENSE_RECLAIM" : "LICENSE_REVIEW";
-
-    recommendations.push({
-      tenantId: input.tenantId,
-      provider: "Microsoft 365",
-      playbookId: disabledEligible ? "m365-disabled-licensed-user-reclaim" : "m365-inactive-licensed-user-review",
-      recommendationType,
-      affectedUserId: user.userId,
-      affectedUserPrincipalName: user.userPrincipalName,
-      affectedDisplayName: user.displayName,
-      assignedSkuIds: user.assignedSkuIds,
-      assignedSkuNames: user.assignedSkuNames,
-      assignedLicenseCount: user.assignedLicenseCount,
-      projectedMonthlySavings: savings.monthly,
-      projectedAnnualSavings: savings.annual,
-      savingsConfidence: savings.confidence,
-      trustScore,
-      evidenceFreshness: user.evidenceFreshness,
-      evidenceConfidence: user.evidenceConfidence,
-      approvalRequirement: disabledEligible ? "REQUIRED" : "RECOMMENDED",
-      rollbackFeasibility: "HIGH",
-      blastRadius: user.assignedLicenseCount > 3 ? "MEDIUM" : "LOW",
-      verificationStrategy: disabledEligible ? "Verify license reclaim in simulation and post-change Graph assignment check." : "Review inactivity evidence, simulate impact, then approve any reclaim.",
-      proofReferences: [
-        `m365:account-status:${user.userId}`,
-        `m365:license-assignment:${user.userId}`,
-        `m365:activity:${user.userId}`,
-        `m365:protection:${user.userId}`,
-        `m365:savings-calculation:${user.userId}`,
-        `m365:rollback-feasibility:${user.userId}`,
-        `m365:verification-strategy:${user.userId}`,
-      ],
-      exclusionReasons: user.exclusionReasons,
-      currentState: disabledEligible ? "Disabled user still holds active licenses." : `Enabled licensed user inactive for ${user.inactivityDays ?? "unknown"} days.`,
-      recommendedAction: disabledEligible ? "Queue governed reclaim recommendation for assigned licenses." : "Queue governed review and simulation before reclaim.",
-      createdAt: new Date().toISOString(),
-      calculationExplanation: savings.explanation,
-    });
+    if (isInactive) {
+      const target = hasE5 ? 'E5→E3' : 'E3→F3/Web';
+      push('m365-inactive-user-rightsizing', 'LICENSE_RIGHTSIZE_REVIEW', u.assignedSkuNames, `inactiveDays=${u.inactivityDays};target=${target};serviceLossRisk=MEDIUM`, `Review rightsizing (${target}) with simulation before approval`, u.assignedSkuIds.reduce((n, s) => n + price(s), 0) * 0.5);
+    }
+    if (hasE5 && tier !== 'E5_REQUIRED') {
+      push('m365-e5-to-e3-downgrade', 'LICENSE_TIER_DOWNGRADE', u.assignedSkuNames.filter((s) => /E5|E3/i.test(s)), `E5 capabilities underused; retained E3 baseline likely sufficient; tierSignal=${tier}`, 'Downgrade E5 to E3 with safety checks and rollback ready', Math.max(0, (M365_LICENSE_PRICING_CATALOG.E5 - M365_LICENSE_PRICING_CATALOG.E3)));
+    }
+    if (addOns.length > 0 && ((u.inactivityDays ?? 0) >= 30 || u.evidenceFreshness !== 'FRESH')) {
+      push('m365-addon-reclaim', 'ADDON_RECLAIM', addOns, `addonCount=${addOns.length};usageLow=true;threshold=30d`, 'Reclaim unused add-ons with post-removal verification', addOns.reduce((n, s) => n + price(s), 0) * 0.7);
+    }
+    if (hasCopilot) {
+      const days = u.inactivityDays ?? 0;
+      const type: M365EconomicRecommendationType = days >= 60 ? 'COPILOT_RECLAIM' : days >= 30 ? 'COPILOT_REALLOCATE' : 'COPILOT_REVIEW';
+      push('m365-copilot-reclamation-governance', type, u.assignedSkuNames.filter((s) => /COPILOT/i.test(s)), `copilotAssigned=true;inactivityDays=${days};governance=HIGH_COST`, type === 'COPILOT_RECLAIM' ? 'Reclaim inactive Copilot licenses' : type === 'COPILOT_REALLOCATE' ? 'Reallocate Copilot to higher-usage cohort' : 'Review Copilot assignment', M365_LICENSE_PRICING_CATALOG.COPILOT);
+    }
+    if (overlap) {
+      push('m365-license-overlap-elimination', 'LICENSE_OVERLAP_ELIMINATION', u.assignedSkuNames, 'detected overlapping conferencing/security/BI capabilities; candidate ranking=HIGH', 'Eliminate overlapping licenses with supersedence proof', Math.max(5, addOns.reduce((n, s) => n + price(s), 0) * 0.5));
+    }
   }
 
-  const trustValues = recommendations.map((r) => trustNumeric[r.trustScore]);
-  const totalMonthly = recommendations.reduce((sum, r) => sum + r.projectedMonthlySavings, 0);
-  const totalAnnual = recommendations.reduce((sum, r) => sum + r.projectedAnnualSavings, 0);
+  const dedup = new Map<string, M365OperationalRecommendation>();
+  for (const r of recs) {
+    const k = `${r.playbookId}:${r.affectedUser.userId}:${r.recommendationType}:${r.affectedLicenses.sort().join(',')}`;
+    if (!dedup.has(k)) dedup.set(k, r);
+  }
 
-  return {
-    recommendations,
-    summary: {
-      usersEvaluated: input.normalizedEvidence.length,
-      recommendationsGenerated: recommendations.length,
-      disabledLicensedUserRecommendations: recommendations.filter((r) => r.recommendationType === "LICENSE_RECLAIM").length,
-      inactiveLicensedUserRecommendations: recommendations.filter((r) => r.recommendationType === "LICENSE_REVIEW").length,
-      excludedUsers: input.normalizedEvidence.filter((u) => u.exclusionReasons.length > 0).length,
-      totalProjectedMonthlySavings: Number(totalMonthly.toFixed(2)),
-      totalProjectedAnnualSavings: Number(totalAnnual.toFixed(2)),
-      averageTrustScore: trustValues.length > 0 ? Number((trustValues.reduce((a, b) => a + b, 0) / trustValues.length).toFixed(2)) : 0,
-      warnings: [...warnings],
-    },
-  };
+  return { recommendations: [...dedup.values()], summary: { usersEvaluated: input.normalizedEvidence.length, recommendationsGenerated: dedup.size, warnings: [...warnings] } };
 }
