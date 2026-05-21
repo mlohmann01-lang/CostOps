@@ -23,6 +23,7 @@ import { globalPackRegistry } from '../lib/economic-operations-pack-registry.js'
 import { AI_ECONOMIC_OPERATIONS_REGISTRY, listDomainsByPriority } from '../lib/ai-economic-operations-registry.js'
 import { requireTenantContext } from '../middleware/security-guards.js'
 import { extractOperatorActor } from '../middleware/economic-operations-rbac-middleware.js'
+import { buildMockProofGraph } from '../lib/ai-proof-graph.js'
 
 const r = Router()
 
