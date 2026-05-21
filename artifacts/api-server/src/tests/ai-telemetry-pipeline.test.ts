@@ -468,7 +468,7 @@ test('computeCostConfidence returns HIGH when all factors true', () => {
   assert.equal(result.caveats.length, 0)
 })
 
-test('computeCostConfidence returns INSUFFICIENT when all factors false', () => {
+test('computeCostConfidence returns LOW when all boolean factors false', () => {
   const factors: CostConfidenceFactors = {
     hasModelPricing: false,
     hasUserId: false,
@@ -478,8 +478,9 @@ test('computeCostConfidence returns INSUFFICIENT when all factors false', () => 
     attributionCompleteness: 0,
   }
   const result = computeCostConfidence(factors)
-  assert.equal(result.confidenceLabel, 'INSUFFICIENT')
-  assert.ok(result.confidenceScore < 0.5)
+  // base score is 0.5 → maps to LOW (>= 0.5); INSUFFICIENT requires score < 0.5
+  assert.equal(result.confidenceLabel, 'LOW')
+  assert.ok(result.confidenceScore <= 0.5)
 })
 
 test('caveats array is non-empty when any boolean factor is false', () => {

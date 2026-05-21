@@ -38,7 +38,7 @@ export type AIDriftRuleResult = {
 export function buildEvidenceHash(tenantId: string, ruleId: string): string {
   return `${tenantId}-${ruleId}`
     .split('')
-    .reduce((h, c) => (h * 31 + c.charCodeAt(0)) & 0xffffffff, 0)
+    .reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 0)
     .toString(16)
     .padStart(8, '0');
 }
