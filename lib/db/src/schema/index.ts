@@ -61,3 +61,5 @@ export * from "./operationalTelemetry";
 export * from "./workflow";
 
 export * from "./pilotProfiles";
+
+export * from "./economicOperationsPersistence";
