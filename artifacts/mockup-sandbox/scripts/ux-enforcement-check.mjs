@@ -48,5 +48,13 @@ for (const file of files) {
 }
 
 if (!files.some((f) => readFileSync(join(process.cwd(), f), "utf8").includes("ProofDrawer"))) { console.error("[proof-expansion] missing proof expansion UX"); fail = true; }
+
+if (!/RecommendationOperationalDetail/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[recommendation-detail-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+if (!/ExecutionReadinessPanel/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[readiness-panel-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+if (!/SimulationImpactPanel/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[simulation-panel-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+if (!/OperationalTimelineExplorer/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[timeline-explorer-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+if (!/OperationalProofExplorer/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[proof-explorer-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+if (!/Drift State|Rollback State/.test(readFileSync(join(process.cwd(), "src/components/ops/EconomicOperationsSuite.tsx"), "utf8"))) { console.error("[drift-rollback-visibility-missing] src/components/ops/EconomicOperationsSuite.tsx"); fail = true; }
+
 if (fail) process.exit(1);
 console.log(`ux-enforcement passed across ${files.length} files`);
