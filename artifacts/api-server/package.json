@@ -10,7 +10,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:contoso": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-contoso-test.mjs",
     "test:platform-boundaries": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-platform-boundary-tests.mjs",
-    "test:operationalization": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-operationalization-test.mjs"
+    "test:operationalization": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-operationalization-test.mjs",
+    "test": "node ./scripts/run-pattern-tests.mjs"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

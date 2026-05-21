@@ -9,6 +9,9 @@ import { evaluateM365LiveExecutionReadiness } from '../lib/connectors/m365/m365-
 import { evaluateM365RollbackReadiness } from '../lib/connectors/m365/m365-rollback-readiness-gate';
 import { reassignUserLicenses } from '../lib/connectors/m365/m365-graph-license-write-client';
 import { M365_ECONOMIC_PLAYBOOK_IDS, M365_PLAYBOOK_REGISTRY } from '../lib/connectors/m365/m365-economic-operations-registry';
+import { globalJobScheduler } from '../lib/economic-operations-job-scheduler';
+import { globalEventsService } from '../lib/operational-events-service';
+import { operationalTelemetry } from '../lib/economic-operations-telemetry';
 
 const r=Router();
 const svc = new EconomicOperationsIntentService();
@@ -60,4 +63,15 @@ r.get('/rollback/:executionId/readiness', async (req,res)=>{ const ex=req.params
 
 r.get('/rollback/:id',(req,res)=>res.json({executionId:req.params.id,rollbackAvailable:true,rollbackWindow:'24h',rollbackComplexity:'MEDIUM',providerRollbackSuccessCalibration:0.74,dependencyRollbackChain:['step3','step2','step1'],blockers:[],requiredApprovals:['DIRECTOR'],blastRadiusDelta:'REDUCE',rollbackSimulationResult:'SAFE'}));
 r.get('/replay/:id',(req,res)=>res.json(buildReplay(req.params.id)));
+
+r.get('/jobs/:jobId', (req,res)=>{ const job=globalJobScheduler.getJob(req.params.jobId); if(!job) return res.status(404).json({error:'JOB_NOT_FOUND'}); return res.json(job); });
+r.get('/jobs', (req,res)=>{ const tenantId=String(req.query.tenantId??''); const jobs=globalJobScheduler.queryJobs({tenantId:tenantId||undefined,status:req.query.status as any,jobType:req.query.jobType as any}); return res.json({jobs,count:jobs.length}); });
+
+r.get('/executions/:executionId/timeline', async (req,res)=>{ const tenantId=String(req.query.tenantId??''); const executionId=req.params.executionId; const [state]=await db.select().from(economicOperationsExecutionStateTable).where(and(eq(economicOperationsExecutionStateTable.tenantId,tenantId),eq(economicOperationsExecutionStateTable.executionId,executionId))).limit(1); const actions=await db.select().from(economicOperationsActionHistoryTable).where(and(eq(economicOperationsActionHistoryTable.tenantId,tenantId),eq(economicOperationsActionHistoryTable.executionId,executionId))); const verifications=await db.select().from(economicOperationsVerificationEventsTable).where(and(eq(economicOperationsVerificationEventsTable.tenantId,tenantId),eq(economicOperationsVerificationEventsTable.executionId,executionId))); const drift=await db.select().from(economicOperationsDriftEventsTable).where(and(eq(economicOperationsDriftEventsTable.tenantId,tenantId),eq(economicOperationsDriftEventsTable.executionId,executionId))); const events=globalEventsService.getEvents(tenantId).filter(e=>e.resourceId===executionId); return res.json({executionId,tenantId,currentState:state??null,timeline:{actions,verifications,drift,events:events.map(e=>({id:e.id,type:e.eventType,timestamp:e.createdAt,severity:e.severity,payload:e.payload}))}}); });
+
+r.get('/alerts', (req,res)=>{ const tenantId=String(req.query.tenantId??''); const status=req.query.status as string|undefined; const alerts=globalEventsService.getAlerts(tenantId,status); return res.json({alerts,count:alerts.length}); });
+r.post('/alerts/:alertId/acknowledge', (req,res)=>{ const tenantId=String(req.query.tenantId??req.body?.tenantId??''); const actorId=String(req.body?.actorId??'system'); const ok=globalEventsService.acknowledgeAlert(req.params.alertId,tenantId,actorId); if(!ok) return res.status(404).json({error:'ALERT_NOT_FOUND_OR_NOT_OPEN'}); return res.json({acknowledged:true,alertId:req.params.alertId,actorId,timestamp:new Date().toISOString()}); });
+
+r.get('/metrics', (_req,res)=>{ return res.json({metrics:operationalTelemetry.getMetricSummary(),timestamp:new Date().toISOString()}); });
+
 export default r;
