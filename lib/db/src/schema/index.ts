@@ -63,3 +63,9 @@ export * from "./workflow";
 export * from "./pilotProfiles";
 
 export * from "./economicOperationsPersistence";
+export * from "./economicOperationsJobs";
+export * from "./distributedLocks";
+export * from "./syncCheckpoints";
+export * from "./operationalEvents";
+export * from "./operatorAlerts";
+export * from "./connectorHealthModel";
