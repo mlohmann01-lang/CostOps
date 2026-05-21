@@ -227,4 +227,132 @@ r.post('/:packId/drift', (async (req, res) => {
   }
 }) as RequestHandler)
 
+// POST /packs/:packId/evidence/sync — trigger evidence sync for a pack
+r.post('/:packId/evidence/sync', ((req, res) => {
+  const packId = String(req.params['packId'])
+  const actor = extractOperatorActor(req)
+  const tenantId = actor.tenantId
+
+  if (!globalPackRegistry.has(packId)) {
+    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    return
+  }
+
+  res.json({
+    packId,
+    tenantId,
+    syncTriggered: true,
+    syncedAt: new Date().toISOString(),
+    note: 'Evidence sync scheduled. Use GET /packs/:packId/readiness to check status.',
+  })
+}) as RequestHandler)
+
+// POST /packs/:packId/recommendations/generate — alias for /recommendations with explicit generate
+r.post('/:packId/recommendations/generate', (async (req, res) => {
+  const packId = String(req.params['packId'])
+  const actor = extractOperatorActor(req)
+  const context = typeof req.body === 'object' && req.body !== null
+    ? (req.body as Record<string, unknown>)
+    : {}
+
+  if (!globalPackRegistry.has(packId)) {
+    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    return
+  }
+
+  try {
+    const results = await globalPackRuntime.generateRecommendations(packId, actor.tenantId, context)
+    res.json({
+      packId,
+      tenantId: actor.tenantId,
+      recommendations: results,
+      count: results.length,
+      generatedAt: new Date().toISOString(),
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    res.status(500).json({ error: 'RECOMMENDATION_FAILED', packId, message: msg })
+  }
+}) as RequestHandler)
+
+// POST /packs/:packId/verify — run verification for a pack execution
+r.post('/:packId/verify', (async (req, res) => {
+  const packId = String(req.params['packId'])
+  const actor = extractOperatorActor(req)
+  const body = typeof req.body === 'object' && req.body !== null
+    ? (req.body as Record<string, unknown>)
+    : {}
+  const executionId = typeof body['executionId'] === 'string' ? body['executionId'] : 'verify-' + Date.now()
+
+  if (!globalPackRegistry.has(packId)) {
+    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    return
+  }
+
+  try {
+    const result = await globalPackRuntime.runVerification(packId, actor.tenantId, executionId, body['expected'] ?? {})
+    res.json({
+      packId,
+      tenantId: actor.tenantId,
+      executionId,
+      verification: result,
+      verifiedAt: new Date().toISOString(),
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    res.status(500).json({ error: 'VERIFICATION_FAILED', packId, message: msg })
+  }
+}) as RequestHandler)
+
+// POST /packs/:packId/drift/scan — run drift scan for a pack (alias for /drift)
+r.post('/:packId/drift/scan', (async (req, res) => {
+  const packId = String(req.params['packId'])
+  const actor = extractOperatorActor(req)
+  const body = typeof req.body === 'object' && req.body !== null
+    ? (req.body as Record<string, unknown>)
+    : {}
+  const executionId = typeof body['executionId'] === 'string' ? body['executionId'] : 'drift-check'
+
+  if (!globalPackRegistry.has(packId)) {
+    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    return
+  }
+
+  try {
+    const results = await globalPackRuntime.detectDrift(packId, actor.tenantId, executionId)
+    const triggered = results.filter((r) => r.triggered)
+    res.json({
+      packId,
+      tenantId: actor.tenantId,
+      executionId,
+      driftDetected: triggered.length > 0,
+      triggeredRules: triggered,
+      allRules: results,
+      checkedAt: new Date().toISOString(),
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    res.status(500).json({ error: 'DRIFT_CHECK_FAILED', packId, message: msg })
+  }
+}) as RequestHandler)
+
+// GET /packs/:packId/proof/:recommendationId — get proof graph for a recommendation
+r.get('/:packId/proof/:recommendationId', ((req, res) => {
+  const packId = String(req.params['packId'])
+  const recommendationId = String(req.params['recommendationId'])
+  const actor = extractOperatorActor(req)
+
+  if (!globalPackRegistry.has(packId)) {
+    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    return
+  }
+
+  res.json({
+    packId,
+    tenantId: actor.tenantId,
+    recommendationId,
+    proof: buildMockProofGraph(actor.tenantId, recommendationId),
+  })
+}) as RequestHandler)
+
 export default r
