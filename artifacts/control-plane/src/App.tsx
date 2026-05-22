@@ -1,37 +1,26 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from 'wouter'
+import { useEffect, useState } from 'react'
+import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import ConnectorHub from './pages/ConnectorHub'
 import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
 import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
+import ConnectorHub from './pages/ConnectorHub'
+import { demoLogin, loginRedirect, logout } from './lib/auth/auth-client'
+import { getSession, type SessionState } from './lib/auth/session'
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
-})
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={() => <Redirect to="/connectors" />} />
-      <Route path="/connectors" component={ConnectorHub} />
-      <Route path="/:domain/command" component={CommandView} />
-      <Route path="/:domain/governance" component={GovernanceView} />
-      <Route path="/:domain/execution" component={ExecutionView} />
-      <Route path="/:domain/intelligence" component={IntelligenceView} />
-      <Route component={() => <Redirect to="/connectors" />} />
-    </Switch>
-  )
-}
+function LandingPage() { return <main className="min-h-screen bg-slate-950 text-slate-100 p-10"><h1 className="text-5xl font-bold max-w-4xl">AI Economic Operations, governed end-to-end.</h1><p className="mt-4 max-w-3xl text-slate-300">Certen helps enterprises detect avoidable AI and software spend, govern execution, prove outcomes, and prevent cost drift.</p><div className="mt-8 flex gap-3"><Link href="/login" className="bg-indigo-400 text-slate-950 px-4 py-2 rounded">Sign in</Link><Link href="/demo-login" className="border px-4 py-2 rounded">View demo</Link></div><section className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-10">{['AI Cost Governance','M365 Optimization','Verified Savings','Drift Prevention','Proof & Auditability','Governed Execution'].map((x)=><div key={x} className="border border-slate-800 rounded p-3">{x}</div>)}</section><section className="mt-10 text-slate-300">Connect evidence → Detect opportunity → Simulate action → Approve safely → Verify savings → Monitor drift</section><section className="mt-10 text-slate-400">Tenant isolation · RBAC · Audit trail · Proof graph · Readiness gates · Rollback visibility · Fail-closed production controls</section><footer className="mt-16 border-t border-slate-800 pt-6 text-sm text-slate-400">Product · Security · Documentation · Contact</footer></main> }
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
-        <Router />
-      </WouterRouter>
-    </QueryClientProvider>
-  )
-}
+function LoginPage(){ const [,setLoc]=useLocation(); return <main className="min-h-screen grid place-items-center bg-slate-950 text-slate-100"><div className="w-full max-w-md border border-slate-800 rounded p-6 space-y-3"><h2 className="text-xl font-semibold">Sign in to Certen</h2><input placeholder="Email" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><input placeholder="Password" type="password" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><input placeholder="Tenant slug" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><button onClick={loginRedirect} className="w-full bg-indigo-400 text-slate-950 rounded p-2">Sign in</button><button onClick={()=>setLoc('/demo-login')} className="w-full border rounded p-2">Enter Demo Workspace</button><button className="w-full border rounded p-2" disabled>Enterprise SSO coming soon</button><p className="text-sm text-slate-400">Forgot password (coming soon)</p></div></main> }
 
-export default App
+function AppShell({session}:{session:SessionState}){ return <div className="min-h-screen bg-slate-950 text-slate-100"><header className="flex justify-between border-b border-slate-800 p-3"><div>Tenant: {session.tenantId} · Role: {session.role} · Mode: {session.tenantMode} · Env: {session.environment}</div><button onClick={()=>logout().then(()=>window.location.href='/login')}>Logout</button></header>{session.isDemo && <div className="bg-amber-200 text-amber-950 p-2 text-sm">Demo workspace — synthetic data only. Live execution disabled.</div>}<div className="flex"><aside className="w-56 border-r border-slate-800 p-3 space-y-2"><Link href="/app/command">Command</Link><br/><Link href="/app/connectors">Connectors</Link><br/><Link href="/app/governance">Governance</Link><br/><Link href="/app/execution">Execution</Link><br/><Link href="/app/intelligence">Intelligence</Link></aside><section className="flex-1 p-4"><Switch><Route path="/app/command" component={CommandView}/><Route path="/app/connectors" component={ConnectorHub}/><Route path="/app/governance" component={GovernanceView}/><Route path="/app/execution" component={ExecutionView}/><Route path="/app/intelligence" component={IntelligenceView}/><Route component={()=> <Redirect to="/app/command"/>}/></Switch></section></div></div> }
+
+function ProtectedApp(){ const [session,setSession]=useState<SessionState|null>(null); useEffect(()=>{setSession(getSession())},[]); if(!session) return <Redirect to="/login"/>; return <AppShell session={session}/> }
+
+function DemoLogin(){ const [,setLoc]=useLocation(); useEffect(()=>{demoLogin().then(()=>setLoc('/app/command')).catch(()=>setLoc('/login'))},[setLoc]); return <div className='p-6'>Starting demo session…</div> }
+
+function Router(){ const session=getSession(); return <Switch><Route path='/' component={LandingPage}/><Route path='/login' component={() => session ? <Redirect to='/app/command'/> : <LoginPage/>}/><Route path='/demo-login' component={DemoLogin}/><Route path='/app/:rest*' component={ProtectedApp}/><Route component={()=><Redirect to='/'/>}/></Switch> }
+
+export default function App(){ return <QueryClientProvider client={queryClient}><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router/></WouterRouter></QueryClientProvider> }
