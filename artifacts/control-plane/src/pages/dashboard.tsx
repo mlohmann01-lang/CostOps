@@ -201,24 +201,24 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={trend.data ?? []} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 15%)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 5% 18%)" />
                     <XAxis
                       dataKey="month"
-                      tick={{ fontSize: 11, fill: "hsl(210 20% 50%)" }}
+                      tick={{ fontSize: 11, fill: "hsl(220 5% 50%)" }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: "hsl(210 20% 50%)" }}
+                      tick={{ fontSize: 11, fill: "hsl(220 5% 50%)" }}
                       axisLine={false}
                       tickLine={false}
                       tickFormatter={(v) => `$${v}`}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(220 20% 8%)",
-                        border: "1px solid hsl(220 15% 15%)",
-                        borderRadius: 6,
+                        background: "hsl(220 5% 12%)",
+                        border: "1px solid hsl(220 5% 20%)",
+                        borderRadius: 4,
                         fontSize: 12,
                       }}
                       formatter={(v: number) => [formatCurrency(v), "Savings"]}
@@ -226,7 +226,7 @@ export default function Dashboard() {
                     <Line
                       type="monotone"
                       dataKey="savings"
-                      stroke="hsl(174 80% 42%)"
+                      stroke="hsl(166 72% 42%)"
                       strokeWidth={2}
                       dot={false}
                       activeDot={{ r: 4 }}
@@ -249,23 +249,23 @@ export default function Dashboard() {
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
                   <BarChart data={breakdown.data ?? []} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 15% 15%)" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 5% 18%)" />
                     <XAxis
                       dataKey="status"
-                      tick={{ fontSize: 10, fill: "hsl(210 20% 50%)" }}
+                      tick={{ fontSize: 10, fill: "hsl(220 5% 50%)" }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <YAxis
-                      tick={{ fontSize: 11, fill: "hsl(210 20% 50%)" }}
+                      tick={{ fontSize: 11, fill: "hsl(220 5% 50%)" }}
                       axisLine={false}
                       tickLine={false}
                     />
                     <Tooltip
                       contentStyle={{
-                        background: "hsl(220 20% 8%)",
-                        border: "1px solid hsl(220 15% 15%)",
-                        borderRadius: 6,
+                        background: "hsl(220 5% 12%)",
+                        border: "1px solid hsl(220 5% 20%)",
+                        borderRadius: 4,
                         fontSize: 12,
                       }}
                     />
