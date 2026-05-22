@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { RefreshCw, Plus } from 'lucide-react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
@@ -6,12 +6,49 @@ import { CommandBar } from '../components/layout/CommandBar'
 import { ConnectorCard } from '../components/connectors/ConnectorCard'
 import { EvidenceSourceTable } from '../components/connectors/EvidenceSourceTable'
 import { AlertBar } from '../components/shared/AlertBar'
-import { CONNECTORS } from '../lib/mockData'
 import type { ConnectorConfig } from '../types/connector'
 
 export default function ConnectorHub() {
-  const [connectors, setConnectors] = useState<ConnectorConfig[]>(CONNECTORS)
-  const [selectedId, setSelectedId] = useState<string>('openai')
+  const [connectors, setConnectors] = useState<ConnectorConfig[]>([])
+  const [selectedId, setSelectedId] = useState<string>('')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchConnectors = async () => {
+      try {
+        const res = await fetch('/api/connectors')
+        if (!res.ok) throw new Error('Failed to fetch connectors')
+        const data = await res.json()
+        setConnectors(data)
+        if (data.length > 0) setSelectedId(data[0].id)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchConnectors()
+  }, [])
+
+  useEffect(() => {
+    if (selectedId) {
+      const fetchEvidenceSources = async () => {
+        try {
+          const res = await fetch(`/api/connectors/${selectedId}/evidence-sources`)
+          if (res.ok) {
+            const sources = await res.json()
+            setConnectors(prev => prev.map(c =>
+              c.id === selectedId ? { ...c, evidenceSources: sources } : c
+            ))
+          }
+        } catch (err) {
+          console.error('Failed to fetch evidence sources:', err)
+        }
+      }
+      fetchEvidenceSources()
+    }
+  }, [selectedId])
 
   const degraded = connectors.filter(c => c.readiness === 'DEGRADED' || c.readiness === 'UNAVAILABLE')
   const selected = connectors.find(c => c.id === selectedId) ?? connectors[0]
@@ -60,7 +97,28 @@ export default function ConnectorHub() {
 
       {/* Content */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-        {/* Alert bars */}
+        {error && (
+          <div style={{
+            padding: '12px 16px', marginBottom: 16,
+            background: 'var(--c-red-50)', border: '0.5px solid var(--c-red-200)',
+            borderRadius: 8, color: 'var(--c-red-700)', fontSize: 12
+          }}>
+            Error: {error}
+          </div>
+        )}
+        {loading && (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            Loading connectors...
+          </div>
+        )}
+        {!loading && connectors.length === 0 && (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            No connectors configured.
+          </div>
+        )}
+        {!loading && connectors.length > 0 && (
+          <>
+            {/* Alert bars */}
         {degraded.filter(c => c.readiness === 'DEGRADED').map(c => (
           <AlertBar
             key={c.id}
@@ -110,6 +168,8 @@ export default function ConnectorHub() {
           sources={selected?.evidenceSources ?? []}
           connectorName={selected?.name ?? ''}
         />
+          </>
+        )}
       </div>
 
       <CommandBar />

@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
-import { CONNECTORS, EXECUTION_RECORDS } from '../lib/mockData'
+import { CONNECTORS } from '../lib/mockData'
 import { formatCurrency, formatRelativeTime } from '../lib/formatters'
 import type { Domain } from '../types/connector'
 import type { BlastRadius, RollbackClass } from '../types/governance'
@@ -43,11 +44,54 @@ interface ExecutionViewProps {
   params?: { domain?: string }
 }
 
+interface ExecutionRecord {
+  id: number | string
+  name: string
+  domain?: string
+  status: string
+  approvedBy?: string
+  approvedAt?: string
+  executedAt?: string
+  blastRadius?: BlastRadius
+  rollback?: RollbackClass
+  savingRealised?: number
+  certId?: string
+}
+
 export default function ExecutionView({ params }: ExecutionViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
-  const records = domain === 'all' ? EXECUTION_RECORDS : EXECUTION_RECORDS.filter(r => r.domain === domain)
-  const queued = records.filter(r => r.status === 'QUEUED')
-  const completed = records.filter(r => r.status === 'COMPLETED')
+  const [queuedRecords, setQueuedRecords] = useState<ExecutionRecord[]>([])
+  const [completedRecords, setCompletedRecords] = useState<ExecutionRecord[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchExecutionData = async () => {
+      try {
+        const [qRes, oRes] = await Promise.all([
+          fetch('/api/execution/queue'),
+          fetch('/api/outcomes'),
+        ])
+        if (!qRes.ok) throw new Error('Failed to fetch execution queue')
+        if (!oRes.ok) throw new Error('Failed to fetch outcomes')
+
+        const queue = await qRes.json()
+        const outcomes = await oRes.json()
+
+        setQueuedRecords(queue)
+        setCompletedRecords(outcomes)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchExecutionData()
+  }, [])
+
+  const records = domain === 'all' ? [...queuedRecords, ...completedRecords] : [...queuedRecords, ...completedRecords].filter(r => r.domain === domain)
+  const queued = queuedRecords.filter(r => domain === 'all' ? true : r.domain === domain)
+  const completed = completedRecords.filter(r => domain === 'all' ? true : r.domain === domain)
 
   return (
     <Shell>
@@ -71,8 +115,23 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-        {/* Execution queue */}
-        {queued.length > 0 && (
+        {error && (
+          <div style={{
+            padding: '12px 16px', marginBottom: 16,
+            background: 'var(--c-red-50)', border: '0.5px solid var(--c-red-200)',
+            borderRadius: 8, color: 'var(--c-red-700)', fontSize: 12
+          }}>
+            Error: {error}
+          </div>
+        )}
+        {loading ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            Loading execution data...
+          </div>
+        ) : (
+          <>
+            {/* Execution queue */}
+            {queued.length > 0 && (
           <>
             <div style={{ marginBottom: 10 }}>
               <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -92,10 +151,10 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
                   borderBottom: i < queued.length - 1 ? '0.5px solid var(--border-subtle)' : 'none',
                 }}>
                   <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{r.name}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvedBy}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{formatRelativeTime(r.approvedAt)}</div>
-                  <BlastBadge level={r.blastRadius} />
-                  <RollbackPill level={r.rollback} />
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvedBy ?? '—'}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvedAt ? formatRelativeTime(r.approvedAt) : '—'}</div>
+                  <BlastBadge level={r.blastRadius ?? 'LOW'} />
+                  <RollbackPill level={r.rollback ?? 'FULL'} />
                   <button style={{
                     fontSize: 11, padding: '4px 10px',
                     background: 'var(--c-teal-400)', color: '#fff',
@@ -135,12 +194,14 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
                 <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{r.name}</div>
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.executedAt ? formatRelativeTime(r.executedAt) : '—'}</div>
                 <div style={{ fontWeight: 500, color: 'var(--c-teal-600)' }}>{r.savingRealised ? formatCurrency(r.savingRealised) + '/mo' : '—'}</div>
-                <RollbackPill level={r.rollback} />
-                <div style={{ fontSize: 10, fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text-tertiary)' }}>{r.certId}</div>
+                <RollbackPill level={r.rollback ?? 'FULL'} />
+                <div style={{ fontSize: 10, fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text-tertiary)' }}>{r.certId ?? '—'}</div>
               </div>
             ))
           )}
         </div>
+          </>
+        )}
       </div>
 
       <CommandBar />

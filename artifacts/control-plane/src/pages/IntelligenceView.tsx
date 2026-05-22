@@ -1,23 +1,14 @@
+import { useState, useEffect } from 'react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
-import { CONNECTORS, GOVERNANCE_ACTIONS } from '../lib/mockData'
+import { CONNECTORS } from '../lib/mockData'
 import { formatCurrency } from '../lib/formatters'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts'
 import type { Domain } from '../types/connector'
 
-const SPEND_TREND = [
-  { month: 'Dec', spend: 187400 },
-  { month: 'Jan', spend: 201200 },
-  { month: 'Feb', spend: 194800 },
-  { month: 'Mar', spend: 218600 },
-  { month: 'Apr', spend: 203400 },
-  { month: 'May', spend: 196200 },
-]
-
-const CONFIDENCE_COLOR: Record<number, string> = {}
 function confidenceColor(pct: number): string {
   if (pct >= 85) return 'var(--c-teal-600)'
   if (pct >= 70) return 'var(--c-amber-600)'
@@ -29,19 +20,57 @@ function recurrenceColor(level: string): string {
   return 'var(--c-red-600)'
 }
 
-const RECOMMENDATIONS = GOVERNANCE_ACTIONS.map(a => ({
-  ...a,
-  confidence: a.verdict === 'GOVERNED_EXECUTION_ELIGIBLE' ? 94 : a.verdict === 'APPROVAL_REQUIRED' ? 76 : 52,
-  recurrence: a.blastRadius === 'LOW' ? 'Low' : a.blastRadius === 'MEDIUM' ? 'Medium' : 'High',
-}))
-
 interface IntelligenceViewProps {
   params?: { domain?: string }
 }
 
+interface SpendTrendPoint {
+  month: string
+  spend: number
+}
+
+interface Recommendation {
+  id: number
+  name: string
+  description: string
+  domain: string
+  savingAmount: number
+  confidence: number
+  recurrence: string
+}
+
 export default function IntelligenceView({ params }: IntelligenceViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
-  const recs = domain === 'all' ? RECOMMENDATIONS : RECOMMENDATIONS.filter(r => r.domain === domain)
+  const [spendTrend, setSpendTrend] = useState<SpendTrendPoint[]>([])
+  const [recs, setRecs] = useState<Recommendation[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchIntelligenceData = async () => {
+      try {
+        const [tRes, rRes] = await Promise.all([
+          fetch('/api/analytics/spend-trend'),
+          fetch('/api/recommendations/enhanced'),
+        ])
+        if (!tRes.ok) throw new Error('Failed to fetch spend trend')
+        if (!rRes.ok) throw new Error('Failed to fetch recommendations')
+
+        const trend = await tRes.json()
+        const recommendations = await rRes.json()
+
+        setSpendTrend(trend)
+        setRecs(recommendations)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchIntelligenceData()
+  }, [])
+
+  const filteredRecs = domain === 'all' ? recs : recs.filter(r => r.domain === domain)
 
   return (
     <Shell>
@@ -65,18 +94,33 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
-        {/* Spend trend */}
-        <div style={{ marginBottom: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Spend trend — all connectors
-          </span>
-        </div>
-        <div style={{
-          background: 'var(--surface-0)', border: '0.5px solid var(--border-subtle)',
-          borderRadius: 12, padding: '16px 12px 8px', marginBottom: 20,
-        }}>
-          <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={SPEND_TREND} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+        {error && (
+          <div style={{
+            padding: '12px 16px', marginBottom: 16,
+            background: 'var(--c-red-50)', border: '0.5px solid var(--c-red-200)',
+            borderRadius: 8, color: 'var(--c-red-700)', fontSize: 12
+          }}>
+            Error: {error}
+          </div>
+        )}
+        {loading ? (
+          <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            Loading intelligence data...
+          </div>
+        ) : (
+          <>
+            {/* Spend trend */}
+            <div style={{ marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Spend trend — all connectors
+              </span>
+            </div>
+            <div style={{
+              background: 'var(--surface-0)', border: '0.5px solid var(--border-subtle)',
+              borderRadius: 12, padding: '16px 12px 8px', marginBottom: 20,
+            }}>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={spendTrend} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
               <CartesianGrid stroke="var(--border-subtle)" strokeDasharray="0" />
               <XAxis
                 dataKey="month"
@@ -101,27 +145,27 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
                 dot={false} activeDot={{ r: 3, fill: 'var(--c-teal-400)' }}
               />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Recommendations */}
-        <div style={{ marginBottom: 10 }}>
-          <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Recommendations ({recs.length})
-          </span>
-        </div>
-        <div style={{ background: 'var(--surface-0)', border: '0.5px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.9fr 0.8fr 0.8fr', padding: '8px 16px', background: 'var(--surface-2)', borderBottom: '0.5px solid var(--border-subtle)' }}>
-            {['Recommendation', 'Saving', 'Confidence', 'Recurrence risk'].map(h => (
-              <span key={h} style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
-            ))}
-          </div>
-          {recs.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 12 }}>
-              No recommendations for this domain.
+              </ResponsiveContainer>
             </div>
-          ) : (
-            recs.map((rec, i) => (
+
+            {/* Recommendations */}
+            <div style={{ marginBottom: 10 }}>
+              <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                Recommendations ({filteredRecs.length})
+              </span>
+            </div>
+            <div style={{ background: 'var(--surface-0)', border: '0.5px solid var(--border-subtle)', borderRadius: 12, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 0.9fr 0.8fr 0.8fr', padding: '8px 16px', background: 'var(--surface-2)', borderBottom: '0.5px solid var(--border-subtle)' }}>
+                {['Recommendation', 'Saving', 'Confidence', 'Recurrence risk'].map(h => (
+                  <span key={h} style={{ fontSize: 10, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{h}</span>
+                ))}
+              </div>
+              {filteredRecs.length === 0 ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: 12 }}>
+                  No recommendations for this domain.
+                </div>
+              ) : (
+                filteredRecs.map((rec, i) => (
               <div key={rec.id} style={{
                 display: 'grid', gridTemplateColumns: '2fr 0.9fr 0.8fr 0.8fr',
                 padding: '11px 16px', fontSize: 12, alignItems: 'center',
@@ -141,9 +185,11 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
                   {rec.recurrence}
                 </div>
               </div>
-            ))
-          )}
-        </div>
+                ))
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       <CommandBar />

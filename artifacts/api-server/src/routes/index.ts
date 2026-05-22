@@ -28,6 +28,11 @@ import workflowRouter from "./workflow";
 import pilotRouter from "./pilot";
 import economicOperationsRouter from "./economic-operations";
 import packsRouter from "./packs";
+import governanceAuditRouter from "./governance-audit.js";
+import analyticsSpendTrendRouter from "./analytics-spend-trend.js";
+import executionQueueRouter from "./execution-queue.js";
+import connectorsEvidenceRouter from "./connectors-evidence.js";
+import recommendationsEnhancedRouter from "./recommendations-enhanced.js";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 
 const router: IRouter = Router();
@@ -36,6 +41,7 @@ router.use(healthRouter);
 router.use("/dashboard", dashboardRouter);
 router.use("/connectors", requireTenantContext(), requireCapability("READ_CONNECTORS"), connectorsRouter);
 router.use("/recommendations", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), recommendationsRouter);
+router.use("/recommendations/enhanced", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), recommendationsEnhancedRouter);
 router.use("/execution", executionRouter);
 router.use("/outcomes", outcomesRouter);
 router.use("/drift", driftRouter);
@@ -45,6 +51,7 @@ router.use("/jobs", jobsRouter);
 router.use("/verification", verificationRouter);
 router.use("/approvals", approvalsRouter);
 router.use("/governance", requireTenantContext(), requireCapability("MANAGE_POLICIES"), governanceRouter);
+router.use("/governance/audit", governanceAuditRouter);
 router.use("/governance/exceptions", governanceExceptionsRouter);
 router.use("/operationalization", operationalizationRouter);
 router.use("/enterprise", enterpriseRouter);
@@ -60,6 +67,9 @@ router.use("/graph", requireTenantContext(), requireCapability("READ_GRAPH"), gr
 router.use("/workflow", workflowRouter);
 router.use("/economic-operations", economicOperationsRouter);
 router.use("/packs", packsRouter);
+router.use("/analytics/spend-trend", analyticsSpendTrendRouter);
+router.use("/execution/queue", executionQueueRouter);
+router.use("/connectors/:id/evidence-sources", connectorsEvidenceRouter);
 router.use("/", pilotRouter);
 
 export default router;
