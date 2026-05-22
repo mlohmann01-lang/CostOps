@@ -229,7 +229,7 @@ test('verification: records baseline measurement', () => {
   assert.ok(baseline.costPerToken > 0);
 });
 
-test('verification: initializes verification from execution', () => {
+test('verification: initializes verification from execution', async () => {
   const proposal = modelDowngradeExecutor.createProposal('tenant-sv2', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
   const execution = modelDowngradeExecutor.createExecution(proposal);
 
@@ -241,13 +241,13 @@ test('verification: initializes verification from execution', () => {
   modelDowngradeExecutor.executeDowngrade(execution.executionId);
 
   // Initialize verification
-  const verification = savingsVerificationService.initializeVerification(execution.executionId);
+  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
   assert.ok(verification);
   assert.strictEqual(verification?.status, 'PENDING');
   assert.strictEqual(verification?.baselineCostUSD, 50.0);
 });
 
-test('verification: calculates realized savings with high confidence', () => {
+test('verification: calculates realized savings with high confidence', async () => {
   const proposal = modelDowngradeExecutor.createProposal('tenant-sv3', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
   const execution = modelDowngradeExecutor.createExecution(proposal);
 
@@ -255,12 +255,13 @@ test('verification: calculates realized savings with high confidence', () => {
   modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
   modelDowngradeExecutor.executeDowngrade(execution.executionId);
 
-  const verification = savingsVerificationService.initializeVerification(execution.executionId);
+  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
   assert.ok(verification);
 
   // Record measurement showing 20% savings
-  const measured = savingsVerificationService.recordMeasurement(
+  const measured = await savingsVerificationService.recordMeasurement(
     verification!.verificationId,
+    'tenant-sv3',
     9500, // 5% fewer tokens
     40.0, // 20% cost reduction
   );
@@ -270,7 +271,7 @@ test('verification: calculates realized savings with high confidence', () => {
   assert.strictEqual(measured?.confidenceLevel, 'HIGH');
 });
 
-test('verification: marks inconclusive when token usage increases', () => {
+test('verification: marks inconclusive when token usage increases', async () => {
   const proposal = modelDowngradeExecutor.createProposal('tenant-sv4', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
   const execution = modelDowngradeExecutor.createExecution(proposal);
 
@@ -278,21 +279,22 @@ test('verification: marks inconclusive when token usage increases', () => {
   modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
   modelDowngradeExecutor.executeDowngrade(execution.executionId);
 
-  const verification = savingsVerificationService.initializeVerification(execution.executionId);
+  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
   assert.ok(verification);
 
   // Record measurement with MORE tokens used
-  const measured = savingsVerificationService.recordMeasurement(
+  const measured = await savingsVerificationService.recordMeasurement(
     verification!.verificationId,
+    'tenant-sv4',
     12000, // 20% MORE tokens (workflow load increased)
     55.0,  // More cost
   );
 
   assert.strictEqual(measured?.confidenceLevel, 'LOW');
-  assert.strictEqual(measured?.status, 'INCONCLUSIVE');
+  assert.strictEqual(measured?.status, 'INSUFFICIENT_EVIDENCE');
 });
 
-test('verification: computes total realized savings for tenant', () => {
+test('verification: computes total realized savings for tenant', async () => {
   const proposal1 = modelDowngradeExecutor.createProposal('tenant-sv5', 'gpt-4', 'gpt-3.5-turbo', 'Test1', 100, []);
   const execution1 = modelDowngradeExecutor.createExecution(proposal1);
 
@@ -300,15 +302,15 @@ test('verification: computes total realized savings for tenant', () => {
   modelDowngradeExecutor.recordApproval(execution1.executionId, 'actor-1');
   modelDowngradeExecutor.executeDowngrade(execution1.executionId);
 
-  const v1 = savingsVerificationService.initializeVerification(execution1.executionId);
-  savingsVerificationService.recordMeasurement(v1!.verificationId, 9000, 70.0); // $30 saved
+  const v1 = await savingsVerificationService.initializeVerification(execution1.executionId);
+  await savingsVerificationService.recordMeasurement(v1!.verificationId, 'tenant-sv5', 9000, 70.0); // $30 saved
 
-  const totals = savingsVerificationService.getTotalRealizedSavings('tenant-sv5');
+  const totals = await savingsVerificationService.getTotalRealizedSavings('tenant-sv5');
   assert.strictEqual(totals.totalSavingsUSD, 30.0);
   assert.strictEqual(totals.completedCount, 1);
 });
 
-test('verification: builds proof graph node', () => {
+test('verification: builds proof graph node', async () => {
   const proposal = modelDowngradeExecutor.createProposal('tenant-sv6', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
   const execution = modelDowngradeExecutor.createExecution(proposal);
 
@@ -316,8 +318,8 @@ test('verification: builds proof graph node', () => {
   modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
   modelDowngradeExecutor.executeDowngrade(execution.executionId);
 
-  const verification = savingsVerificationService.initializeVerification(execution.executionId);
-  savingsVerificationService.recordMeasurement(verification!.verificationId, 9000, 35.0);
+  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
+  await savingsVerificationService.recordMeasurement(verification!.verificationId, 'tenant-sv6', 9000, 35.0);
 
   const node = savingsVerificationService.buildProofGraphNode(verification!);
   assert.strictEqual(node.nodeType, 'SAVINGS_VERIFICATION');

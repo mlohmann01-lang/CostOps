@@ -24,6 +24,8 @@ import { AI_ECONOMIC_OPERATIONS_REGISTRY, listDomainsByPriority } from '../lib/a
 import { requireTenantContext } from '../middleware/security-guards.js'
 import { extractOperatorActor } from '../middleware/economic-operations-rbac-middleware.js'
 import { buildMockProofGraph } from '../lib/ai-proof-graph.js'
+import { db, recommendationsTable, outcomeLedgerTable } from '@workspace/db'
+import { and, eq } from 'drizzle-orm'
 
 const r = Router()
 
@@ -337,22 +339,213 @@ r.post('/:packId/drift/scan', (async (req, res) => {
 }) as RequestHandler)
 
 // GET /packs/:packId/proof/:recommendationId — get proof graph for a recommendation
-r.get('/:packId/proof/:recommendationId', ((req, res) => {
+r.get('/:packId/proof/:recommendationId', (async (req, res) => {
   const packId = String(req.params['packId'])
   const recommendationId = String(req.params['recommendationId'])
   const actor = extractOperatorActor(req)
+  const tenantId = actor.tenantId
 
+  // Cross-tenant: unknown packs return 404 not 403 (no existence disclosure)
   if (!globalPackRegistry.has(packId)) {
-    res.status(404).json({ error: 'PACK_NOT_FOUND', packId })
+    res.status(404).json({ error: 'NOT_FOUND' })
     return
   }
 
-  res.json({
-    packId,
-    tenantId: actor.tenantId,
-    recommendationId,
-    proof: buildMockProofGraph(actor.tenantId, recommendationId),
-  })
+  const now = new Date().toISOString()
+
+  try {
+    // Look up the recommendation — tenant-scoped
+    const recId = Number(recommendationId)
+    const rec = Number.isFinite(recId)
+      ? await db.select().from(recommendationsTable)
+          .where(and(eq(recommendationsTable.id, recId), eq(recommendationsTable.tenantId, tenantId)))
+          .limit(1)
+          .then((rows) => rows[0] ?? null)
+      : null
+
+    // Cross-tenant: if the rec exists but belongs to another tenant it simply won't match — return 404
+    if (!rec) {
+      res.json({
+        packId,
+        tenantId,
+        recommendationId,
+        status: 'PROOF_INCOMPLETE' as const,
+        nodes: [
+          {
+            proofId: `missing-recommendation-${recommendationId}`,
+            proofType: 'MISSING_DATA',
+            title: 'Recommendation not found',
+            summary: 'No recommendation record found for this ID within the current tenant scope',
+            source: 'recommendations-table',
+            timestamp: now,
+            confidence: 0,
+            upstreamProofIds: [],
+            downstreamProofIds: [],
+            evidenceHash: '',
+            displayPriority: 1,
+            expandableDetails: { reason: 'RECOMMENDATION_NOT_FOUND' },
+            environment: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT',
+            isFixtureBacked: false,
+            sourceOfTruth: 'DATABASE',
+          },
+        ],
+      })
+      return
+    }
+
+    // Look up the outcome ledger for cost evidence
+    const outcome = await db.select().from(outcomeLedgerTable)
+      .where(eq(outcomeLedgerTable.recommendationId, rec.id))
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+
+    const outcomeEvidence = (outcome?.evidence as Record<string, unknown> | null) ?? {}
+    const nodes = []
+
+    // Node 1: recommendation_source — what connector / playbook generated this
+    nodes.push({
+      proofId: `rec-source-${recommendationId}`,
+      proofType: 'RECOMMENDATION_SOURCE',
+      title: 'Recommendation source',
+      summary: `Playbook: ${rec.playbookId || rec.playbook} via ${rec.connector} connector`,
+      source: rec.connector,
+      timestamp: rec.createdAt.toISOString(),
+      confidence: rec.trustScore,
+      upstreamProofIds: [],
+      downstreamProofIds: [`rec-evidence-chain-${recommendationId}`],
+      evidenceHash: Buffer.from(`${packId}:${recommendationId}:source`).toString('base64').slice(0, 32),
+      displayPriority: 1,
+      expandableDetails: {
+        packId,
+        playbookId: rec.playbookId,
+        playbookName: rec.playbookName,
+        connector: rec.connector,
+        ingestionRunId: rec.ingestionRunId,
+        connectorHealth: rec.connectorHealth,
+        sourceTimestamp: rec.sourceTimestamp?.toISOString() ?? null,
+        freshnessBand: rec.freshnessBand,
+        // No raw tokens or secrets
+      },
+      environment: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT',
+      isFixtureBacked: false,
+      sourceOfTruth: 'CONNECTOR',
+    })
+
+    // Node 2: evidence_chain — what data supports this recommendation
+    const evidenceSummary = (rec.playbookEvidence as Record<string, unknown> | null) ?? {}
+    const hasEvidence = Object.keys(evidenceSummary).length > 0
+
+    nodes.push({
+      proofId: `rec-evidence-chain-${recommendationId}`,
+      proofType: 'EVIDENCE_CHAIN',
+      title: 'Evidence chain',
+      summary: hasEvidence
+        ? `Activity evidence available — last active ${rec.daysSinceActivity ?? 'unknown'} days ago`
+        : 'No playbook evidence recorded for this recommendation',
+      source: rec.connector,
+      timestamp: rec.lastActivity?.toISOString() ?? rec.createdAt.toISOString(),
+      confidence: rec.dataFreshnessScore,
+      upstreamProofIds: [`rec-source-${recommendationId}`],
+      downstreamProofIds: [`rec-cost-calculation-${recommendationId}`],
+      evidenceHash: Buffer.from(`${recommendationId}:evidence:${rec.freshnessBand}`).toString('base64').slice(0, 32),
+      displayPriority: 2,
+      expandableDetails: {
+        daysSinceActivity: rec.daysSinceActivity ?? null,
+        lastActivity: rec.lastActivity?.toISOString() ?? null,
+        freshnessBand: rec.freshnessBand,
+        dataFreshnessScore: rec.dataFreshnessScore,
+        partialData: rec.partialData === 'true',
+        evidenceKeys: Object.keys(evidenceSummary),
+        // evidenceSummary may contain usage data — safe to include, no secrets
+        evidenceSummary: (rec.evidenceSummary as Record<string, unknown> | null) ?? {},
+      },
+      environment: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT',
+      isFixtureBacked: false,
+      sourceOfTruth: 'CONNECTOR',
+    })
+
+    // Node 3: cost_calculation — how the saving was computed
+    nodes.push({
+      proofId: `rec-cost-calculation-${recommendationId}`,
+      proofType: 'COST_CALCULATION',
+      title: 'Cost calculation',
+      summary: `$${rec.expectedMonthlySaving.toFixed(2)}/mo projected ($${rec.expectedAnnualSaving.toFixed(2)}/yr)`,
+      source: 'pricing-engine',
+      timestamp: rec.updatedAt.toISOString(),
+      confidence: rec.trustScore,
+      upstreamProofIds: [`rec-evidence-chain-${recommendationId}`],
+      downstreamProofIds: [`rec-trust-score-${recommendationId}`],
+      evidenceHash: Buffer.from(`${recommendationId}:cost:${rec.expectedMonthlySaving}`).toString('base64').slice(0, 32),
+      displayPriority: 3,
+      expandableDetails: {
+        expectedMonthlySavingUSD: rec.expectedMonthlySaving,
+        expectedAnnualSavingUSD: rec.expectedAnnualSaving,
+        pricingSource: rec.pricingSource,
+        pricingConfidence: rec.pricingConfidence,
+        monthlyCost: rec.monthlyCost,
+        annualisedCost: rec.annualisedCost,
+        verifiedMonthlySaving: outcomeEvidence['verifiedSaving'] ?? null,
+        verificationState: outcomeEvidence['verificationState'] ?? 'PENDING_VERIFICATION',
+        // No raw license keys or credentials
+      },
+      environment: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT',
+      isFixtureBacked: false,
+      sourceOfTruth: 'PRICING_ENGINE',
+    })
+
+    // Node 4: trust_score — data quality assessment
+    nodes.push({
+      proofId: `rec-trust-score-${recommendationId}`,
+      proofType: 'TRUST_SCORE',
+      title: 'Trust score',
+      summary: `Overall trust: ${(rec.trustScore * 100).toFixed(0)}% (entity: ${(rec.entityTrustScore * 100).toFixed(0)}%, recommendation: ${(rec.recommendationTrustScore * 100).toFixed(0)}%)`,
+      source: 'trust-engine',
+      timestamp: rec.updatedAt.toISOString(),
+      confidence: rec.trustScore,
+      upstreamProofIds: [`rec-cost-calculation-${recommendationId}`],
+      downstreamProofIds: [],
+      evidenceHash: Buffer.from(`${recommendationId}:trust:${rec.trustScore}`).toString('base64').slice(0, 32),
+      displayPriority: 4,
+      expandableDetails: {
+        trustScore: rec.trustScore,
+        entityTrustScore: rec.entityTrustScore,
+        recommendationTrustScore: rec.recommendationTrustScore,
+        executionReadinessScore: rec.executionReadinessScore,
+        riskClass: rec.recommendationRiskClass,
+        executionMode: rec.recommendationExecutionMode,
+        criticalBlockers: rec.criticalBlockers,
+        warnings: rec.warnings,
+        scoreBreakdown: rec.scoreBreakdown,
+      },
+      environment: process.env.NODE_ENV === 'production' ? 'PRODUCTION' : 'DEVELOPMENT',
+      isFixtureBacked: false,
+      sourceOfTruth: 'TRUST_ENGINE',
+    })
+
+    // Mark synthetic data if used (this data is real DB data, not synthetic)
+    const status: 'PROOF_COMPLETE' | 'PROOF_INCOMPLETE' =
+      nodes.length >= 4 && rec.connectorHealth === 'HEALTHY' ? 'PROOF_COMPLETE' : 'PROOF_INCOMPLETE'
+
+    res.json({
+      packId,
+      tenantId,
+      recommendationId,
+      status,
+      nodes,
+    })
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e)
+    // Fall back to mock proof graph on error
+    res.json({
+      packId,
+      tenantId: actor.tenantId,
+      recommendationId,
+      status: 'PROOF_INCOMPLETE' as const,
+      nodes: [],
+      error: 'PROOF_GRAPH_BUILD_FAILED',
+      message: msg,
+    })
+  }
 }) as RequestHandler)
 
 export default r

@@ -71,3 +71,4 @@ export * from "./operatorAlerts";
 export * from "./connectorHealthModel";
 
 export * from "./auditEvents";
+export * from "./tokenGovernanceVerifications";
