@@ -18,12 +18,21 @@ import type {
 
 import type {
   ActionBreakdownItem,
+  AuditEntry,
   Connector,
   DashboardSummary,
+  EnhancedRecommendation,
   ErrorResponse,
+  EvidenceSource,
+  ExecutionQueueItem,
   ExecutionResult,
   GenerateRecommendations200,
+  GetConnectorEvidenceSourcesParams,
+  GetExecutionQueueParams,
+  GetSpendTrendParams,
   HealthStatus,
+  ListEnhancedRecommendationsParams,
+  ListGovernanceAuditParams,
   ListOutcomesParams,
   ListRecommendationsParams,
   OutcomeLedgerEntry,
@@ -31,6 +40,7 @@ import type {
   Recommendation,
   RejectRecommendationBody,
   SavingsTrendPoint,
+  SpendTrendPoint,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -1105,6 +1115,527 @@ export function useGetOutcomesSummary<
   request?: SecondParameter<typeof customFetch>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
   const queryOptions = getGetOutcomesSummaryQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List governance audit log entries
+ */
+export const getListGovernanceAuditUrl = (
+  params?: ListGovernanceAuditParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/governance/audit?${stringifiedParams}`
+    : `/api/governance/audit`;
+};
+
+export const listGovernanceAudit = async (
+  params?: ListGovernanceAuditParams,
+  options?: RequestInit,
+): Promise<AuditEntry[]> => {
+  return customFetch<AuditEntry[]>(getListGovernanceAuditUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListGovernanceAuditQueryKey = (
+  params?: ListGovernanceAuditParams,
+) => {
+  return [`/api/governance/audit`, ...(params ? [params] : [])] as const;
+};
+
+export const getListGovernanceAuditQueryOptions = <
+  TData = Awaited<ReturnType<typeof listGovernanceAudit>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListGovernanceAuditParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGovernanceAudit>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListGovernanceAuditQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listGovernanceAudit>>
+  > = ({ signal }) =>
+    listGovernanceAudit(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listGovernanceAudit>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListGovernanceAuditQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listGovernanceAudit>>
+>;
+export type ListGovernanceAuditQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List governance audit log entries
+ */
+
+export function useListGovernanceAudit<
+  TData = Awaited<ReturnType<typeof listGovernanceAudit>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListGovernanceAuditParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listGovernanceAudit>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListGovernanceAuditQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get spend trend over time
+ */
+export const getGetSpendTrendUrl = (params?: GetSpendTrendParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/analytics/spend-trend?${stringifiedParams}`
+    : `/api/analytics/spend-trend`;
+};
+
+export const getSpendTrend = async (
+  params?: GetSpendTrendParams,
+  options?: RequestInit,
+): Promise<SpendTrendPoint[]> => {
+  return customFetch<SpendTrendPoint[]>(getGetSpendTrendUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetSpendTrendQueryKey = (params?: GetSpendTrendParams) => {
+  return [`/api/analytics/spend-trend`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetSpendTrendQueryOptions = <
+  TData = Awaited<ReturnType<typeof getSpendTrend>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSpendTrendParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSpendTrend>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetSpendTrendQueryKey(params);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getSpendTrend>>> = ({
+    signal,
+  }) => getSpendTrend(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getSpendTrend>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetSpendTrendQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getSpendTrend>>
+>;
+export type GetSpendTrendQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get spend trend over time
+ */
+
+export function useGetSpendTrend<
+  TData = Awaited<ReturnType<typeof getSpendTrend>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetSpendTrendParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getSpendTrend>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetSpendTrendQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get execution queue items awaiting approval or execution
+ */
+export const getGetExecutionQueueUrl = (params?: GetExecutionQueueParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/execution/queue?${stringifiedParams}`
+    : `/api/execution/queue`;
+};
+
+export const getExecutionQueue = async (
+  params?: GetExecutionQueueParams,
+  options?: RequestInit,
+): Promise<ExecutionQueueItem[]> => {
+  return customFetch<ExecutionQueueItem[]>(getGetExecutionQueueUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetExecutionQueueQueryKey = (
+  params?: GetExecutionQueueParams,
+) => {
+  return [`/api/execution/queue`, ...(params ? [params] : [])] as const;
+};
+
+export const getGetExecutionQueueQueryOptions = <
+  TData = Awaited<ReturnType<typeof getExecutionQueue>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetExecutionQueueParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExecutionQueue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getGetExecutionQueueQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getExecutionQueue>>
+  > = ({ signal }) => getExecutionQueue(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof getExecutionQueue>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetExecutionQueueQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getExecutionQueue>>
+>;
+export type GetExecutionQueueQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get execution queue items awaiting approval or execution
+ */
+
+export function useGetExecutionQueue<
+  TData = Awaited<ReturnType<typeof getExecutionQueue>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: GetExecutionQueueParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExecutionQueue>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetExecutionQueueQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Get evidence sources for a specific connector
+ */
+export const getGetConnectorEvidenceSourcesUrl = (
+  id: string,
+  params?: GetConnectorEvidenceSourcesParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/connectors/${id}/evidence-sources?${stringifiedParams}`
+    : `/api/connectors/${id}/evidence-sources`;
+};
+
+export const getConnectorEvidenceSources = async (
+  id: string,
+  params?: GetConnectorEvidenceSourcesParams,
+  options?: RequestInit,
+): Promise<EvidenceSource[]> => {
+  return customFetch<EvidenceSource[]>(
+    getGetConnectorEvidenceSourcesUrl(id, params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getGetConnectorEvidenceSourcesQueryKey = (
+  id: string,
+  params?: GetConnectorEvidenceSourcesParams,
+) => {
+  return [
+    `/api/connectors/${id}/evidence-sources`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getGetConnectorEvidenceSourcesQueryOptions = <
+  TData = Awaited<ReturnType<typeof getConnectorEvidenceSources>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  params?: GetConnectorEvidenceSourcesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getConnectorEvidenceSources>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ??
+    getGetConnectorEvidenceSourcesQueryKey(id, params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getConnectorEvidenceSources>>
+  > = ({ signal }) =>
+    getConnectorEvidenceSources(id, params, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getConnectorEvidenceSources>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetConnectorEvidenceSourcesQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getConnectorEvidenceSources>>
+>;
+export type GetConnectorEvidenceSourcesQueryError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Get evidence sources for a specific connector
+ */
+
+export function useGetConnectorEvidenceSources<
+  TData = Awaited<ReturnType<typeof getConnectorEvidenceSources>>,
+  TError = ErrorType<ErrorResponse>,
+>(
+  id: string,
+  params?: GetConnectorEvidenceSourcesParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getConnectorEvidenceSources>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetConnectorEvidenceSourcesQueryOptions(
+    id,
+    params,
+    options,
+  );
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary List recommendations with enhanced intelligence metadata
+ */
+export const getListEnhancedRecommendationsUrl = (
+  params?: ListEnhancedRecommendationsParams,
+) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/recommendations/enhanced?${stringifiedParams}`
+    : `/api/recommendations/enhanced`;
+};
+
+export const listEnhancedRecommendations = async (
+  params?: ListEnhancedRecommendationsParams,
+  options?: RequestInit,
+): Promise<EnhancedRecommendation[]> => {
+  return customFetch<EnhancedRecommendation[]>(
+    getListEnhancedRecommendationsUrl(params),
+    {
+      ...options,
+      method: "GET",
+    },
+  );
+};
+
+export const getListEnhancedRecommendationsQueryKey = (
+  params?: ListEnhancedRecommendationsParams,
+) => {
+  return [
+    `/api/recommendations/enhanced`,
+    ...(params ? [params] : []),
+  ] as const;
+};
+
+export const getListEnhancedRecommendationsQueryOptions = <
+  TData = Awaited<ReturnType<typeof listEnhancedRecommendations>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEnhancedRecommendationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listEnhancedRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListEnhancedRecommendationsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listEnhancedRecommendations>>
+  > = ({ signal }) =>
+    listEnhancedRecommendations(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listEnhancedRecommendations>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListEnhancedRecommendationsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listEnhancedRecommendations>>
+>;
+export type ListEnhancedRecommendationsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List recommendations with enhanced intelligence metadata
+ */
+
+export function useListEnhancedRecommendations<
+  TData = Awaited<ReturnType<typeof listEnhancedRecommendations>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListEnhancedRecommendationsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listEnhancedRecommendations>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListEnhancedRecommendationsQueryOptions(
+    params,
+    options,
+  );
 
   const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
     queryKey: QueryKey;

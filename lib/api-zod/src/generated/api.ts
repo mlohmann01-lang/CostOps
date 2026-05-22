@@ -323,3 +323,122 @@ export const GetOutcomesSummaryResponse = zod.object({
   topPlaybook: zod.string(),
   avgMonthlySavingPerAction: zod.number(),
 });
+
+/**
+ * @summary List governance audit log entries
+ */
+export const listGovernanceAuditQueryLimitDefault = 50;
+export const listGovernanceAuditQueryOffsetDefault = 0;
+
+export const ListGovernanceAuditQueryParams = zod.object({
+  tenantId: zod.coerce.string().optional(),
+  domain: zod.coerce.string().optional(),
+  limit: zod.coerce.number().default(listGovernanceAuditQueryLimitDefault),
+  offset: zod.coerce.number().default(listGovernanceAuditQueryOffsetDefault),
+});
+
+export const ListGovernanceAuditResponseItem = zod.object({
+  id: zod.number(),
+  timestamp: zod.string(),
+  action: zod.string(),
+  verdict: zod.string(),
+  domain: zod.string().nullish(),
+  certId: zod.string().nullish(),
+  actorId: zod.string(),
+});
+export const ListGovernanceAuditResponse = zod.array(
+  ListGovernanceAuditResponseItem,
+);
+
+/**
+ * @summary Get spend trend over time
+ */
+export const getSpendTrendQueryMonthsDefault = 6;
+
+export const GetSpendTrendQueryParams = zod.object({
+  tenantId: zod.coerce.string().optional(),
+  months: zod.coerce.number().default(getSpendTrendQueryMonthsDefault),
+  domain: zod.coerce.string().optional(),
+});
+
+export const GetSpendTrendResponseItem = zod.object({
+  month: zod.string(),
+  spend: zod.number(),
+  trend: zod.number().nullish(),
+});
+export const GetSpendTrendResponse = zod.array(GetSpendTrendResponseItem);
+
+/**
+ * @summary Get execution queue items awaiting approval or execution
+ */
+export const getExecutionQueueQueryStatusDefault = `PENDING`;
+
+export const GetExecutionQueueQueryParams = zod.object({
+  tenantId: zod.coerce.string().optional(),
+  status: zod.coerce.string().default(getExecutionQueueQueryStatusDefault),
+  domain: zod.coerce.string().optional(),
+});
+
+export const GetExecutionQueueResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  domain: zod.string().nullish(),
+  status: zod.string(),
+  approvedBy: zod.string().nullish(),
+  approvedAt: zod.string().nullish(),
+  blastRadius: zod.string().nullish(),
+  rollback: zod.string().nullish(),
+});
+export const GetExecutionQueueResponse = zod.array(
+  GetExecutionQueueResponseItem,
+);
+
+/**
+ * @summary Get evidence sources for a specific connector
+ */
+export const GetConnectorEvidenceSourcesParams = zod.object({
+  id: zod.coerce.string(),
+});
+
+export const GetConnectorEvidenceSourcesQueryParams = zod.object({
+  tenantId: zod.coerce.string().optional(),
+});
+
+export const GetConnectorEvidenceSourcesResponseItem = zod.object({
+  id: zod.string(),
+  name: zod.string(),
+  iconType: zod.string(),
+  trustScore: zod.number(),
+  lastSyncAt: zod.string().nullish(),
+  status: zod.string(),
+});
+export const GetConnectorEvidenceSourcesResponse = zod.array(
+  GetConnectorEvidenceSourcesResponseItem,
+);
+
+/**
+ * @summary List recommendations with enhanced intelligence metadata
+ */
+export const ListEnhancedRecommendationsQueryParams = zod.object({
+  tenantId: zod.coerce.string().optional(),
+  domain: zod.coerce.string().optional(),
+  verdict: zod.coerce.string().optional(),
+});
+
+export const ListEnhancedRecommendationsResponseItem = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  description: zod.string(),
+  domain: zod.string(),
+  savingAmount: zod.number(),
+  verdict: zod.string(),
+  blastRadius: zod.string(),
+  rollback: zod.boolean(),
+  certId: zod.string().nullish(),
+  confidence: zod.number(),
+  recurrence: zod.string(),
+  proofChain: zod.array(zod.unknown()),
+});
+export const ListEnhancedRecommendationsResponse = zod.array(
+  ListEnhancedRecommendationsResponseItem,
+);

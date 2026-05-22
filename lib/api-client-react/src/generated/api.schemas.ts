@@ -147,6 +147,57 @@ export interface ErrorResponse {
   error: string;
 }
 
+export interface AuditEntry {
+  id: number;
+  timestamp: string;
+  action: string;
+  verdict: string;
+  domain?: string | null;
+  certId?: string | null;
+  actorId: string;
+}
+
+export interface SpendTrendPoint {
+  month: string;
+  spend: number;
+  trend?: number | null;
+}
+
+export interface ExecutionQueueItem {
+  id: number;
+  name: string;
+  domain?: string | null;
+  status: string;
+  approvedBy?: string | null;
+  approvedAt?: string | null;
+  blastRadius?: string | null;
+  rollback?: string | null;
+}
+
+export interface EvidenceSource {
+  id: string;
+  name: string;
+  iconType: string;
+  trustScore: number;
+  lastSyncAt?: string | null;
+  status: string;
+}
+
+export interface EnhancedRecommendation {
+  id: number;
+  name: string;
+  description: string;
+  domain: string;
+  savingAmount: number;
+  verdict: string;
+  blastRadius: string;
+  rollback: boolean;
+  certId?: string | null;
+  confidence: number;
+  recurrence: string;
+  proofChain: unknown[];
+}
+
 export type ListRecommendationsParams = {
   status?: ListRecommendationsStatus;
   playbook?: string;
@@ -170,4 +221,33 @@ export type GenerateRecommendations200 = {
 
 export type ListOutcomesParams = {
   limit?: number;
+};
+
+export type ListGovernanceAuditParams = {
+  tenantId?: string;
+  domain?: string;
+  limit?: number;
+  offset?: number;
+};
+
+export type GetSpendTrendParams = {
+  tenantId?: string;
+  months?: number;
+  domain?: string;
+};
+
+export type GetExecutionQueueParams = {
+  tenantId?: string;
+  status?: string;
+  domain?: string;
+};
+
+export type GetConnectorEvidenceSourcesParams = {
+  tenantId?: string;
+};
+
+export type ListEnhancedRecommendationsParams = {
+  tenantId?: string;
+  domain?: string;
+  verdict?: string;
 };
