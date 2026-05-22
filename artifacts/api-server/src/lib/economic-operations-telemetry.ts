@@ -1,4 +1,5 @@
-import type { JobType } from './economic-operations-job-registry';
+import type { JobType } from './economic-operations-job-registry.js';
+import { logger } from './logger.js';
 
 export type MetricName =
   | 'job_count'
@@ -46,9 +47,22 @@ export class EconomicOperationsTelemetry {
     const log = { ...entry, timestamp: new Date().toISOString() };
     this.logs.push(log);
     if (process.env.NODE_ENV !== 'test') {
-      // In production, this would emit to pino/OpenTelemetry
-      // eslint-disable-next-line no-console
-      console.log(JSON.stringify(log));
+      logger.info(
+        {
+          tenantId: entry.tenantId,
+          executionId: entry.executionId,
+          jobId: entry.jobId,
+          connectorId: entry.connectorId,
+          action: entry.action,
+          result: entry.result,
+          reason: entry.reason,
+          latencyMs: entry.latencyMs,
+          actorId: entry.actorId,
+          correlationId: entry.correlationId,
+          metadata: entry.metadata,
+        },
+        entry.action,
+      );
     }
   }
 

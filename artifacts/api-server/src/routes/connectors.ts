@@ -18,6 +18,7 @@ import { evaluateM365LiveExecutionReadiness } from "../lib/connectors/m365/m365-
 import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
 import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
 import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
+import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-routes.js";
 
 const router = Router();
 
@@ -589,5 +590,7 @@ router.post("/servicenow/sync", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+router.use("/openai", openaiConnectorRouter);
 
 export default router;

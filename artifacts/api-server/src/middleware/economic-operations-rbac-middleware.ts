@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction, RequestHandler } from 'express';
-import { buildAuthContext, type AuthRole } from '../lib/auth/auth-context';
+import { buildAuthContextSync, type AuthRole } from '../lib/auth/auth-context.js';
 import { globalRbac, type Permission, type OperatorRole } from '../lib/economic-operations-rbac';
 import type { ExecutionIntentType } from '../lib/economic-operations-intent-service';
 
 // Bridge from existing AuthRole to economic-operations OperatorRole.
-// x-actor-role header (OperatorRole) takes precedence for fine-grained control.
+// Role is derived exclusively from JWT claims — no header overrides.
 const AUTH_ROLE_TO_OPERATOR_ROLE: Record<AuthRole, OperatorRole> = {
   PLATFORM_ADMIN: 'OWNER',
   TENANT_ADMIN: 'ADMIN',
@@ -12,10 +12,6 @@ const AUTH_ROLE_TO_OPERATOR_ROLE: Record<AuthRole, OperatorRole> = {
   OPERATOR: 'ECONOMIC_OPERATOR',
   VIEWER: 'VIEWER',
 };
-
-const VALID_OPERATOR_ROLES = new Set<string>([
-  'OWNER', 'ADMIN', 'ECONOMIC_OPERATOR', 'APPROVER', 'AUDITOR', 'VIEWER', 'CONNECTOR_ADMIN',
-]);
 
 const INTENT_PERMISSION_MAP: Record<ExecutionIntentType, Permission> = {
   SIMULATE: 'SIMULATION_RUN',
@@ -32,11 +28,9 @@ const INTENT_PERMISSION_MAP: Record<ExecutionIntentType, Permission> = {
 };
 
 export function extractOperatorActor(req: Request): { actorId: string; actorRole: OperatorRole; tenantId: string } {
-  const auth = buildAuthContext(req);
-  const explicitRole = String(req.headers['x-actor-role'] ?? '');
-  const operatorRole: OperatorRole = VALID_OPERATOR_ROLES.has(explicitRole)
-    ? (explicitRole as OperatorRole)
-    : AUTH_ROLE_TO_OPERATOR_ROLE[auth.role] ?? 'VIEWER';
+  const auth = buildAuthContextSync(req);
+  // Role is derived from JWT claims only — x-actor-role header override has been removed
+  const operatorRole: OperatorRole = AUTH_ROLE_TO_OPERATOR_ROLE[auth.role] ?? 'VIEWER';
   return { actorId: auth.userId, actorRole: operatorRole, tenantId: auth.tenantId };
 }
 

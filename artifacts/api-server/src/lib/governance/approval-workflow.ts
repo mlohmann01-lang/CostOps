@@ -9,8 +9,11 @@ const EXPIRY_HOURS = 72;
 
 export async function createApprovalRequest(input: { tenantId: string; recommendationId: string; requestedBy: string; reason: string; riskClass?: string; action?: string }) {
   const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000);
-  const policy = await evaluateApprovalPolicy({ tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.requestedBy, riskClass: input.riskClass ?? "B", action: input.action ?? "REMOVE_LICENSE" });
-  const [req] = await db.insert(approvalRequestsTable).values({ tenantId: input.tenantId, recommendationId: input.recommendationId, requestedBy: input.requestedBy, requiredApproverRole: policy.requiredApproverRole, status: "PENDING", riskClass: input.riskClass ?? "B", action: input.action ?? "REMOVE_LICENSE", reason: input.reason ?? "", expiresAt, updatedAt: new Date() }).returning();
+  const riskClass = input.riskClass ?? "B";
+  const policy = await evaluateApprovalPolicy({ tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.requestedBy, riskClass, action: input.action ?? "REMOVE_LICENSE" });
+  // Class A risk always requires dual approval regardless of policy outcome
+  const requiredApproverRole = riskClass === "A" ? "DUAL_APPROVAL" : policy.requiredApproverRole;
+  const [req] = await db.insert(approvalRequestsTable).values({ tenantId: input.tenantId, recommendationId: input.recommendationId, requestedBy: input.requestedBy, requiredApproverRole, status: "PENDING", riskClass, action: input.action ?? "REMOVE_LICENSE", reason: input.reason ?? "", expiresAt, updatedAt: new Date() }).returning();
   await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: input.tenantId, actorId: input.requestedBy, eventType: "REQUESTED", reason: input.reason ?? "", evidence: {} });
   return req;
 }
@@ -24,7 +27,52 @@ export async function approveRequest(input: { approvalRequestId: number; actorId
   if (!auth.allowed) throw new Error(`AUTH_${auth.reason}`);
   const runtimeControl = evaluateApprovalRuntimeControls({ tenantId: req.tenantId, actorId: input.actorId, riskClass: req.riskClass, action: req.action });
   if (runtimeControl.decision === "BLOCK") throw new Error("APPROVAL_BLOCKED_BY_RUNTIME_CONTROL");
+
+  // DUAL_APPROVAL: requests with DUAL_APPROVAL role or risk class A require two distinct approvers
+  const isDualApproval = req.requiredApproverRole === "DUAL_APPROVAL" || req.riskClass === "A";
+  if (isDualApproval) {
+    const previousEvents = await db
+      .select()
+      .from(approvalEventsTable)
+      .where(eq(approvalEventsTable.approvalRequestId, input.approvalRequestId));
+    const firstApprovalEvents = previousEvents.filter(
+      (e) => e.eventType === "FIRST_APPROVAL_GRANTED"
+    );
+
+    if (firstApprovalEvents.length >= 2) {
+      throw new Error("APPROVAL_ALREADY_COMPLETE");
+    }
+
+    if (firstApprovalEvents.length === 0) {
+      // First approval — transition to PENDING_SECOND_APPROVAL
+      const [updated] = await db
+        .update(approvalRequestsTable)
+        .set({ status: "PENDING_SECOND_APPROVAL", updatedAt: new Date() })
+        .where(eq(approvalRequestsTable.id, input.approvalRequestId))
+        .returning();
+      await db.insert(approvalEventsTable).values({
+        approvalRequestId: req.id,
+        tenantId: req.tenantId,
+        actorId: input.actorId,
+        eventType: "FIRST_APPROVAL_GRANTED",
+        reason: input.reason ?? "",
+        evidence: { dualApproval: true, awaitingSecondApprover: true },
+      });
+      return updated!;
+    } else {
+      // Second approval — must be a different actor
+      const firstActorId = firstApprovalEvents[0]?.actorId;
+      if (firstActorId === input.actorId) {
+        throw new Error("DUAL_APPROVAL_SAME_ACTOR_BLOCKED");
+      }
+      // Fall through to the normal approval path below
+    }
+  }
+
   const [updated] = await db.update(approvalRequestsTable).set({ status: "APPROVED", updatedAt: new Date() }).where(eq(approvalRequestsTable.id, req.id)).returning();
+  if (isDualApproval) {
+    await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: req.tenantId, actorId: input.actorId, eventType: "SECOND_APPROVAL_GRANTED", reason: input.reason ?? "", evidence: { dualApproval: true, role: auth.role } });
+  }
   const eventType = runtimeControl.decision === "ALLOW" ? "APPROVED" : "APPROVED_WITH_WARNING";
   await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: req.tenantId, actorId: input.actorId, eventType, reason: input.reason ?? "", evidence: { role: auth.role, runtimeControl } });
   if (runtimeControl.decision !== "ALLOW") {

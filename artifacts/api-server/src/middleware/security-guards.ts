@@ -1,5 +1,5 @@
 import type { NextFunction, Request, Response } from "express";
-import { buildAuthContext } from "../lib/auth/auth-context";
+import { buildAuthContextSync } from "../lib/auth/auth-context.js";
 import { authorizationService, type Capability } from "../lib/security/authorization-service";
 
 function requestedTenant(req: Request): string | null {
@@ -10,7 +10,7 @@ function requestedTenant(req: Request): string | null {
 
 export function requireTenantContext() {
   return (req: Request, res: Response, next: NextFunction) => {
-    const auth = buildAuthContext(req);
+    const auth = buildAuthContextSync(req);
     const tenantId = requestedTenant(req);
 
     if (!tenantId) {
@@ -38,7 +38,7 @@ export function requireTenantContext() {
 
 export function requireCapability(capability: Capability) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const auth = buildAuthContext(req);
+    const auth = buildAuthContextSync(req);
     if (!authorizationService.hasCapability(auth.role, capability)) {
       res.status(403).json({ error: "CAPABILITY_FORBIDDEN", capability });
       return;
@@ -53,7 +53,7 @@ export function requireTenantResourceAccess(
   resourceTenantIdResolver: (req: Request) => string,
 ) {
   return (req: Request, res: Response, next: NextFunction) => {
-    const auth = buildAuthContext(req);
+    const auth = buildAuthContextSync(req);
     const tenantId = resourceTenantIdResolver(req);
     if (auth.role !== "PLATFORM_ADMIN" && auth.tenantId !== tenantId) {
       res.status(403).json({ error: "RESOURCE_TENANT_ACCESS_DENIED" });

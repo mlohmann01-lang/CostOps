@@ -69,3 +69,5 @@ export * from "./syncCheckpoints";
 export * from "./operationalEvents";
 export * from "./operatorAlerts";
 export * from "./connectorHealthModel";
+
+export * from "./auditEvents";
