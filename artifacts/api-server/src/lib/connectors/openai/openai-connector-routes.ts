@@ -13,15 +13,15 @@ import { z } from 'zod';
 import { openaiCapabilityRegistry } from './openai-capability-registry.js';
 import { openaiSyncJob } from './openai-sync-job.js';
 import { logger } from '../../logger.js';
-import { requireAuth } from '../../middleware/security-guards.js';
 
 const router = Router();
 
-// Middleware: verify tenant context
-const requireTenant = (req: Request, res: Response, next: NextFunction) => {
+// Middleware: verify tenant context (defensive guard for standalone mounting)
+const requireTenant = (req: Request, res: Response, next: NextFunction): void => {
   const authContext = (req as { __authContext?: { tenantId?: string } }).__authContext;
   if (!authContext?.tenantId) {
-    return res.status(401).json({ error: 'TENANT_CONTEXT_REQUIRED' });
+    res.status(401).json({ error: 'TENANT_CONTEXT_REQUIRED' });
+    return;
   }
   next();
 };
@@ -35,12 +35,10 @@ router.get('/readiness', requireTenant, async (req: Request, res: Response) => {
     const authContext = (req as { __authContext?: { tenantId: string } }).__authContext!;
     const tenantId = authContext.tenantId;
 
-    const readiness = await openaiCapabilityRegistry.evaluateReadiness?.(tenantId);
-
     res.json({
       connector: 'OPENAI',
       tenantId,
-      readiness: readiness || {
+      readiness: {
         connectorId: 'OPENAI',
         overallState: 'UNKNOWN',
         capabilityStatuses: openaiCapabilityRegistry.listCapabilities().map((cap) => ({
@@ -67,14 +65,15 @@ const SyncBodySchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)'),
 });
 
-router.post('/sync', requireTenant, async (req: Request, res: Response) => {
+router.post('/sync', requireTenant, async (req: Request, res: Response): Promise<void> => {
   try {
     const validation = SyncBodySchema.safeParse(req.body);
     if (!validation.success) {
-      return res.status(400).json({
+      res.status(400).json({
         error: 'INVALID_REQUEST_BODY',
         details: validation.error.errors,
       });
+      return;
     }
 
     const authContext = (req as { __authContext?: { tenantId: string } }).__authContext!;

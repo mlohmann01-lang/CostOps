@@ -201,7 +201,7 @@ export class OpenAIAdminClientImpl implements OpenAIAdminClient {
     try {
       // Simple request to validate credentials
       // GET /account/billing/credit_grants (minimal read, no cost impact)
-      const result = await this.request<{ object: string }>('/billing/credit_grants');
+      const result = await this.request<{ object: string }>('GET', '/billing/credit_grants');
       return result.object === 'list';
     } catch (error) {
       if (error instanceof OpenAIAPIError) {
@@ -236,7 +236,7 @@ export class OpenAIAdminClientImpl implements OpenAIAdminClient {
       data: Array<{ project_id?: string; model?: string; tokens_in?: number; tokens_out?: number; date?: string }>;
       has_more?: boolean;
       cursor?: string;
-    }>('/usage', query);
+    }>('GET', '/usage', query);
 
     const data: UsageBucket[] = (result.data || []).map((item) => ({
       projectId: item.project_id || 'unknown',
@@ -271,7 +271,7 @@ export class OpenAIAdminClientImpl implements OpenAIAdminClient {
       data: Array<{ project_id?: string; model?: string; amount?: number; date?: string }>;
       has_more?: boolean;
       cursor?: string;
-    }>('/billing/costs', query);
+    }>('GET', '/billing/costs', query);
 
     const data: CostBucket[] = (result.data || []).map((item) => ({
       projectId: item.project_id || 'unknown',
@@ -302,7 +302,7 @@ export class OpenAIAdminClientImpl implements OpenAIAdminClient {
       }>;
       has_more?: boolean;
       cursor?: string;
-    }>('/organization/projects', query);
+    }>('GET', '/organization/projects', query);
 
     const data: ProjectInfo[] = (result.data || []).map((item) => ({
       projectId: item.id || 'unknown',
@@ -334,7 +334,7 @@ export class OpenAIAdminClientImpl implements OpenAIAdminClient {
       }>;
       has_more?: boolean;
       cursor?: string;
-    }>('/organization/users', query);
+    }>('GET', '/organization/users', query);
 
     const data: UserInfo[] = (result.data || []).map((item) => ({
       userId: item.id || 'unknown',

@@ -114,10 +114,10 @@ export class OpenAIEvidenceSourceManager {
   /**
    * Tag events with their source (for proof graph integration)
    */
-  tagEventsWithSource(events: NormalizedAITelemetryEvent[], source: EvidenceSource): (NormalizedAITelemetryEvent & { sourceOfTruth: EvidenceSource })[] {
+  tagEventsWithSource(events: NormalizedAITelemetryEvent[], source: EvidenceSource): (NormalizedAITelemetryEvent & { evidenceSource: EvidenceSource })[] {
     return events.map((event) => ({
       ...event,
-      sourceOfTruth: source,
+      evidenceSource: source,
     }));
   }
 

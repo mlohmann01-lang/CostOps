@@ -5,7 +5,7 @@
  * Sets sourceOfTruth="CONNECTOR" and isEstimated flags based on data completeness.
  */
 
-import type { NormalizedAITelemetryEvent } from '../ai-telemetry-types.js';
+import type { NormalizedAITelemetryEvent } from '../../ai-telemetry-types.js';
 import type { RawOpenAITelemetryBatch } from './openai-raw-telemetry-dto.js';
 
 export type NormalizedOpenAIEvent = NormalizedAITelemetryEvent & {

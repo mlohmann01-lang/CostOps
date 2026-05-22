@@ -5,8 +5,6 @@
  * The API key is NEVER logged or exposed in error messages.
  */
 
-import { logger } from '../../logger.js';
-
 export type OpenAICredentialStatus = 'VALID' | 'INVALID' | 'EXPIRED' | 'MISSING' | 'MISCONFIGURED';
 
 export type OpenAICredentials = {
@@ -23,12 +21,14 @@ export class OpenAICredentialManager {
     this.apiKey = process.env.OPENAI_API_KEY;
     this.organizationId = process.env.OPENAI_ORGANIZATION_ID;
 
-    // Production warning if credentials not set
+    // Production warning if credentials not set (lazy import to avoid pino worker at test bundling time)
     if (!this.apiKey && process.env.NODE_ENV === 'production') {
-      logger.warn(
-        { component: 'openai-credentials' },
-        'OPENAI_API_KEY not set in production — OpenAI connector will be unavailable',
-      );
+      import('../../logger.js').then(({ logger }) => {
+        logger.warn(
+          { component: 'openai-credentials' },
+          'OPENAI_API_KEY not set in production — OpenAI connector will be unavailable',
+        );
+      }).catch(() => { /* silently ignore if logger unavailable */ });
     }
   }
 
