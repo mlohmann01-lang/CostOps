@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useListOutcomes, useGetOutcomesSummary } from "@workspace/api-client-react";
 import { Layout } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -138,9 +138,8 @@ export default function Outcomes() {
                 {outcomes.data.map((o: any) => {
                   const v = verifications[o.id];
                   return (
-                  <>
+                  <React.Fragment key={o.id}>
                     <TableRow
-                      key={o.id}
                       className="cursor-pointer hover:bg-secondary/30"
                       onClick={() => setExpandedId(expandedId === o.id ? null : o.id)}
                       data-testid={`row-outcome-${o.id}`}
@@ -212,7 +211,7 @@ export default function Outcomes() {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 );})}
               </TableBody>
             </Table>
