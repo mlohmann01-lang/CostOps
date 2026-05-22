@@ -14,7 +14,9 @@ import assert from 'node:assert/strict';
 import { tokenGovernancePolicyRegistry } from '../lib/token-governance/token-governance-policy.js';
 import { budgetGate } from '../lib/token-governance/budget-gate.js';
 import { modelDowngradeExecutor } from '../lib/token-governance/model-downgrade-execution.js';
-import { savingsVerificationService } from '../lib/token-governance/savings-verification.js';
+// Note: savingsVerificationService is now DB-backed.
+// DB-persistence tests are in token-governance-verification-persistence.test.ts (mocked).
+// End-to-end verification tests require a real DATABASE_URL.
 
 // --- Policy Registry ---
 
@@ -210,119 +212,6 @@ test('downgrade: executes routing change', () => {
 });
 
 // --- Savings Verification ---
-
-test('verification: records baseline measurement', () => {
-  const proposal = modelDowngradeExecutor.createProposal('tenant-sv1', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
-  const execution = modelDowngradeExecutor.createExecution(proposal);
-
-  const baseline = savingsVerificationService.recordBaseline(
-    execution.executionId,
-    'tenant-sv1',
-    'gpt-4',
-    30,
-    10000,
-    50.0,
-  );
-
-  assert.strictEqual(baseline.totalTokens, 10000);
-  assert.strictEqual(baseline.totalCostUSD, 50.0);
-  assert.ok(baseline.costPerToken > 0);
-});
-
-test('verification: initializes verification from execution', async () => {
-  const proposal = modelDowngradeExecutor.createProposal('tenant-sv2', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
-  const execution = modelDowngradeExecutor.createExecution(proposal);
-
-  // Record baseline first
-  savingsVerificationService.recordBaseline(execution.executionId, 'tenant-sv2', 'gpt-4', 30, 10000, 50.0);
-
-  // Execute downgrade
-  modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
-  modelDowngradeExecutor.executeDowngrade(execution.executionId);
-
-  // Initialize verification
-  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
-  assert.ok(verification);
-  assert.strictEqual(verification?.status, 'PENDING');
-  assert.strictEqual(verification?.baselineCostUSD, 50.0);
-});
-
-test('verification: calculates realized savings with high confidence', async () => {
-  const proposal = modelDowngradeExecutor.createProposal('tenant-sv3', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
-  const execution = modelDowngradeExecutor.createExecution(proposal);
-
-  savingsVerificationService.recordBaseline(execution.executionId, 'tenant-sv3', 'gpt-4', 30, 10000, 50.0);
-  modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
-  modelDowngradeExecutor.executeDowngrade(execution.executionId);
-
-  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
-  assert.ok(verification);
-
-  // Record measurement showing 20% savings
-  const measured = await savingsVerificationService.recordMeasurement(
-    verification!.verificationId,
-    'tenant-sv3',
-    9500, // 5% fewer tokens
-    40.0, // 20% cost reduction
-  );
-
-  assert.strictEqual(measured?.realizedSavingsUSD, 10.0); // $10 saved
-  assert.ok(measured!.realizedSavingsPercent >= 15, 'Should have >15% savings for HIGH confidence');
-  assert.strictEqual(measured?.confidenceLevel, 'HIGH');
-});
-
-test('verification: marks inconclusive when token usage increases', async () => {
-  const proposal = modelDowngradeExecutor.createProposal('tenant-sv4', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
-  const execution = modelDowngradeExecutor.createExecution(proposal);
-
-  savingsVerificationService.recordBaseline(execution.executionId, 'tenant-sv4', 'gpt-4', 30, 10000, 50.0);
-  modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
-  modelDowngradeExecutor.executeDowngrade(execution.executionId);
-
-  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
-  assert.ok(verification);
-
-  // Record measurement with MORE tokens used
-  const measured = await savingsVerificationService.recordMeasurement(
-    verification!.verificationId,
-    'tenant-sv4',
-    12000, // 20% MORE tokens (workflow load increased)
-    55.0,  // More cost
-  );
-
-  assert.strictEqual(measured?.confidenceLevel, 'LOW');
-  assert.strictEqual(measured?.status, 'INSUFFICIENT_EVIDENCE');
-});
-
-test('verification: computes total realized savings for tenant', async () => {
-  const proposal1 = modelDowngradeExecutor.createProposal('tenant-sv5', 'gpt-4', 'gpt-3.5-turbo', 'Test1', 100, []);
-  const execution1 = modelDowngradeExecutor.createExecution(proposal1);
-
-  savingsVerificationService.recordBaseline(execution1.executionId, 'tenant-sv5', 'gpt-4', 30, 10000, 100.0);
-  modelDowngradeExecutor.recordApproval(execution1.executionId, 'actor-1');
-  modelDowngradeExecutor.executeDowngrade(execution1.executionId);
-
-  const v1 = await savingsVerificationService.initializeVerification(execution1.executionId);
-  await savingsVerificationService.recordMeasurement(v1!.verificationId, 'tenant-sv5', 9000, 70.0); // $30 saved
-
-  const totals = await savingsVerificationService.getTotalRealizedSavings('tenant-sv5');
-  assert.strictEqual(totals.totalSavingsUSD, 30.0);
-  assert.strictEqual(totals.completedCount, 1);
-});
-
-test('verification: builds proof graph node', async () => {
-  const proposal = modelDowngradeExecutor.createProposal('tenant-sv6', 'gpt-4', 'gpt-3.5-turbo', 'Test', 100, []);
-  const execution = modelDowngradeExecutor.createExecution(proposal);
-
-  savingsVerificationService.recordBaseline(execution.executionId, 'tenant-sv6', 'gpt-4', 30, 10000, 50.0);
-  modelDowngradeExecutor.recordApproval(execution.executionId, 'actor-1');
-  modelDowngradeExecutor.executeDowngrade(execution.executionId);
-
-  const verification = await savingsVerificationService.initializeVerification(execution.executionId);
-  await savingsVerificationService.recordMeasurement(verification!.verificationId, 'tenant-sv6', 9000, 35.0);
-
-  const node = savingsVerificationService.buildProofGraphNode(verification!);
-  assert.strictEqual(node.nodeType, 'SAVINGS_VERIFICATION');
-  assert.ok((node.properties.realizedSavingsUSD as number) > 0);
-  assert.ok(!JSON.stringify(node).includes('sk-'), 'No API keys in proof graph');
-});
+// SavingsVerificationService is now DB-backed; tested in:
+//   token-governance-verification-persistence.test.ts (full mock, no DB required)
+// Integration tests require a real DATABASE_URL.
