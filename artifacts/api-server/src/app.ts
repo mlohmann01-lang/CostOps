@@ -4,6 +4,7 @@ import pinoHttp from "pino-http";
 import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 import { authMiddleware } from "./middleware/auth-middleware.js";
+import { rateLimitMiddleware, DEFAULT_API_LIMIT } from "./middleware/rate-limit.js";
 
 const app: Express = express();
 
@@ -27,6 +28,7 @@ app.use(
   }),
 );
 app.use(cors());
+app.use(rateLimitMiddleware(DEFAULT_API_LIMIT));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
