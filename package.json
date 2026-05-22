@@ -14,7 +14,9 @@
     "smoke:m365-demo": "pnpm --filter @workspace/scripts exec tsx scripts/smoke-m365-demo.ts",
     "seed:golden-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-golden-demo.ts",
     "reset:golden-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./reset-golden-demo.ts",
-    "provision:tenant": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./provision-tenant.ts"
+    "provision:tenant": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./provision-tenant.ts",
+    "smoke:certen": "tsx scripts/smoke/certen-smoke-test.ts",
+    "migrate:db": "pnpm --filter @workspace/db run push"
   },
   "private": true,
   "devDependencies": {
