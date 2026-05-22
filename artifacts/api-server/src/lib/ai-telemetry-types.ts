@@ -41,6 +41,8 @@ export type NormalizedAITelemetryEvent = {
   normalizedAt: string
   rawEventId: string
   dataVersion: string // normalization schema version
+  sourceOfTruth?: 'MOCK' | 'CONNECTOR' // MOCK for fixtures, CONNECTOR for real API
+  isEstimated?: boolean // true if any required field is inferred/missing
 }
 
 // Telemetry data freshness state

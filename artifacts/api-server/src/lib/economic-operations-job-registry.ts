@@ -8,7 +8,10 @@ export type JobType =
   | 'OUTCOME_LEDGER_RECONCILIATION'
   | 'OPERATOR_NOTIFICATION_DISPATCH'
   | 'SERVICENOW_SYNC'
-  | 'FLEXERA_SYNC';
+  | 'FLEXERA_SYNC'
+  | 'OPENAI_READ_ONLY_SYNC'
+  | 'OPENAI_RECOMMENDATION_GENERATION'
+  | 'OPENAI_CONNECTOR_HEALTH_CHECK';
 
 export type JobStatus =
   | 'QUEUED'
@@ -133,6 +136,36 @@ export const JOB_REGISTRY: Record<JobType, JobDefinition> = {
     isHighRisk: false,
     requiresLock: true,
     description: 'Sync Flexera entitlement and license position data',
+  },
+  OPENAI_READ_ONLY_SYNC: {
+    jobType: 'OPENAI_READ_ONLY_SYNC',
+    defaultMaxAttempts: 4,
+    defaultPriority: 5,
+    defaultTtlMs: 20 * 60 * 1000,
+    allowedConcurrency: 1,
+    isHighRisk: false,
+    requiresLock: true,
+    description: 'Read-only sync of OpenAI usage and cost data via Admin API',
+  },
+  OPENAI_RECOMMENDATION_GENERATION: {
+    jobType: 'OPENAI_RECOMMENDATION_GENERATION',
+    defaultMaxAttempts: 2,
+    defaultPriority: 4,
+    defaultTtlMs: 10 * 60 * 1000,
+    allowedConcurrency: 1,
+    isHighRisk: false,
+    requiresLock: true,
+    description: 'Generate economic recommendations from normalized OpenAI usage data',
+  },
+  OPENAI_CONNECTOR_HEALTH_CHECK: {
+    jobType: 'OPENAI_CONNECTOR_HEALTH_CHECK',
+    defaultMaxAttempts: 2,
+    defaultPriority: 2,
+    defaultTtlMs: 3 * 60 * 1000,
+    allowedConcurrency: 1,
+    isHighRisk: false,
+    requiresLock: false,
+    description: 'Check OpenAI Admin API connector health and credential validity',
   },
 };
 
