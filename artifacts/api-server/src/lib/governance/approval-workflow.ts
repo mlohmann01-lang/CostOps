@@ -9,8 +9,11 @@ const EXPIRY_HOURS = 72;
 
 export async function createApprovalRequest(input: { tenantId: string; recommendationId: string; requestedBy: string; reason: string; riskClass?: string; action?: string }) {
   const expiresAt = new Date(Date.now() + EXPIRY_HOURS * 60 * 60 * 1000);
-  const policy = await evaluateApprovalPolicy({ tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.requestedBy, riskClass: input.riskClass ?? "B", action: input.action ?? "REMOVE_LICENSE" });
-  const [req] = await db.insert(approvalRequestsTable).values({ tenantId: input.tenantId, recommendationId: input.recommendationId, requestedBy: input.requestedBy, requiredApproverRole: policy.requiredApproverRole, status: "PENDING", riskClass: input.riskClass ?? "B", action: input.action ?? "REMOVE_LICENSE", reason: input.reason ?? "", expiresAt, updatedAt: new Date() }).returning();
+  const riskClass = input.riskClass ?? "B";
+  const policy = await evaluateApprovalPolicy({ tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.requestedBy, riskClass, action: input.action ?? "REMOVE_LICENSE" });
+  // Class A risk always requires dual approval regardless of policy outcome
+  const requiredApproverRole = riskClass === "A" ? "DUAL_APPROVAL" : policy.requiredApproverRole;
+  const [req] = await db.insert(approvalRequestsTable).values({ tenantId: input.tenantId, recommendationId: input.recommendationId, requestedBy: input.requestedBy, requiredApproverRole, status: "PENDING", riskClass, action: input.action ?? "REMOVE_LICENSE", reason: input.reason ?? "", expiresAt, updatedAt: new Date() }).returning();
   await db.insert(approvalEventsTable).values({ approvalRequestId: req.id, tenantId: input.tenantId, actorId: input.requestedBy, eventType: "REQUESTED", reason: input.reason ?? "", evidence: {} });
   return req;
 }
