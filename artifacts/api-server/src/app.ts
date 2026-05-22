@@ -1,8 +1,9 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
-import router from "./routes";
-import { logger } from "./lib/logger";
+import router from "./routes/index.js";
+import { logger } from "./lib/logger.js";
+import { authMiddleware } from "./middleware/auth-middleware.js";
 
 const app: Express = express();
 
@@ -29,6 +30,34 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// JWT auth middleware — runs before all routes, populates req.__authContext
+app.use(authMiddleware());
+
 app.use("/api", router);
+
+// Global error handler — must be last middleware (4-param signature)
+app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+  const status =
+    err instanceof Error &&
+    "statusCode" in err &&
+    typeof (err as { statusCode?: unknown }).statusCode === "number"
+      ? ((err as { statusCode: number }).statusCode)
+      : 500;
+  const message = err instanceof Error ? err.message : "INTERNAL_ERROR";
+  const requestId = (req as { id?: string }).id;
+
+  logger.error({ err, requestId, method: req.method, url: req.url }, "Unhandled error");
+
+  const detail =
+    process.env.NODE_ENV !== "production" && err instanceof Error
+      ? err.stack
+      : undefined;
+
+  res.status(status).json({
+    error: message,
+    requestId,
+    ...(detail ? { detail } : {}),
+  });
+});
 
 export default app;

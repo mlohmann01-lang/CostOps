@@ -1,5 +1,16 @@
-import app from "./app";
-import { logger } from "./lib/logger";
+import app from "./app.js";
+import { logger } from "./lib/logger.js";
+import { validateProductionConfig } from "./lib/config/production-config-validator.js";
+
+// Fail fast on misconfiguration — never start with invalid config
+const configResult = validateProductionConfig();
+if (!configResult.valid) {
+  logger.fatal({ errors: configResult.errors }, "Startup config validation failed — refusing to start");
+  process.exit(1);
+}
+if (configResult.warnings.length > 0) {
+  logger.warn({ warnings: configResult.warnings }, "Startup config warnings");
+}
 
 const rawPort = process.env["PORT"];
 
