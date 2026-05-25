@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
@@ -5,6 +6,9 @@ import { CONNECTORS, EXECUTION_RECORDS } from '../lib/mockData'
 import { formatCurrency, formatRelativeTime } from '../lib/formatters'
 import type { Domain } from '../types/connector'
 import type { BlastRadius, RollbackClass } from '../types/governance'
+import { ConfirmDialog } from '../lib/interaction/confirm-dialog'
+import { isDemoMode } from '../lib/demo/demo-action-policy'
+import { emitOperationEvent } from '../lib/operations/operation-store'
 
 function BlastBadge({ level }: { level: BlastRadius }) {
   const color = level === 'LOW' ? 'var(--c-teal-600)' : level === 'MEDIUM' ? 'var(--c-amber-600)' : 'var(--c-red-600)'
@@ -46,6 +50,10 @@ interface ExecutionViewProps {
 export default function ExecutionView({ params }: ExecutionViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
   const records = domain === 'all' ? EXECUTION_RECORDS : EXECUTION_RECORDS.filter(r => r.domain === domain)
+  const [executionStatus, setExecutionStatus] = useState<Record<string, string>>({})
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
+  const [statusMessage, setStatusMessage] = useState('')
   const queued = records.filter(r => r.status === 'QUEUED')
   const completed = records.filter(r => r.status === 'COMPLETED')
 
@@ -59,7 +67,7 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <h1 style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)' }}>Execution</h1>
-          <button style={{
+          <button onClick={() => setScheduleOpen(true)} style={{
             fontSize: 11, padding: '5px 11px',
             border: '0.5px solid var(--border-medium)', borderRadius: 8,
             background: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontFamily: 'inherit',
@@ -96,12 +104,12 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{formatRelativeTime(r.approvedAt)}</div>
                   <BlastBadge level={r.blastRadius} />
                   <RollbackPill level={r.rollback} />
-                  <button style={{
+                  <button onClick={() => setConfirmingId(r.id)} style={{
                     fontSize: 11, padding: '4px 10px',
                     background: 'var(--c-teal-400)', color: '#fff',
                     border: 'none', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
                   }}>
-                    Execute now
+                    {executionStatus[r.id] ?? 'Execute now'}
                   </button>
                 </div>
               ))}
@@ -141,7 +149,36 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
             ))
           )}
         </div>
+        {statusMessage && <p style={{ marginTop: 10, fontSize: 12, color: 'var(--text-secondary)' }}>{statusMessage}</p>}
       </div>
+
+      <ConfirmDialog
+        open={!!confirmingId}
+        title="Execute action"
+        body={`Tenant mode: ${isDemoMode() ? 'DEMO' : 'PRODUCTION'}. ${isDemoMode() ? 'Demo simulation only.' : 'Live endpoint required: POST /economic-operations/intent.'}`}
+        confirmText="Execute"
+        onCancel={() => setConfirmingId(null)}
+        onConfirm={() => {
+          if (!confirmingId) return
+          const demo = isDemoMode()
+          setExecutionStatus((prev) => ({ ...prev, [confirmingId]: demo ? 'Demo simulated' : 'Blocked' }))
+          setStatusMessage(demo ? 'Demo simulation complete. No live systems changed.' : 'Blocked: live execution endpoint not available for this action.')
+          emitOperationEvent({ type: demo ? 'EXECUTION_COMPLETED' : 'EXECUTION_BLOCKED', entityId: confirmingId, timestamp: new Date().toISOString(), demo })
+          setConfirmingId(null)
+        }}
+      />
+
+      <ConfirmDialog
+        open={scheduleOpen}
+        title="Schedule execution"
+        body="Choose: Execute now, Schedule later, or Maintenance window. Demo records scheduled state; production requires scheduler endpoint."
+        confirmText="Schedule later"
+        onCancel={() => setScheduleOpen(false)}
+        onConfirm={() => {
+          setStatusMessage(isDemoMode() ? 'Demo schedule recorded — no production action taken.' : 'Scheduler endpoint not available.')
+          setScheduleOpen(false)
+        }}
+      />
 
       <CommandBar />
     </Shell>

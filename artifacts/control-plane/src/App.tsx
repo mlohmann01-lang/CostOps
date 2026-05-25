@@ -7,6 +7,9 @@ import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
 import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
+import SyncJobsPage from './pages/SyncJobsPage'
+import AuditLogPage from './pages/AuditLogPage'
+import SettingsPage from './pages/SettingsPage'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
 const DEMO_EMAIL = 'admin@certen.com'
@@ -190,15 +193,14 @@ function Router() {
         <RequireAuth><IntelligenceView params={params} /></RequireAuth>
       } />
 
-      {/* System nav items — pages not yet built, stay on connector hub */}
       <Route path="/sync-jobs" component={() =>
-        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+        <RequireAuth><SyncJobsPage /></RequireAuth>
       } />
       <Route path="/audit-log" component={() =>
-        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+        <RequireAuth><AuditLogPage /></RequireAuth>
       } />
       <Route path="/settings" component={() =>
-        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+        <RequireAuth><SettingsPage /></RequireAuth>
       } />
 
       <Route component={() => <Redirect to={session ? '/connectors' : '/login'} />} />
