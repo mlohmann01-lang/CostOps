@@ -37,3 +37,16 @@ export function getSession(): SessionState | null {
 export function clearSession() {
   sessionStorage.removeItem(KEY)
 }
+
+export function createDemoSession(email: string): SessionState {
+  return {
+    accessToken: 'demo-token',
+    expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
+    tenantId: 'certen-demo',
+    tenantMode: 'DEMO',
+    role: 'ADMIN',
+    isDemo: true,
+    user: { email, name: 'Admin' },
+    environment: 'DEMO',
+  }
+}

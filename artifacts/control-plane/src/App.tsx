@@ -1,26 +1,221 @@
-import { useEffect, useState } from 'react'
-import { Link, Redirect, Route, Router as WouterRouter, Switch, useLocation } from 'wouter'
+import { useState } from 'react'
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from 'wouter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ShieldCheck } from 'lucide-react'
+import ConnectorHub from './pages/ConnectorHub'
 import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
 import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
-import ConnectorHub from './pages/ConnectorHub'
-import { demoLogin, loginRedirect, logout } from './lib/auth/auth-client'
-import { getSession, type SessionState } from './lib/auth/session'
+import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
+const DEMO_EMAIL = 'admin@certen.com'
+const DEMO_PASSWORD = 'certen@demo1'
 
-function LandingPage() { return <main className="min-h-screen bg-slate-950 text-slate-100 p-10"><h1 className="text-5xl font-bold max-w-4xl">AI Economic Operations, governed end-to-end.</h1><p className="mt-4 max-w-3xl text-slate-300">Certen helps enterprises detect avoidable AI and software spend, govern execution, prove outcomes, and prevent cost drift.</p><div className="mt-8 flex gap-3"><Link href="/login" className="bg-indigo-400 text-slate-950 px-4 py-2 rounded">Sign in</Link><Link href="/demo-login" className="border px-4 py-2 rounded">View demo</Link></div><section className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-10">{['AI Cost Governance','M365 Optimization','Verified Savings','Drift Prevention','Proof & Auditability','Governed Execution'].map((x)=><div key={x} className="border border-slate-800 rounded p-3">{x}</div>)}</section><section className="mt-10 text-slate-300">Connect evidence → Detect opportunity → Simulate action → Approve safely → Verify savings → Monitor drift</section><section className="mt-10 text-slate-400">Tenant isolation · RBAC · Audit trail · Proof graph · Readiness gates · Rollback visibility · Fail-closed production controls</section><footer className="mt-16 border-t border-slate-800 pt-6 text-sm text-slate-400">Product · Security · Documentation · Contact</footer></main> }
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+})
 
-function LoginPage(){ const [,setLoc]=useLocation(); return <main className="min-h-screen grid place-items-center bg-slate-950 text-slate-100"><div className="w-full max-w-md border border-slate-800 rounded p-6 space-y-3"><h2 className="text-xl font-semibold">Sign in to Certen</h2><input placeholder="Email" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><input placeholder="Password" type="password" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><input placeholder="Tenant slug" className="w-full bg-slate-900 border border-slate-700 rounded p-2"/><button onClick={loginRedirect} className="w-full bg-indigo-400 text-slate-950 rounded p-2">Sign in</button><button onClick={()=>setLoc('/demo-login')} className="w-full border rounded p-2">Enter Demo Workspace</button><button className="w-full border rounded p-2" disabled>Enterprise SSO coming soon</button><p className="text-sm text-slate-400">Forgot password (coming soon)</p></div></main> }
+function LoginPage() {
+  const [, setLoc] = useLocation()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-function AppShell({session}:{session:SessionState}){ return <div className="min-h-screen bg-slate-950 text-slate-100"><header className="flex justify-between border-b border-slate-800 p-3"><div>Tenant: {session.tenantId} · Role: {session.role} · Mode: {session.tenantMode} · Env: {session.environment}</div><button onClick={()=>logout().then(()=>window.location.href='/login')}>Logout</button></header>{session.isDemo && <div className="bg-amber-200 text-amber-950 p-2 text-sm">Demo workspace — synthetic data only. Live execution disabled.</div>}<div className="flex"><aside className="w-56 border-r border-slate-800 p-3 space-y-2"><Link href="/app/command">Command</Link><br/><Link href="/app/connectors">Connectors</Link><br/><Link href="/app/governance">Governance</Link><br/><Link href="/app/execution">Execution</Link><br/><Link href="/app/intelligence">Intelligence</Link></aside><section className="flex-1 p-4"><Switch><Route path="/app/command" component={CommandView}/><Route path="/app/connectors" component={ConnectorHub}/><Route path="/app/governance" component={GovernanceView}/><Route path="/app/execution" component={ExecutionView}/><Route path="/app/intelligence" component={IntelligenceView}/><Route component={()=> <Redirect to="/app/command"/>}/></Switch></section></div></div> }
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setTimeout(() => {
+      if (email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        saveSession(createDemoSession(email.trim().toLowerCase()))
+        setLoc('/connectors')
+      } else {
+        setError('Invalid email or password.')
+      }
+      setLoading(false)
+    }, 350)
+  }
 
-function ProtectedApp(){ const [session,setSession]=useState<SessionState|null>(null); useEffect(()=>{setSession(getSession())},[]); if(!session) return <Redirect to="/login"/>; return <AppShell session={session}/> }
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '8px 11px',
+    background: 'var(--surface-2)',
+    border: '0.5px solid var(--border-medium)',
+    borderRadius: 7,
+    fontSize: 13,
+    color: 'var(--text-primary)',
+    outline: 'none',
+    fontFamily: 'inherit',
+  }
 
-function DemoLogin(){ const [,setLoc]=useLocation(); useEffect(()=>{demoLogin().then(()=>setLoc('/app/command')).catch(()=>setLoc('/login'))},[setLoc]); return <div className='p-6'>Starting demo session…</div> }
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--surface-1)',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 380,
+        background: 'var(--surface-0)',
+        border: '0.5px solid var(--border-subtle)',
+        borderRadius: 12,
+        padding: '32px 28px',
+      }}>
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 26 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: 'var(--c-teal-400)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <ShieldCheck size={17} color="#fff" />
+          </div>
+          <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)' }}>Certen</span>
+        </div>
 
-function Router(){ const session=getSession(); return <Switch><Route path='/' component={LandingPage}/><Route path='/login' component={() => session ? <Redirect to='/app/command'/> : <LoginPage/>}/><Route path='/demo-login' component={DemoLogin}/><Route path='/app/:rest*' component={ProtectedApp}/><Route component={()=><Redirect to='/'/>}/></Switch> }
+        <h1 style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+          Sign in to your workspace
+        </h1>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+          Use your Certen credentials to continue.
+        </p>
 
-export default function App(){ return <QueryClientProvider client={queryClient}><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router/></WouterRouter></QueryClientProvider> }
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 5 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              required
+              autoFocus
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 5 }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              style={inputStyle}
+            />
+          </div>
+
+          {error && (
+            <p style={{ fontSize: 12, color: 'var(--c-red-400)', margin: 0 }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              marginTop: 2,
+              padding: '10px 0',
+              background: loading ? 'var(--c-teal-200)' : 'var(--c-teal-400)',
+              border: 'none',
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#fff',
+              cursor: loading ? 'default' : 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.15s',
+            }}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 22, textAlign: 'center' }}>
+          Demo workspace · synthetic data only
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function RequireAuth({ children }: { children: React.ReactNode }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <>{children}</>
+}
+
+function Router() {
+  const session = getSession()
+
+  return (
+    <Switch>
+      <Route path="/login" component={() =>
+        session ? <Redirect to="/connectors" /> : <LoginPage />
+      } />
+
+      <Route path="/" component={() =>
+        <Redirect to={session ? '/connectors' : '/login'} />
+      } />
+
+      <Route path="/connectors" component={() =>
+        <RequireAuth><ConnectorHub /></RequireAuth>
+      } />
+
+      <Route path="/:domain/command" component={({ params }) =>
+        <RequireAuth><CommandView params={params} /></RequireAuth>
+      } />
+
+      <Route path="/:domain/governance" component={({ params }) =>
+        <RequireAuth><GovernanceView params={params} /></RequireAuth>
+      } />
+
+      <Route path="/:domain/execution" component={({ params }) =>
+        <RequireAuth><ExecutionView params={params} /></RequireAuth>
+      } />
+
+      <Route path="/:domain/intelligence" component={({ params }) =>
+        <RequireAuth><IntelligenceView params={params} /></RequireAuth>
+      } />
+
+      <Route component={() => <Redirect to={session ? '/connectors' : '/login'} />} />
+    </Switch>
+  )
+}
+
+export default function App() {
+  const [, forceUpdate] = useState(0)
+
+  function handleLogout() {
+    clearSession()
+    forceUpdate(n => n + 1)
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <Router />
+        <LogoutBridge onLogout={handleLogout} />
+      </WouterRouter>
+    </QueryClientProvider>
+  )
+}
+
+function LogoutBridge({ onLogout }: { onLogout: () => void }) {
+  if (typeof window !== 'undefined') {
+    (window as any).__certenLogout = onLogout
+  }
+  return null
+}

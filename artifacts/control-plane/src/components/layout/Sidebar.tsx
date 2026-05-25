@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'wouter'
 import {
   ShieldCheck, LayoutDashboard, Award, Play, TrendingUp,
-  Activity, FileText, Settings, Plug
+  Activity, FileText, Settings, Plug, LogOut,
 } from 'lucide-react'
+import { getSession, clearSession } from '../../lib/auth/session'
 
 const NAV_PLATFORM = [
   { label: 'Connector hub', icon: Plug, href: '/connectors', badge: 1, badgeType: 'warn' as const },
@@ -69,11 +70,15 @@ function NavItem({ label, icon: Icon, href, badge, badgeType, active }: NavItemP
 
 export function Sidebar() {
   const [location] = useLocation()
+  const session = getSession()
 
-  function isActive(href: string) {
-    if (href === '/connectors') return location === '/connectors'
-    const base = href.split('/').slice(2).join('/')
-    return location.includes(base) && base !== ''
+  function handleLogout() {
+    clearSession()
+    if (typeof window !== 'undefined' && (window as any).__certenLogout) {
+      (window as any).__certenLogout()
+    } else {
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -119,7 +124,10 @@ export function Sidebar() {
           <NavItem
             key={item.href}
             {...item}
-            active={item.href === '/connectors' ? location === '/connectors' : location.includes(item.href.split('/').slice(2).join('/')) && item.href.split('/').slice(2).join('/') !== ''}
+            active={item.href === '/connectors'
+              ? location === '/connectors'
+              : location.includes(item.href.split('/').slice(2).join('/')) && item.href.split('/').slice(2).join('/') !== ''
+            }
           />
         ))}
       </div>
@@ -145,18 +153,63 @@ export function Sidebar() {
       {/* Footer */}
       <div style={{
         marginTop: 'auto',
-        padding: '12px 18px',
         borderTop: '0.5px solid var(--border-subtle)',
       }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          fontSize: 11, color: 'var(--c-teal-600)',
-          background: 'var(--c-teal-50)',
-          padding: '4px 9px', borderRadius: 20,
-        }}>
-          <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--c-teal-400)' }} />
-          Data trust: 91%
+        {/* Data trust pill */}
+        <div style={{ padding: '12px 18px 8px' }}>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            fontSize: 11, color: 'var(--c-teal-600)',
+            background: 'var(--c-teal-50)',
+            padding: '4px 9px', borderRadius: 20,
+          }}>
+            <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--c-teal-400)' }} />
+            Data trust: 91%
+          </div>
         </div>
+
+        {/* User row */}
+        {session && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 18px 14px',
+          }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: 'var(--surface-2)',
+              border: '0.5px solid var(--border-medium)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
+              fontSize: 10, fontWeight: 600,
+              color: 'var(--text-secondary)',
+            }}>
+              {session.user.email.charAt(0).toUpperCase()}
+            </div>
+            <span style={{
+              fontSize: 11, color: 'var(--text-tertiary)',
+              flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>
+              {session.user.email}
+            </span>
+            <button
+              onClick={handleLogout}
+              title="Sign out"
+              style={{
+                background: 'none', border: 'none', padding: 4,
+                cursor: 'pointer', color: 'var(--text-tertiary)',
+                display: 'flex', alignItems: 'center',
+                borderRadius: 4,
+                transition: 'color 0.1s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-tertiary)')}
+            >
+              <LogOut size={13} />
+            </button>
+          </div>
+        )}
       </div>
     </nav>
   )
