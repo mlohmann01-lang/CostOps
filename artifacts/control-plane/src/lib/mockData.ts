@@ -74,6 +74,17 @@ export const CONNECTORS: ConnectorConfig[] = [
     evidenceSources: [],
   },
   {
+    id: 'flexera',
+    name: 'Flexera Authority',
+    domain: 'saas',
+    description: 'Authority source · entitlement validation · license position evidence',
+    iconType: 'saas',
+    readiness: 'UNAVAILABLE',
+    enabled: false,
+    lastSyncAt: null,
+    evidenceSources: [],
+  },
+  {
     id: 'snowflake',
     name: 'Snowflake',
     domain: 'data',

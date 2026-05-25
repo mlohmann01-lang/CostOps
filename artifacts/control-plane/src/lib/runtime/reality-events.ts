@@ -1,0 +1,3 @@
+export type RealityEventType = 'CONNECTOR_SYNC_STARTED'|'CONNECTOR_SYNC_COMPLETED'|'CONNECTOR_FRESHNESS_DEGRADED'|'CONNECTOR_RECOVERED'|'EXECUTION_MOVED_TO_RUNNING'|'EXECUTION_MOVED_TO_PENDING_VERIFICATION'|'VERIFICATION_COMPLETED'|'VERIFICATION_FAILED'|'DRIFT_RISK_ELEVATED'|'DRIFT_DETECTED'|'AUDIT_EVENT_APPENDED'|'PROOF_NODE_MATURED'|'INTELLIGENCE_METRIC_UPDATED'|'FLEXERA_AUTHORITY_APPLIED'|'FLEXERA_MISMATCH_DETECTED'
+export type RealitySeverity = 'info'|'success'|'warning'|'critical'
+export interface RealityEvent { id:string; type:RealityEventType; timestamp:string; domain:string; source:string; severity:RealitySeverity; message:string; relatedPath?:string; demo:boolean }
