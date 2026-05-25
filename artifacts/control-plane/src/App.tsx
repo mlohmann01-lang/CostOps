@@ -190,6 +190,17 @@ function Router() {
         <RequireAuth><IntelligenceView params={params} /></RequireAuth>
       } />
 
+      {/* System nav items — pages not yet built, stay on connector hub */}
+      <Route path="/sync-jobs" component={() =>
+        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+      } />
+      <Route path="/audit-log" component={() =>
+        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+      } />
+      <Route path="/settings" component={() =>
+        <RequireAuth><Redirect to="/connectors" /></RequireAuth>
+      } />
+
       <Route component={() => <Redirect to={session ? '/connectors' : '/login'} />} />
     </Switch>
   )
