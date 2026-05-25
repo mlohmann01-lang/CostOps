@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Switch, Route, Router as WouterRouter, Redirect, useLocation, Link } from 'wouter'
+import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from 'wouter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import ConnectorHub from './pages/ConnectorHub'
 import CommandView from './pages/CommandView'
@@ -16,20 +16,9 @@ import { TenantProvider } from './lib/tenant/tenant-context'
 import { ExecutiveNarrativeOverlay } from './components/layout/ExecutiveNarrativeOverlay'
 import { updateDemoSession, useDemoSession } from './lib/operations/demo-session'
 import { useRealityEngine } from './lib/runtime/reality-engine'
+import LandingPage from './pages/LandingPage'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
-
-function LandingPage() {
-  return <div style={{minHeight:'100vh',background:'var(--surface-1)',color:'var(--text-primary)',padding:'40px 28px'}}>
-    <h1 style={{fontSize:32,fontWeight:600,maxWidth:780}}>Governed Economic Operations for AI, SaaS, Cloud & IT.</h1>
-    <p style={{maxWidth:840,color:'var(--text-secondary)'}}>Certen identifies, governs, verifies, and operationalizes cost optimization opportunities across enterprise technology environments.</p>
-    <div style={{display:'flex',gap:10,margin:'14px 0 24px'}}><Link href='/request-access'><button>Request Access</button></Link><Link href='/login'><button>Launch Demo Workspace</button></Link><Link href='/onboarding'><button>View Platform Overview</button></Link></div>
-    <p>Connect → Analyze → Govern → Execute → Verify → Prevent Drift</p>
-    <p style={{marginTop:18}}>Domains: AI · SaaS · Cloud · Data · M365 · Governance</p>
-    <p style={{marginTop:18,color:'var(--text-secondary)'}}>Interactive demo workspace · No production systems connected · Synthetic evidence only</p>
-    <footer style={{marginTop:30,fontSize:12,color:'var(--text-tertiary)'}}>Environment: Demo-ready runtime · Security: governed access controls enabled · Contact: request access</footer>
-  </div>
-}
 
 function LoginPage() {
   const [, setLoc] = useLocation(); const { loginDemo, loading, refresh } = useAuth()
