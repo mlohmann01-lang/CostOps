@@ -7,10 +7,12 @@ import { REALITY_SCENARIO_TIMELINES } from './reality-scenarios'
 const listeners = new Set<() => void>()
 const feed: RealityEvent[] = []
 let timers: number[] = []
+let cachedFeed: RealityEvent[] = []
 
 function publish(event: RealityEvent) {
   feed.unshift(event)
   if (feed.length > 40) feed.length = 40
+  cachedFeed = [...feed]
   if (event.type === 'VERIFICATION_COMPLETED') updateDemoSession({ verifiedSavings: 1320 })
   if (event.type === 'VERIFICATION_COMPLETED') emitOperationEvent({ type: 'EXECUTION_COMPLETED', entityId: event.id, timestamp: event.timestamp, demo: true, message: event.message })
   if (event.type === 'DRIFT_RISK_ELEVATED') updateDemoSession({ driftLevel: 'elevated' })
@@ -19,7 +21,7 @@ function publish(event: RealityEvent) {
   listeners.forEach((l) => l())
 }
 
-export function getRealityFeed() { return [...feed] }
+export function getRealityFeed() { return cachedFeed }
 export function subscribeRealityFeed(listener: () => void) { listeners.add(listener); return () => listeners.delete(listener) }
 
 export function startRealityEngine(scenarioId: keyof typeof REALITY_SCENARIO_TIMELINES) {

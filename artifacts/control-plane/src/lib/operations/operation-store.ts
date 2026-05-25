@@ -23,6 +23,11 @@ const summary: RuntimeSummary = {
   connectorIssuesCount: 0,
 }
 
+// Stable snapshot reference — only replaced when state mutates.
+// useSyncExternalStore uses Object.is to compare, so returning a new
+// object on every call causes an infinite re-render loop.
+let cachedSnapshot: RuntimeSummary = { ...summary }
+
 export function emitOperationEvent(event: OperationEvent) {
   eventLog.unshift(event)
   if (eventLog.length > 200) eventLog.length = 200
@@ -33,6 +38,7 @@ export function emitOperationEvent(event: OperationEvent) {
   if (event.type === 'VERIFICATION_PENDING') summary.verificationPendingCount += 1
   if (event.type === 'CONNECTOR_DEGRADED' || event.type === 'CONNECTOR_UNAVAILABLE') summary.connectorIssuesCount += 1
   if (event.type === 'CONNECTOR_READY' && summary.connectorIssuesCount > 0) summary.connectorIssuesCount -= 1
+  cachedSnapshot = { ...summary }
   for (const listener of listeners) listener(event)
 }
 
@@ -46,7 +52,7 @@ export function getOperationEvents() {
 }
 
 export function getRuntimeSummary(): RuntimeSummary {
-  return { ...summary }
+  return cachedSnapshot
 }
 
 export function useRuntimeSummary() {
