@@ -6,17 +6,17 @@ import {
 import { getSession, clearSession } from '../../lib/auth/session'
 
 const NAV_PLATFORM = [
-  { label: 'Connector hub', icon: Plug, href: '/connectors', badge: 1, badgeType: 'warn' as const },
-  { label: 'Command', icon: LayoutDashboard, href: '/all/command' },
-  { label: 'Governance', icon: Award, href: '/all/governance' },
-  { label: 'Execution', icon: Play, href: '/all/execution' },
-  { label: 'Intelligence', icon: TrendingUp, href: '/all/intelligence' },
+  { label: 'Connector hub', icon: Plug, href: '/app/connectors', badge: 1, badgeType: 'warn' as const },
+  { label: 'Command', icon: LayoutDashboard, href: '/app/command' },
+  { label: 'Governance', icon: Award, href: '/app/governance' },
+  { label: 'Execution', icon: Play, href: '/app/execution' },
+  { label: 'Intelligence', icon: TrendingUp, href: '/app/intelligence' },
 ]
 
 const NAV_SYSTEM = [
-  { label: 'Sync jobs', icon: Activity, href: '/sync-jobs', badge: 2, badgeType: 'error' as const },
-  { label: 'Audit log', icon: FileText, href: '/audit-log' },
-  { label: 'Settings', icon: Settings, href: '/settings' },
+  { label: 'Sync jobs', icon: Activity, href: '/app/sync-jobs', badge: 2, badgeType: 'error' as const },
+  { label: 'Audit log', icon: FileText, href: '/app/audit-log' },
+  { label: 'Settings', icon: Settings, href: '/app/settings' },
 ]
 
 interface NavItemProps {
@@ -124,8 +124,8 @@ export function Sidebar() {
           <NavItem
             key={item.href}
             {...item}
-            active={item.href === '/connectors'
-              ? location === '/connectors'
+            active={item.href === '/app/connectors'
+              ? location === '/app/connectors'
               : location.includes(item.href.split('/').slice(2).join('/')) && item.href.split('/').slice(2).join('/') !== ''
             }
           />

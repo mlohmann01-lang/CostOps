@@ -1,6 +1,7 @@
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
+import { DemoWorkspaceGuide } from '../components/layout/DemoWorkspaceGuide'
 import { MetricStrip } from '../components/command/MetricStrip'
 import { ActionTable } from '../components/command/ActionTable'
 import { CONNECTORS, GOVERNANCE_ACTIONS } from '../lib/mockData'
@@ -41,6 +42,7 @@ export default function CommandView({ params }: CommandViewProps) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
+        <DemoWorkspaceGuide />
         <MetricStrip
           totalIdentified={totalIdentified}
           eligibleNow={eligibleNow}

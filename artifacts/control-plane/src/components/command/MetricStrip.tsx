@@ -35,8 +35,9 @@ interface MetricStripProps {
 }
 
 export function MetricStrip({ totalIdentified, eligibleNow, pendingApproval, blockedManual }: MetricStripProps) {
+  const annualizedEligible = eligibleNow * 12
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1.4fr 1fr 1fr', gap: 10, marginBottom: 20 }}>
       <MetricCard
         label="Total identified"
         value={formatCurrency(totalIdentified)}
@@ -45,7 +46,7 @@ export function MetricStrip({ totalIdentified, eligibleNow, pendingApproval, blo
       <MetricCard
         label="Eligible now"
         value={formatCurrency(eligibleNow)}
-        subtext="governance-certified, ready to execute"
+        subtext={`Governed savings ready for action · ${formatCurrency(annualizedEligible)}/yr`}
         accent
       />
       <MetricCard
