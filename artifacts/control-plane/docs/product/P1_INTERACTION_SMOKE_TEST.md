@@ -22,3 +22,15 @@
 - [ ] Connector readiness transitions emit tested/degraded/ready/unavailable and refresh blocker/freshness surfaces.
 - [ ] Intelligence funnel and spend trend react after approval/execution interactions.
 - [ ] Recommendation detail timeline includes operational states and demo/live distinction.
+
+## P2 Product Surface Checks
+- [ ] Landing page (`/`) shows enterprise narrative + CTA pathing.
+- [ ] Login supports Sign In + Launch Demo Workspace with error/loading states.
+- [ ] Demo workspace banner clearly indicates synthetic/no production connections.
+- [ ] Demo workspace guide appears (demo only) and is dismissible.
+- [ ] Connector setup wizard opens from Add Connector and Reconfigure flows.
+- [ ] Recommendation detail drawer opens from every Review action.
+- [ ] Intelligence shows trend, funnel, projected vs verified, and domain breakdown.
+- [ ] Empty/loading/error states include what happened, why, and next step.
+- [ ] Tenant/runtime banner shows tenant, role, environment, mode, execution status.
+- [ ] Logout clears session and returns to login flow.

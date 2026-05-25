@@ -12,6 +12,14 @@ const ICON_MAP: Record<string, { icon: React.ElementType; bg: string; color: str
   'data':      { icon: Database,  bg: 'var(--c-pink-50)',   color: 'var(--c-pink-600)' },
 }
 
+
+function freshnessColor(state: ConnectorConfig['readiness']): string {
+  if (state === 'READY') return 'var(--c-teal-600)'
+  if (state === 'DEGRADED') return 'var(--c-amber-600)'
+  if (state === 'UNAVAILABLE') return 'var(--c-red-600)'
+  return 'var(--text-tertiary)'
+}
+
 interface ConnectorCardProps {
   connector: ConnectorConfig
   selected: boolean
@@ -84,7 +92,7 @@ export function ConnectorCard({ connector, selected, onSelect, onToggle }: Conne
         borderTop: '0.5px solid var(--border-subtle)',
       }}>
         <ReadinessBadge state={connector.readiness} />
-        <span style={{ fontSize: 10, color: 'var(--text-tertiary)' }}>
+        <span style={{ fontSize: 10, color: freshnessColor(connector.readiness) }}>
           {connector.lastSyncAt ? `Synced ${formatRelativeTime(connector.lastSyncAt)}` : 'Not configured'}
         </span>
       </div>

@@ -9,12 +9,12 @@ import {
 import type { Domain } from '../types/connector'
 
 const SPEND_TREND = [
-  { month: 'Dec', spend: 187400 },
-  { month: 'Jan', spend: 201200 },
-  { month: 'Feb', spend: 194800 },
-  { month: 'Mar', spend: 218600 },
-  { month: 'Apr', spend: 203400 },
-  { month: 'May', spend: 196200 },
+  { month: 'Dec', baseline: 187400, projected: 187400, verified: 187400 },
+  { month: 'Jan', baseline: 201200, projected: 201200, verified: 201200 },
+  { month: 'Feb', baseline: 208800, projected: 208800, verified: 208800 },
+  { month: 'Mar', baseline: 218600, projected: 218600, verified: 218600 },
+  { month: 'Apr', baseline: 224400, projected: 205800, verified: 209100 },
+  { month: 'May', baseline: 229100, projected: 194200, verified: 198300 },
 ]
 
 const CONFIDENCE_COLOR: Record<number, string> = {}
@@ -76,7 +76,7 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
         {/* Spend trend */}
         <div style={{ marginBottom: 10 }}>
           <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-            Spend trend — all connectors
+Spend trend — baseline vs governed savings
           </span>
         </div>
         <div style={{
@@ -103,15 +103,13 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
                   borderRadius: 8, fontSize: 11, fontFamily: 'IBM Plex Sans, sans-serif',
                 }}
               />
-              <Line
-                type="monotone" dataKey="spend"
-                stroke="var(--c-teal-400)" strokeWidth={1.5}
-                dot={false} activeDot={{ r: 3, fill: 'var(--c-teal-400)' }}
-              />
+              <Line type='monotone' dataKey='baseline' stroke='var(--text-tertiary)' strokeWidth={1.2} dot={false} strokeDasharray='4 4' />
+              <Line type='monotone' dataKey='projected' stroke='var(--c-blue-400)' strokeWidth={1.5} dot={false} />
+              <Line type='monotone' dataKey='verified' stroke='var(--c-teal-500)' strokeWidth={2} dot={false} activeDot={{ r: 3, fill: 'var(--c-teal-400)' }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-
+        <p style={{fontSize:11,color:'var(--text-secondary)',marginTop:-8, marginBottom:18}}>Governed actions applied in April/May, driving verified spend down versus baseline.</p>
 
         <div style={{ marginBottom: 10 }}>
           <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -131,6 +129,12 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
               <Bar dataKey="value" fill="var(--c-blue-400)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+
+
+        <div style={{ marginBottom: 10 }}><span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Domain breakdown of identified savings</span></div>
+        <div style={{ background:'var(--surface-0)', border:'0.5px solid var(--border-subtle)', borderRadius:12, padding:'16px 12px 8px', marginBottom:20 }}>
+          <ResponsiveContainer width='100%' height={170}><BarChart data={[{domain:'AI',value:35200},{domain:'SaaS',value:42840},{domain:'Cloud',value:63800},{domain:'Data',value:22100},{domain:'M365',value:51200}]}><CartesianGrid stroke='var(--border-subtle)' /><XAxis dataKey='domain' tick={{fontSize:11, fill:'var(--text-tertiary)'}} axisLine={false} tickLine={false} /><YAxis tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} tick={{fontSize:11, fill:'var(--text-tertiary)'}} axisLine={false} tickLine={false} width={50} /><Tooltip formatter={(v:number)=>[formatCurrency(v),'Identified savings']} /><Bar dataKey='value' fill='var(--c-purple-500)' radius={[6,6,0,0]} /></BarChart></ResponsiveContainer>
         </div>
 
         {/* Recommendations */}

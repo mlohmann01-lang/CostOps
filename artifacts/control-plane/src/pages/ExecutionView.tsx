@@ -80,6 +80,7 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
         {/* Execution queue */}
+        {queued.length === 0 && <div style={{padding:'22px', marginBottom:18, border:'0.5px dashed var(--border-subtle)', borderRadius:12, color:'var(--text-secondary)', fontSize:12}}>Execution queue is empty. Approved actions will appear here before governed execution.</div>}
         {queued.length > 0 && (
           <>
             <div style={{ marginBottom: 10 }}>
@@ -102,9 +103,9 @@ export default function ExecutionView({ params }: ExecutionViewProps) {
                   <div style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{r.name}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{r.approvedBy}</div>
                   <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>{formatRelativeTime(r.approvedAt)}</div>
-                  <BlastBadge level={r.blastRadius} />
-                  <RollbackPill level={r.rollback} />
-                  <button onClick={() => setConfirmingId(r.id)} style={{
+                  <div title='Blast radius = expected operational impact if action is executed.'><BlastBadge level={r.blastRadius} /></div>
+                  <div title='Rollback = whether Certen has a governed reversal path.'><RollbackPill level={r.rollback} /></div>
+                  <button title='Execute now in demo simulation.' onClick={() => setConfirmingId(r.id)} style={{
                     fontSize: 11, padding: '4px 10px',
                     background: 'var(--c-teal-400)', color: '#fff',
                     border: 'none', borderRadius: 6, cursor: 'pointer', fontFamily: 'inherit',
