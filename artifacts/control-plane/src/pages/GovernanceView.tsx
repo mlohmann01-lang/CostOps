@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
@@ -13,6 +14,8 @@ interface GovernanceViewProps {
 export default function GovernanceView({ params }: GovernanceViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
   const entries = domain === 'all' ? AUDIT_ENTRIES : AUDIT_ENTRIES.filter(e => e.domain === domain)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selected = entries.find((x) => x.id === selectedId)
 
   return (
     <Shell>
@@ -71,11 +74,14 @@ export default function GovernanceView({ params }: GovernanceViewProps) {
             </div>
           ) : (
             entries.map((entry, i) => (
-              <div
+              <button
                 key={entry.id}
+                onClick={() => setSelectedId(entry.id)}
                 style={{
                   display: 'grid', gridTemplateColumns: '1fr 2fr 1fr 1.2fr 0.8fr',
                   padding: '11px 16px', fontSize: 12, alignItems: 'center',
+                  width: '100%', textAlign: 'left', background: 'transparent', border: 'none',
+                  cursor: 'pointer',
                   borderBottom: i < entries.length - 1 ? '0.5px solid var(--border-subtle)' : 'none',
                 }}
               >
@@ -92,11 +98,22 @@ export default function GovernanceView({ params }: GovernanceViewProps) {
                 <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
                   {entry.actorId}
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>
       </div>
+
+      {selected && <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.2)' }} onClick={() => setSelectedId(null)}><div style={{ background: 'white', padding: 16, margin: '7% auto', width: 520 }} onClick={(e) => e.stopPropagation()}>
+        <h3>Audit detail</h3>
+        <p><strong>Cert ID:</strong> {selected.certId ?? 'Unavailable'}</p>
+        <p><strong>Actor:</strong> {selected.actorId}</p>
+        <p><strong>Verdict:</strong> {selected.verdict}</p>
+        <p><strong>Action:</strong> {selected.action}</p>
+        <p><strong>Domain:</strong> {selected.domain}</p>
+        <p><strong>Timestamp:</strong> {selected.timestamp}</p>
+        {selected.verdict === 'NEVER_ELIGIBLE' && <p>No rollback, committed spend, non-reversible action, and policy block conditions are active.</p>}
+      </div></div>}
 
       <CommandBar />
     </Shell>
