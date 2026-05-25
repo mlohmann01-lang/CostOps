@@ -7,6 +7,11 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar
 } from 'recharts'
 import type { Domain } from '../types/connector'
+import { useDemoSession } from '../lib/operations/demo-session'
+import { governanceConfidenceScore } from '../lib/scoring/confidence-score'
+import { authorityCoverageScore } from '../lib/scoring/authority-coverage-score'
+import { driftStabilityScore } from '../lib/scoring/drift-stability-score'
+import { verificationMaturityScore } from '../lib/scoring/operational-score'
 
 const SPEND_TREND = [
   { month: 'Dec', baseline: 187400, projected: 187400, verified: 187400 },
@@ -42,6 +47,8 @@ interface IntelligenceViewProps {
 export default function IntelligenceView({ params }: IntelligenceViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
   const recs = domain === 'all' ? RECOMMENDATIONS : RECOMMENDATIONS.filter(r => r.domain === domain)
+  const demo = useDemoSession()
+  const scoring = recs.length ? { governance: Math.round(recs.reduce((a,r)=>a+governanceConfidenceScore(r),0)/recs.length), authority: Math.round(recs.reduce((a,r)=>a+authorityCoverageScore(r),0)/recs.length), drift: Math.round(recs.reduce((a,r)=>a+driftStabilityScore(r),0)/recs.length), verification: Math.round(recs.reduce((a,r)=>a+verificationMaturityScore(r),0)/recs.length) } : { governance:0, authority:0, drift:0, verification:0 }
   const funnel = [
     { stage: 'Identified', value: recs.reduce((s, r) => s + r.savingAmount, 0) },
     { stage: 'Eligible', value: recs.filter(r => r.verdict === 'GOVERNED_EXECUTION_ELIGIBLE').reduce((s, r) => s + r.savingAmount, 0) },
@@ -73,6 +80,12 @@ export default function IntelligenceView({ params }: IntelligenceViewProps) {
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
+
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:14}}>
+          {[['Opportunity', formatCurrency(funnel[0].value)],['Actionable', formatCurrency(funnel[1].value)],['Verified', formatCurrency(funnel[4].value)],['Drift risk', 'Increasing in AI workloads']].map(([k,v]) => <div key={String(k)} style={{padding:10,border:'0.5px solid var(--border-subtle)',borderRadius:10,background:'var(--surface-0)'}}><div style={{fontSize:10,color:'var(--text-tertiary)',textTransform:'uppercase'}}>{k}</div><div style={{fontSize:13,fontWeight:600}}>{v}</div></div>)}
+        </div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:8,marginBottom:10}}>{[['Governance Confidence',`${scoring.governance}%`],['Authority Coverage',`${scoring.authority}%`],['Drift Stability',`${scoring.drift}%`],['Verification Maturity',`${scoring.verification}%`]].map(([k,v]) => <div key={String(k)} style={{padding:10,border:'0.5px solid var(--border-subtle)',borderRadius:10,background:'var(--surface-0)'}}><div style={{fontSize:10,color:'var(--text-tertiary)',textTransform:'uppercase'}}>{k}</div><div style={{fontSize:13,fontWeight:600}}>{v}</div></div>)}</div>
+        <p style={{fontSize:11,color:'var(--text-secondary)',marginBottom:6}}>{demo.viewMode === 'executive' ? 'Executive narrative: verified savings momentum improving; connector freshness stable; governed execution elevated.' : 'Operational narrative: AI optimization actions contribute 38% of governed savings opportunity; M365 reclaim has highest verification confidence.'}</p><p style={{fontSize:11,color:'var(--text-secondary)',marginBottom:14}}>Authority coverage: {demo.flexeraConfigured ? 'Flexera connected' : 'Flexera not connected'} · Demo authority evidence: synthetic entitlement signal · Drift state: {demo.driftLevel}</p>
         {/* Spend trend */}
         <div style={{ marginBottom: 10 }}>
           <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>

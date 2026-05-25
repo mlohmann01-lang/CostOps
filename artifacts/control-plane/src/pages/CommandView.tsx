@@ -3,7 +3,10 @@ import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
 import { DemoWorkspaceGuide } from '../components/layout/DemoWorkspaceGuide'
 import { MetricStrip } from '../components/command/MetricStrip'
+import { ScenarioLauncher } from '../components/layout/ScenarioLauncher'
+import { useRuntimeSummary } from '../lib/operations/operation-store'
 import { ActionTable } from '../components/command/ActionTable'
+import { OperationalFeed } from '../components/runtime/OperationalFeed'
 import { CONNECTORS, GOVERNANCE_ACTIONS } from '../lib/mockData'
 import type { Domain } from '../types/connector'
 
@@ -14,6 +17,7 @@ interface CommandViewProps {
 export default function CommandView({ params }: CommandViewProps) {
   const domain = (params?.domain ?? 'all') as Domain
   const actions = domain === 'all' ? GOVERNANCE_ACTIONS : GOVERNANCE_ACTIONS.filter(a => a.domain === domain)
+  const runtime = useRuntimeSummary()
 
   const totalIdentified = actions.reduce((s, a) => s + a.savingAmount, 0)
   const eligibleNow     = actions.filter(a => a.verdict === 'GOVERNED_EXECUTION_ELIGIBLE').reduce((s, a) => s + a.savingAmount, 0)
@@ -43,6 +47,9 @@ export default function CommandView({ params }: CommandViewProps) {
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '18px 20px' }}>
         <DemoWorkspaceGuide />
+        <ScenarioLauncher />
+        <OperationalFeed />
+        <div style={{display:'flex',gap:8,marginBottom:10,fontSize:11,color:'var(--text-secondary)'}}><span>Operational pulse:</span><span>Queued executions {runtime.verificationPendingCount}</span><span>• Connector issues {runtime.connectorIssuesCount}</span><span>• Governance events {runtime.approvedCount + runtime.executionCompletedCount}</span></div>
         <MetricStrip
           totalIdentified={totalIdentified}
           eligibleNow={eligibleNow}
@@ -62,7 +69,7 @@ export default function CommandView({ params }: CommandViewProps) {
         {actions.length === 0 ? (
           <div style={{ padding: '48px 20px', textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              No governance actions for this domain. Connect a data source to start.
+No governed actions are currently available for this domain. Impact: no immediate savings can be executed. Next step: activate connector evidence and reload this scenario.
             </p>
           </div>
         ) : (

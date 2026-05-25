@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Switch, Route, Router as WouterRouter, Redirect, useLocation, Link } from 'wouter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ShieldCheck } from 'lucide-react'
 import ConnectorHub from './pages/ConnectorHub'
 import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
@@ -14,6 +13,9 @@ import { AuthProvider, useAuth } from './lib/auth/auth-provider'
 import { ProtectedRoute } from './lib/auth/protected-route'
 import { getSessionStatus, validateCredentials } from './lib/auth/session'
 import { TenantProvider } from './lib/tenant/tenant-context'
+import { ExecutiveNarrativeOverlay } from './components/layout/ExecutiveNarrativeOverlay'
+import { updateDemoSession, useDemoSession } from './lib/operations/demo-session'
+import { useRealityEngine } from './lib/runtime/reality-engine'
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
 
@@ -49,12 +51,16 @@ const SimplePage = ({title, children}:{title:string, children:React.ReactNode}) 
 
 function AppRuntime() {
   const { session, logout } = useAuth()
+  const demo = useDemoSession()
+  useRealityEngine()
   if (!session) return <Redirect to='/login?reason=unauthorized' />
   return <TenantProvider><div style={{borderBottom:'0.5px solid var(--border-subtle)',padding:'8px 14px',fontSize:12,background:'var(--surface-0)'}}>
     {session.tenantName} • {session.role} • {session.environment} • {session.tenantMode} • {session.liveExecutionEnabled ? 'Live execution enabled' : 'Live execution disabled'}
-    {session.isDemo && <span style={{marginLeft:10,color:'var(--c-amber-600)'}}>Demo workspace • Synthetic evidence • No production systems connected</span>}
+    {session.isDemo && <span style={{marginLeft:10,color:'var(--c-amber-600)'}}>Demo workspace • Synthetic evidence • No production systems connected • Governed execution simulated safely</span>}
+    {session.isDemo && <button onClick={() => updateDemoSession({ viewMode: demo.viewMode === 'executive' ? 'operational' : 'executive' })} style={{marginLeft:10,fontSize:11}}>{demo.viewMode === 'executive' ? 'Operational view' : 'Executive view'}</button>}
     <button onClick={logout} style={{float:'right'}}>Logout</button>
   </div>
+  {session.isDemo && <ExecutiveNarrativeOverlay />}
   <Switch>
       <Route path='/app/connectors' component={() => <ConnectorHub />} />
       <Route path='/app/command' component={() => <CommandView params={{domain:'all'}} />} />
