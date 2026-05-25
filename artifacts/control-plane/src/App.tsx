@@ -1,79 +1,238 @@
 import { useState } from 'react'
 import { Switch, Route, Router as WouterRouter, Redirect, useLocation } from 'wouter'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ShieldCheck } from 'lucide-react'
 import ConnectorHub from './pages/ConnectorHub'
 import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
 import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
-import SyncJobsPage from './pages/SyncJobsPage'
-import AuditLogPage from './pages/AuditLogPage'
-import SettingsPage from './pages/SettingsPage'
-import { AuthProvider, useAuth } from './lib/auth/auth-provider'
-import { ProtectedRoute } from './lib/auth/protected-route'
-import { getSessionStatus, validateCredentials } from './lib/auth/session'
-import { TenantProvider } from './lib/tenant/tenant-context'
-import { ExecutiveNarrativeOverlay } from './components/layout/ExecutiveNarrativeOverlay'
-import { updateDemoSession, useDemoSession } from './lib/operations/demo-session'
-import { useRealityEngine } from './lib/runtime/reality-engine'
-import LandingPage from './pages/LandingPage'
+import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 30_000 } } })
+const DEMO_EMAIL = 'admin@certen.com'
+const DEMO_PASSWORD = 'certen@demo1'
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
+})
+
+// ─── Login page ────────────────────────────────────────────────────────────────
 
 function LoginPage() {
-  const [, setLoc] = useLocation(); const { loginDemo, loading, refresh } = useAuth()
-  const [email, setEmail] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState('')
-  const sessionStatus = getSessionStatus()
-  async function submit(e: React.FormEvent) { e.preventDefault(); setError(''); if (!validateCredentials(email, password)) { setError('Invalid credentials.'); return } await loginDemo(email.trim().toLowerCase()); refresh(); setLoc('/app/command') }
-  return <div style={{minHeight:'100vh',display:'grid',placeItems:'center',background:'var(--surface-1)'}}><form onSubmit={submit} style={{width:380,background:'var(--surface-0)',padding:24,border:'0.5px solid var(--border-subtle)',borderRadius:12}}>
-    <h2>Sign in</h2>{sessionStatus==='expired' && <p style={{fontSize:12,color:'var(--c-amber-600)'}}>Session expired. Please sign in again.</p>}
-    <input value={email} onChange={e=>setEmail(e.target.value)} placeholder='Email' style={{width:'100%',marginBottom:8}} />
-    <input type='password' value={password} onChange={e=>setPassword(e.target.value)} placeholder='Password' style={{width:'100%',marginBottom:8}} />
-    {error && <p style={{fontSize:12,color:'var(--c-red-600)'}}>{error}</p>}
-    <button disabled={loading} type='submit'>{loading ? 'Signing in…' : 'Sign In'}</button>
-    <button type='button' onClick={async()=>{setError(''); await loginDemo('demo@certen.io'); setLoc('/app/command')}} style={{marginLeft:8}}>{loading ? 'Demo workspace loading…' : 'Launch Demo Workspace'}</button>
-    <p style={{fontSize:11,color:'var(--text-tertiary)',marginTop:10}}>Demo credentials are provisioned via access policy.</p>
-  </form></div>
+  const [, setLoc] = useLocation()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setTimeout(() => {
+      if (email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        saveSession(createDemoSession(email.trim().toLowerCase()))
+        setLoc('/connectors')
+      } else {
+        setError('Invalid email or password.')
+      }
+      setLoading(false)
+    }, 350)
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    boxSizing: 'border-box',
+    padding: '8px 11px',
+    background: 'var(--surface-2)',
+    border: '0.5px solid var(--border-medium)',
+    borderRadius: 7,
+    fontSize: 13,
+    color: 'var(--text-primary)',
+    outline: 'none',
+    fontFamily: 'inherit',
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--surface-1)',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 380,
+        background: 'var(--surface-0)',
+        border: '0.5px solid var(--border-subtle)',
+        borderRadius: 12,
+        padding: '32px 28px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 26 }}>
+          <div style={{
+            width: 32, height: 32, borderRadius: 8,
+            background: 'var(--c-teal-400)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
+          }}>
+            <ShieldCheck size={17} color="#fff" />
+          </div>
+          <span style={{ fontSize: 17, fontWeight: 500, color: 'var(--text-primary)' }}>Certen</span>
+        </div>
+
+        <h1 style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 6px' }}>
+          Sign in to your workspace
+        </h1>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+          Use your Certen credentials to continue.
+        </p>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 5 }}>
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="you@company.com"
+              required
+              autoFocus
+              style={inputStyle}
+            />
+          </div>
+
+          <div>
+            <label style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 5 }}>
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              placeholder="••••••••"
+              required
+              style={inputStyle}
+            />
+          </div>
+
+          {error && (
+            <p style={{ fontSize: 12, color: 'var(--c-red-400)', margin: 0 }}>{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              marginTop: 2,
+              padding: '10px 0',
+              background: loading ? 'var(--c-teal-200)' : 'var(--c-teal-400)',
+              border: 'none',
+              borderRadius: 7,
+              fontSize: 13,
+              fontWeight: 500,
+              color: '#fff',
+              cursor: loading ? 'default' : 'pointer',
+              fontFamily: 'inherit',
+              transition: 'background 0.15s',
+            }}
+          >
+            {loading ? 'Signing in…' : 'Sign in'}
+          </button>
+        </form>
+
+        <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 22, textAlign: 'center' }}>
+          Demo workspace · synthetic data only
+        </p>
+      </div>
+    </div>
+  )
 }
 
-const SimplePage = ({title, children}:{title:string, children:React.ReactNode}) => <div style={{padding:24}}><h1>{title}</h1>{children}</div>
+// ─── Named route components (stable references — no inline arrows) ─────────────
 
-function AppRuntime() {
-  const { session, logout } = useAuth()
-  const demo = useDemoSession()
-  useRealityEngine()
-  if (!session) return <Redirect to='/login?reason=unauthorized' />
-  return <TenantProvider><div style={{borderBottom:'0.5px solid var(--border-subtle)',padding:'8px 14px',fontSize:12,background:'var(--surface-0)'}}>
-    {session.tenantName} • {session.role} • {session.environment} • {session.tenantMode} • {session.liveExecutionEnabled ? 'Live execution enabled' : 'Live execution disabled'}
-    {session.isDemo && <span style={{marginLeft:10,color:'var(--c-amber-600)'}}>Demo workspace • Synthetic evidence • No production systems connected • Governed execution simulated safely</span>}
-    {session.isDemo && <button onClick={() => updateDemoSession({ viewMode: demo.viewMode === 'executive' ? 'operational' : 'executive' })} style={{marginLeft:10,fontSize:11}}>{demo.viewMode === 'executive' ? 'Operational view' : 'Executive view'}</button>}
-    <button onClick={logout} style={{float:'right'}}>Logout</button>
-  </div>
-  {session.isDemo && <ExecutiveNarrativeOverlay />}
-  <Switch>
-      <Route path='/app/connectors' component={() => <ConnectorHub />} />
-      <Route path='/app/command' component={() => <CommandView params={{domain:'all'}} />} />
-      <Route path='/app/governance' component={() => <GovernanceView params={{domain:'all'}} />} />
-      <Route path='/app/execution' component={() => <ExecutionView params={{domain:'all'}} />} />
-      <Route path='/app/intelligence' component={() => <IntelligenceView params={{domain:'all'}} />} />
-      <Route path='/app/sync-jobs' component={() => <SyncJobsPage />} />
-      <Route path='/app/audit-log' component={() => <AuditLogPage />} />
-      <Route path='/app/settings' component={() => <SettingsPage />} />
-      <Route component={() => <Redirect to='/app/command' />} />
-    </Switch></TenantProvider>
+function LoginRoute() {
+  const session = getSession()
+  return session ? <Redirect to="/connectors" /> : <LoginPage />
 }
+
+function HomeRoute() {
+  const session = getSession()
+  return <Redirect to={session ? '/connectors' : '/login'} />
+}
+
+function ConnectorsRoute() {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <ConnectorHub />
+}
+
+function CommandRoute({ params }: { params?: { domain?: string } }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <CommandView params={params} />
+}
+
+function GovernanceRoute({ params }: { params?: { domain?: string } }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <GovernanceView params={params} />
+}
+
+function ExecutionRoute({ params }: { params?: { domain?: string } }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <ExecutionView params={params} />
+}
+
+function IntelligenceRoute({ params }: { params?: { domain?: string } }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <IntelligenceView params={params} />
+}
+
+function StubRoute() {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <Redirect to="/connectors" />
+}
+
+function CatchAllRoute() {
+  const session = getSession()
+  return <Redirect to={session ? '/connectors' : '/login'} />
+}
+
+// ─── Router ────────────────────────────────────────────────────────────────────
 
 function Router() {
-  return <Switch>
-    <Route path='/' component={LandingPage} />
-    <Route path='/login' component={LoginPage} />
-    <Route path='/request-access' component={() => <SimplePage title='Request Access'><p>Access request submitted. A Certen operator will review your workspace request.</p></SimplePage>} />
-    <Route path='/onboarding' component={() => <SimplePage title='Onboarding'><p>Welcome → Workspace mode → Connector interests → Governance preferences → Launch workspace.</p><p>Production onboarding requires access review and setup.</p></SimplePage>} />
-    <Route path='/app/:rest*' component={() => <ProtectedRoute><AppRuntime /></ProtectedRoute>} />
-    <Route component={() => <Redirect to='/' />} />
-  </Switch>
+  return (
+    <Switch>
+      <Route path="/login" component={LoginRoute} />
+      <Route path="/" component={HomeRoute} />
+      <Route path="/connectors" component={ConnectorsRoute} />
+      <Route path="/:domain/command" component={CommandRoute} />
+      <Route path="/:domain/governance" component={GovernanceRoute} />
+      <Route path="/:domain/execution" component={ExecutionRoute} />
+      <Route path="/:domain/intelligence" component={IntelligenceRoute} />
+      <Route path="/sync-jobs" component={StubRoute} />
+      <Route path="/audit-log" component={StubRoute} />
+      <Route path="/settings" component={StubRoute} />
+      <Route component={CatchAllRoute} />
+    </Switch>
+  )
 }
 
+// ─── App root ──────────────────────────────────────────────────────────────────
+
 export default function App() {
-  return <QueryClientProvider client={queryClient}><AuthProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}><Router /></WouterRouter></AuthProvider></QueryClientProvider>
+  return (
+    <QueryClientProvider client={queryClient}>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+        <Router />
+      </WouterRouter>
+    </QueryClientProvider>
+  )
 }

@@ -6,17 +6,17 @@ import {
 import { getSession, clearSession } from '../../lib/auth/session'
 
 const NAV_PLATFORM = [
-  { label: 'Connector hub', icon: Plug, href: '/app/connectors', badge: 1, badgeType: 'warn' as const },
-  { label: 'Command', icon: LayoutDashboard, href: '/app/command' },
-  { label: 'Governance', icon: Award, href: '/app/governance' },
-  { label: 'Execution', icon: Play, href: '/app/execution' },
-  { label: 'Intelligence', icon: TrendingUp, href: '/app/intelligence' },
+  { label: 'Connector hub', icon: Plug,          href: '/connectors',      badge: 1, badgeType: 'warn' as const },
+  { label: 'Command',       icon: LayoutDashboard, href: '/all/command' },
+  { label: 'Governance',    icon: Award,           href: '/all/governance' },
+  { label: 'Execution',     icon: Play,            href: '/all/execution' },
+  { label: 'Intelligence',  icon: TrendingUp,      href: '/all/intelligence' },
 ]
 
 const NAV_SYSTEM = [
-  { label: 'Sync jobs', icon: Activity, href: '/app/sync-jobs', badge: 2, badgeType: 'error' as const },
-  { label: 'Audit log', icon: FileText, href: '/app/audit-log' },
-  { label: 'Settings', icon: Settings, href: '/app/settings' },
+  { label: 'Sync jobs', icon: Activity, href: '/sync-jobs', badge: 2, badgeType: 'error' as const },
+  { label: 'Audit log', icon: FileText,  href: '/audit-log' },
+  { label: 'Settings',  icon: Settings,  href: '/settings' },
 ]
 
 interface NavItemProps {
@@ -68,17 +68,20 @@ function NavItem({ label, icon: Icon, href, badge, badgeType, active }: NavItemP
   )
 }
 
+function isPathActive(href: string, location: string): boolean {
+  if (href === '/connectors') return location === '/connectors'
+  // match the last segment of the href (e.g. 'command', 'governance')
+  const segment = href.split('/').filter(Boolean).pop() ?? ''
+  return segment !== '' && location.endsWith(segment)
+}
+
 export function Sidebar() {
   const [location] = useLocation()
   const session = getSession()
 
   function handleLogout() {
     clearSession()
-    if (typeof window !== 'undefined' && (window as any).__certenLogout) {
-      (window as any).__certenLogout()
-    } else {
-      window.location.href = '/login'
-    }
+    window.location.href = '/login'
   }
 
   return (
@@ -124,10 +127,7 @@ export function Sidebar() {
           <NavItem
             key={item.href}
             {...item}
-            active={item.href === '/app/connectors'
-              ? location === '/app/connectors'
-              : location.includes(item.href.split('/').slice(2).join('/')) && item.href.split('/').slice(2).join('/') !== ''
-            }
+            active={isPathActive(item.href, location)}
           />
         ))}
       </div>
@@ -151,11 +151,7 @@ export function Sidebar() {
       </div>
 
       {/* Footer */}
-      <div style={{
-        marginTop: 'auto',
-        borderTop: '0.5px solid var(--border-subtle)',
-      }}>
-        {/* Data trust pill */}
+      <div style={{ marginTop: 'auto', borderTop: '0.5px solid var(--border-subtle)' }}>
         <div style={{ padding: '12px 18px 8px' }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -168,13 +164,12 @@ export function Sidebar() {
           </div>
         </div>
 
-        {/* User row */}
         {session && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            padding: '8px 18px 14px',
+            padding: '6px 18px 14px',
           }}>
             <div style={{
               width: 22, height: 22, borderRadius: '50%',
@@ -201,7 +196,6 @@ export function Sidebar() {
                 cursor: 'pointer', color: 'var(--text-tertiary)',
                 display: 'flex', alignItems: 'center',
                 borderRadius: 4,
-                transition: 'color 0.1s',
               }}
               onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-secondary)')}
               onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-tertiary)')}
