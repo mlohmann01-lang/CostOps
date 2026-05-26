@@ -24,6 +24,7 @@ import playbooksRouter from "./playbooks";
 import demoRouter from "./demo";
 import simulationsRouter from "./simulations";
 import graphRouter from "./graph";
+import discoveryRouter from "./discovery";
 import workflowRouter from "./workflow";
 import pilotRouter from "./pilot";
 import economicOperationsRouter from "./economic-operations";
@@ -57,6 +58,7 @@ router.use("/playbooks", requireTenantContext(), requireCapability("READ_RECOMME
 router.use("/demo", demoRouter);
 router.use("/simulations", requireTenantContext(), requireCapability("CREATE_SIMULATIONS"), simulationsRouter);
 router.use("/graph", requireTenantContext(), requireCapability("READ_GRAPH"), graphRouter);
+router.use("/discovery", requireTenantContext(), requireCapability("READ_GRAPH"), discoveryRouter);
 router.use("/workflow", workflowRouter);
 router.use("/economic-operations", economicOperationsRouter);
 router.use("/packs", packsRouter);
