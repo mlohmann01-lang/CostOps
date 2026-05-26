@@ -1,0 +1,22 @@
+# M365 Beta E2E Verification Map
+
+- mutation-capable Graph paths:
+  - `src/lib/execution/m365-graph-actions.ts`
+  - `src/lib/execution/rollback-engine.ts`
+  - `src/lib/connectors/m365/m365-graph-license-write-client.ts`
+- mutation guard helper:
+  - `src/domain/m365/mutationGuard.ts`
+- sync persistence path:
+  - `src/routes/connectors.ts` (`POST /m365/sync/read-only`)
+- recommendation generation path:
+  - `src/routes/connectors.ts` (`POST /m365/recommendations/generate`)
+- recommendation storage table/model:
+  - `recommendationsTable`
+- outcome write path:
+  - `src/routes/connectors.ts` and `src/routes/execution.ts`
+- dry-run record path:
+  - `src/routes/execution.ts` (`POST /m365/dry-run`)
+- drift event path:
+  - `src/routes/drift.ts` (`POST /m365/check`, `GET /m365/events`)
+- frontend control-plane API path:
+  - `src/routes/connectors.ts`, `src/routes/execution.ts`, `src/routes/drift.ts`
