@@ -7,10 +7,15 @@ import CommandView from './pages/CommandView'
 import GovernanceView from './pages/GovernanceView'
 import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
+import WorkspaceSelection from './pages/WorkspaceSelection'
+import DriftMonitorView from './pages/DriftMonitorView'
+import OutcomeLedgerView from './pages/OutcomeLedgerView'
+import { ControlPlaneShell } from './components/ControlPlaneShell'
+import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
-const DEMO_EMAIL = 'admin@certen.com'
-const DEMO_PASSWORD = 'certen@demo1'
+const DEMO_EMAIL = 'demo@certen.io'
+const DEMO_PASSWORD = 'DemoWorkspace2026!'
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, staleTime: 30_000 } },
@@ -32,7 +37,7 @@ function LoginPage() {
     setTimeout(() => {
       if (email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
         saveSession(createDemoSession(email.trim().toLowerCase()))
-        setLoc('/connectors')
+        setLoc('/workspace')
       } else {
         setError('Invalid email or password.')
       }
@@ -86,7 +91,7 @@ function LoginPage() {
           Sign in to your workspace
         </h1>
         <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
-          Use your Certen credentials to continue.
+          Use your Certen credentials to continue. Demo: demo@certen.io / DemoWorkspace2026!
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -156,53 +161,62 @@ function LoginPage() {
 
 function LoginRoute() {
   const session = getSession()
-  return session ? <Redirect to="/connectors" /> : <LoginPage />
+  return session ? <Redirect to="/workspace" /> : <LoginPage />
 }
 
 function HomeRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/connectors' : '/login'} />
+  return <Redirect to={session ? '/workspace' : '/login'} />
+}
+
+function RequireRuntime({ children }: { children: React.ReactNode }) {
+  const session = getSession()
+  const runtime = useRuntimeContext()
+  if (!session) return <Redirect to="/login" />
+  if (!runtime.hasSelectedEnvironment) return <Redirect to="/workspace" />
+  return <>{children}</>
+}
+
+function WorkspaceRoute() {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <WorkspaceSelection />
 }
 
 function ConnectorsRoute() {
-  const session = getSession()
-  if (!session) return <Redirect to="/login" />
-  return <ConnectorHub />
+  return <RequireRuntime><ControlPlaneShell><ConnectorHub /></ControlPlaneShell></RequireRuntime>
 }
 
+
 function CommandRoute({ params }: { params?: { domain?: string } }) {
-  const session = getSession()
-  if (!session) return <Redirect to="/login" />
-  return <CommandView params={params} />
+  return <RequireRuntime><ControlPlaneShell><CommandView params={params} /></ControlPlaneShell></RequireRuntime>
 }
 
 function GovernanceRoute({ params }: { params?: { domain?: string } }) {
-  const session = getSession()
-  if (!session) return <Redirect to="/login" />
-  return <GovernanceView params={params} />
+  return <RequireRuntime><ControlPlaneShell><GovernanceView /></ControlPlaneShell></RequireRuntime>
 }
 
 function ExecutionRoute({ params }: { params?: { domain?: string } }) {
-  const session = getSession()
-  if (!session) return <Redirect to="/login" />
-  return <ExecutionView params={params} />
+  return <RequireRuntime><ControlPlaneShell><ExecutionView /></ControlPlaneShell></RequireRuntime>
 }
 
 function IntelligenceRoute({ params }: { params?: { domain?: string } }) {
-  const session = getSession()
-  if (!session) return <Redirect to="/login" />
-  return <IntelligenceView params={params} />
+  return <RequireRuntime><ControlPlaneShell><IntelligenceView params={params} /></ControlPlaneShell></RequireRuntime>
 }
+
+
+function OutcomesRoute() { return <RequireRuntime><ControlPlaneShell><OutcomeLedgerView /></ControlPlaneShell></RequireRuntime> }
+function DriftRoute() { return <RequireRuntime><ControlPlaneShell><DriftMonitorView /></ControlPlaneShell></RequireRuntime> }
 
 function StubRoute() {
   const session = getSession()
   if (!session) return <Redirect to="/login" />
-  return <Redirect to="/connectors" />
+  return <Redirect to="/workspace" />
 }
 
 function CatchAllRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/connectors' : '/login'} />
+  return <Redirect to={session ? '/workspace' : '/login'} />
 }
 
 // ─── Router ────────────────────────────────────────────────────────────────────
@@ -212,11 +226,14 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginRoute} />
       <Route path="/" component={HomeRoute} />
+      <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
       <Route path="/:domain/governance" component={GovernanceRoute} />
       <Route path="/:domain/execution" component={ExecutionRoute} />
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
+      <Route path="/outcomes" component={OutcomesRoute} />
+      <Route path="/drift" component={DriftRoute} />
       <Route path="/sync-jobs" component={StubRoute} />
       <Route path="/audit-log" component={StubRoute} />
       <Route path="/settings" component={StubRoute} />
@@ -230,9 +247,9 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+      <RuntimeContextProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Router />
-      </WouterRouter>
+      </WouterRouter></RuntimeContextProvider>
     </QueryClientProvider>
   )
 }

@@ -21,4 +21,18 @@ router.get("/events", async (_req, res) => {
   return res.json(events);
 });
 
+
+
+router.post('/m365/check', async (_req, res) => {
+  const events = await db.select().from(driftEventsTable).orderBy(desc(driftEventsTable.createdAt));
+  const active = events.filter((e: any) => String(e.status ?? 'OPEN').toUpperCase() === 'OPEN');
+  const valueAtRisk = active.reduce((n: number, e: any) => n + Number(e.realizationDelta ?? 0), 0);
+  return res.json({ status: 'COMPLETED', summary: { activeDriftEvents: active.length, valueAtRisk, monitoredRecommendations: events.length }, events: active });
+});
+
+router.get('/m365/events', async (_req, res) => {
+  const events = await db.select().from(driftEventsTable).orderBy(desc(driftEventsTable.createdAt));
+  return res.json(events);
+});
+
 export default router;
