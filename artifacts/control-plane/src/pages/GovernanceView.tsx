@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useRuntimeContext } from '../lib/runtimeContext'
-import { loadGovernanceState } from '../lib/governanceData'
+import { governanceService } from '../services/platformServices'
 import { Shell } from '../components/layout/Shell'
 import { CommandBar } from '../components/layout/CommandBar'
 
@@ -34,7 +34,7 @@ export default function GovernanceView() {
   const runtime = useRuntimeContext()
   const isDemo = runtime.environment === 'DEMO'
   const runtimeOptions = { environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }
-  const { data } = useQuery({ queryKey: ['governance', runtime.environment], queryFn: () => loadGovernanceState(runtimeOptions) })
+  const { data } = useQuery({ queryKey: ['governance', runtime.environment], queryFn: () => governanceService.load(runtimeOptions) })
   const [approving, setApproving] = useState<string | null>(null)
   const [approved, setApproved] = useState<string[]>([])
 

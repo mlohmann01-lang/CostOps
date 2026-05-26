@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRuntimeContext } from '../lib/runtimeContext'
-import { loadOutcomeLedgerState } from '../lib/outcomeLedgerData'
+import { outcomeLedgerService } from '../services/platformServices'
 import { Shell } from '../components/layout/Shell'
 import { CommandBar } from '../components/layout/CommandBar'
 
@@ -36,7 +36,7 @@ export default function OutcomeLedgerView() {
   const runtime = useRuntimeContext()
   const isDemo = runtime.environment === 'DEMO'
   const runtimeOptions = { environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }
-  const { data } = useQuery({ queryKey: ['outcomes', runtime.environment], queryFn: () => loadOutcomeLedgerState(runtimeOptions) })
+  const { data } = useQuery({ queryKey: ['outcomes', runtime.environment], queryFn: () => outcomeLedgerService.load(runtimeOptions) })
 
   if (!data) return (
     <Shell>

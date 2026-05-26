@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useRuntimeContext } from '../lib/runtimeContext'
-import { loadDriftMonitorState } from '../lib/driftMonitorData'
+import { driftService } from '../services/platformServices'
 import { Shell } from '../components/layout/Shell'
 import { CommandBar } from '../components/layout/CommandBar'
 
@@ -35,7 +35,7 @@ export default function DriftMonitorView() {
   const runtime = useRuntimeContext()
   const isDemo = runtime.environment === 'DEMO'
   const runtimeOptions = { environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }
-  const { data } = useQuery({ queryKey: ['drift', runtime.environment], queryFn: () => loadDriftMonitorState(runtimeOptions) })
+  const { data } = useQuery({ queryKey: ['drift', runtime.environment], queryFn: () => driftService.load(runtimeOptions) })
 
   if (!data) return (
     <Shell>

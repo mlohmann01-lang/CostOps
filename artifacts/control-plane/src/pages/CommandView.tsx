@@ -5,12 +5,8 @@ import { ChevronRight, ChevronDown } from 'lucide-react'
 import { Shell } from '../components/layout/Shell'
 import { DomainTabs } from '../components/layout/DomainTabs'
 import { CommandBar } from '../components/layout/CommandBar'
-import {
-  buildActionProofDetail,
-  loadCommandViewState,
-  type CommandActionState,
-  type ConnectorHealth,
-} from '../lib/commandViewData'
+import { commandService } from '../services/platformServices'
+import { buildActionProofDetail, type CommandActionState, type ConnectorHealth } from '../lib/commandViewData'
 import { useRuntimeContext } from '../lib/runtimeContext'
 import type { Domain } from '../types/connector'
 
@@ -68,7 +64,7 @@ export default function CommandView({ params }: CommandViewProps) {
 
   const { data } = useQuery({
     queryKey: ['command-view-runtime', runtime.environment],
-    queryFn: () => loadCommandViewState({ environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }),
+    queryFn: () => commandService.load({ environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }),
   })
 
   const [expandedId, setExpandedId] = useState<string | null>(null)
