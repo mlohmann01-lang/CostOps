@@ -1,0 +1,33 @@
+import { index, jsonb, pgTable, serial, text, timestamp, uniqueIndex, boolean } from "drizzle-orm/pg-core";
+
+export const executionRequestsTable = pgTable("execution_requests", {
+  id: serial("id").primaryKey(),
+  executionRequestId: text("execution_request_id").notNull(),
+  tenantId: text("tenant_id").notNull(),
+  recommendationId: text("recommendation_id").notNull(),
+  playbookId: text("playbook_id").notNull(),
+  targetEntityId: text("target_entity_id").notNull(),
+  actionType: text("action_type").notNull(),
+  actionRiskClass: text("action_risk_class").notNull(),
+  executionState: text("execution_state").notNull(),
+  executionMode: text("execution_mode").notNull(),
+  dryRunRequired: boolean("dry_run_required").notNull().default(false),
+  rollbackRequired: boolean("rollback_required").notNull().default(false),
+  rollbackPlan: jsonb("rollback_plan").notNull().default({}),
+  preflightChecks: jsonb("preflight_checks").notNull().default([]),
+  blockedReasons: jsonb("blocked_reasons").notNull().default([]),
+  evidencePointers: jsonb("evidence_pointers").notNull().default([]),
+  governanceEventIds: jsonb("governance_event_ids").notNull().default([]),
+  idempotencyKey: text("idempotency_key").notNull(),
+  requestedBy: text("requested_by").notNull(),
+  requestedAt: timestamp("requested_at", { withTimezone: true }).notNull(),
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+}, (t) => [
+  uniqueIndex("execution_requests_execution_request_id_uidx").on(t.executionRequestId),
+  uniqueIndex("execution_requests_idempotency_key_uidx").on(t.idempotencyKey),
+  index("execution_requests_tenant_idx").on(t.tenantId),
+]);

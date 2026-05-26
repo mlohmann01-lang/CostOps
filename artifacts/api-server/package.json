@@ -7,11 +7,14 @@
     "dev": "export NODE_ENV=development && pnpm run build && pnpm run start",
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json --noEmit",
     "test:contoso": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-contoso-test.mjs",
     "test:platform-boundaries": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-platform-boundary-tests.mjs",
+    "test:graph-discovery": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && pnpm run verify:dist-exports && node ./scripts/run-pattern-tests.mjs -- operational-graph-discovery.test.ts && node ./scripts/run-pattern-tests.mjs -- discover-phase-adapter.test.ts",
     "test:operationalization": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-operationalization-test.mjs",
-    "test": "node ./scripts/run-pattern-tests.mjs"
+    "test": "node ./scripts/run-pattern-tests.mjs",
+    "diagnose:typecheck": "pnpm --filter @workspace/scripts exec tsx ./scripts/diagnose-typecheck-blockers.ts",
+    "verify:dist-exports": "node ./scripts/verify-dist-exports.mjs"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

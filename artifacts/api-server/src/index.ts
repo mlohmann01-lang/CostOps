@@ -1,16 +1,21 @@
 import app from "./app.js";
 import { logger } from "./lib/logger.js";
 import { validateProductionConfig } from "./lib/config/production-config-validator.js";
+import { validateEnv } from "./lib/config/env.js";
 
-// Fail fast on misconfiguration — never start with invalid config
-const configResult = validateProductionConfig();
-if (!configResult.valid) {
-  logger.fatal({ errors: configResult.errors }, "Startup config validation failed — refusing to start");
+const runtimeEnv = validateEnv();
+runtimeEnv.warnings.forEach((warning) => logger.warn({ env: runtimeEnv.env, warning }, "Runtime bootstrap warning"));
+if (runtimeEnv.errors.length > 0) {
+  logger.fatal({ env: runtimeEnv.env, errors: runtimeEnv.errors }, "Runtime bootstrap failed");
   process.exit(1);
 }
-if (configResult.warnings.length > 0) {
-  logger.warn({ warnings: configResult.warnings }, "Startup config warnings");
+
+const configResult = validateProductionConfig();
+if (!configResult.valid) {
+  logger.fatal({ env: runtimeEnv.env, errors: configResult.errors }, "Startup config validation failed — refusing to start");
+  process.exit(1);
 }
+configResult.warnings.forEach((warning) => logger.warn({ env: runtimeEnv.env, warning }, "Startup config warning"));
 
 const rawPort = process.env["PORT"];
 
@@ -32,5 +37,5 @@ app.listen(port, (err) => {
     process.exit(1);
   }
 
-  logger.info({ port }, "Server listening");
+  logger.info({ port, env: runtimeEnv.env }, "Server listening");
 });
