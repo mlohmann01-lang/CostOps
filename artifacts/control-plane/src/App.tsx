@@ -90,9 +90,23 @@ function LoginPage() {
         <h1 style={{ fontSize: 15, fontWeight: 500, color: 'var(--text-primary)', margin: '0 0 6px' }}>
           Sign in to your workspace
         </h1>
-        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 16px' }}>
           Use your Certen credentials to continue.
         </p>
+        <div style={{
+          background: 'var(--surface-2)',
+          border: '0.5px solid var(--border-subtle)',
+          borderRadius: 7,
+          padding: '9px 12px',
+          marginBottom: 18,
+          fontSize: 11,
+          color: 'var(--text-tertiary)',
+          lineHeight: 1.7,
+        }}>
+          <strong style={{ color: 'var(--text-secondary)' }}>Demo credentials</strong><br />
+          Email: <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>demo@certen.io</span><br />
+          Password: <span style={{ color: 'var(--text-primary)', fontFamily: 'monospace' }}>DemoWorkspace2026!</span>
+        </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
