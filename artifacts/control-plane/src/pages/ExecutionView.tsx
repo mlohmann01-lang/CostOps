@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { X } from 'lucide-react'
 import { useRuntimeContext } from '../lib/runtimeContext'
-import { loadExecutionState } from '../lib/executionData'
+import { executionService } from '../services/platformServices'
 import { Shell } from '../components/layout/Shell'
 import { CommandBar } from '../components/layout/CommandBar'
 
@@ -47,7 +47,7 @@ export default function ExecutionView() {
   const runtime = useRuntimeContext()
   const isDemo = runtime.environment === 'DEMO'
   const runtimeOptions = { environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }
-  const { data } = useQuery({ queryKey: ['execution', runtime.environment], queryFn: () => loadExecutionState(runtimeOptions) })
+  const { data } = useQuery({ queryKey: ['execution', runtime.environment], queryFn: () => executionService.load(runtimeOptions) })
 
   const [confirmId, setConfirmId] = useState<string | null>(null)
   const [executingId, setExecutingId] = useState<string | null>(null)

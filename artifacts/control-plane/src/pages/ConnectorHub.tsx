@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useRuntimeContext } from '../lib/runtimeContext'
-import { loadConnectorHubState } from '../lib/connectorHubData'
+import { connectorService } from '../services/platformServices'
 import { Shell } from '../components/layout/Shell'
 import { CommandBar } from '../components/layout/CommandBar'
 import { Cloud, Building2, Users, Brain, MessageSquare, GitBranch, Video, Server, Settings, Plus, RefreshCw } from 'lucide-react'
@@ -129,7 +129,7 @@ export default function ConnectorHub() {
   const runtime = useRuntimeContext()
   const isDemo = runtime.environment === 'DEMO'
   const runtimeOptions = { environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }
-  const { data } = useQuery({ queryKey: ['connectors-hub', runtime.environment], queryFn: () => loadConnectorHubState(runtimeOptions) })
+  const { data } = useQuery({ queryKey: ['connectors-hub', runtime.environment], queryFn: () => connectorService.load(runtimeOptions) })
   const [toggles, setToggles] = useState<Record<string, boolean>>({})
   const [selected, setSelected] = useState<string | null>(null)
 
