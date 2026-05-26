@@ -1,8 +1,9 @@
 import { db, connectorSyncStatusTable, m365UsersTable } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { getGraphAccessToken } from "../connectors/m365/m365-graph-client";
+import { assertLiveM365MutationAllowed, type M365MutationGuardContext } from "../../domain/m365/mutationGuard";
 
-export async function removeUserLicense(input: { tenantId: string; userPrincipalName: string; skuId: string; actorId?: string; dryRun: boolean; action: string }) {
+export async function removeUserLicense(input: { tenantId: string; userPrincipalName: string; skuId: string; actorId?: string; dryRun: boolean; action: string; guardContext: M365MutationGuardContext }) {
   if (input.action !== "REMOVE_LICENSE") {
     return { ok: false, error: "UNSUPPORTED_ACTION", mutationPerformed: false };
   }
@@ -30,6 +31,8 @@ export async function removeUserLicense(input: { tenantId: string; userPrincipal
   if (input.dryRun) {
     return { ok: true, mutationPerformed: false, dryRun: true, before, after, rollbackPayload, requestId: undefined };
   }
+
+  assertLiveM365MutationAllowed(input.guardContext);
 
   const token = await getGraphAccessToken();
   if (!token.accessToken) return { ok: false, error: token.error ?? "GRAPH_TOKEN_ERROR", mutationPerformed: false };

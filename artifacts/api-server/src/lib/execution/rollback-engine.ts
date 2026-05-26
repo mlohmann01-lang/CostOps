@@ -4,8 +4,9 @@ import { canExecute } from "../governance/authorization";
 import { getGraphAccessToken } from "../connectors/m365/m365-graph-client";
 import { evaluateRollbackRuntimeControls } from "../security/runtime-controls";
 import { emitPlatformEvent } from "../observability/platform-events";
+import { assertLiveM365MutationAllowed, type M365MutationGuardContext } from "../../domain/m365/mutationGuard";
 
-export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?: string; tenantId: string; dryRun: boolean }) {
+export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?: string; tenantId: string; dryRun: boolean; guardContext: M365MutationGuardContext }) {
   const [outcome] = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.id, Number(input.outcomeLedgerId)), eq(outcomeLedgerTable.tenantId, input.tenantId))).limit(1);
   if (!outcome) return { allowed: false, error: "OUTCOME_NOT_FOUND" };
 
@@ -30,10 +31,9 @@ export async function rollbackOutcome(input: { outcomeLedgerId: string; actorId?
     await emitPlatformEvent({ tenantId: input.tenantId, eventType: "ROLLBACK_ANOMALY_BLOCK", severity: "WARNING", source: "rollback-engine", correlationId: `rollback:${outcome.id}`, entityType: "outcome", entityId: String(outcome.id), message: runtimeControl.reasons.join(","), evidence: runtimeControl.evidence });
     return { allowed: false, error: runtimeControl.reasons[0] ?? "ROLLBACK_BLOCKED", evidence: runtimeControl.evidence };
   }
-  const liveEnabled = process.env.ENABLE_LIVE_M365_EXECUTION === "true";
-  if (!liveEnabled) return { allowed: false, error: "LIVE_EXECUTION_DISABLED" };
-
   if (input.dryRun) return { allowed: true, executed: false, beforeState: before, afterState: after, executionMode: "LIVE_GRAPH", mutationPerformed: false };
+
+  assertLiveM365MutationAllowed(input.guardContext);
 
   const token = await getGraphAccessToken();
   if (!token.accessToken) return { allowed: false, error: token.error ?? "GRAPH_TOKEN_ERROR" };

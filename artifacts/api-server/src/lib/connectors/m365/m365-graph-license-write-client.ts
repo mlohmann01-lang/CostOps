@@ -1,3 +1,4 @@
+import { assertLiveM365MutationAllowed, type M365MutationGuardContext } from "../../../domain/m365/mutationGuard";
 export type M365LicenseRemovalResult = {
   ok: boolean;
   status: "LIVE_EXECUTION_SUBMITTED" | "LIVE_EXECUTION_FAILED" | "LIVE_EXECUTION_BLOCKED" | "LIVE_EXECUTION_PARTIAL";
@@ -11,8 +12,9 @@ export type M365LicenseRemovalResult = {
 export class M365GraphLicenseWriteClient {
   constructor(private readonly accessToken: string, private readonly timeoutMs = 20000) {}
 
-  async removeUserLicenses(userId: string, skuIds: string[]): Promise<M365LicenseRemovalResult> {
+  async removeUserLicenses(userId: string, skuIds: string[], guardContext: M365MutationGuardContext): Promise<M365LicenseRemovalResult> {
     if (skuIds.length === 0) return { ok: false, status: "LIVE_EXECUTION_BLOCKED", requestId: null, httpStatus: 400, errorCode: "NO_SKUS", evidence: { userId, skuIds } };
+    assertLiveM365MutationAllowed(guardContext);
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
@@ -38,7 +40,8 @@ export class M365GraphLicenseWriteClient {
 
 export type M365LicenseRollbackResult = M365LicenseRemovalResult & { rollback: true };
 
-export async function reassignUserLicenses(accessToken: string, userId: string, skuIds: string[], timeoutMs = 20000): Promise<M365LicenseRollbackResult> {
+export async function reassignUserLicenses(accessToken: string, userId: string, skuIds: string[], guardContext: M365MutationGuardContext, timeoutMs = 20000): Promise<M365LicenseRollbackResult> {
+  assertLiveM365MutationAllowed(guardContext);
   if (String(process.env.M365_LIVE_LICENSE_ROLLBACK_ENABLED ?? "false") !== "true") {
     return { ok: false, rollback: true, status: "LIVE_EXECUTION_BLOCKED", requestId: null, httpStatus: 403, errorCode: "ROLLBACK_READY_NOT_LIVE_ENABLED", evidence: { userId, skuIds } };
   }
