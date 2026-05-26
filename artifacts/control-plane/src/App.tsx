@@ -10,7 +10,6 @@ import IntelligenceView from './pages/IntelligenceView'
 import WorkspaceSelection from './pages/WorkspaceSelection'
 import DriftMonitorView from './pages/DriftMonitorView'
 import OutcomeLedgerView from './pages/OutcomeLedgerView'
-import { ControlPlaneShell } from './components/ControlPlaneShell'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
@@ -198,29 +197,32 @@ function WorkspaceRoute() {
 }
 
 function ConnectorsRoute() {
-  return <RequireRuntime><ControlPlaneShell><ConnectorHub /></ControlPlaneShell></RequireRuntime>
+  return <RequireRuntime><ConnectorHub /></RequireRuntime>
 }
-
 
 function CommandRoute({ params }: { params?: { domain?: string } }) {
-  return <RequireRuntime><ControlPlaneShell><CommandView params={params} /></ControlPlaneShell></RequireRuntime>
+  return <RequireRuntime><CommandView params={params} /></RequireRuntime>
 }
 
-function GovernanceRoute({ params }: { params?: { domain?: string } }) {
-  return <RequireRuntime><ControlPlaneShell><GovernanceView /></ControlPlaneShell></RequireRuntime>
+function GovernanceRoute() {
+  return <RequireRuntime><GovernanceView /></RequireRuntime>
 }
 
-function ExecutionRoute({ params }: { params?: { domain?: string } }) {
-  return <RequireRuntime><ControlPlaneShell><ExecutionView /></ControlPlaneShell></RequireRuntime>
+function ExecutionRoute() {
+  return <RequireRuntime><ExecutionView /></RequireRuntime>
 }
 
 function IntelligenceRoute({ params }: { params?: { domain?: string } }) {
-  return <RequireRuntime><ControlPlaneShell><IntelligenceView params={params} /></ControlPlaneShell></RequireRuntime>
+  return <RequireRuntime><IntelligenceView params={params} /></RequireRuntime>
 }
 
+function OutcomesRoute() {
+  return <RequireRuntime><OutcomeLedgerView /></RequireRuntime>
+}
 
-function OutcomesRoute() { return <RequireRuntime><ControlPlaneShell><OutcomeLedgerView /></ControlPlaneShell></RequireRuntime> }
-function DriftRoute() { return <RequireRuntime><ControlPlaneShell><DriftMonitorView /></ControlPlaneShell></RequireRuntime> }
+function DriftRoute() {
+  return <RequireRuntime><DriftMonitorView /></RequireRuntime>
+}
 
 function StubRoute() {
   const session = getSession()

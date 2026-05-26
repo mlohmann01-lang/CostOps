@@ -1,0 +1,864 @@
+Certen — UI Rebuild Brief for Replit
+Version: Beta 1 — Full visual rebuild
+Date: May 2026
+Purpose: Restore and significantly upgrade the Certen platform UI. The current build has been stripped to plain text with no visual design. This document provides complete, precise instructions to rebuild every page to a world-class standard.
+
+0. Context: What Happened and What We're Fixing
+The current codebase renders all pages as raw text on a dark background — no cards, no colour coding, no visual hierarchy, no interactive components. We need to restore the richer UI that existed previously (reference screenshots attached) and improve it significantly based on the design direction below.
+There are two distinct environments that must be handled differently in the UI:
+
+Demo workspace (demo-sandbox-tenant) — synthetic data, live execution disabled. Must always show a clear amber warning banner at the top.
+Live workspace — real connectors, real execution enabled. Normal UI with no demo banner.
+
+
+1. Global Design System
+Apply these rules to every page, every component.
+1.1 Colour Palette
+Background (page):       #0d0f0e
+Background (cards):      rgba(255,255,255,0.04)
+Background (card hover): rgba(255,255,255,0.06)
+Border (default):        rgba(255,255,255,0.08)   — 0.5px
+Border (emphasis):       rgba(255,255,255,0.15)   — 0.5px
+Border (hover):          rgba(255,255,255,0.20)
+
+Brand teal:              #1D9E75
+Teal light:              #5DCAA5
+Teal bg tint:            rgba(29,158,117,0.10)
+Teal border tint:        rgba(29,158,117,0.25)
+
+Text primary:            #e8e6e0
+Text secondary:          rgba(255,255,255,0.45)
+Text tertiary:           rgba(255,255,255,0.25)
+Text muted label:        rgba(255,255,255,0.35)
+
+Status — green:          #1D9E75
+Status — amber:          #EF9F27
+Status — red:            #E24B4A
+Status — red bg:         rgba(226,75,74,0.12)
+Status — amber bg:       rgba(239,159,39,0.12)
+Status — green bg:       rgba(29,158,117,0.12)
+1.2 Typography
+Font family:   system-ui, -apple-system, "Segoe UI", sans-serif
+Font sizes:
+  - Page title:     18px / weight 500 / color #e8e6e0
+  - Section label:  11px / weight 500 / uppercase / letter-spacing 0.06em / color rgba(255,255,255,0.35)
+  - Body:           13px / weight 400 / color #e8e6e0
+  - Sub-text:       12px / weight 400 / color rgba(255,255,255,0.45)
+  - Micro:          11px / weight 400 / color rgba(255,255,255,0.30)
+  - Metric hero:    24px / weight 500 / color #e8e6e0  (or #1D9E75 for primary metric)
+  - Metric label:   11px / uppercase / letter-spacing 0.06em / color rgba(255,255,255,0.35)
+  - Metric delta:   11px / color varies by direction (teal = positive, amber = warning)
+1.3 Card Component (use everywhere)
+css.card {
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 16px;
+  transition: border-color 0.15s;
+}
+.card:hover {
+  border-color: rgba(255,255,255,0.14);
+}
+1.4 Status Pills / Badges
+All status badges use this pattern — coloured background + matching coloured text. Never plain text for status.
+css/* Base pill */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+.pill-green  { background: rgba(29,158,117,0.15);  color: #5DCAA5; }
+.pill-amber  { background: rgba(239,159,39,0.15);  color: #EF9F27; }
+.pill-red    { background: rgba(226,75,74,0.15);   color: #E24B4A; }
+.pill-gray   { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.45); }
+
+/* Status dot inside pill */
+.pill-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+1.5 Buttons
+css.btn-primary {
+  background: #1D9E75;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.btn-primary:hover { opacity: 0.88; }
+
+.btn-secondary {
+  background: transparent;
+  color: rgba(255,255,255,0.5);
+  border: 0.5px solid rgba(255,255,255,0.18);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-secondary:hover {
+  border-color: rgba(255,255,255,0.35);
+  color: #e8e6e0;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: rgba(255,255,255,0.35);
+  border: none;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.06); color: #e8e6e0; }
+1.6 Table Rows
+css.table-header-row {
+  display: grid;
+  padding: 6px 16px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.07);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.25);
+}
+.table-data-row {
+  display: grid;
+  padding: 12px 16px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.05);
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-radius: 6px;
+}
+.table-data-row:hover { background: rgba(255,255,255,0.03); }
+.table-data-row:last-child { border-bottom: none; }
+1.7 Toggle Switches
+Replace all plain on/off text with proper toggle switches.
+html<label class="toggle">
+  <input type="checkbox" checked>
+  <span class="toggle-track">
+    <span class="toggle-thumb"></span>
+  </span>
+</label>
+css.toggle input { display: none; }
+.toggle-track {
+  width: 34px; height: 18px;
+  background: rgba(255,255,255,0.12);
+  border-radius: 9px;
+  display: block;
+  position: relative;
+  transition: background 0.2s;
+  cursor: pointer;
+}
+.toggle input:checked + .toggle-track { background: #1D9E75; }
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+.toggle input:checked + .toggle-track .toggle-thumb { transform: translateX(16px); }
+
+2. Global Navigation
+2.1 Top Bar (persistent across all pages)
+The top bar exists in two modes:
+Demo mode (amber warning):
+html<div class="demo-banner">
+  <span class="demo-icon">⚠</span>
+  <span class="demo-label">DEMO WORKSPACE</span>
+  <span class="demo-sep">·</span>
+  <span class="demo-tenant">tenant demo-sandbox-tenant</span>
+  <span class="demo-msg">Synthetic evidence only. No production systems connected. Live execution disabled.</span>
+  <button class="btn-ghost" style="margin-left:auto">Switch workspace</button>
+</div>
+css.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 20px;
+  background: rgba(239,159,39,0.10);
+  border-bottom: 0.5px solid rgba(239,159,39,0.25);
+  font-size: 12px;
+  color: #EF9F27;
+}
+.demo-label { font-weight: 500; }
+.demo-msg { color: rgba(239,159,39,0.65); }
+Live mode (standard):
+html<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">
+      <div class="logo-icon"><!-- Certen shield icon --></div>
+      <span class="logo-name">Certen</span>
+    </div>
+    <nav class="nav-tabs">
+      <a class="ntab" href="/connector-hub">Connector hub</a>
+      <a class="ntab" href="/command">Command</a>
+      <a class="ntab" href="/governance">Governance</a>
+      <a class="ntab" href="/execution">Execution</a>
+      <a class="ntab" href="/intelligence">Intelligence</a>
+    </nav>
+  </div>
+  <div class="topbar-right">
+    <div class="trust-pill">
+      <span class="trust-dot"></span>
+      Data trust: 91%
+    </div>
+    <div class="user-avatar">A</div>
+  </div>
+</div>
+css.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 52px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: #1D9E75;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+}
+.logo-name { font-size: 15px; font-weight: 500; color: #e8e6e0; }
+.nav-tabs { display: flex; gap: 2px; margin-left: 24px; }
+.ntab {
+  font-size: 13px;
+  color: rgba(255,255,255,0.40);
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: color 0.15s, background 0.15s;
+}
+.ntab:hover { color: rgba(255,255,255,0.70); }
+.ntab.active { color: #1D9E75; background: rgba(29,158,117,0.10); }
+.trust-pill {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 12px; color: #1D9E75;
+  background: rgba(29,158,117,0.10);
+  padding: 5px 12px; border-radius: 20px;
+}
+.trust-dot { width: 6px; height: 6px; border-radius: 50%; background: #1D9E75; }
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(29,158,117,0.20);
+  color: #1D9E75; font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+}
+2.2 Left Sidebar (live workspace only — not shown in demo)
+css.sidebar {
+  width: 180px;
+  min-height: 100vh;
+  border-right: 0.5px solid rgba(255,255,255,0.08);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidebar-section-label {
+  font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: rgba(255,255,255,0.25);
+  padding: 0 16px; margin: 16px 0 6px;
+}
+.sidebar-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 16px;
+  font-size: 13px; color: rgba(255,255,255,0.45);
+  text-decoration: none;
+  border-radius: 6px; margin: 0 8px;
+  transition: background 0.12s, color 0.12s;
+}
+.sidebar-link:hover { background: rgba(255,255,255,0.05); color: #e8e6e0; }
+.sidebar-link.active { background: rgba(29,158,117,0.10); color: #1D9E75; }
+.sidebar-badge {
+  margin-left: auto;
+  background: #E24B4A; color: #fff;
+  font-size: 10px; font-weight: 500;
+  min-width: 16px; height: 16px;
+  border-radius: 8px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+}
+2.3 Domain Filter Tabs (below page title on all main pages)
+html<div class="domain-tabs">
+  <button class="dtab active">All domains</button>
+  <button class="dtab">AI runtime <span class="dtab-dot green"></span></button>
+  <button class="dtab">Cloud <span class="dtab-dot amber"></span></button>
+  <button class="dtab">SaaS / M365 <span class="dtab-dot green"></span></button>
+  <button class="dtab">ITAM <span class="dtab-dot red"></span></button>
+  <button class="dtab">Data platforms <span class="dtab-dot green"></span></button>
+</div>
+css.domain-tabs { display: flex; gap: 4px; padding: 12px 0; border-bottom: 0.5px solid rgba(255,255,255,0.07); }
+.dtab {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: rgba(255,255,255,0.40);
+  padding: 6px 14px; border-radius: 6px; border: none;
+  background: transparent; cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.dtab:hover { color: rgba(255,255,255,0.65); }
+.dtab.active { color: #e8e6e0; border-bottom: 2px solid #1D9E75; border-radius: 0; }
+.dtab-dot { width: 6px; height: 6px; border-radius: 50%; }
+.dtab-dot.green { background: #1D9E75; }
+.dtab-dot.amber { background: #EF9F27; }
+.dtab-dot.red   { background: #E24B4A; }
+Important: The dot colour on each tab must reflect connector health for that domain. If AWS (Cloud domain) is degraded, the Cloud tab shows an amber dot. If ITAM has no connector configured, it shows a red dot.
+2.4 Ask Certen Command Bar (bottom of every page)
+html<div class="cmdbar">
+  <i class="cmdbar-icon">›_</i>
+  <input class="cmdbar-input" placeholder="Ask Certen — e.g. 'What's our biggest saving this month?' or query via Slack / MCP agent" />
+  <kbd class="cmdbar-kbd">⌘K</kbd>
+  <kbd class="cmdbar-kbd">?</kbd>
+</div>
+css.cmdbar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  border-top: 0.5px solid rgba(255,255,255,0.08);
+  background: #0d0f0e;
+  position: sticky; bottom: 0;
+}
+.cmdbar-icon { font-size: 14px; color: rgba(255,255,255,0.25); font-family: monospace; }
+.cmdbar-input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13px; color: rgba(255,255,255,0.35);
+  font-family: inherit;
+}
+.cmdbar-input::placeholder { color: rgba(255,255,255,0.20); }
+.cmdbar-kbd {
+  font-size: 10px; color: rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 4px; padding: 2px 6px;
+  font-family: monospace;
+}
+
+3. Page: Connector Hub
+Layout
+Left sidebar (live mode) + main content area. Top domain filter tabs.
+3.1 Alert Banner (when a connector is degraded)
+html<div class="alert-banner alert-amber">
+  <span class="alert-icon">⚠</span>
+  <strong>AWS connector degraded</strong> — credential refresh failed 3h ago — downstream spend data may be stale.
+  <a class="alert-link" href="#">Reconfigure →</a>
+</div>
+css.alert-banner {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 8px; margin-bottom: 16px;
+  font-size: 13px;
+}
+.alert-amber {
+  background: rgba(239,159,39,0.10);
+  border: 0.5px solid rgba(239,159,39,0.30);
+  color: #EF9F27;
+}
+.alert-link { color: #EF9F27; font-weight: 500; margin-left: auto; text-decoration: none; }
+.alert-link:hover { text-decoration: underline; }
+3.2 Section Header with Count
+html<div class="section-header">
+  <span class="section-label">Active connectors</span>
+  <span class="section-meta">6 configured · 4 ready · 1 degraded · 1 unavailable</span>
+</div>
+css.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.section-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); }
+.section-meta  { font-size: 12px; color: rgba(255,255,255,0.30); }
+3.3 Connector Cards Grid
+Render connectors as a 3-column card grid (not a list).
+html<div class="connector-grid">
+  <!-- One card per connector -->
+  <div class="connector-card">
+    <div class="cc-top">
+      <div class="cc-icon-wrap">
+        <!-- Service icon SVG or letter avatar -->
+        <div class="cc-icon aws">☁</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" checked>
+        <span class="toggle-track"><span class="toggle-thumb"></span></span>
+      </label>
+    </div>
+    <div class="cc-name">AWS</div>
+    <div class="cc-desc">Cloud spend · EC2 · S3 · RDS · Cost Explorer</div>
+    <div class="cc-footer">
+      <span class="pill pill-amber"><span class="pill-dot"></span>Degraded</span>
+      <span class="cc-sync">Synced 3h ago</span>
+    </div>
+  </div>
+  <!-- etc -->
+</div>
+css.connector-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.connector-card {
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 16px;
+  transition: border-color 0.15s;
+  cursor: pointer;
+}
+.connector-card:hover { border-color: rgba(255,255,255,0.16); }
+.connector-card.status-degraded { border-color: rgba(239,159,39,0.25); }
+.connector-card.status-unavailable { border-color: rgba(226,75,74,0.20); }
+.cc-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.cc-icon-wrap { width: 36px; height: 36px; border-radius: 8px; background: rgba(255,255,255,0.07); display: flex; align-items: center; justify-content: center; }
+.cc-name { font-size: 15px; font-weight: 500; color: #e8e6e0; margin-bottom: 4px; }
+.cc-desc { font-size: 12px; color: rgba(255,255,255,0.40); margin-bottom: 14px; line-height: 1.5; }
+.cc-footer { display: flex; align-items: center; justify-content: space-between; }
+.cc-sync { font-size: 11px; color: rgba(255,255,255,0.25); }
+Status colour rules for connector card border:
+
+Ready → default border (rgba(255,255,255,0.08))
+Degraded → amber border (rgba(239,159,39,0.25))
+Unavailable / Not configured → red tint border (rgba(226,75,74,0.20)) + "Configure →" button inside card instead of toggle
+
+ServiceNow ITAM card (unconfigured): Show a "Configure connector →" button in teal instead of a toggle, and text explaining what it provides. Do not show a dead grey toggle.
+Add Connector ghost card:
+html<div class="connector-card connector-card-add">
+  <div class="cc-add-icon">+</div>
+  <div class="cc-name" style="color:rgba(255,255,255,0.30)">Add connector</div>
+  <div class="cc-desc">Flexera, Datadog, GCP, and more</div>
+</div>
+css.connector-card-add {
+  border-style: dashed;
+  border-color: rgba(255,255,255,0.10);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; gap: 8px; min-height: 140px;
+}
+.cc-add-icon { font-size: 22px; color: rgba(255,255,255,0.20); }
+3.4 Evidence Sources Panel
+html<div class="evidence-panel">
+  <div class="section-header">
+    <span class="section-label">Evidence sources — OpenAI</span>
+    <button class="btn-secondary" style="font-size:11px;padding:4px 10px">Manage sources</button>
+  </div>
+  <table class="evidence-table">
+    <thead>
+      <tr>
+        <th>Source</th><th>Trust score</th><th>Last sync</th><th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><i class="sync-icon">↻</i> Usage API v2</td>
+        <td style="color:#1D9E75;font-weight:500">99%</td>
+        <td style="color:rgba(255,255,255,0.40)">12m ago</td>
+        <td><span class="pill pill-green"><span class="pill-dot"></span>Active</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+css.evidence-panel { margin-top: 24px; }
+.evidence-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.evidence-table thead th {
+  font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.25); padding: 8px 12px; text-align: left;
+  border-bottom: 0.5px solid rgba(255,255,255,0.07);
+}
+.evidence-table tbody td { padding: 12px 12px; border-bottom: 0.5px solid rgba(255,255,255,0.05); }
+.evidence-table tbody tr:hover { background: rgba(255,255,255,0.02); }
+.evidence-table tbody tr:last-child td { border-bottom: none; }
+
+4. Page: Command
+4.1 Summary Pipeline Cards
+Four cards in a row showing the savings pipeline. "Eligible Now" must be visually dominant.
+html<div class="pipeline-row">
+  <div class="pipeline-card">
+    <div class="pc-label">Total identified</div>
+    <div class="pc-value">$76,000</div>
+    <div class="pc-sub">across all active domains</div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-card pipeline-card-hero">
+    <div class="pc-label">Eligible now</div>
+    <div class="pc-value hero">$53,320</div>
+    <div class="pc-sub">governance-certified, ready to execute</div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-card">
+    <div class="pc-label">Pending approval</div>
+    <div class="pc-value">$22,440</div>
+    <div class="pc-sub pending">awaiting second approver</div>
+  </div>
+  <div class="pipeline-arrow">→</div>
+  <div class="pipeline-card">
+    <div class="pc-label">Blocked / manual</div>
+    <div class="pc-value">$240</div>
+    <div class="pc-sub">requires manual review or config</div>
+  </div>
+</div>
+css.pipeline-row { display: flex; align-items: center; gap: 0; margin-bottom: 24px; }
+.pipeline-card {
+  flex: 1; padding: 20px;
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+}
+.pipeline-card-hero {
+  background: rgba(29,158,117,0.08);
+  border-color: rgba(29,158,117,0.30);
+}
+.pipeline-arrow { color: rgba(255,255,255,0.15); font-size: 18px; padding: 0 8px; flex-shrink: 0; }
+.pc-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.35); margin-bottom: 8px; }
+.pc-value { font-size: 26px; font-weight: 500; color: #e8e6e0; }
+.pc-value.hero { color: #1D9E75; font-size: 30px; }
+.pc-sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-top: 4px; }
+.pc-sub.pending { color: #EF9F27; }
+4.2 Actions Table
+Column layout: [1fr] [100px] [120px] [80px] [80px] [120px]
+Columns: Action | Saving | Verdict | Blast | Rollback | (button)
+css.actions-table .action-row {
+  grid-template-columns: 1fr 100px 120px 80px 80px 120px;
+}
+Verdict pills:
+
+Eligible → pill-green with ✓ prefix
+Approval required → pill-amber with ⏳ prefix
+Manual only → pill-gray
+Never eligible → pill-red
+
+Blast pills:
+
+Low → pill-green
+Medium → pill-amber
+High → pill-red
+
+Rollback:
+
+Full → plain text, color: rgba(255,255,255,0.50)
+None → red badge: pill-red
+
+Row action buttons:
+
+Eligible rows → green btn-primary "Approve"
+Approval required rows → btn-secondary "Review"
+Manual only rows → no button, chevron only
+
+"Click any row to expand governance proof" — show this hint text right-aligned above the table header. When a row is expanded, slide down a GOVERNANCE PROOF CHAIN section with 4 checkmark items (Telemetry validated, Cost model applied, Blast radius assessed, Policy gate cleared), each with a description and hash. Show the cert ID at the bottom of the expanded section.
+4.3 Governance Proof Chain (expanded state)
+html<div class="proof-chain">
+  <div class="proof-title">Governance proof chain</div>
+  <div class="proof-item">
+    <span class="proof-check">✓</span>
+    <div>
+      <div class="proof-name">Telemetry validated</div>
+      <div class="proof-desc">OpenAI Usage API v2 · 30-day baseline · 99% trust</div>
+      <div class="proof-hash">a3f7c2e1b8d94</div>
+    </div>
+  </div>
+  <!-- repeat for other items -->
+  <div class="proof-cert">GEC-2026-05-22-AI-0001</div>
+</div>
+css.proof-chain {
+  background: rgba(255,255,255,0.02);
+  border: 0.5px solid rgba(29,158,117,0.15);
+  border-radius: 8px; padding: 16px; margin: 8px 0;
+}
+.proof-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.30); margin-bottom: 12px; }
+.proof-item { display: flex; gap: 12px; margin-bottom: 12px; }
+.proof-check { color: #1D9E75; font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.proof-name { font-size: 13px; font-weight: 500; color: #e8e6e0; }
+.proof-desc { font-size: 12px; color: rgba(255,255,255,0.40); margin-top: 2px; }
+.proof-hash { font-size: 10px; color: rgba(255,255,255,0.20); font-family: monospace; margin-top: 2px; }
+.proof-cert { font-size: 11px; color: rgba(255,255,255,0.20); font-family: monospace; margin-top: 12px; padding-top: 12px; border-top: 0.5px solid rgba(255,255,255,0.07); }
+
+5. Page: Governance
+5.1 Summary Stats Row
+html<div class="gov-stats">
+  <div class="gov-stat"><span class="gs-val">2</span><span class="gs-label">Approvals required</span></div>
+  <div class="gov-stat"><span class="gs-val warn">1</span><span class="gs-label">Blocked</span></div>
+  <div class="gov-stat"><span class="gs-val warn">2</span><span class="gs-label">Warnings</span></div>
+  <div class="gov-stat"><span class="gs-val">79</span><span class="gs-label">Avg trust score</span></div>
+</div>
+css.gov-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+.gov-stat { background: rgba(255,255,255,0.04); border: 0.5px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 16px; }
+.gs-val { display: block; font-size: 28px; font-weight: 500; color: #e8e6e0; }
+.gs-val.warn { color: #EF9F27; }
+.gs-label { font-size: 11px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.05em; margin-top: 4px; display: block; }
+5.2 Audit Log Table
+Column layout: [120px] [1fr] [150px] [180px] [160px]
+Columns: Timestamp | Action | Verdict | Cert ID | Actor
+Actor column: Show initials avatar circle + email. E.g. "JD" circle in teal for j.doe@acme.com, grey circle with "SYS" for system entries.
+html<div class="actor-cell">
+  <div class="actor-avatar">JD</div>
+  <span>j.doe@acme.com</span>
+</div>
+css.actor-avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: rgba(29,158,117,0.20); color: #1D9E75;
+  font-size: 10px; font-weight: 500;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.actor-cell { display: flex; align-items: center; gap: 8px; font-size: 12px; color: rgba(255,255,255,0.50); }
+Cert ID column: Style as a monospace link-like element that's visually distinct.
+css.cert-id { font-family: monospace; font-size: 11px; color: rgba(255,255,255,0.30); cursor: pointer; }
+.cert-id:hover { color: #1D9E75; }
+"Never eligible" rows: Add a small ⓘ tooltip icon next to the verdict pill. Tooltip text: "Committed spend — no rollback possible on this contract type."
+
+6. Page: Execution
+6.1 Section: Approved — Awaiting Execution
+Column layout: [1fr] [150px] [150px] [80px] [80px] [140px]
+Columns: Action | Approved by | Approved at | Blast | Rollback | Execute
+Execute now button: Primary teal button. On click:
+
+Show a confirmation modal: "Are you sure you want to execute [action name]? This will [description]. Rollback: Full — reversal available within 72h."
+Two buttons: "Confirm execution" (teal) and "Cancel" (ghost)
+After confirm: button changes to a loading spinner for 1.5s, then row moves to Completed section with saving amount shown in green
+
+Approved at column: Timestamps that are older than 24h should display in amber to flag stale approvals.
+6.2 Section: Completed
+Show a summary line at the top of this section:
+html<div class="completed-total">
+  Total saving realised: <strong style="color:#1D9E75">$9,240/mo</strong>
+</div>
+Completed rows should show a "Rollback" secondary button if the Rollback column is "Full".
+
+7. Page: Intelligence
+This page needs the most work. Replace the current minimal layout with the following full structure.
+7.1 Hero Metric Cards (top row, 4 across)
+Same pipeline card pattern as Command but without the arrows. Primary metric is "Total identified" in teal.
+Metrics to show: Total identified / Eligible now / Pending approval / Realised this month.
+Each card shows: label, value, and a delta line (e.g. "↑ $12,400 vs last month" in teal, or "Awaiting 2nd approver" in amber).
+7.2 Spend Trend Chart
+Full-width line chart below the metric cards. Uses Chart.js.
+Critical requirements:
+
+The line must show a downward inflection after the most recent action executions. Do NOT show a flat or rising line — this kills the product's value narrative.
+Example data shape: Dec $165k → Jan $175k → Feb $190k → Mar $220k (peak) → Apr $210k → May $185k (with annotation "Actions executed")
+Annotate the peak point in amber: "Peak — actions initiated"
+Annotate the May point in teal: "Savings landing"
+Area fill below the line: very subtle teal gradient fill
+Grid lines: rgba(255,255,255,0.05) — barely visible
+Axis labels: rgba(255,255,255,0.35) at 11px
+Y-axis: formatted as $Xk (e.g. "$165k")
+
+javascript// Chart.js config
+{
+  type: 'line',
+  data: {
+    labels: ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May'],
+    datasets: [{
+      data: [165000, 175000, 190000, 220000, 210000, 185000],
+      borderColor: '#1D9E75',
+      borderWidth: 2,
+      tension: 0.4,
+      fill: true,
+      backgroundColor: (ctx) => {
+        const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 200);
+        g.addColorStop(0, 'rgba(29,158,117,0.18)');
+        g.addColorStop(1, 'rgba(29,158,117,0)');
+        return g;
+      },
+      pointRadius: [3,3,3,6,3,6],
+      pointBackgroundColor: ['#1D9E75','#1D9E75','#1D9E75','#EF9F27','#1D9E75','#1D9E75'],
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 11 } } },
+      y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: 'rgba(255,255,255,0.35)', font: { size: 11 }, callback: v => '$' + Math.round(v/1000) + 'k' }, min: 100000 }
+    }
+  }
+}
+7.3 Two-Column Middle Section
+Left column (wider): Savings Funnel
+Right column: Opportunity by Domain
+Savings Funnel — horizontal bar chart showing:
+
+Identified: $76,000 (100% width, grey)
+Eligible: $53,320 (70% width, teal)
+Pending: $22,440 (30% width, amber)
+Realised: $9,240 (12% width, teal light)
+
+Each bar is a pill with the dollar value and percentage shown inline.
+html<div class="funnel-row">
+  <div class="funnel-label">Identified</div>
+  <div class="funnel-track">
+    <div class="funnel-bar" style="width:100%;border-left:3px solid #888780;background:rgba(136,135,128,0.12)">
+      <span class="funnel-val">$76,000</span>
+    </div>
+  </div>
+  <div class="funnel-pct">100%</div>
+</div>
+Opportunity by Domain — 2×2 grid of mini cards, one per domain:
+Each domain card shows: domain name, confidence score (coloured), dollar amount, a thin progress bar (relative to total), and risk level.
+html<div class="domain-card">
+  <div class="dc-top">
+    <span class="dc-name">SaaS / M365</span>
+    <span style="color:#1D9E75;font-size:11px">94%</span>
+  </div>
+  <div class="dc-val">$42,840</div>
+  <div class="dc-bar-track"><div class="dc-bar-fill" style="width:100%;background:#1D9E75"></div></div>
+  <div class="dc-meta">56% of total · Low risk</div>
+</div>
+7.4 Recommendations Table
+Column layout: [1fr] [110px] [120px] [100px]
+Columns: Recommendation | Saving | Confidence | Recurrence risk
+Confidence column: Show as a mini progress bar + percentage, not just a number. Colour the bar and percentage by value: ≥80% teal, 60–79% amber, <60% red.
+Recurrence risk: Show as coloured text only — Low (teal), Medium (amber), High (red badge).
+52% confidence (ServiceNow): Add a small ⓘ icon next to the percentage. Tooltip: "Low confidence due to unconfigured ServiceNow connector. Connect ITAM data to improve accuracy."
+
+8. Page: Drift Monitor (new nav item)
+The "Drift" page from the new build is a valid addition. Render it with proper cards:
+8.1 Stats Row
+Three stat cards: Active alerts | Value at risk | Monitored outcomes
+8.2 Drift Alert Cards
+Each drift alert as a card (not a plain text row):
+html<div class="drift-card">
+  <div class="dc-header">
+    <span class="pill pill-amber"><span class="pill-dot"></span>Active</span>
+    <span class="dc-risk">Medium risk · $900 at risk</span>
+  </div>
+  <div class="dc-title">License reclaim recurrence watch</div>
+  <div class="dc-desc">ACTIVE · Review synthetic recurrence evidence</div>
+  <div class="dc-action">
+    <button class="btn-secondary" style="font-size:11px">Review evidence</button>
+  </div>
+</div>
+
+9. Page: Outcome Ledger (Outcomes nav item)
+9.1 Stats Row
+Three stat cards: Projected monthly | Verified monthly | Verification pending
+Important: "Projected monthly" and "Verified monthly" must look visually different — projected in default white, verified in teal (because it's confirmed real money).
+9.2 Outcome Rows
+Each outcome as a card row:
+html<div class="outcome-row">
+  <div class="or-left">
+    <div class="or-name">OpenAI route policy update</div>
+    <div class="or-meta">Projected $11,200 · Verified $4,200</div>
+  </div>
+  <div class="or-right">
+    <span class="pill pill-green"><span class="pill-dot"></span>Verified</span>
+    <span class="or-saving">$4,200/mo</span>
+  </div>
+</div>
+
+10. Lifecycle Timeline Component (used in Command action detail view)
+Replace the current plain-text lifecycle with a proper vertical timeline:
+html<div class="lifecycle">
+  <div class="lc-item complete">
+    <div class="lc-dot"></div>
+    <div class="lc-content">
+      <div class="lc-stage">Discovered</div>
+      <div class="lc-desc">Recommendation discovered from runtime telemetry</div>
+      <div class="lc-time">2026-05-01 09:00</div>
+    </div>
+  </div>
+  <div class="lc-item complete">...</div>
+  <div class="lc-item blocked">
+    <div class="lc-dot"></div>
+    <div class="lc-content">
+      <div class="lc-stage">Dry run ready</div>
+      <div class="lc-status-pill"><span class="pill pill-amber">Blocked</span></div>
+      <div class="lc-desc">Safe execution simulation only</div>
+    </div>
+  </div>
+  <div class="lc-item pending">...</div>
+</div>
+css.lifecycle { position: relative; padding-left: 28px; }
+.lifecycle::before {
+  content: '';
+  position: absolute; left: 7px; top: 12px; bottom: 12px;
+  width: 1px; background: rgba(255,255,255,0.10);
+}
+.lc-item { position: relative; margin-bottom: 20px; }
+.lc-dot {
+  position: absolute; left: -24px; top: 3px;
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,0.20);
+  background: #0d0f0e;
+}
+.lc-item.complete .lc-dot { background: #1D9E75; border-color: #1D9E75; }
+.lc-item.blocked  .lc-dot { background: #EF9F27; border-color: #EF9F27; }
+.lc-item.pending  .lc-dot { background: transparent; border-color: rgba(255,255,255,0.25); }
+.lc-stage { font-size: 13px; font-weight: 500; color: #e8e6e0; margin-bottom: 3px; }
+.lc-desc  { font-size: 12px; color: rgba(255,255,255,0.40); }
+.lc-time  { font-size: 11px; color: rgba(255,255,255,0.20); font-family: monospace; margin-top: 3px; }
+
+11. Governance Gates Component (used in Command action detail view)
+Replace the plain table with a proper visual gate list:
+html<div class="gates-list">
+  <div class="gate-row passed">
+    <span class="gate-icon">✓</span>
+    <span class="gate-name">Usage freshness</span>
+    <span class="gate-desc">Source freshness metadata captured</span>
+    <span class="gate-status">Passed</span>
+  </div>
+  <div class="gate-row blocked">
+    <span class="gate-icon">✕</span>
+    <span class="gate-name">Identity match</span>
+    <span class="gate-desc">Identity confidence derived from source account mapping</span>
+    <span class="gate-status">Blocked</span>
+  </div>
+</div>
+css.gates-list { display: flex; flex-direction: column; gap: 4px; }
+.gate-row {
+  display: grid; grid-template-columns: 20px 160px 1fr 80px;
+  align-items: center; gap: 12px;
+  padding: 10px 14px; border-radius: 7px;
+  font-size: 13px;
+}
+.gate-row.passed { background: rgba(29,158,117,0.06); }
+.gate-row.blocked { background: rgba(239,159,39,0.06); }
+.gate-icon { font-size: 14px; }
+.gate-row.passed .gate-icon { color: #1D9E75; }
+.gate-row.blocked .gate-icon { color: #EF9F27; }
+.gate-name { font-weight: 500; color: #e8e6e0; }
+.gate-desc { color: rgba(255,255,255,0.40); font-size: 12px; }
+.gate-status { text-align: right; font-size: 12px; font-weight: 500; }
+.gate-row.passed .gate-status { color: #1D9E75; }
+.gate-row.blocked .gate-status { color: #EF9F27; }
+
+12. Navigation Structure — Final
+The nav structure has changed between the two builds. Use this consolidated structure:
+Live workspace sidebar:
+
+Platform: Connector hub · Command · Governance · Execution · Intelligence
+System: Sync jobs · Audit log · Settings
+
+Demo workspace top nav (no sidebar):
+
+Command · Governance · Execution · Connectors · Outcomes · Drift
+
+Recommendation: Unify these. The demo workspace should also use a sidebar (makes the transition to live feel natural). Show demo-specific pages (Outcomes, Drift) as additional items under Platform in the sidebar for both environments.
+
+13. Demo Workspace Specific Rules
+Every page in demo mode must:
+
+Show the amber demo banner at the very top (above the main nav)
+Show a page-level demo info bar below the page title: "DEMO · [page-specific note e.g. 'Synthetic evidence only. Production connectors cannot be modified here.']"
+Never show live execute buttons — replace "Execute now" with "Simulate execution" (grey, btn-secondary)
+Never show "Approve" buttons — replace with "Simulate approval" (grey)
+Show all financial figures but they must be clearly marked as synthetic in tooltips
+
+
+14. Interaction Checklist
+Every button and interactive element must do something. Minimum viable interactions:
+ElementRequired behaviourApprove buttonOpens confirmation modal → marks as pending execution → moves to Execution pageReview buttonExpands governance proof chain inlineExecute now buttonConfirmation modal → loading state → moves to CompletedSimulate execution (demo)Same flow but shows "Simulated — no live systems affected" badge on resultDomain tab filterFilters the actions table to that domain onlyRow click (Command table)Expands governance proof chainCert ID click (Governance)Opens proof detail drawer or modalAdd Connector (ghost card)Opens a connector selection modalTest All buttonShows a running test state on each connector card in sequenceManage Sources buttonOpens evidence source management panelAsk Certen inputOn enter/submit, routes to the AI query handler⌘K keyboard shortcutOpens command palette with quick-jump links
+
+15. What NOT to Do
+
+Do not use plain <p> or <div> text dumps for structured data — always use cards, tables, or lists
+Do not use SCREAMING_SNAKE_CASE labels visible to users — always humanise (e.g. "APPROVAL_REQUIRED" → "Approval required")
+Do not show raw timestamps like 2026-05-01T09:00:00.000Z — format as "May 1, 2026 · 09:00" or "3h ago"
+Do not show status as plain text — always use coloured pills
+Do not render the lifecycle timeline as a text list — always use the visual timeline component above
+Do not show a flat spend trend — the line must curve down after actions are executed
+Do not use gauges, dials, or speedometer charts — ever
+Do not use rainbow colours — the entire colour system is teal (primary), amber (warning), red (danger), grey (neutral)
+Do not repeat "DEMO · SYNTHETIC · DEGRADED · NONE" as raw dot-separated strings — parse and render as structured pills
+
+
+End of brief. All component patterns above include working CSS. Implement in the order: Global design system → Navigation → Connector Hub → Command → Governance → Execution → Intelligence → Drift → Outcomes.

@@ -76,9 +76,10 @@
   --c-teal-600:   #2dbb8a;
   --c-teal-800:   #1a8a65;
 
-  --c-amber-50:   rgba(186, 117, 23, 0.15);
-  --c-amber-400:  #e09a35;
-  --c-amber-600:  #f0b050;
+  --c-amber-50:   rgba(239, 159, 39, 0.12);
+  --c-amber-100:  rgba(239, 159, 39, 0.22);
+  --c-amber-400:  #EF9F27;
+  --c-amber-600:  #f5b84a;
   --c-amber-800:  #c98038;
 
   --c-red-50:     rgba(226, 75, 74, 0.14);
@@ -100,18 +101,19 @@
   --c-pink-600:   #d4728e;
 
   /* ─── Surface tokens — dark ─────────────────────────────────────────────── */
-  --surface-0:    #131313;   /* sidebar, topbar, card bg */
-  --surface-1:    #1b1b1b;   /* main page background     */
-  --surface-2:    #232323;   /* hover / elevated surface  */
+  --surface-0:    #0d0f0e;   /* sidebar, topbar           */
+  --surface-1:    #0d0f0e;   /* main page background      */
+  --surface-2:    rgba(255, 255, 255, 0.04); /* card / hover surface */
+  --surface-3:    rgba(255, 255, 255, 0.07); /* elevated hover        */
 
   /* ─── Text tokens — dark ────────────────────────────────────────────────── */
-  --text-primary:   rgba(255, 255, 255, 0.92);
-  --text-secondary: rgba(255, 255, 255, 0.52);
-  --text-tertiary:  rgba(255, 255, 255, 0.32);
+  --text-primary:   #e8e6e0;
+  --text-secondary: rgba(255, 255, 255, 0.45);
+  --text-tertiary:  rgba(255, 255, 255, 0.28);
 
   /* ─── Border tokens — dark ──────────────────────────────────────────────── */
-  --border-subtle: rgba(255, 255, 255, 0.07);
-  --border-medium: rgba(255, 255, 255, 0.13);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.14);
   --border-strong: rgba(255, 255, 255, 0.22);
 
   /* ─── Interactive surface helpers ──────────────────────────────────────── */
