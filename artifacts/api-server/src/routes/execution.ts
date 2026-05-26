@@ -97,4 +97,35 @@ router.post("/reject/:id", async (req, res) => {
   }
 });
 
+
+
+router.post('/m365/dry-run', async (req, res) => {
+  try {
+    const recommendationId = Number(req.body?.recommendationId);
+    if (!recommendationId) return res.status(400).json({ error: 'recommendationId is required' });
+    const [rec] = await db.select().from(recommendationsTable).where(eq(recommendationsTable.id, recommendationId));
+    if (!rec) return res.status(404).json({ error: 'Recommendation not found' });
+    const projectedMonthlySavings = Number(rec.monthlyCost ?? 0);
+    const projectedAnnualSavings = Number(rec.annualisedCost ?? projectedMonthlySavings * 12);
+    const [outcome] = await db.insert(outcomeLedgerTable).values({
+      recommendationId: rec.id,
+      userEmail: rec.userEmail,
+      displayName: rec.displayName,
+      action: 'DRY_RUN_ONLY',
+      licenceSku: rec.licenceSku,
+      beforeCost: rec.monthlyCost,
+      afterCost: rec.monthlyCost,
+      monthlySaving: projectedMonthlySavings,
+      annualisedSaving: projectedAnnualSavings,
+      approved: false,
+      executed: false,
+      executionMode: 'DRY_RUN_ONLY',
+      evidence: { summary: 'Dry-run completed. No production changes were made.' },
+    }).returning();
+    return res.json({ status: 'DRY_RUN_COMPLETED', recordId: String(outcome.id), recommendationId: String(rec.id), summary: 'Dry-run completed. No production changes were made.', projectedMonthlySavings, projectedAnnualSavings, warnings: [], blockers: [] });
+  } catch (err) {
+    return res.status(500).json({ error: 'DRY_RUN_FAILED' });
+  }
+});
+
 export default router;

@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, m365ConnectorConfigsTable, m365EvidenceRecordsTable, type Connector } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, m365ConnectorConfigsTable, m365EvidenceRecordsTable, recommendationsTable, outcomeLedgerTable, type Connector } from "@workspace/db";
+import { and, desc, eq } from "drizzle-orm";
 import { checkM365PermissionReadiness } from "../lib/connectors/m365/m365-permission-check";
 import { fetchGraphUserActivity, fetchGraphUserLicences, fetchGraphUsersFirstPage, getGraphAccessToken } from "../lib/connectors/m365/m365-graph-client";
 import { normalizeM365Users } from "../lib/connectors/m365-normalizer";
@@ -58,7 +58,7 @@ router.post("/:id/sync", async (req, res) => {
     void setTimeout(async () => {
       await db
         .update(connectorsTable)
-        .set({ status: "connected", recordCount: connector.recordCount + Math.floor(Math.random() * 10) })
+        .set({ status: "connected", recordCount: connector.recordCount + 1 })
         .where(eq(connectorsTable.id, id));
     }, 3000);
 
@@ -78,12 +78,23 @@ router.post("/:id/sync", async (req, res) => {
   }
 });
 
-router.get("/m365/readiness", async (_req, res) => {
+router.get("/m365/readiness", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const required = ["User.Read.All", "Directory.Read.All", "AuditLog.Read.All"];
+  const checks: Array<{ id: string; label: string; status: string; detail: string }> = [];
+  const configured = Boolean(process.env.M365_TENANT_ID && process.env.M365_CLIENT_ID && process.env.M365_CLIENT_SECRET);
+  checks.push({ id: "GRAPH_CONFIGURED", label: "Graph configuration", status: configured ? "PASSED" : "FAILED", detail: configured ? "Tenant/client credentials configured." : "Missing M365_TENANT_ID / M365_CLIENT_ID / M365_CLIENT_SECRET." });
+  if (!configured) {
+    return res.json({ connectorId: "m365", status: "NOT_CONFIGURED", mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: [], missing: required }, lastCheckedAt: new Date().toISOString(), canSync: false, canSmokeTest: false, canExecute: false });
+  }
   try {
     const readiness = await checkM365PermissionReadiness();
-    return res.json(readiness);
-  } catch (err) {
-    return res.status(500).json({ error: "Internal server error" });
+    checks.push({ id: "GRAPH_PERMISSION_READY", label: "Permission readiness", status: readiness.status === "READY" ? "PASSED" : readiness.status === "DEGRADED" ? "WARNING" : "FAILED", detail: readiness.warnings?.join('; ') || "Permission checks completed." });
+    const status = readiness.status === "READY" ? "READY" : readiness.status === "DEGRADED" ? "DEGRADED" : "BLOCKED";
+    return res.json({ connectorId: "m365", status, mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: required.filter((p) => !(readiness as any).missingPermissions?.includes?.(p)), missing: (readiness as any).missingPermissions ?? [] }, lastCheckedAt: new Date().toISOString(), canSync: status !== "BLOCKED", canSmokeTest: true, canExecute: false });
+  } catch {
+    checks.push({ id: "TOKEN_ACQUISITION", label: "Token acquisition", status: "FAILED", detail: "Graph token acquisition failed." });
+    return res.json({ connectorId: "m365", status: "BLOCKED", mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: [], missing: required }, lastCheckedAt: new Date().toISOString(), canSync: false, canSmokeTest: true, canExecute: false });
   }
 });
 
@@ -270,7 +281,7 @@ router.get("/m365/status", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
     const status = await m365ReadOnlySyncService.getSyncStatus(tenantId);
-    return res.json(status ?? { tenantId, status: "NOT_CONFIGURED", mode: "DISABLED" });
+    return res.json(status ?? { connectorId: "m365", tenantId, status: "NEVER_SYNCED", summary: { usersScanned: 0, licensedUsers: 0, disabledLicensedUsers: 0, inactiveLicensedUsers: 0, skusSeen: 0, activityCoveragePercent: 0 }, stale: false, canGenerateRecommendations: false });
   } catch (err) {
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -305,19 +316,81 @@ router.post("/m365/recommendations/generate", async (req, res) => {
     const body = (req.body ?? {}) as { normalizedEvidence?: unknown; skuPricingCatalog?: M365SkuPricing[]; generationOptions?: { inactivityDaysThreshold?: number; evidenceConfidenceThreshold?: number; confidenceAdjustment?: number } };
     const syncResult = Array.isArray(body.normalizedEvidence) ? null : await m365ReadOnlyEvidenceSyncService.runSync(tenantId);
     const normalizedEvidence = (Array.isArray(body.normalizedEvidence) ? body.normalizedEvidence : syncResult?.normalizedEvidence) ?? [];
-    const recommendations = generateM365Recommendations({
+    const generated = generateM365Recommendations({
       tenantId,
       normalizedEvidence: normalizedEvidence as Parameters<typeof generateM365Recommendations>[0]["normalizedEvidence"],
       skuPricingCatalog: Array.isArray(body.skuPricingCatalog) ? body.skuPricingCatalog : [],
       generationOptions: body.generationOptions,
     });
 
+    let inserted = 0;
+    let updated = 0;
+    for (const rec of generated.recommendations) {
+      const stableKey = `${tenantId}:${rec.affectedUser.userPrincipalName}:${rec.recommendationType}:${[...rec.affectedLicenses].sort().join(',')}`;
+      const [existing] = await db.select().from(recommendationsTable).where(and(eq(recommendationsTable.tenantId, tenantId), eq(recommendationsTable.correlationId, stableKey))).limit(1);
+      const patch = {
+        userEmail: rec.affectedUser.userPrincipalName,
+        displayName: rec.affectedUser.displayName,
+        licenceSku: rec.affectedLicenses.join(','),
+        monthlyCost: rec.projectedMonthlySavings,
+        annualisedCost: rec.projectedAnnualSavings,
+        trustScore: rec.trustLevel === 'HIGH' ? 90 : rec.trustLevel === 'MEDIUM' ? 70 : 50,
+        executionStatus: rec.approvalRequirement === 'REQUIRED' ? 'APPROVAL_REQUIRED' : 'DRY_RUN_READY',
+        status: 'pending',
+        playbook: rec.recommendationType,
+        playbookId: rec.playbookId,
+        playbookName: rec.playbookId,
+        playbookEvidence: { proofReferences: rec.proofReferences, confidenceReasoning: rec.confidenceReasoning, utilizationReasoning: rec.utilizationReasoning },
+        connector: 'm365',
+        connectorHealth: rec.evidenceFreshness === 'FRESH' ? 'HEALTHY' : 'DEGRADED',
+        freshnessBand: rec.evidenceFreshness,
+        actionType: 'REMOVE_LICENSE',
+        targetEntityId: rec.affectedUser.userId,
+        expectedMonthlySaving: rec.projectedMonthlySavings,
+        expectedAnnualSaving: rec.projectedAnnualSavings,
+        recommendationRiskClass: rec.blastRadiusClass,
+        recommendationExecutionMode: rec.approvalRequirement === 'REQUIRED' ? 'APPROVAL_REQUIRED' : 'DRY_RUN_ONLY',
+        recommendationStatus: 'CANDIDATE',
+        correlationId: stableKey,
+      } as const;
+      let recommendationId = 0;
+      if (existing) {
+        const [saved] = await db.update(recommendationsTable).set({ ...patch, updatedAt: new Date() }).where(eq(recommendationsTable.id, existing.id)).returning({ id: recommendationsTable.id });
+        recommendationId = saved.id;
+        updated += 1;
+      } else {
+        const [saved] = await db.insert(recommendationsTable).values(patch as any).returning({ id: recommendationsTable.id });
+        recommendationId = saved.id;
+        inserted += 1;
+      }
+      await db.insert(outcomeLedgerTable).values({
+        tenantId,
+        recommendationId,
+        userEmail: rec.affectedUser.userPrincipalName,
+        displayName: rec.affectedUser.displayName,
+        action: 'PROJECTED_ONLY',
+        licenceSku: rec.affectedLicenses.join(','),
+        beforeCost: rec.projectedMonthlySavings,
+        afterCost: 0,
+        monthlySaving: rec.projectedMonthlySavings,
+        annualisedSaving: rec.projectedAnnualSavings,
+        approved: false,
+        executed: false,
+        executionMode: 'DRY_RUN_ONLY',
+        savingConfidence: 'ESTIMATED',
+        evidence: { source: 'M365_GENERATOR', recommendationType: rec.recommendationType, verifiedMonthlySavings: 0, verificationState: 'PROJECTED_ONLY' },
+        executionStatus: 'PROJECTED',
+      });
+    }
+
     return res.json({
       tenantId,
       syncSummary: syncResult?.summary ?? null,
-      recommendations: recommendations.recommendations,
-      summary: recommendations.summary,
-      persisted: false,
+      recommendations: generated.recommendations,
+      summary: generated.summary,
+      generated: inserted,
+      updated,
+      persisted: true,
     });
   } catch (error) {
     return res.status(500).json({ error: error instanceof Error ? error.message : "M365_RECOMMENDATION_GENERATION_FAILED" });
