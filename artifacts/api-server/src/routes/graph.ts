@@ -16,4 +16,10 @@ router.get("/orphaned", async (req,res)=>res.json((await service.integrity((req.
 router.get("/duplicates", async (req,res)=>res.json((await service.integrity((req.query.tenantId as string) ?? "default")).duplicateCandidates));
 router.get("/integrity", async (req,res)=>res.json(await service.integrity((req.query.tenantId as string) ?? "default")));
 
+// Canonical graph API aliases
+router.get("/nodes", async (req,res)=>res.json(await db.select().from(operationalEntitiesTable).where(eq(operationalEntitiesTable.tenantId,(req.query.tenantId as string) ?? "default"))));
+router.get("/edges", async (req,res)=>res.json(await db.select().from(operationalEntityEdgesTable).where(eq(operationalEntityEdgesTable.tenantId,(req.query.tenantId as string) ?? "default"))));
+router.post("/query", async (req,res)=>{ const tenantId=(req.query.tenantId as string) ?? "default"; const type=req.body?.entityType as string|undefined; const all=await db.select().from(operationalEntitiesTable).where(eq(operationalEntitiesTable.tenantId,tenantId)); const nodes=type?all.filter((n)=>n.entityType===type):all; res.json({nodes,count:nodes.length});});
+
+
 export default router;
