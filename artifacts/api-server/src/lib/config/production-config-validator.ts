@@ -5,7 +5,7 @@ export type ConfigValidationResult = {
   failClosed: boolean;
 };
 
-export type RuntimeEnvironment = 'development' | 'test' | 'production';
+export type RuntimeEnvironment = 'development' | 'test' | 'staging' | 'production';
 
 export type ProductionConfig = {
   databaseUrl?: string;

@@ -1,4 +1,6 @@
 import type { CanonicalGraphEntityType, CanonicalRelationshipType, GraphEvidence } from "../operational-graph/types";
+export const DISCOVERY_LIFECYCLE_STATES = ["DISCOVERED","NORMALIZED","MATCHED","CONFLICTED","UNRESOLVED","TRUSTED","STALE"] as const;
+export type DiscoveryLifecycleState = (typeof DISCOVERY_LIFECYCLE_STATES)[number];
 export type DiscoverySource = "M365"|"Entra"|"Flexera"|"ServiceNow"|"SaaSConnector"|"OAuthGrant"|"AIProvider"|"MCPRegistry"|"ExpensePlaceholder"|"BrowserTelemetryPlaceholder"|"EndpointTelemetryPlaceholder";
 export type DiscoverySignal = { source: DiscoverySource; externalId: string; entityType: CanonicalGraphEntityType; displayName: string; confidence: number; observedAt: string; attributes?: Record<string, unknown>; relatedTo?: { canonicalKey: string; relationshipType: CanonicalRelationshipType; confidence: number }[] };
-export type DiscoveryFinding = { tenantId: string; runId: string; signal: DiscoverySignal; evidence: GraphEvidence[]; conflicts: string[] };
+export type DiscoveryFinding = { tenantId: string; runId: string; signal: DiscoverySignal; evidence: GraphEvidence[]; conflicts: string[]; state: DiscoveryLifecycleState; sourceReliabilityScore: number; discoveryConfidenceScore: number; unresolvedIdentity: boolean; stale: boolean };

@@ -4,10 +4,10 @@
   "license": "MIT",
   "scripts": {
     "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
-    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "build": "pnpm run typecheck && pnpm --filter @workspace/db build && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "test": "pnpm --filter @workspace/api-server run test:contoso && pnpm --filter @workspace/api-server run test:platform-boundaries",
+    "test": "pnpm --filter @workspace/api-server run test:contoso && pnpm --filter @workspace/api-server run test:platform-boundaries && pnpm --filter @workspace/api-server run test:graph-discovery",
     "seed:orchestration-demo": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-execution-orchestration-demo.ts",
     "seed:customer-demo:m365": "pnpm --filter @workspace/db build && pnpm --filter @workspace/scripts exec tsx ./seed-customer-demo-m365.ts",
     "validate:runtime-env": "pnpm --filter @workspace/scripts exec tsx scripts/validate-runtime-env.ts",

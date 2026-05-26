@@ -1,6 +1,5 @@
 import { jwtVerify, createRemoteJWKSet, importSPKI } from 'jose'
 import type { ProviderClaims } from './token-claims.js'
-import { logger } from '../../logger.js'
 
 // Three modes — selected by env vars at module load time:
 // 1. JWKS_URI is set → fetch public keys from OIDC provider (RS256/ES256) — PRODUCTION
@@ -97,7 +96,7 @@ function validateDevFallback(token: string): JwtValidationResult {
     return { ok: false, error: 'JWT_VALIDATION_NOT_CONFIGURED' }
   }
 
-  logger.warn('DEV_FALLBACK JWT mode active — tokens are NOT cryptographically verified. Do not use in production.')
+  console.warn('DEV_FALLBACK JWT mode active — tokens are NOT cryptographically verified. Do not use in production.')
 
   // Try to parse the token without verification
   const parts = token.split('.')

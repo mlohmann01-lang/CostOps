@@ -49,6 +49,7 @@ export * from "./recommendationOutcomes";
 export * from "./policySimulations";
 
 export * from "./recommendationArbitrationSnapshots";
+export * from "./governedRecommendations";
 
 export * from "./operationalEntities";
 export * from "./operationalEntityEdges";
@@ -71,3 +72,11 @@ export * from "./operatorAlerts";
 export * from "./connectorHealthModel";
 
 export * from "./auditEvents";
+
+export * from "./recommendationGovernanceEvents";
+
+export * from "./executionRequests";
+
+export * from "./executionRequestDryRuns";
+
+export * from "./executionResults";

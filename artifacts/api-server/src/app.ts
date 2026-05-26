@@ -5,6 +5,7 @@ import router from "./routes/index.js";
 import { logger } from "./lib/logger.js";
 import { authMiddleware } from "./middleware/auth-middleware.js";
 import { rateLimitMiddleware, DEFAULT_API_LIMIT } from "./middleware/rate-limit.js";
+import { getRuntimeEnv, parseAllowedOrigins } from "./lib/config/env.js";
 
 const app: Express = express();
 
@@ -27,7 +28,14 @@ app.use(
     },
   }),
 );
-app.use(cors());
+const runtimeEnv = getRuntimeEnv();
+const corsOrigins = parseAllowedOrigins(process.env.ALLOWED_ORIGINS, runtimeEnv).origins;
+app.use(
+  cors({
+    origin: corsOrigins.length === 0 || corsOrigins.includes("*") ? true : corsOrigins,
+    credentials: true,
+  }),
+);
 app.use(rateLimitMiddleware(DEFAULT_API_LIMIT));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
