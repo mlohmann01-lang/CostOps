@@ -25,9 +25,13 @@ export default function CommandView({ params }: CommandViewProps) {
   const runtime = useRuntimeContext()
   const { data, isLoading, error } = useQuery({ queryKey: ['command-view-runtime', runtime.environment], queryFn: () => loadCommandViewState({ environment: runtime.environment ?? 'DEMO', tenantId: runtime.tenantId, tenantMode: runtime.tenantMode, executionCapabilities: runtime.executionCapabilities, connectorPolicy: runtime.connectorPolicy }) })
   const [selectedActionId, setSelectedActionId] = useState<string | null>(null)
+  // All hooks must be called unconditionally before any early return
+  const filteredActions = useMemo(() => {
+    if (!data) return []
+    return [...(domain === 'all' ? data.actionQueue : data.actionQueue.filter((a) => a.domain === domain))].sort((a, b) => (rank[a.state] ?? 99) - (rank[b.state] ?? 99))
+  }, [domain, data])
   const state = data
   if (!state) return <Shell><div style={{ padding: 20 }}>Loading runtime control-plane data…</div><CommandBar /></Shell>
-  const filteredActions = useMemo(() => [...(domain === 'all' ? state.actionQueue : state.actionQueue.filter((a) => a.domain === domain))].sort((a, b) => (rank[a.state] ?? 99) - (rank[b.state] ?? 99)), [domain, state.actionQueue])
   const selected = filteredActions.find((a) => a.id === selectedActionId) ?? filteredActions[0]
   const proof = selected ? buildActionProofDetail(selected, state) : null
 

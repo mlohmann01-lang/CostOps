@@ -21,10 +21,12 @@ const KEY = 'certen.session.v2'
 const DEMO_EMAIL = 'demo@certen.io'
 const DEMO_PASSWORD = 'DemoWorkspace2026!'
 
-export function saveSession(session: SessionState) { localStorage.setItem(KEY, JSON.stringify(session)) }
+// Session lives in sessionStorage so it clears when the browser tab/session closes,
+// ensuring users always see the login page on a fresh visit.
+export function saveSession(session: SessionState) { sessionStorage.setItem(KEY, JSON.stringify(session)) }
 
 export function getSession(): SessionState | null {
-  const raw = localStorage.getItem(KEY)
+  const raw = sessionStorage.getItem(KEY)
   if (!raw) return null
   try {
     const parsed = JSON.parse(raw) as SessionState
@@ -34,12 +36,18 @@ export function getSession(): SessionState | null {
 }
 
 export function getSessionStatus(): 'active' | 'expired' | 'none' {
-  const raw = localStorage.getItem(KEY)
+  const raw = sessionStorage.getItem(KEY)
   if (!raw) return 'none'
   try { const parsed = JSON.parse(raw) as SessionState; return new Date(parsed.expiresAt).getTime() <= Date.now() ? 'expired' : 'active' } catch { return 'none' }
 }
 
-export function clearSession() { localStorage.removeItem(KEY) }
+export function clearSession() {
+  sessionStorage.removeItem(KEY)
+  // Also clear the old localStorage key if it exists (migration cleanup)
+  localStorage.removeItem(KEY)
+  localStorage.removeItem('certen.runtimeEnvironment')
+  localStorage.removeItem('certen.runtimeEnvironmentSelectedAt')
+}
 
 export function validateCredentials(email: string, password: string): boolean {
   return email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD

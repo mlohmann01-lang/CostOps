@@ -91,7 +91,7 @@ function LoginPage() {
           Sign in to your workspace
         </h1>
         <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 22px' }}>
-          Use your Certen credentials to continue. Demo: demo@certen.io / DemoWorkspace2026!
+          Use your Certen credentials to continue.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

@@ -22,6 +22,10 @@ export interface RuntimeContextValue {
 export const RUNTIME_ENVIRONMENT_STORAGE_KEY = 'certen.runtimeEnvironment'
 const SELECTED_AT_KEY = 'certen.runtimeEnvironmentSelectedAt'
 
+// Runtime environment is per-session — cleared when the tab closes so workspace
+// selection is always shown after a fresh login.
+const runtimeStore = sessionStorage
+
 const DEMO_RUNTIME_CONTEXT = {
   environment: 'DEMO' as RuntimeEnvironment, tenantId: 'demo-sandbox-tenant', tenantMode: 'DEMO' as RuntimeTenantMode,
   executionCapabilities: { liveExecutionEnabled: false, simulatedExecutionEnabled: true, approvalEnabled: true, rollbackEnabled: true, dryRunEnabled: true },
@@ -39,35 +43,43 @@ const LIVE_RUNTIME_CONTEXT = {
 const RuntimeContext = createContext<RuntimeContextValue | null>(null)
 
 export function RuntimeContextProvider({ children }: { children: React.ReactNode }) {
-  const initial = (localStorage.getItem(RUNTIME_ENVIRONMENT_STORAGE_KEY) as RuntimeEnvironment | null) ?? undefined
+  const initial = (runtimeStore.getItem(RUNTIME_ENVIRONMENT_STORAGE_KEY) as RuntimeEnvironment | null) ?? undefined
   const [environment, setEnvironment] = useState<RuntimeEnvironment | undefined>(initial)
-  const selectedAt = localStorage.getItem(SELECTED_AT_KEY) ?? undefined
+  const selectedAt = runtimeStore.getItem(SELECTED_AT_KEY) ?? undefined
 
   const value = useMemo<RuntimeContextValue>(() => {
     const base = environment === 'LIVE' ? LIVE_RUNTIME_CONTEXT : DEMO_RUNTIME_CONTEXT
+    const now = new Date().toISOString()
+    const select = (next: RuntimeEnvironment) => {
+      runtimeStore.setItem(RUNTIME_ENVIRONMENT_STORAGE_KEY, next)
+      runtimeStore.setItem(SELECTED_AT_KEY, now)
+      setEnvironment(next)
+    }
+    const clear = () => {
+      runtimeStore.removeItem(RUNTIME_ENVIRONMENT_STORAGE_KEY)
+      runtimeStore.removeItem(SELECTED_AT_KEY)
+      setEnvironment(undefined)
+    }
     if (!environment) {
       return {
-        environment: undefined, tenantId: '', tenantMode: 'READ_ONLY', isDemo: false, isLive: false, selectedAt: undefined, hasSelectedEnvironment: false,
+        environment: undefined, tenantId: '', tenantMode: 'READ_ONLY', isDemo: false, isLive: false,
+        selectedAt: undefined, hasSelectedEnvironment: false,
         executionCapabilities: LIVE_RUNTIME_CONTEXT.executionCapabilities,
         connectorPolicy: LIVE_RUNTIME_CONTEXT.connectorPolicy,
-        banner: { label: 'WORKSPACE REQUIRED', description: 'Select Demo Workspace or Live Workspace to continue.', severity: 'info' },
-        selectEnvironment: (next) => { localStorage.setItem(RUNTIME_ENVIRONMENT_STORAGE_KEY, next); localStorage.setItem(SELECTED_AT_KEY, '2026-05-01T09:00:00.000Z'); setEnvironment(next) },
-        clearEnvironment: () => { localStorage.removeItem(RUNTIME_ENVIRONMENT_STORAGE_KEY); localStorage.removeItem(SELECTED_AT_KEY); setEnvironment(undefined) },
+        banner: { label: 'WORKSPACE REQUIRED', description: 'Select Demo or Live Workspace to continue.', severity: 'info' },
+        selectEnvironment: select,
+        clearEnvironment: clear,
       }
     }
     return {
-      environment,
-      tenantId: base.tenantId,
-      tenantMode: base.tenantMode,
-      isDemo: environment === 'DEMO',
-      isLive: environment === 'LIVE',
-      selectedAt,
-      hasSelectedEnvironment: true,
+      environment, tenantId: base.tenantId, tenantMode: base.tenantMode,
+      isDemo: environment === 'DEMO', isLive: environment === 'LIVE',
+      selectedAt, hasSelectedEnvironment: true,
       executionCapabilities: base.executionCapabilities,
       connectorPolicy: base.connectorPolicy,
       banner: base.banner,
-      selectEnvironment: (next) => { localStorage.setItem(RUNTIME_ENVIRONMENT_STORAGE_KEY, next); localStorage.setItem(SELECTED_AT_KEY, '2026-05-01T09:00:00.000Z'); setEnvironment(next) },
-      clearEnvironment: () => { localStorage.removeItem(RUNTIME_ENVIRONMENT_STORAGE_KEY); localStorage.removeItem(SELECTED_AT_KEY); setEnvironment(undefined) },
+      selectEnvironment: select,
+      clearEnvironment: clear,
     }
   }, [environment, selectedAt])
 
