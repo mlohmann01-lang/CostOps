@@ -66,7 +66,7 @@ export async function runExecutionEngine(input: { recommendation: any; actorId?:
   if (input.mode === "DRY_RUN") {
     const liveEnabled = process.env.ENABLE_LIVE_M365_EXECUTION === "true";
     if (liveEnabled && action === "REMOVE_LICENSE") {
-      const liveDryRun = await removeUserLicense({ tenantId: input.tenantId, userPrincipalName: input.recommendation.userEmail, skuId: input.recommendation.licenceSku, actorId: input.actorId, dryRun: true, action });
+      const liveDryRun = await removeUserLicense({ tenantId: input.tenantId, userPrincipalName: input.recommendation.userEmail, skuId: input.recommendation.licenceSku, actorId: input.actorId, dryRun: true, action, guardContext: { tenantId: input.tenantId, actorId: input.actorId, recommendationId: String(input.recommendation.id), idempotencyKey } });
       return { allowed: true, executed: false, gate: gateResult.gate, denialReasons: [], actionRiskProfile: gateResult.actionRiskProfile, dryRunResult: liveDryRun, idempotencyKey, duplicateExecution: false, executionMode: "LIVE_GRAPH", evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: true, dryRun: true, authorizationResult, liveExecutionEnabled: true } };
     }
     return {
@@ -85,7 +85,7 @@ export async function runExecutionEngine(input: { recommendation: any; actorId?:
 
   const liveEnabled = process.env.ENABLE_LIVE_M365_EXECUTION === "true";
   if (liveEnabled && action === "REMOVE_LICENSE") {
-    const liveResult = await removeUserLicense({ tenantId: input.tenantId, userPrincipalName: input.recommendation.userEmail, skuId: input.recommendation.licenceSku, actorId: input.actorId, dryRun: false, action });
+    const liveResult = await removeUserLicense({ tenantId: input.tenantId, userPrincipalName: input.recommendation.userEmail, skuId: input.recommendation.licenceSku, actorId: input.actorId, dryRun: false, action, guardContext: { runtimeEnvironment: "LIVE", tenantId: input.tenantId, actorId: input.actorId, recommendationId: String(input.recommendation.id), approvalState: input.recommendation.approvalStatus ?? "APPROVED", riskClass: gateResult.actionRiskProfile?.riskClass, trustScore: Number(input.recommendation.trustScore ?? 0) * 100, connectorCapability: "GOVERNED_EXECUTION", idempotencyKey } });
     if (!liveResult.ok) {
       return { allowed: false, executed: false, gate: gateResult.gate, denialReasons: [String(liveResult.error)], actionRiskProfile: gateResult.actionRiskProfile, dryRunResult, idempotencyKey, duplicateExecution: false, executionMode: "LIVE_GRAPH", evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: true, authorizationResult, graphError: liveResult } };
     }

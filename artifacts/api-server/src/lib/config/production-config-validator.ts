@@ -24,7 +24,26 @@ export type ProductionConfig = {
   webhookUrl?: string;
 };
 
-export function validateProductionConfig(config: ProductionConfig = process.env as ProductionConfig): ConfigValidationResult {
+function envToConfig(): ProductionConfig {
+  return {
+    databaseUrl: process.env['DATABASE_URL'],
+    nodeEnv: process.env['NODE_ENV'],
+    tenantIsolationEnabled: process.env['TENANT_ISOLATION_ENABLED'],
+    defaultTenantFallback: process.env['DEFAULT_TENANT_FALLBACK'],
+    liveMutationEnabled: process.env['LIVE_MUTATION_ENABLED'],
+    authRequired: process.env['AUTH_REQUIRED'],
+    jwtSecret: process.env['JWT_SECRET'],
+    allowedOrigins: process.env['ALLOWED_ORIGINS'],
+    demoMode: process.env['DEMO_MODE'],
+    previewMode: process.env['PREVIEW_MODE'],
+    demoFixturesEnabled: process.env['DEMO_FIXTURES_ENABLED'],
+    schedulerEnabled: process.env['SCHEDULER_ENABLED'],
+    jobRunnerEnabled: process.env['JOB_RUNNER_ENABLED'],
+    webhookUrl: process.env['WEBHOOK_URL'],
+  };
+}
+
+export function validateProductionConfig(config: ProductionConfig = envToConfig()): ConfigValidationResult {
   const errors: string[] = [];
   const warnings: string[] = [];
   const env: RuntimeEnvironment = (config.nodeEnv as RuntimeEnvironment) ?? 'development';
@@ -84,7 +103,7 @@ export function assertProductionConfigSafe(config?: ProductionConfig): void {
   }
 }
 
-export function getConfigSummary(config: ProductionConfig = process.env as ProductionConfig): Record<string, string> {
+export function getConfigSummary(config: ProductionConfig = envToConfig()): Record<string, string> {
   return {
     nodeEnv: config.nodeEnv ?? 'unset',
     databaseUrl: config.databaseUrl ? 'SET' : 'MISSING',

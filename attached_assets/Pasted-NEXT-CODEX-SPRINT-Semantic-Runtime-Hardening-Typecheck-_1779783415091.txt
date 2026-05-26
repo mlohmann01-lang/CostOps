@@ -1,0 +1,71 @@
+NEXT CODEX SPRINT: Semantic Runtime Hardening + Typecheck Recovery
+
+Context:
+The visual rebuild is complete. Canonical platform semantics, service adapters, lineage metadata, and typed runtime contracts have been added. Typecheck currently fails due to pre-existing workspace issues:
+- missing built lib/api-client-react/dist/index.d.ts
+- unrelated implicit any errors in legacy pages
+
+Objective:
+Make the frontend runtime semantically stable and restore clean typecheck without weakening the new platform contracts.
+
+Tasks:
+
+1. Fix workspace dependency build order
+Investigate why lib/api-client-react/dist/index.d.ts is missing.
+Add or repair the build step so control-plane typecheck can resolve api-client-react types.
+
+2. Do not bypass type safety
+Do not use blanket any, ts-ignore, or skipLibCheck as the main solution.
+Only use narrow explicit types where required.
+
+3. Fix legacy implicit any errors
+Patch existing legacy pages with proper local interfaces/types.
+Keep changes minimal and non-visual.
+
+4. Strengthen new semantic tests
+Expand semantics.test.ts to cover:
+- all canonical states
+- evidence lineage generation
+- trust score bands
+- policy result rendering
+- execution eligibility mapping
+- blocked/quarantined state handling
+
+5. Add service adapter tests
+Create tests for:
+- connectorService
+- commandService
+- governanceService
+- executionService
+- intelligenceService
+- outcomeLedgerService
+- driftService
+
+Each service must return typed objects with:
+- canonical state
+- evidence lineage
+- trustScore
+- confidenceScore
+- policyResult
+
+6. Add UI smoke tests
+Ensure these pages render without runtime errors:
+- ConnectorHub
+- CommandView
+- GovernanceView
+- ExecutionView
+- IntelligenceView
+- OutcomeLedgerView
+- DriftMonitorView
+
+7. Preserve completed visual rebuild
+Do not redesign UI.
+Only adjust UI where semantic correctness requires it.
+
+Acceptance Criteria:
+- npm run typecheck passes cleanly.
+- All existing E2E tests still pass.
+- New semantic tests pass.
+- No new untyped mock objects are introduced.
+- No evidence-bearing object lacks lineage metadata.
+- No action/recommendation renders without canonical state.
