@@ -158,6 +158,15 @@ describe('OutcomeLedgerView smoke test', () => {
     assert.ok(typeof state.summary.projectedMonthlySavings === 'number')
     assert.ok(typeof state.summary.verifiedMonthlySavings === 'number')
   })
+
+  test('ui renders proof metrics vocabulary', async () => {
+    const state = await loadOutcomeLedgerState(DEMO_RUNTIME)
+    assert.ok(typeof state.summary.savingsVariance === 'number')
+    assert.ok(typeof state.summary.failedVerification === 'number')
+    assert.ok(typeof state.summary.driftDetected === 'number')
+    assert.ok(state.outcomes.some((o) => String(o.evidenceSummary ?? '').includes('Evidence-backed')))
+  })
+
   test('outcomes have valid status', async () => {
     const state = await loadOutcomeLedgerState(DEMO_RUNTIME)
     const valid = ['PROJECTED','APPROVED','EXECUTED','VERIFIED','DRIFTED','BLOCKED']

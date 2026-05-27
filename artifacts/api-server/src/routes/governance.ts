@@ -1,9 +1,10 @@
 import { authMiddleware } from "../middleware/auth";
 import { Router } from "express";
-import { db, executionApprovalsTable, executionGovernancePoliciesTable, governanceExceptionsTable, policyEvaluationsTable, governancePolicyEngineTable, governancePolicyEvaluationsTable } from "@workspace/db";
+import { db, executionApprovalsTable, executionGovernancePoliciesTable, governanceExceptionsTable, policyEvaluationsTable, governancePolicyEngineTable, governancePolicyEvaluationsTable, governancePolicyEvaluationsV1Table } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
 import { ExecutionApprovalService } from "../lib/governance/execution-approval-service";
 import { GovernancePolicyEngine } from "../lib/governance/governance-policy-engine";
+import { runGovernanceChecks } from "../lib/governance/scheduled-task-runner";
 
 const router = Router();
 const approvals = new ExecutionApprovalService();
@@ -38,6 +39,10 @@ router.get("/evaluations", async (req,res)=>{
   const tenantId=(req.query.tenantId as string) ?? "default";
   return res.json(await db.select().from(governancePolicyEvaluationsTable).where(eq(governancePolicyEvaluationsTable.tenantId,tenantId)).orderBy(desc(governancePolicyEvaluationsTable.createdAt)));
 });
+
+
+router.get("/evaluations", async (req,res)=>{ const tenantId=(req.query.tenantId as string) ?? "default"; return res.json(await db.select().from(governancePolicyEvaluationsV1Table).where(eq(governancePolicyEvaluationsV1Table.tenantId,tenantId)).orderBy(desc(governancePolicyEvaluationsV1Table.evaluatedAt))); });
+router.post("/run-checks", async (req,res)=>{ const tenantId=(req.body?.tenantId as string) ?? (req.query.tenantId as string) ?? "default"; return res.json(await runGovernanceChecks(tenantId, "MANUAL")); });
 
 router.get("/policy-evaluations", async (req,res)=>{ const tenantId=(req.query.tenantId as string) ?? "default"; return res.json(await db.select().from(policyEvaluationsTable).where(eq(policyEvaluationsTable.tenantId,tenantId)).orderBy(desc(policyEvaluationsTable.createdAt)).limit(200)); });
 router.get("/exceptions", async (req,res)=>{ const tenantId=(req.query.tenantId as string) ?? "default"; return res.json(await db.select().from(governanceExceptionsTable).where(eq(governanceExceptionsTable.tenantId,tenantId)).orderBy(desc(governanceExceptionsTable.createdAt))); });

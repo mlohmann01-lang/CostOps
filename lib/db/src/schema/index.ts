@@ -80,3 +80,7 @@ export * from "./executionRequests";
 export * from "./executionRequestDryRuns";
 
 export * from "./executionResults";
+
+export * from "./executionOutcomes";
+
+export * from "./governancePolicyEvaluationsV1";

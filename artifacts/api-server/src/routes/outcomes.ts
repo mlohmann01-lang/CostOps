@@ -2,8 +2,58 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { outcomeLedgerTable } from "@workspace/db";
 import { desc } from "drizzle-orm";
+import { buildEconomicProofConsole } from "../lib/outcomes/economic-proof-service";
+import { listOutcomeLedger, outcomeLedgerByPlaybook, outcomeLedgerByState, outcomeLedgerSummary } from "../lib/outcomes/outcome-ledger";
 
 const router = Router();
+
+
+router.get('/ledger', async (req, res) => {
+  try {
+    const tenantId = String(req.query.tenantId ?? 'default');
+    const limit = Math.min(parseInt(String(req.query.limit ?? '100')) || 100, 500);
+    return res.json(await listOutcomeLedger(tenantId, limit));
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching outcome ledger');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/ledger/summary', async (req, res) => {
+  try {
+    const tenantId = String(req.query.tenantId ?? 'default');
+    return res.json(await outcomeLedgerSummary(tenantId));
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching ledger summary');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/ledger/by-playbook', async (req, res) => {
+  try {
+    const tenantId = String(req.query.tenantId ?? 'default');
+    return res.json(await outcomeLedgerByPlaybook(tenantId));
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching ledger by playbook');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/ledger/by-state', async (req, res) => {
+  try {
+    const tenantId = String(req.query.tenantId ?? 'default');
+    return res.json(await outcomeLedgerByState(tenantId));
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching ledger by state');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/ledger/proof-console', async (req,res)=>{
+  const tenantId = String(req.query.tenantId ?? 'default');
+  return res.json(await buildEconomicProofConsole(tenantId));
+});
+
 
 router.get("/", async (req, res) => {
   try {
