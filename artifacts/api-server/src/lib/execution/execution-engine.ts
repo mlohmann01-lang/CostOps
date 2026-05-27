@@ -13,6 +13,9 @@ export async function runExecutionEngine(input: { recommendation: any; actorId?:
   const gateResult = evaluateExecutionGate(input);
   const dryRunResult = runDryRun(input.recommendation);
   const action = input.recommendation?.action ?? "REMOVE_LICENSE";
+  if (action === "RECLAIM_COPILOT_LICENSE") {
+    return { allowed: false, executed: false, gate: gateResult.gate, denialReasons: ["COPILOT_RECLAIM_EXECUTION_NOT_SUPPORTED"], actionRiskProfile: gateResult.actionRiskProfile, dryRunResult, idempotencyKey: buildIdempotencyKey(String(input.recommendation.id), action), duplicateExecution: false, evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: false, executionSupport: "DRY_RUN_ONLY" } };
+  }
   const idempotencyKey = buildIdempotencyKey(String(input.recommendation.id), action);
   const authorizationResult = canExecute(input.actorId, input.tenantId, {
     ...input.recommendation,

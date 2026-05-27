@@ -47,9 +47,12 @@ export default function OutcomeLedgerView() {
   const outcomes = data.outcomes as OutcomeRecord[]
 
   const stats = [
-    { label: 'Projected monthly', value: fmtSummary(data.summary.projectedMonthlySavings), teal: false },
-    { label: 'Verified monthly', value: fmtSummary(data.summary.verifiedMonthlySavings), teal: true },
-    { label: 'Verification pending', value: String(data.summary.verificationPending ?? 0), teal: false },
+    { label: 'Projected savings', value: fmtSummary(data.summary.projectedMonthlySavings), teal: false },
+    { label: 'Verified savings', value: fmtSummary(data.summary.verifiedMonthlySavings), teal: true },
+    { label: 'Savings variance', value: fmtSummary(data.summary.savingsVariance), teal: false },
+    { label: 'Pending verification', value: String(data.summary.verificationPending ?? 0), teal: false },
+    { label: 'Verification failed', value: String(data.summary.failedVerification ?? 0), teal: false },
+    { label: 'Drift detected', value: String(data.summary.driftDetected ?? 0), teal: false },
   ]
 
   return (
@@ -74,7 +77,7 @@ export default function OutcomeLedgerView() {
               <div key={s.label} style={{ background: s.teal ? 'rgba(29,158,117,0.06)' : 'rgba(255,255,255,0.03)', border: `0.5px solid ${s.teal ? 'rgba(29,158,117,0.22)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 10, padding: 16 }}>
                 <span style={{ display: 'block', fontSize: 28, fontWeight: 500, color: s.teal ? '#1D9E75' : '#e8e6e0', lineHeight: 1 }}>{s.value}</span>
                 <span style={{ display: 'block', fontSize: 11, color: 'rgba(255,255,255,0.32)', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 6 }}>{s.label}</span>
-                {s.teal && <span style={{ display: 'block', fontSize: 11, color: 'rgba(29,158,117,0.60)', marginTop: 3 }}>Confirmed real money</span>}
+                {s.teal && <span style={{ display: 'block', fontSize: 11, color: 'rgba(29,158,117,0.60)', marginTop: 3 }}>Evidence-backed</span>}
               </div>
             ))}
           </div>
@@ -110,6 +113,7 @@ export default function OutcomeLedgerView() {
                         )}
                       </div>
                     </div>
+                    <div style={{ fontSize: 11, color: 'rgba(29,158,117,0.85)' }}>{(o as any).badge ?? 'Evidence-backed'}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0, marginLeft: 20 }}>
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 500, padding: '3px 8px', borderRadius: 20, background: sts.bg, border: `0.5px solid ${sts.border}`, color: sts.color }}>
                         <span style={{ width: 5, height: 5, borderRadius: '50%', background: sts.dot, flexShrink: 0 }} />

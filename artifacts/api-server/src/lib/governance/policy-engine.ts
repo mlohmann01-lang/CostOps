@@ -1,48 +1,37 @@
-import { db, policyEvaluationsTable } from "@workspace/db";
-import { evaluateExceptions } from "./exceptions";
+import { db, governancePolicyEvaluationsV1Table, policyEvaluationsTable } from '@workspace/db';
+import { evaluatePolicy, type GovernanceEntityType } from './policy-evaluator';
 
-export type PolicyContext = {
-  tenantId: string;
-  actorId?: string;
-  recommendationId?: string;
-  action?: string;
-  riskClass?: string;
-  trustGate?: string;
-  criticalBlockers?: string[];
-  pricingConfidence?: string;
-  reconciliationImpact?: string;
-  executionMode?: string;
-  approvalStatus?: string;
-  projectedAnnualSaving?: number;
-};
-
-export async function evaluatePolicies(context: PolicyContext) {
-  const reasons: string[] = [];
-  let decision: "ALLOW"|"REQUIRE_APPROVAL"|"BLOCK"|"ESCALATE"|"EXCEPTION_REQUIRED" = "ALLOW";
-  if ((context.criticalBlockers ?? []).length) { decision = "BLOCK"; reasons.push("CRITICAL_BLOCKERS_PRESENT"); }
-  if (["BLOCKED","INVESTIGATE"].includes(context.trustGate ?? "")) { decision = "BLOCK"; reasons.push("TRUST_GATE_BLOCKED"); }
-  if (context.riskClass === "C") { decision = "BLOCK"; reasons.push("RISK_CLASS_C_BLOCK"); }
-  if (context.riskClass === "B" && decision !== "BLOCK") { decision = "REQUIRE_APPROVAL"; reasons.push("RISK_CLASS_B_APPROVAL_REQUIRED"); }
-  if (context.pricingConfidence === "UNKNOWN" && (context.projectedAnnualSaving ?? 0) >= 10000 && decision === "ALLOW") { decision = "ESCALATE"; reasons.push("UNKNOWN_PRICING_HIGH_SAVINGS"); }
-  if (["BLOCK","DOWNGRADE"].includes(context.reconciliationImpact ?? "") && decision === "ALLOW") { decision = "ESCALATE"; reasons.push("RECONCILIATION_ESCALATION"); }
-  if (context.approvalStatus === "EXPIRED") { decision = "BLOCK"; reasons.push("APPROVAL_EXPIRED"); }
-  const ex = await evaluateExceptions({ ...context, policyDecision: decision });
-  if (ex.overrideDecision === "ALLOW" && decision === "REQUIRE_APPROVAL" && context.riskClass === "A") { decision = "ALLOW"; reasons.push("POLICY_OVERRIDE_ALLOW"); }
-  reasons.push(...ex.reasons);
-  return { decision, reasons, evidence: { ...context, appliedExceptionIds: ex.appliedExceptionIds, exceptionWarnings: ex.warnings } };
-}
-
-export async function evaluateExecutionPolicy(context: PolicyContext) { return evaluatePolicies(context); }
-export async function evaluateApprovalPolicy(context: PolicyContext) {
-  const out = await evaluatePolicies(context);
-  return { ...out, requiredApproverRole: out.decision === "ESCALATE" ? "ADMIN" : "APPROVER" };
-}
-
-export async function createPolicyEvaluation(event: { tenantId: string; policyId?: number|null; recommendationId?: string|null; outcomeLedgerId?: number|null; actorId?: string|null; decision: string; reasons: unknown; evidence: unknown; }) {
+export async function evaluateAndPersistPolicy(input: {
+  tenantId: string; entityType: GovernanceEntityType; entityId: string; policyName: string; entity: any; triggeredBy: string; now?: Date;
+}) {
+  const now = input.now ?? new Date();
+  const out = evaluatePolicy(input.policyName, input.entity, { now, approvalExpiresHours: Number(process.env.GOV_APPROVAL_EXPIRY_HOURS ?? 24), dryRunExpiresHours: Number(process.env.GOV_DRY_RUN_EXPIRY_HOURS ?? 24), autoExecuteSafeEnabled: String(process.env.AUTO_EXECUTE_SAFE_ENABLED ?? 'false') === 'true' });
   try {
-    const [row] = await db.insert(policyEvaluationsTable).values({ tenantId: event.tenantId, policyId: event.policyId ?? null, recommendationId: event.recommendationId ?? null, outcomeLedgerId: event.outcomeLedgerId ?? null, actorId: event.actorId ?? null, decision: event.decision, reasons: event.reasons as any, evidence: event.evidence as any }).returning();
+    const [row] = await db.insert(governancePolicyEvaluationsV1Table).values({ evaluationId: `gpe-${input.tenantId}-${input.entityType}-${input.entityId}-${input.policyName}-${now.getTime()}`, tenantId: input.tenantId, entityType: input.entityType, entityId: input.entityId, policyName: input.policyName, evaluationResult: out.result, evaluationReason: out.reason, evaluatedAt: now, triggeredBy: input.triggeredBy, evidenceSnapshot: input.entity ?? {} }).returning();
     return row;
   } catch {
-    return { id: -1, ...event };
+    return { evaluationId: `gpe-${input.tenantId}-${input.entityType}-${input.entityId}`, tenantId: input.tenantId, entityType: input.entityType, entityId: input.entityId, policyName: input.policyName, evaluationResult: out.result, evaluationReason: out.reason, evaluatedAt: now, triggeredBy: input.triggeredBy, evidenceSnapshot: input.entity ?? {} } as any;
   }
+}
+
+export async function evaluateExecutionPolicy(input: any) {
+  const reasons: string[] = [];
+  if (Array.isArray(input?.criticalBlockers) && input.criticalBlockers.length > 0) reasons.push('CRITICAL_BLOCKERS_PRESENT');
+  if (String(input?.riskClass ?? '').toUpperCase() === 'C' && String(input?.trustGate ?? '').toUpperCase() === 'APPROVAL_REQUIRED') reasons.push('LOW_TRUST_APPROVAL_REQUIRED');
+  const decision = reasons.length > 0 ? 'BLOCK' : 'ALLOW';
+  return { decision, reasons: reasons.length ? reasons : ['POLICY_ALLOW'], evidence: { riskClass: input?.riskClass ?? 'UNKNOWN', executionMode: input?.executionMode ?? 'UNKNOWN', trustGate: input?.trustGate ?? 'UNKNOWN' } };
+}
+
+export async function createPolicyEvaluation(input: { tenantId: string; recommendationId: string; actorId: string | null; decision: string; reasons: string[]; evidence: any }) {
+  try {
+    const [row] = await db.insert(policyEvaluationsTable).values({ tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.actorId ?? 'system', decision: input.decision, reasons: input.reasons ?? [], evidence: input.evidence ?? {} }).returning();
+    return row;
+  } catch {
+    return { tenantId: input.tenantId, recommendationId: input.recommendationId, actorId: input.actorId ?? 'system', decision: input.decision, reasons: input.reasons ?? [], evidence: input.evidence ?? {} } as any;
+  }
+}
+
+export async function evaluateApprovalPolicy(input: any) {
+  const riskClass = String(input?.riskClass ?? 'B');
+  return { requiredApproverRole: riskClass === 'A' ? 'DUAL_APPROVAL' : 'FINOPS_APPROVER', decision: 'ALLOW', reasons: ['APPROVAL_POLICY_V1'], evidence: { riskClass, action: input?.action ?? 'UNKNOWN' } };
 }
