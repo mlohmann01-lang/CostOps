@@ -16,6 +16,7 @@ import RuntimeHealthView from './pages/RuntimeHealthView'
 import SecurityView from './pages/SecurityView'
 import OutcomeLedgerView from './pages/OutcomeLedgerView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
+import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
 
 const DEMO_EMAIL = 'demo@certen.io'
@@ -293,9 +294,9 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <RuntimeContextProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+      <RuntimeContextProvider><WorkspaceProvider><WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
         <Router />
-      </WouterRouter></RuntimeContextProvider>
+      </WouterRouter></WorkspaceProvider></RuntimeContextProvider>
     </QueryClientProvider>
   )
 }

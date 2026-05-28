@@ -24,7 +24,7 @@ const SELECTED_AT_KEY = 'certen.runtimeEnvironmentSelectedAt'
 
 // Runtime environment is per-session — cleared when the tab closes so workspace
 // selection is always shown after a fresh login.
-const runtimeStore = sessionStorage
+const runtimeStore: Pick<Storage, 'getItem'|'setItem'|'removeItem'> = typeof sessionStorage === 'undefined' ? { getItem: () => null, setItem: () => {}, removeItem: () => {} } : sessionStorage
 
 const DEMO_RUNTIME_CONTEXT = {
   environment: 'DEMO' as RuntimeEnvironment, tenantId: 'demo-sandbox-tenant', tenantMode: 'DEMO' as RuntimeTenantMode,
