@@ -1,0 +1,2 @@
+export type AuditExportFormat = 'JSON'|'Markdown';
+export interface AuditPack { auditPackId:string; tenantId:string; entityType:string; entityId:string; generatedAt:string; generatedBy:string; summary:string; stateTimeline:any[]; evidenceSnapshots:any[]; governanceEvents:any[]; approvalHistory:any[]; policyDecisions:any[]; executionEvidence:any[]; outcomeEvidence:any[]; driftEvidence:any[]; savingsSummary:{ monthly:number; annual:number }; exportFormat:AuditExportFormat; content:string|Record<string,unknown>; }

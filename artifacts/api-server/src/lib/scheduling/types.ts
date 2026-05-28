@@ -1,0 +1,3 @@
+export type ScheduleState = "DRAFT"|"REVIEW_READY"|"APPROVAL_PENDING"|"APPROVED"|"BLOCKED"|"SCHEDULED"|"ACTIVE_WINDOW"|"COMPLETED"|"CANCELLED"|"EXPIRED";
+export type ChangeWindowType = "BUSINESS_HOURS"|"AFTER_HOURS"|"MAINTENANCE_WINDOW"|"LOW_RISK_WINDOW"|"MANUAL_SUPERVISION_REQUIRED";
+export interface GovernanceSchedule { scheduleId:string; tenantId:string; campaignId:string; executionRequestIds:string[]; scheduleName:string; changeWindowType:ChangeWindowType; scheduledStart:string; scheduledEnd:string; timezone:string; riskLevel:string; approvalState:string; rollbackCoverage:number; executionMode:string; scheduleState:ScheduleState; createdAt:string; updatedAt:string; governanceComplexity:number; approvalReadiness:string; }

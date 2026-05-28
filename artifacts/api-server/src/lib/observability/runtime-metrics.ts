@@ -1,0 +1,4 @@
+export interface RuntimeMetrics { policyEvaluationActivity:number; executionRuntimeActivity:number; dryRunActivity:number; governanceEventThroughput:number; auditPackGenerationActivity:number; failedVerificationCount:number; driftDetectionCount:number; staleRecommendationCount:number; staleApprovalCount:number; }
+export function computeRuntimeMetrics(input: Partial<RuntimeMetrics> = {}): RuntimeMetrics {
+  return { policyEvaluationActivity: input.policyEvaluationActivity ?? 0, executionRuntimeActivity: input.executionRuntimeActivity ?? 0, dryRunActivity: input.dryRunActivity ?? 0, governanceEventThroughput: input.governanceEventThroughput ?? 0, auditPackGenerationActivity: input.auditPackGenerationActivity ?? 0, failedVerificationCount: input.failedVerificationCount ?? 0, driftDetectionCount: input.driftDetectionCount ?? 0, staleRecommendationCount: input.staleRecommendationCount ?? 0, staleApprovalCount: input.staleApprovalCount ?? 0 };
+}

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { GovernedRecommendationRepository } from "../lib/recommendations/recommendation-repository";
 import { GovernedRecommendationService } from "../lib/recommendations/recommendation-service";
 import { RecommendationGovernanceEventService } from "../lib/recommendations/governance-event-service";
+import { prioritizeRecommendations } from "../lib/recommendations/opportunity-prioritizer";
 
 const router = Router();
 const repo = new GovernedRecommendationRepository();
@@ -20,6 +21,19 @@ router.get("/", async (req, res) => {
   if (!filters.success) return res.status(400).json({ error: "INVALID_FILTERS", details: filters.error.flatten() });
   const rows = await repo.list(tenant(req), filters.data);
   return res.json(rows);
+});
+
+
+router.get("/prioritized", async (req, res) => {
+  const filters = listFilterSchema.safeParse(req.query);
+  if (!filters.success) return res.status(400).json({ error: "INVALID_FILTERS", details: filters.error.flatten() });
+  const rows = await repo.list(tenant(req), filters.data);
+  return res.json(prioritizeRecommendations(rows));
+});
+
+router.get("/top-opportunities", async (req, res) => {
+  const rows = await repo.list(tenant(req), {});
+  return res.json(prioritizeRecommendations(rows).slice(0, 5));
 });
 
 router.get("/:recommendationId", async (req, res) => {

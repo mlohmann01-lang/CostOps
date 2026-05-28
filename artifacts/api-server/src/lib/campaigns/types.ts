@@ -1,0 +1,4 @@
+export type CampaignState = "DRAFT" | "REVIEW_READY" | "APPROVAL_PENDING" | "APPROVED" | "BLOCKED" | "SCHEDULED" | "PARTIALLY_EXECUTED" | "COMPLETED";
+export type CampaignType = "LICENSE_RECLAIM" | "RIGHTSIZING" | "COPILOT_OPTIMIZATION" | "ADDON_RECLAMATION" | "MIXED";
+export interface RecommendationCampaign { campaignId:string; tenantId:string; campaignName:string; campaignType:CampaignType; recommendationIds:string[]; totalProjectedMonthlySavings:number; totalProjectedAnnualSavings:number; totalOpportunityScore:number; recommendationCount:number; executionReadinessSummary:Record<string,number>; riskSummary:Record<string,number>; rollbackCoverage:number; governanceComplexity:number; campaignState:CampaignState; createdAt:string; updatedAt:string; }
+export interface BuildCampaignInput { tenantId:string; recommendations:any[]; grouping:"department"|"costCentre"|"playbookType"|"riskClass"|"executionReadiness"|"priorityBand"|"connector"; }

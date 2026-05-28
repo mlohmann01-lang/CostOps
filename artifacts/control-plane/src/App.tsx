@@ -9,6 +9,11 @@ import ExecutionView from './pages/ExecutionView'
 import IntelligenceView from './pages/IntelligenceView'
 import WorkspaceSelection from './pages/WorkspaceSelection'
 import DriftMonitorView from './pages/DriftMonitorView'
+import CampaignsView from './pages/CampaignsView'
+import SchedulingView from './pages/SchedulingView'
+import ApprovalWorkflowsView from './pages/ApprovalWorkflowsView'
+import RuntimeHealthView from './pages/RuntimeHealthView'
+import SecurityView from './pages/SecurityView'
 import OutcomeLedgerView from './pages/OutcomeLedgerView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -224,6 +229,26 @@ function DriftRoute() {
   return <RequireRuntime><DriftMonitorView /></RequireRuntime>
 }
 
+function CampaignsRoute() {
+  return <RequireRuntime><CampaignsView /></RequireRuntime>
+}
+
+function SchedulingRoute() {
+  return <RequireRuntime><SchedulingView /></RequireRuntime>
+}
+
+function ApprovalWorkflowsRoute() {
+  return <RequireRuntime><ApprovalWorkflowsView /></RequireRuntime>
+}
+
+function RuntimeHealthRoute() {
+  return <RequireRuntime><RuntimeHealthView /></RequireRuntime>
+}
+
+function SecurityRoute() {
+  return <RequireRuntime><SecurityView /></RequireRuntime>
+}
+
 function StubRoute() {
   const session = getSession()
   if (!session) return <Redirect to="/login" />
@@ -250,6 +275,11 @@ function Router() {
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
       <Route path="/drift" component={DriftRoute} />
+      <Route path="/campaigns" component={CampaignsRoute} />
+      <Route path="/scheduling" component={SchedulingRoute} />
+      <Route path="/approval-workflows" component={ApprovalWorkflowsRoute} />
+      <Route path="/runtime-health" component={RuntimeHealthRoute} />
+      <Route path="/security" component={SecurityRoute} />
       <Route path="/sync-jobs" component={StubRoute} />
       <Route path="/audit-log" component={StubRoute} />
       <Route path="/settings" component={StubRoute} />
