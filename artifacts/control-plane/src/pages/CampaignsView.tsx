@@ -1,12 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout';
+import { Layout } from '@/components/layout'
+import { useCampaignsData } from '@/hooks/useCampaignsData'
 
 export default function CampaignsView() {
-  const [rows, setRows] = useState<any[]>([]);
-  useEffect(() => { (async () => {
-    await fetch('/api/campaigns/build', { method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ grouping: 'playbookType' }) });
-    const data = await fetch('/api/campaigns').then((r)=>r.json());
-    setRows(Array.isArray(data) ? data : []);
-  })(); }, []);
-  return <Layout><div className='space-y-3'><h1 className='text-2xl font-semibold'>Campaigns</h1>{rows.map((c)=><div key={c.campaignId} className='border rounded p-3 text-sm'><div className='font-semibold'>{c.campaignName}</div><div>Campaign priority: {Math.round(Number(c.totalOpportunityScore ?? 0))}</div><div>Total projected savings: ${Number(c.totalProjectedMonthlySavings).toFixed(2)}/mo · ${Number(c.totalProjectedAnnualSavings).toFixed(2)}/yr</div><div>Governance complexity: {Math.round(Number(c.governanceComplexity ?? 0))}</div><div>Rollback coverage: {Math.round(Number(c.rollbackCoverage ?? 0))}%</div><div>Recommendation count: {c.recommendationCount}</div><div>Grouped recommendations: {(c.recommendationIds ?? []).join(', ')}</div></div>)}</div></Layout>;
+  const { data, isEmptyLive } = useCampaignsData()
+  if (isEmptyLive) return <Layout><div className='p-6 text-sm text-muted-foreground'>Live campaigns will appear when orchestration data is ready.</div></Layout>
+  const projected = data.reduce((a:any,c:any)=>a+c.projectedSavings,0)
+  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Campaigns</h1><div className='text-sm'>4 campaigns · Projected savings ${projected.toLocaleString()}</div>
+    {data.map((c:any)=><div key={c.id} className='border rounded p-3 text-sm'><div className='font-semibold'>{c.name}</div><div>Projected savings ${c.projectedSavings.toLocaleString()}</div><div className='h-2 bg-muted rounded'><div className='h-2 bg-blue-500 rounded' style={{width:`${c.progress}%`}} /></div><div>Approvals: pending {c.approvals.pending} · approved {c.approvals.approved} · blocked {c.approvals.blocked}</div><div className='text-xs'>[View] [Request Approval]</div></div>)}
+  </div></Layout>
 }

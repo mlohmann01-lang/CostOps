@@ -13,7 +13,11 @@ import CampaignsView from './pages/CampaignsView'
 import SchedulingView from './pages/SchedulingView'
 import ApprovalWorkflowsView from './pages/ApprovalWorkflowsView'
 import RuntimeHealthView from './pages/RuntimeHealthView'
+import ConnectorOperationsPage from './pages/connector-operations'
+import AuditLogPage from './pages/AuditLogPage'
 import SecurityView from './pages/SecurityView'
+import SettingsPage from './pages/SettingsPage'
+import Recommendations from './pages/recommendations'
 import OutcomeLedgerView from './pages/OutcomeLedgerView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
@@ -230,6 +234,10 @@ function DriftRoute() {
   return <RequireRuntime><DriftMonitorView /></RequireRuntime>
 }
 
+function RecommendationsRoute() {
+  return <RequireRuntime><Recommendations /></RequireRuntime>
+}
+
 function CampaignsRoute() {
   return <RequireRuntime><CampaignsView /></RequireRuntime>
 }
@@ -246,8 +254,24 @@ function RuntimeHealthRoute() {
   return <RequireRuntime><RuntimeHealthView /></RequireRuntime>
 }
 
+function ConnectorOpsRoute() {
+  return <RequireRuntime><ConnectorOperationsPage /></RequireRuntime>
+}
+
+function EvidenceAuditRoute() {
+  return <RequireRuntime><AuditLogPage /></RequireRuntime>
+}
+
 function SecurityRoute() {
   return <RequireRuntime><SecurityView /></RequireRuntime>
+}
+
+function SettingsRoute() {
+  return <RequireRuntime><SettingsPage /></RequireRuntime>
+}
+
+function SyncJobsRedirectRoute() {
+  return <Redirect to="/connector-ops" />
 }
 
 function StubRoute() {
@@ -276,14 +300,16 @@ function Router() {
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
       <Route path="/drift" component={DriftRoute} />
+      <Route path="/recommendations" component={RecommendationsRoute} />
       <Route path="/campaigns" component={CampaignsRoute} />
       <Route path="/scheduling" component={SchedulingRoute} />
       <Route path="/approval-workflows" component={ApprovalWorkflowsRoute} />
       <Route path="/runtime-health" component={RuntimeHealthRoute} />
+      <Route path="/connector-ops" component={ConnectorOpsRoute} />
       <Route path="/security" component={SecurityRoute} />
-      <Route path="/sync-jobs" component={StubRoute} />
-      <Route path="/audit-log" component={StubRoute} />
-      <Route path="/settings" component={StubRoute} />
+      <Route path="/sync-jobs" component={SyncJobsRedirectRoute} />
+      <Route path="/audit-log" component={EvidenceAuditRoute} />
+      <Route path="/settings" component={SettingsRoute} />
       <Route component={CatchAllRoute} />
     </Switch>
   )

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout';
+import { Layout } from '@/components/layout'
+import { useSchedulingData } from '@/hooks/useSchedulingData'
 
 export default function SchedulingView() {
-  const [rows, setRows] = useState<any[]>([]);
-  useEffect(()=>{ (async()=>{ const data = await fetch('/api/schedules').then((r)=>r.json()).catch(()=>[]); setRows(Array.isArray(data)?data:[]); })(); },[]);
-  return <Layout><div className='space-y-3'><h1 className='text-2xl font-semibold'>Scheduling Governance</h1>{rows.map((s)=><div key={s.scheduleId} className='border rounded p-3 text-sm'><div className='font-semibold'>{s.scheduleName}</div><div>Window: {s.changeWindowType} · {s.scheduledStart} → {s.scheduledEnd} ({s.timezone})</div><div>Scheduled risk level: {s.riskLevel}</div><div>Rollback coverage: {Math.round(Number(s.rollbackCoverage ?? 0))}% {Number(s.rollbackCoverage ?? 0)<100?'(Rollback coverage incomplete)':''}</div><div>Governance complexity: {Math.round(Number(s.governanceComplexity ?? 0))}</div><div>Approval readiness: {s.approvalReadiness}</div><div>State: {s.scheduleState}</div></div>)}</div></Layout>;
+  const { data, isEmptyLive } = useSchedulingData()
+  if (isEmptyLive) return <Layout><div className='p-6 text-sm text-muted-foreground'>Live scheduling windows appear when runtime dependencies are connected.</div></Layout>
+  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Scheduling</h1><div className='text-sm'>Upcoming {data.summary.upcoming} · Past {data.summary.completed}</div>
+  <h2 className='font-medium'>Upcoming windows</h2>{data.upcoming.map((w:any)=><div key={w.id} className='border rounded p-2 text-sm'>{w.name} · readiness {w.readiness} · rollback {w.rollback} · risk {w.risk} · deps {w.dependencies} · [Simulate] [Open Runbook]</div>)}
+  <h2 className='font-medium'>Past windows</h2>{data.past.map((w:any)=><div key={w.id} className='border rounded p-2 text-sm'>{w.name} · readiness {w.readiness} · rollback {w.rollback} · risk {w.risk} · deps {w.dependencies}</div>)}
+  </div></Layout>
 }

@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Layout } from '@/components/layout';
+import { Layout } from '@/components/layout'
+import { useApprovalWorkflowsData } from '@/hooks/useApprovalWorkflowsData'
 
 export default function ApprovalWorkflowsView() {
-  const [rows, setRows] = useState<any[]>([]);
-  useEffect(()=>{ (async()=>{ const data=await fetch('/api/approval-workflows').then((r)=>r.json()).catch(()=>[]); setRows(Array.isArray(data)?data:[]); })(); },[]);
-  return <Layout><div className='space-y-3'><h1 className='text-2xl font-semibold'>Approval Workflows</h1>{rows.map((w)=><div key={w.workflowId} className='border rounded p-3 text-sm'><div className='font-semibold'>{w.workflowName}</div><div>Target: {w.targetType} · {w.targetId}</div><div>Current stage: {w.currentStage+1}/{w.approvalStages?.length ?? 0}</div><div>State: {w.approvalState}</div><div>{w.approvalState==='ESCALATED'?'Escalated due to timeout':''}</div><div>{(w.approvalStages?.[w.currentStage]?.requiredRoles ?? []).includes('SECURITY')?'Security approval required':''}</div><div>{(w.approvalStages?.[w.currentStage]?.requiredRoles ?? []).includes('CAB')?'Awaiting CAB approval':''}</div><div>{w.delegatedApprovalAllowed?'Delegated approval active':''}</div><div>{w.separationOfDutiesRequired?'Separation-of-duties enforced':''}</div><div>Expiry: {w.approvalExpiryAt}</div></div>)}</div></Layout>;
+  const { data, isEmptyLive } = useApprovalWorkflowsData()
+  if (isEmptyLive) return <Layout><div className='p-6 text-sm text-muted-foreground'>Live approvals will appear when governance queues are available.</div></Layout>
+  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Approval Workflows</h1><div className='text-sm'>Pending {data.summary.pending} · Approved today {data.summary.approvedToday} · Escalated {data.summary.escalated}</div>
+    <h2 className='font-medium'>Pending approvals</h2>{data.pending.map((p:any)=><div key={p.id} className='border rounded p-2 text-sm'>{p.item} · stage {p.stage} · approver {p.approver} · {p.sla} · [Simulate Approve] [Simulate Reject]</div>)}
+    <h2 className='font-medium'>History</h2>{data.history.map((h:any)=><div key={h.id} className='border rounded p-2 text-sm'>{h.item} · {h.result} · {h.approver}</div>)}
+  </div></Layout>
 }
