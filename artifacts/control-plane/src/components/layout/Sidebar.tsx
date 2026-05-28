@@ -1,237 +1,43 @@
+import type { ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import {
-  ShieldCheck, LayoutDashboard, Award, Play, TrendingUp,
-  Activity, FileText, Settings, Plug, LogOut, BookOpen, Waves,
-} from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Activity, FileText, Settings, Plug, LogOut, BookOpen, Waves, Target, Calendar, Shield, Server } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
-const NAV_PLATFORM = [
-  { label: 'Connector hub',  icon: Plug,           href: '/connectors',       badge: 1, badgeType: 'warn' as const },
-  { label: 'Command',        icon: LayoutDashboard, href: '/all/command' },
-  { label: 'Governance',     icon: Award,           href: '/all/governance' },
-  { label: 'Execution',      icon: Play,            href: '/all/execution' },
-  { label: 'Intelligence',   icon: TrendingUp,      href: '/all/intelligence' },
-  { label: 'Outcomes',       icon: BookOpen,        href: '/outcomes' },
-  { label: 'Drift monitor',  icon: Waves,           href: '/drift' },
-  { label: 'Campaigns',      icon: BookOpen,         href: '/campaigns' },
-  { label: 'Scheduling',     icon: Activity,         href: '/scheduling' },
-  { label: 'Approval workflows', icon: Award,       href: '/approval-workflows' },
-  { label: 'Runtime health', icon: Activity,        href: '/runtime-health' },
-  { label: 'Security', icon: ShieldCheck,           href: '/security' },
+type Item = { label:string; href:string; icon: ElementType; muted?: boolean; badge?: string }
+
+export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
+  { items: [{ label: 'Command', icon: LayoutDashboard, href: '/all/command' }] },
+  { label: 'OPERATIONAL', items: [
+    { label: 'Intelligence', icon: TrendingUp, href: '/all/intelligence' },
+    { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
+  ]},
+  { label: 'EXECUTION', items: [
+    { label: 'Recommendations', icon: Target, href: '/all/command', badge: 'In progress' },
+    { label: 'Campaigns', icon: Target, href: '/campaigns' },
+    { label: 'Execution', icon: Play, href: '/all/execution' },
+    { label: 'Drift monitor', icon: Waves, href: '/drift' },
+  ]},
+  { label: 'GOVERNANCE', items: [
+    { label: 'Governance', icon: Award, href: '/all/governance' },
+    { label: 'Approval workflows', icon: Shield, href: '/approval-workflows' },
+    { label: 'Scheduling', icon: Calendar, href: '/scheduling' },
+  ]},
+  { label: 'PLATFORM', items: [
+    { label: 'Connector hub', icon: Plug, href: '/connectors', muted: true, badge: '1' },
+    { label: 'Runtime health', icon: Server, href: '/runtime-health', muted: true },
+    { label: 'Connector ops', icon: Activity, href: '/sync-jobs', muted: true },
+    { label: 'Evidence & audit', icon: FileText, href: '/audit-log', muted: true },
+    { label: 'Security', icon: ShieldCheck, href: '/security', muted: true },
+    { label: 'Settings', icon: Settings, href: '/settings', muted: true },
+  ]},
 ]
 
-const NAV_SYSTEM = [
-  { label: 'Sync jobs',  icon: Activity,  href: '/sync-jobs',  badge: 2, badgeType: 'error' as const },
-  { label: 'Audit log',  icon: FileText,  href: '/audit-log' },
-  { label: 'Settings',   icon: Settings,  href: '/settings' },
-]
-
-interface NavItemProps {
-  label: string
-  icon: React.ElementType
-  href: string
-  badge?: number
-  badgeType?: 'warn' | 'error'
-  active: boolean
-}
-
-function NavItem({ label, icon: Icon, href, badge, badgeType, active }: NavItemProps) {
-  return (
-    <Link href={href}>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 9,
-          padding: '7px 16px',
-          fontSize: 12.5,
-          cursor: 'pointer',
-          borderLeft: active ? '2px solid #1D9E75' : '2px solid transparent',
-          color: active ? '#1D9E75' : 'rgba(255,255,255,0.45)',
-          background: active ? 'rgba(29,158,117,0.08)' : 'transparent',
-          fontWeight: active ? 500 : 400,
-          transition: 'background 0.12s, color 0.12s',
-          textDecoration: 'none',
-          borderRadius: '0 5px 5px 0',
-          marginRight: 8,
-        }}
-        onMouseEnter={e => {
-          if (!active) {
-            (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'
-            ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.70)'
-          }
-        }}
-        onMouseLeave={e => {
-          if (!active) {
-            (e.currentTarget as HTMLElement).style.background = 'transparent'
-            ;(e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)'
-          }
-        }}
-      >
-        <Icon size={14} strokeWidth={active ? 2 : 1.5} />
-        <span style={{ flex: 1 }}>{label}</span>
-        {badge !== undefined && (
-          <span style={{
-            fontSize: 10,
-            fontWeight: 600,
-            padding: '1px 5px',
-            borderRadius: 10,
-            background: badgeType === 'error' ? 'rgba(226,75,74,0.18)' : 'rgba(239,159,39,0.18)',
-            color: badgeType === 'error' ? '#E24B4A' : '#EF9F27',
-          }}>
-            {badge}
-          </span>
-        )}
-      </div>
-    </Link>
-  )
-}
-
-function isPathActive(href: string, location: string): boolean {
-  if (href === '/connectors') return location === '/connectors'
-  if (href === '/outcomes') return location === '/outcomes'
-  if (href === '/drift') return location === '/drift'
-  const segment = href.split('/').filter(Boolean).pop() ?? ''
-  return segment !== '' && location.endsWith(segment)
-}
-
-export function Sidebar() {
-  const [location] = useLocation()
-  const session = getSession()
-
-  function handleLogout() {
-    clearSession()
-    window.location.href = '/login'
-  }
-
-  return (
-    <nav
-      style={{
-        width: 192,
-        minWidth: 192,
-        background: '#0a0c0b',
-        borderRight: '0.5px solid rgba(255,255,255,0.07)',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100%',
-        overflow: 'hidden',
-      }}
-    >
-      {/* Logo */}
-      <div style={{
-        padding: '16px 16px 14px',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 9,
-        borderBottom: '0.5px solid rgba(255,255,255,0.07)',
-        flexShrink: 0,
-      }}>
-        <div style={{
-          width: 26, height: 26, borderRadius: 6,
-          background: '#1D9E75',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0,
-        }}>
-          <ShieldCheck size={13} color="#fff" strokeWidth={2.5} />
-        </div>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#e8e6e0', letterSpacing: '-0.01em' }}>Certen</span>
-      </div>
-
-      {/* Platform section */}
-      <div style={{ paddingTop: 10, flex: 1, overflow: 'hidden auto' }}>
-        <div style={{
-          fontSize: 10, color: 'rgba(255,255,255,0.22)',
-          textTransform: 'uppercase', letterSpacing: '0.07em',
-          padding: '8px 16px 5px',
-          fontWeight: 500,
-        }}>
-          Platform
-        </div>
-        {NAV_PLATFORM.map(item => (
-          <NavItem
-            key={item.href}
-            {...item}
-            active={isPathActive(item.href, location)}
-          />
-        ))}
-
-        {/* System section */}
-        <div style={{
-          fontSize: 10, color: 'rgba(255,255,255,0.22)',
-          textTransform: 'uppercase', letterSpacing: '0.07em',
-          padding: '16px 16px 5px',
-          fontWeight: 500,
-        }}>
-          System
-        </div>
-        {NAV_SYSTEM.map(item => (
-          <NavItem
-            key={item.href}
-            {...item}
-            active={location === item.href}
-          />
-        ))}
-      </div>
-
-      {/* Footer */}
-      <div style={{ borderTop: '0.5px solid rgba(255,255,255,0.07)', flexShrink: 0 }}>
-        {/* Trust pill */}
-        <div style={{ padding: '10px 16px 6px' }}>
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 11, color: '#1D9E75',
-            background: 'rgba(29,158,117,0.10)',
-            border: '0.5px solid rgba(29,158,117,0.25)',
-            padding: '3px 9px', borderRadius: 20,
-          }}>
-            <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#1D9E75', flexShrink: 0 }} />
-            Data trust: 91%
-          </div>
-        </div>
-
-        {/* User row */}
-        {session && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '6px 16px 14px',
-          }}>
-            <div style={{
-              width: 22, height: 22, borderRadius: '50%',
-              background: 'rgba(29,158,117,0.18)',
-              border: '0.5px solid rgba(29,158,117,0.30)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-              fontSize: 10, fontWeight: 600,
-              color: '#1D9E75',
-            }}>
-              {session.user.email.charAt(0).toUpperCase()}
-            </div>
-            <span style={{
-              fontSize: 11, color: 'rgba(255,255,255,0.30)',
-              flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {session.user.email}
-            </span>
-            <button
-              onClick={handleLogout}
-              title="Sign out"
-              style={{
-                background: 'none', border: 'none', padding: 4,
-                cursor: 'pointer', color: 'rgba(255,255,255,0.25)',
-                display: 'flex', alignItems: 'center',
-                borderRadius: 4,
-                transition: 'color 0.12s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.55)')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.25)')}
-            >
-              <LogOut size={12} />
-            </button>
-          </div>
-        )}
-      </div>
-    </nav>
-  )
+export function Sidebar(){
+ const [location]=useLocation(); const session=getSession()
+ const active=(href:string)=> location===href || location.endsWith(href.split('/').pop()||'')
+ return <nav style={{width:220,background:'#0a0c0b',borderRight:'var(--border-default)',display:'flex',flexDirection:'column'}}>
+  <div style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'var(--border-default)'}}><ShieldCheck size={14}/><b>Certen</b></div>
+  <div style={{flex:1,overflow:'auto',paddingTop:8}}>{NAV_GROUPS.map(g=><div key={g.label||'top'}>{g.label&&<div style={{fontSize:9,color:'var(--text-tertiary)',letterSpacing:'0.08em',padding:'8px 16px'}}>{g.label}</div>}{g.items.map(i=>{const a=active(i.href);const Icon=i.icon;return <Link key={i.label} href={i.href}><div title={i.badge==='In progress'?'In progress':undefined} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 16px',fontSize:i.muted?12:13,color:a?'var(--text-primary)':(i.muted?'var(--text-tertiary)':'var(--text-secondary)'),background:a?'var(--teal-bg)':'transparent',borderLeft:a?'2px solid var(--teal)':'2px solid transparent'}}><Icon size={13}/><span style={{flex:1}}>{i.label}</span>{i.badge&&<span style={{fontSize:10,color:'var(--amber)'}}>{i.badge}</span>}</div></Link>})}</div>)}</div>
+  <div style={{borderTop:'var(--border-default)',padding:12}}><div style={{display:'inline-flex',padding:'3px 8px',border:'var(--border-teal)',borderRadius:999,color:'var(--teal)',fontSize:11}}>Data trust: 91%</div>{session&&<button onClick={()=>{clearSession();window.location.href='/login'}} style={{marginLeft:8,fontSize:11}}><LogOut size={12}/></button>}</div>
+ </nav>
 }

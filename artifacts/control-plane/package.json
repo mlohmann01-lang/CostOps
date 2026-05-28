@@ -8,7 +8,7 @@
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm --dir ../.. --filter @workspace/scripts exec tsx --test ../artifacts/control-plane/src/lib/semantics.test.ts ../artifacts/control-plane/src/lib/services/services.test.ts ../artifacts/control-plane/src/lib/smoke.test.ts ../artifacts/control-plane/src/lib/recommendations-page.test.ts"
+    "test": "pnpm --dir ../.. --filter @workspace/scripts exec tsx --test ../artifacts/control-plane/src/lib/semantics.test.ts ../artifacts/control-plane/src/lib/services/services.test.ts ../artifacts/control-plane/src/lib/smoke.test.ts ../artifacts/control-plane/src/lib/recommendations-page.test.ts ../artifacts/control-plane/src/lib/ui-foundation.test.tsx ../artifacts/control-plane/src/lib/command-phase2.test.tsx ../artifacts/control-plane/src/lib/existing-pages-density.test.tsx ../artifacts/control-plane/src/lib/existing-pages-rendering.test.tsx"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
