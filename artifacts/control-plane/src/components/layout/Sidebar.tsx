@@ -25,7 +25,7 @@ export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
   { label: 'PLATFORM', items: [
     { label: 'Connector hub', icon: Plug, href: '/connectors', muted: true, badge: '1' },
     { label: 'Runtime health', icon: Server, href: '/runtime-health', muted: true },
-    { label: 'Connector ops', icon: Activity, href: '/sync-jobs', muted: true },
+    { label: 'Connector ops', icon: Activity, href: '/connector-ops', muted: true },
     { label: 'Evidence & audit', icon: FileText, href: '/audit-log', muted: true },
     { label: 'Security', icon: ShieldCheck, href: '/security', muted: true },
     { label: 'Settings', icon: Settings, href: '/settings', muted: true },
