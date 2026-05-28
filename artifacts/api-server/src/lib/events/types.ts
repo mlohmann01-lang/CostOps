@@ -1,0 +1,2 @@
+export type UnifiedEventCategory = "DISCOVERY"|"RECOMMENDATION"|"APPROVAL"|"SCHEDULING"|"EXECUTION_REQUEST"|"DRY_RUN"|"EXECUTION"|"OUTCOME"|"DRIFT"|"POLICY"|"CAMPAIGN";
+export interface UnifiedGovernanceEvent { eventId:string; tenantId:string; entityType:string; entityId:string; eventType:string; eventCategory:UnifiedEventCategory; actorId:string; actorRole:string; eventReason:string; beforeState:string; afterState:string; evidenceSnapshot:unknown; sourceSystem:string; createdAt:string; }

@@ -13,6 +13,11 @@ const NAV_PLATFORM = [
   { label: 'Intelligence',   icon: TrendingUp,      href: '/all/intelligence' },
   { label: 'Outcomes',       icon: BookOpen,        href: '/outcomes' },
   { label: 'Drift monitor',  icon: Waves,           href: '/drift' },
+  { label: 'Campaigns',      icon: BookOpen,         href: '/campaigns' },
+  { label: 'Scheduling',     icon: Activity,         href: '/scheduling' },
+  { label: 'Approval workflows', icon: Award,       href: '/approval-workflows' },
+  { label: 'Runtime health', icon: Activity,        href: '/runtime-health' },
+  { label: 'Security', icon: ShieldCheck,           href: '/security' },
 ]
 
 const NAV_SYSTEM = [
