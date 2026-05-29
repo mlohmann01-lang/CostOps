@@ -3,18 +3,26 @@ import { z } from "zod";
 import { GovernedRecommendationRepository } from "../lib/recommendations/recommendation-repository";
 import { GovernedRecommendationService } from "../lib/recommendations/recommendation-service";
 import { RecommendationGovernanceEventService } from "../lib/recommendations/governance-event-service";
+import { RecommendationGovernanceEventRepository } from "../lib/recommendations/governance-event-repository";
 import { prioritizeRecommendations } from "../lib/recommendations/opportunity-prioritizer";
+import { RecommendationApprovalError, RecommendationApprovalService } from "../lib/recommendations/recommendation-approval-service";
 
 const router = Router();
 const repo = new GovernedRecommendationRepository();
 const service = new GovernedRecommendationService(repo);
-const eventService = new RecommendationGovernanceEventService();
+const eventEnv = String(process.env.RUNTIME_ENV ?? process.env.NODE_ENV ?? "development").toLowerCase();
+const eventRepo = (eventEnv === "production" || eventEnv === "staging")
+  ? new RecommendationGovernanceEventRepository()
+  : new RecommendationGovernanceEventRepository({ storageMode: "memory" });
+const eventService = new RecommendationGovernanceEventService(eventRepo);
+const approvalService = new RecommendationApprovalService(repo, eventService);
 const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
 
 const recommendationIdParam = z.object({ recommendationId: z.string().min(1) });
 const listFilterSchema = z.object({ readiness: z.string().optional(), state: z.string().optional(), playbookId: z.string().optional() });
 const blockBodySchema = z.object({ reason: z.string().min(1), blockedBy: z.string().min(1).default("operator") });
 const approveBodySchema = z.object({ approvedBy: z.string().min(1).default("operator") });
+const submitApprovalBodySchema = z.object({ actorId: z.string().min(1).default("operator"), actorRole: z.string().min(1).default("OPERATOR"), reason: z.string().optional() });
 
 router.get("/", async (req, res) => {
   const filters = listFilterSchema.safeParse(req.query);
@@ -42,6 +50,19 @@ router.get("/:recommendationId", async (req, res) => {
   const row = await repo.getByRecommendationId(tenant(req), parsed.data.recommendationId);
   if (!row) return res.status(404).json({ error: "NOT_FOUND" });
   return res.json(row);
+});
+
+router.post("/:recommendationId/submit-approval", async (req, res) => {
+  const id = recommendationIdParam.safeParse(req.params);
+  const body = submitApprovalBodySchema.safeParse(req.body ?? {});
+  if (!id.success || !body.success) return res.status(400).json({ error: "INVALID_SUBMIT_APPROVAL_REQUEST" });
+  try {
+    const out = await approvalService.submitForApproval({ tenantId: tenant(req), recommendationId: id.data.recommendationId, actorId: body.data.actorId, actorRole: body.data.actorRole, reason: body.data.reason });
+    return res.json(out);
+  } catch (error) {
+    if (error instanceof RecommendationApprovalError) return res.status(error.status).json({ error: error.code, message: error.message });
+    return res.status(500).json({ error: "APPROVAL_SUBMISSION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 router.post("/:recommendationId/recalculate", async (req, res) => {

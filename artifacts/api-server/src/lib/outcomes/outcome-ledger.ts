@@ -1,6 +1,7 @@
 import { db, outcomeLedgerTable } from '@workspace/db';
 import { desc, eq } from 'drizzle-orm';
 import { rollupSavings } from './savings-rollup';
+import { outcomeProjectionService } from './outcome-projection-service';
 
 export async function listOutcomeLedger(tenantId: string, limit = 200) {
   const rows = await db.select().from(outcomeLedgerTable).where(eq(outcomeLedgerTable.tenantId, tenantId)).orderBy(desc(outcomeLedgerTable.createdAt)).limit(Math.min(Math.max(limit,1),500));
@@ -9,7 +10,9 @@ export async function listOutcomeLedger(tenantId: string, limit = 200) {
 
 export async function outcomeLedgerSummary(tenantId: string) {
   const rows = await listOutcomeLedger(tenantId, 500);
-  return rollupSavings(rows as any[]);
+  const base = rollupSavings(rows as any[]) as any;
+  const projected = outcomeProjectionService.commandMetrics(tenantId);
+  return { ...base, ...projected, activeDrift: base.activeDrift ?? 0 };
 }
 
 export async function outcomeLedgerByPlaybook(tenantId: string) {

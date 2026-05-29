@@ -3,12 +3,25 @@ import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recomme
 import { buildExplainabilityEnvelope } from "../lib/recommendations/explainability-surface";
 import { RecommendationRationalePersistenceService } from "../lib/recommendations/recommendation-rationale-persistence-service";
 import { RecommendationOutcomeResolutionService } from "../lib/recommendations/recommendation-outcome-resolution-service";
+import { M365RecommendationService } from "../lib/playbooks/m365/m365-recommendation-service";
 
 const router = Router();
 const svc = new PlaybookRecommendationService();
 const rationaleSvc = new RecommendationRationalePersistenceService();
 const outcomeSvc = new RecommendationOutcomeResolutionService();
-const scope = (req:any)=>({ tenantId: String(req.query.tenantId ?? req.body?.tenantId ?? "default"), actorId: String(req.query.actorId ?? req.body?.actorId ?? "system") });
+const m365RecommendationSvc = new M365RecommendationService();
+const scope = (req:any)=>({ tenantId: String(req.tenantId ?? req.query.tenantId ?? req.body?.tenantId ?? "default"), actorId: String(req.query.actorId ?? req.body?.actorId ?? "system") });
+
+
+router.post("/m365/generate-recommendations", async (req,res)=>{
+  const { tenantId, actorId } = scope(req);
+  try {
+    const out = await m365RecommendationSvc.generateForTenant(tenantId, actorId);
+    return res.json(out);
+  } catch (err:any) {
+    return res.status(409).json({ tenantId, error: "M365_RECOMMENDATION_GENERATION_FAILED", message: String(err?.message ?? err), generatedAt: new Date().toISOString() });
+  }
+});
 
 router.post("/m365/evaluate", async (req,res)=>{
   const {tenantId, actorId}=scope(req);

@@ -1,12 +1,18 @@
 import { useMemo } from 'react'
 import { useWorkspace } from '../lib/workspaceContext'
-import { demoActions, demoCommandMetrics, demoPostureSignals, demoPriorityActions } from '../data/demo'
+import { useDemoRuntimeStore } from '../lib/demoRuntimeStore'
+import { emptyCommandMetrics, normalizeCommandAggregate } from '../lib/liveNormalizers'
+import { useLiveResource } from './useLiveResource'
 
-export function useCommandData() {
+const emptyCommand = { actions: [], metrics: emptyCommandMetrics, posture: [], priority: [] }
+
+export function useCommandData(): any {
   const workspace = useWorkspace()
+  const demo = useDemoRuntimeStore()
+  const live = useLiveResource({ path: ['/api/recommendations','/api/outcomes/ledger/summary','/api/runtime/status','/api/runtime/connectors','/api/events'], enabled: workspace.mode === 'live', initialData: emptyCommand, normalizer: normalizeCommandAggregate, isEmpty: (data) => data.actions.length === 0 && data.metrics.totalIdentified === 0 && data.posture.length === 0 })
   return useMemo(() => {
-    if (workspace.mode === 'demo') return { loading: false, isEmptyLive: false, data: { actions: demoActions, metrics: demoCommandMetrics, posture: demoPostureSignals, priority: demoPriorityActions } }
-    if (!workspace.dataReady) return { loading: false, isEmptyLive: true, data: { actions: [], metrics: { totalIdentified:0, eligibleNow:0, pendingApproval:0, blockedManual:0 }, posture: [], priority: [] } }
-    return { loading: false, isEmptyLive: false, data: { actions: [], metrics: { totalIdentified:0, eligibleNow:0, pendingApproval:0, blockedManual:0 }, posture: [], priority: [] } }
-  }, [workspace])
+    if (workspace.mode === 'demo') return { loading: false, error: null, refresh: () => Promise.resolve({ actions: demo.actions, metrics: demo.commandMetrics, posture: demo.posture, priority: demo.priority }), isEmptyLive: false, data: { actions: demo.actions, metrics: demo.commandMetrics, posture: demo.posture, priority: demo.priority } }
+    if (!workspace.dataReady) return { loading: false, error: null, refresh: live.refresh, isEmptyLive: true, data: emptyCommand }
+    return { loading: live.loading, error: live.error, refresh: live.refresh, isEmptyLive: live.isEmpty, data: live.data }
+  }, [workspace, demo, live.loading, live.error, live.refresh, live.isEmpty, live.data])
 }

@@ -1,12 +1,15 @@
 import { useMemo } from 'react'
 import { useWorkspace } from '../lib/workspaceContext'
-import { demoApprovals } from '../data/demo'
+import { useDemoRuntimeStore } from '../lib/demoRuntimeStore'
+import { emptyApprovals, normalizeApprovalWorkflows } from '../lib/liveNormalizers'
+import { useLiveResource } from './useLiveResource'
 
-export function useApprovalWorkflowsData() {
+export function useApprovalWorkflowsData(): any {
   const workspace = useWorkspace()
+  const demo = useDemoRuntimeStore()
+  const live = useLiveResource({ path: '/api/approval-workflows', enabled: workspace.mode === 'live', initialData: emptyApprovals, normalizer: normalizeApprovalWorkflows, isEmpty: (data) => data.pending.length === 0 && data.history.length === 0 })
   return useMemo(() => {
-    if (workspace.mode === 'demo') return { loading: false, isEmptyLive: false, data: demoApprovals }
-    if (!workspace.dataReady) return { loading: false, isEmptyLive: true, data: { summary: { pending: 0, approvedToday: 0, escalated: 0, averageSlaHours: 0 }, pending: [], history: [] } }
-    return { loading: false, isEmptyLive: false, data: { summary: { pending: 0, approvedToday: 0, escalated: 0, averageSlaHours: 0 }, pending: [], history: [] } }
-  }, [workspace])
+    if (workspace.mode === 'demo') return { loading: false, error: null, refresh: () => Promise.resolve(demo.approvals), isEmptyLive: false, data: demo.approvals }
+    return { loading: live.loading, error: live.error, refresh: live.refresh, isEmptyLive: !workspace.dataReady || live.isEmpty, data: live.data }
+  }, [workspace, demo, live.loading, live.error, live.refresh, live.isEmpty, live.data])
 }

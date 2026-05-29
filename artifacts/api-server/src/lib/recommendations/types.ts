@@ -34,6 +34,13 @@ export type GovernedRecommendationObject = {
   createdAt: string;
   updatedAt: string;
   recommendationState: RecommendationState;
+  approvalWorkflowId?: string | null;
+  approvalSubmittedAt?: string | Date | null;
+  approvalState?: string | null;
+  currentApprovalStage?: string | null;
+  executionRequestId?: string | null;
+  executionRequestCreatedAt?: string | Date | null;
+  executionRequestState?: string | null;
 };
 
 export type GovernedRecommendationInput = Omit<GovernedRecommendationObject, "executionReadiness" | "readinessReasons" | "blockedReasons" | "requiredApprovals" | "recommendationState" | "createdAt" | "updatedAt"> & {

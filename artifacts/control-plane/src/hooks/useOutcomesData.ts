@@ -1,8 +1,12 @@
 import { useWorkspace } from '../lib/workspaceContext'
-import { demoConnectors, demoGovernanceAuditLog, demoExecution, demoOutcomes, demoDrift, demoIntelligence } from '../data/demo'
+import { useDemoRuntimeStore } from '../lib/demoRuntimeStore'
+import { emptyOutcomes, normalizeOutcomes } from '../lib/liveNormalizers'
+import { useLiveResource } from './useLiveResource'
 
-export function useOutcomesData(){
+export function useOutcomesData(): any{
  const w=useWorkspace();
- if(w.mode==='demo') return { isEmptyLive:false, data:demoOutcomes }
- return { isEmptyLive:!w.dataReady, data: !w.dataReady ? {stats:[],ledger:[]} : demoOutcomes }
+ const demo=useDemoRuntimeStore();
+ const live=useLiveResource({ path: ['/api/outcomes/ledger','/api/outcomes/ledger/summary'], enabled: w.mode === 'live', initialData: emptyOutcomes, normalizer: normalizeOutcomes, isEmpty: (data) => data.ledger.length === 0 && data.stats.length === 0 })
+ if(w.mode==='demo') return { isEmptyLive:false, data:demo.outcomes, loading:false, error:null, refresh: () => Promise.resolve(demo.outcomes) }
+ return { isEmptyLive:!w.dataReady || live.isEmpty, data: live.data, loading: live.loading, error: live.error, refresh: live.refresh }
 }
