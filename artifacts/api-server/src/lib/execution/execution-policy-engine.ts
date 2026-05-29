@@ -10,7 +10,7 @@ export function evaluateExecutionPolicy(input: {
 }) {
   const blocks: string[] = [];
   if (input.actionType !== "REMOVE_LICENSE") blocks.push("UNSUPPORTED_ACTION");
-  if (input.actionRiskClass !== "B") blocks.push("UNSUPPORTED_RISK_CLASS");
+  if (!["A", "B"].includes(input.actionRiskClass)) blocks.push("UNSUPPORTED_RISK_CLASS");
   if (!input.rollbackSupported) blocks.push("ROLLBACK_REQUIRED");
   if (input.lifecycleState !== "TRUSTED") blocks.push("LIFECYCLE_NOT_TRUSTED");
   if (input.connectorHealth !== "HEALTHY") blocks.push("CONNECTOR_UNHEALTHY");

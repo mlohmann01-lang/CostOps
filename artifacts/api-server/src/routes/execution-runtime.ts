@@ -12,9 +12,13 @@ router.post("/execution-requests/:executionRequestId/execute", async (req, res) 
   const p = executionRequestIdParam.safeParse(req.params);
   const b = executeBody.safeParse(req.body ?? {});
   if (!p.success || !b.success) return res.status(400).json({ error: "INVALID_EXECUTION_REQUEST" });
-  const row = await runtime.execute(tenant(req), p.data.executionRequestId, b.data.executedBy);
-  if (!row) return res.status(404).json({ error: "NOT_FOUND" });
-  return res.json({ result: row });
+  try {
+    const row = await runtime.execute(tenant(req), p.data.executionRequestId, b.data.executedBy);
+    if (!row) return res.status(404).json({ error: "NOT_FOUND" });
+    return res.json({ executionRequestId: p.data.executionRequestId, executionState: row.executionState, result: row });
+  } catch (error) {
+    return res.status(500).json({ error: "EXECUTION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
 });
 
 router.get("/execution-requests/:executionRequestId/result", async (req, res) => {

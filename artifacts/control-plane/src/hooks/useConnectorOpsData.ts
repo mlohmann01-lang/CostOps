@@ -1,17 +1,15 @@
 import { useMemo } from 'react'
-import { demoConnectorOps } from '../data/demo'
+import { useDemoRuntimeStore } from '../lib/demoRuntimeStore'
+import { emptyConnectorOps, normalizeConnectorOps } from '../lib/liveNormalizers'
 import { useWorkspace } from '../lib/workspaceContext'
+import { useLiveResource } from './useLiveResource'
 
-const emptyConnectorOps = {
-  summary: { configured: 0, healthy: 0, degraded: 0, failedJobs: 0 },
-  connectors: [],
-}
-
-export function useConnectorOpsData() {
+export function useConnectorOpsData(): any {
   const workspace = useWorkspace()
+  const demo = useDemoRuntimeStore()
+  const live = useLiveResource({ path: '/api/runtime/connectors', enabled: workspace.mode === 'live', initialData: emptyConnectorOps, normalizer: normalizeConnectorOps, isEmpty: (data) => data.connectors.length === 0 })
   return useMemo(() => {
-    if (workspace.mode === 'demo') return { loading: false, isEmptyLive: false, data: demoConnectorOps }
-    if (!workspace.dataReady) return { loading: false, isEmptyLive: true, data: emptyConnectorOps }
-    return { loading: false, isEmptyLive: false, data: emptyConnectorOps }
-  }, [workspace])
+    if (workspace.mode === 'demo') return { loading: false, error: null, refresh: () => Promise.resolve(demo.connectorOps), isEmptyLive: false, data: demo.connectorOps }
+    return { loading: live.loading, error: live.error, refresh: live.refresh, isEmptyLive: !workspace.dataReady || live.isEmpty, data: live.data }
+  }, [workspace, demo, live.loading, live.error, live.refresh, live.isEmpty, live.data])
 }

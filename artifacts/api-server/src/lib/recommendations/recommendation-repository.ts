@@ -20,7 +20,8 @@ export class GovernedRecommendationRepository {
       const [existing] = await db.select().from(governedRecommendationsTable).where(and(eq(governedRecommendationsTable.tenantId, tenantId), eq(governedRecommendationsTable.recommendationId, recommendation.recommendationId))).limit(1);
 
       if (!existing) {
-        const [row] = await db.insert(governedRecommendationsTable).values({ ...recommendation, tenantId, sourceReferences, createdAt: new Date(recommendation.createdAt), updatedAt: new Date(recommendation.updatedAt) }).returning();
+        const { approvalSubmittedAt, executionRequestCreatedAt, ...insertRecommendation } = recommendation;
+        const [row] = await db.insert(governedRecommendationsTable).values({ ...insertRecommendation, tenantId, sourceReferences, approvalSubmittedAt: approvalSubmittedAt ? new Date(approvalSubmittedAt) : null, executionRequestCreatedAt: executionRequestCreatedAt ? new Date(executionRequestCreatedAt) : null, createdAt: new Date(recommendation.createdAt), updatedAt: new Date(recommendation.updatedAt) }).returning();
         return row;
       }
 
@@ -32,12 +33,15 @@ export class GovernedRecommendationRepository {
 
     const preventEscalation = existing.executionReadiness === "BLOCKED" && recommendation.recommendationState === "EXECUTION_READY" && readinessCheck.executionReadiness !== "AUTO_EXECUTE_ELIGIBLE";
 
+      const { approvalSubmittedAt, executionRequestCreatedAt, ...updateRecommendation } = recommendation;
       const [row] = await db.update(governedRecommendationsTable).set({
-      ...recommendation,
+      ...updateRecommendation,
       tenantId,
       evidencePointers: mergedEvidence,
       blockedReasons: mergedBlocked,
       sourceReferences: uniq([...(existing.sourceReferences as string[]), ...sourceReferences]),
+      approvalSubmittedAt: approvalSubmittedAt ? new Date(approvalSubmittedAt) : null,
+      executionRequestCreatedAt: executionRequestCreatedAt ? new Date(executionRequestCreatedAt) : null,
       executionReadiness: preventEscalation ? "BLOCKED" : recommendation.executionReadiness,
       recommendationState: preventEscalation ? "BLOCKED" : recommendation.recommendationState,
       createdAt: existing.createdAt,
@@ -72,6 +76,73 @@ export class GovernedRecommendationRepository {
         throw new Error(`GOVERNED_RECOMMENDATION_DB_UNAVAILABLE_FAIL_CLOSED: ${(error as Error).message}`);
       }
       return GovernedRecommendationRepository.memory.get(this.key(tenantId, recommendationId)) ?? null;
+    }
+  }
+
+  async linkApprovalWorkflow(tenantId: string, recommendationId: string, link: { approvalWorkflowId: string; approvalSubmittedAt: string | Date; approvalState: string; currentApprovalStage: string }) {
+    try {
+      const [existing] = await db.select().from(governedRecommendationsTable).where(and(eq(governedRecommendationsTable.tenantId, tenantId), eq(governedRecommendationsTable.recommendationId, recommendationId))).limit(1);
+      if (!existing) return null;
+      const [row] = await db.update(governedRecommendationsTable).set({
+        approvalWorkflowId: link.approvalWorkflowId,
+        approvalSubmittedAt: new Date(link.approvalSubmittedAt),
+        approvalState: link.approvalState,
+        currentApprovalStage: link.currentApprovalStage,
+        sourceReferences: uniq([...(existing.sourceReferences as string[]), `approval:${link.approvalWorkflowId}`]),
+        updatedAt: new Date(),
+      }).where(eq(governedRecommendationsTable.id, existing.id)).returning();
+      return row ?? null;
+    } catch (error) {
+      if (!fallbackAllowed()) {
+        throw new Error(`GOVERNED_RECOMMENDATION_DB_UNAVAILABLE_FAIL_CLOSED: ${(error as Error).message}`);
+      }
+      const key = this.key(tenantId, recommendationId);
+      const existing = GovernedRecommendationRepository.memory.get(key);
+      if (!existing) return null;
+      const row = {
+        ...existing,
+        approvalWorkflowId: link.approvalWorkflowId,
+        approvalSubmittedAt: new Date(link.approvalSubmittedAt),
+        approvalState: link.approvalState,
+        currentApprovalStage: link.currentApprovalStage,
+        sourceReferences: uniq([...(existing.sourceReferences ?? []), `approval:${link.approvalWorkflowId}`]),
+        updatedAt: new Date(),
+      };
+      GovernedRecommendationRepository.memory.set(key, row);
+      return row;
+    }
+  }
+
+
+  async linkExecutionRequest(tenantId: string, recommendationId: string, link: { executionRequestId: string; executionRequestCreatedAt: string | Date; executionRequestState: string }) {
+    try {
+      const [existing] = await db.select().from(governedRecommendationsTable).where(and(eq(governedRecommendationsTable.tenantId, tenantId), eq(governedRecommendationsTable.recommendationId, recommendationId))).limit(1);
+      if (!existing) return null;
+      const [row] = await db.update(governedRecommendationsTable).set({
+        executionRequestId: link.executionRequestId,
+        executionRequestCreatedAt: new Date(link.executionRequestCreatedAt),
+        executionRequestState: link.executionRequestState,
+        sourceReferences: uniq([...(existing.sourceReferences as string[]), `execution-request:${link.executionRequestId}`]),
+        updatedAt: new Date(),
+      }).where(eq(governedRecommendationsTable.id, existing.id)).returning();
+      return row ?? null;
+    } catch (error) {
+      if (!fallbackAllowed()) {
+        throw new Error(`GOVERNED_RECOMMENDATION_DB_UNAVAILABLE_FAIL_CLOSED: ${(error as Error).message}`);
+      }
+      const key = this.key(tenantId, recommendationId);
+      const existing = GovernedRecommendationRepository.memory.get(key);
+      if (!existing) return null;
+      const row = {
+        ...existing,
+        executionRequestId: link.executionRequestId,
+        executionRequestCreatedAt: new Date(link.executionRequestCreatedAt),
+        executionRequestState: link.executionRequestState,
+        sourceReferences: uniq([...(existing.sourceReferences ?? []), `execution-request:${link.executionRequestId}`]),
+        updatedAt: new Date(),
+      };
+      GovernedRecommendationRepository.memory.set(key, row);
+      return row;
     }
   }
 

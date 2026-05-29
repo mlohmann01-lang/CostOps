@@ -3,6 +3,8 @@ import { z } from "zod";
 import { ExecutionRequestRepository } from "../lib/execution/execution-request-repository";
 import { ExecutionDryRunRepository } from "../lib/execution/dry-run-repository";
 import { buildSchedule } from "../lib/scheduling/change-window-engine";
+import { buildScheduleRuntimeRows } from '../lib/scheduling/schedule-runtime';
+import { checkM365LiveReadiness } from '../lib/connectors/m365-live-readiness';
 
 const router = Router();
 const reqRepo = new ExecutionRequestRepository();
@@ -23,7 +25,7 @@ router.post('/', async (req,res)=>{
  return res.json(schedule);
 });
 
-router.get('/', async (req,res)=> res.json(mem.get(tenant(req)) ?? []));
+router.get('/', async (req,res)=> { const t=tenant(req); const rows=mem.get(t); if(rows?.length) return res.json(rows); const requests=await reqRepo.listExecutionRequestsByTenant(t); const readiness=await checkM365LiveReadiness(); const dryRuns=await Promise.all(requests.map((r:any)=>dryRepo.latest(t, r.requestId))); return res.json(buildScheduleRuntimeRows(t, requests, dryRuns.filter(Boolean), readiness.state)); });
 router.get('/:scheduleId', async (req,res)=>{ const row=(mem.get(tenant(req))??[]).find((x)=>x.scheduleId===req.params.scheduleId); if(!row) return res.status(404).json({error:'NOT_FOUND'}); return res.json(row); });
 router.post('/:scheduleId/cancel', async (req,res)=>{ const t=tenant(req); const rows=mem.get(t)??[]; const idx=rows.findIndex((x)=>x.scheduleId===req.params.scheduleId); if(idx<0) return res.status(404).json({error:'NOT_FOUND'}); rows[idx]={...rows[idx], scheduleState:'CANCELLED', updatedAt:new Date().toISOString()}; mem.set(t,rows); return res.json(rows[idx]); });
 

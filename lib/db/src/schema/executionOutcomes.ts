@@ -5,6 +5,7 @@ export const executionOutcomesTable = pgTable('execution_outcomes', {
   outcomeId: text('outcome_id').notNull(),
   executionResultId: text('execution_result_id').notNull(),
   executionRequestId: text('execution_request_id').notNull(),
+  recommendationId: text('recommendation_id'),
   tenantId: text('tenant_id').notNull(),
   verificationState: text('verification_state').notNull().default('PENDING_VERIFICATION'),
   projectedMonthlySavings: real('projected_monthly_savings').notNull().default(0),

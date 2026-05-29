@@ -3,8 +3,11 @@ import { index, jsonb, pgTable, serial, text, timestamp, uniqueIndex, boolean, r
 export const executionRequestDryRunsTable = pgTable("execution_request_dry_runs", {
   id: serial("id").primaryKey(),
   simulationId: text("simulation_id").notNull(),
+  dryRunId: text("dry_run_id"),
   tenantId: text("tenant_id").notNull(),
   executionRequestId: text("execution_request_id").notNull(),
+  recommendationId: text("recommendation_id"),
+  actionType: text("action_type"),
   simulationState: text("simulation_state").notNull(),
   simulatedActions: jsonb("simulated_actions").notNull().default([]),
   impactedEntities: jsonb("impacted_entities").notNull().default([]),
@@ -15,6 +18,7 @@ export const executionRequestDryRunsTable = pgTable("execution_request_dry_runs"
   rollbackSupported: boolean("rollback_supported").notNull().default(false),
   policyBlocks: jsonb("policy_blocks").notNull().default([]),
   preflightResults: jsonb("preflight_results").notNull().default([]),
+  evidencePointers: jsonb("evidence_pointers").notNull().default([]),
   simulatedAt: timestamp("simulated_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [

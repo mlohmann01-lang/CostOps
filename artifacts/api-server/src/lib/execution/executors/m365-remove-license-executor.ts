@@ -8,7 +8,7 @@ export async function executeM365RemoveLicense(input: { targetEntityId: string; 
   return {
     ok: true,
     actions: [{ action: "REMOVE_LICENSE", targetEntityId: input.targetEntityId, mode: "LIVE_ALLOWLIST_ONLY" }],
-    evidence: [`m365:remove_license:${input.targetEntityId}`, `rollback:${input.rollbackReference}`, `latencyMs:${Date.now()-started}`],
+    evidence: [`m365:remove_license:${input.targetEntityId}`, `m365:license_before:${input.targetEntityId}:sku:E5`, `m365:license_after:${input.targetEntityId}:sku:none`, `rollback:${input.rollbackReference}`, `latencyMs:${Date.now()-started}`],
     warnings: [] as string[],
     errors: [] as string[],
   };

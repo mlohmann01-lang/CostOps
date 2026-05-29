@@ -59,7 +59,7 @@ export function simulateExecutionRequest(input: {
     rollbackPlan = sim.rollbackPlan;
     rollbackSupported = sim.rollbackSupported;
   } else {
-    validationWarnings.push("UNSUPPORTED_ACTION_SIMULATED_AS_REVIEW");
+    validationWarnings.push(input.actionType === "RIGHTSIZE_LICENSE" ? "Rightsizing dry run is not yet supported in live mode." : "Unsupported action dry run requires review.");
   }
 
   let simulationState: DryRunState = "READY_FOR_EXECUTION";

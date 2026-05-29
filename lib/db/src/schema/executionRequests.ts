@@ -9,6 +9,16 @@ export const executionRequestsTable = pgTable("execution_requests", {
   targetEntityId: text("target_entity_id").notNull(),
   actionType: text("action_type").notNull(),
   actionRiskClass: text("action_risk_class").notNull(),
+  approvalWorkflowId: text("approval_workflow_id"),
+  platform: text("platform"),
+  readinessState: text("readiness_state"),
+  rollbackCoverage: text("rollback_coverage"),
+  projectedMonthlySavings: text("projected_monthly_savings"),
+  projectedAnnualSavings: text("projected_annual_savings"),
+  createdByWorkflowId: text("created_by_workflow_id"),
+  governanceStatus: text("governance_status"),
+  policyEvaluationId: text("policy_evaluation_id"),
+  metadata: jsonb("metadata").notNull().default({}),
   executionState: text("execution_state").notNull(),
   executionMode: text("execution_mode").notNull(),
   dryRunRequired: boolean("dry_run_required").notNull().default(false),
@@ -29,5 +39,6 @@ export const executionRequestsTable = pgTable("execution_requests", {
 }, (t) => [
   uniqueIndex("execution_requests_execution_request_id_uidx").on(t.executionRequestId),
   uniqueIndex("execution_requests_idempotency_key_uidx").on(t.idempotencyKey),
+  uniqueIndex("execution_requests_recommendation_id_uidx").on(t.recommendationId),
   index("execution_requests_tenant_idx").on(t.tenantId),
 ]);
