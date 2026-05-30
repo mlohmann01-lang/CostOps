@@ -19,6 +19,14 @@ import SecurityView from './pages/SecurityView'
 import SettingsPage from './pages/SettingsPage'
 import Recommendations from './pages/recommendations'
 import OutcomeLedgerView from './pages/OutcomeLedgerView'
+import DataTrustView from './pages/DataTrustView'
+import VendorIntelligenceView from './pages/VendorIntelligenceView'
+import BenchmarkIntelligenceView from './pages/BenchmarkIntelligenceView'
+import ContractIntelligenceView from './pages/ContractIntelligenceView'
+import ExecutivePrioritiesView from './pages/ExecutivePrioritiesView'
+import UtilizationIntelligenceView from './pages/UtilizationIntelligenceView'
+import OpportunitiesView from './pages/OpportunitiesView'
+import RenewalsView from './pages/RenewalsView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -230,6 +238,38 @@ function OutcomesRoute() {
   return <RequireRuntime><OutcomeLedgerView /></RequireRuntime>
 }
 
+function DataTrustRoute() {
+  return <RequireRuntime><DataTrustView /></RequireRuntime>
+}
+
+function VendorIntelligenceRoute() {
+  return <RequireRuntime><VendorIntelligenceView /></RequireRuntime>
+}
+
+function BenchmarkIntelligenceRoute() {
+  return <RequireRuntime><BenchmarkIntelligenceView /></RequireRuntime>
+}
+
+function ContractIntelligenceRoute() {
+  return <RequireRuntime><ContractIntelligenceView /></RequireRuntime>
+}
+
+function ExecutivePrioritiesRoute() {
+  return <RequireRuntime><ExecutivePrioritiesView /></RequireRuntime>
+}
+
+function UtilizationIntelligenceRoute() {
+  return <RequireRuntime><UtilizationIntelligenceView /></RequireRuntime>
+}
+
+function OpportunitiesRoute() {
+  return <RequireRuntime><OpportunitiesView /></RequireRuntime>
+}
+
+function RenewalsRoute() {
+  return <RequireRuntime><RenewalsView /></RequireRuntime>
+}
+
 function DriftRoute() {
   return <RequireRuntime><DriftMonitorView /></RequireRuntime>
 }
@@ -299,6 +339,14 @@ function Router() {
       <Route path="/:domain/execution" component={ExecutionRoute} />
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
+      <Route path="/data-trust" component={DataTrustRoute} />
+      <Route path="/vendor-intelligence" component={VendorIntelligenceRoute} />
+      <Route path="/benchmark-intelligence" component={BenchmarkIntelligenceRoute} />
+      <Route path="/contract-intelligence" component={ContractIntelligenceRoute} />
+      <Route path="/utilization-intelligence" component={UtilizationIntelligenceRoute} />
+      <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
+      <Route path="/opportunities" component={OpportunitiesRoute} />
+      <Route path="/renewals" component={RenewalsRoute} />
       <Route path="/drift" component={DriftRoute} />
       <Route path="/recommendations" component={RecommendationsRoute} />
       <Route path="/campaigns" component={CampaignsRoute} />

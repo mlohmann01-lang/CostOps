@@ -15,6 +15,7 @@ import {
   demoPriorityActions,
   demoRecommendations,
   demoRuntimeHealth,
+  demoTrustResolutionTasks,
 } from '../data/demo'
 
 export type ActivityCategory = 'approval' | 'execution' | 'rollback' | 'drift' | 'connector' | 'evidence' | 'governance'
@@ -55,6 +56,7 @@ export interface DemoRuntimeState {
   activity: DemoActivityEvent[]
   executingIds: Record<string, 'QUEUED_FOR_EXECUTION' | 'EXECUTING' | 'VERIFIED'>
   rollbackNotices: Record<string, string>
+  trustResolutionTasks: Array<any>
 }
 
 type Listener = () => void
@@ -192,6 +194,7 @@ function createInitialState(): DemoRuntimeState {
     ],
     executingIds: {},
     rollbackNotices: {},
+    trustResolutionTasks: clone(demoTrustResolutionTasks),
   }
   state.approvals.pending = state.approvals.pending.map((item: any) => {
     const action = state.actions.find((candidate) => actionMatchesName(candidate, item.item))
@@ -427,4 +430,154 @@ export function simulateConnectorRetry(connectorId: string) {
       draft.activity.unshift({ id: `act-${eventCounter++}`, message: `Connector retry completed for ${name}`, category: 'connector', at: nowAgo(), timestamp: Date.now() })
     })
   }, 1100)
+}
+
+
+
+function defaultOwnerForFinding(type: string) {
+  const name = ({
+    IDENTITY_CONFLICT: 'IAM Team',
+    MISSING_OWNER: 'IT Asset Management',
+    STALE_SOURCE: 'Connector Operations',
+    CONNECTOR_DEGRADED: 'Platform Operations',
+    MISSING_USAGE_EVIDENCE: 'M365 Operations',
+    ENTITLEMENT_CONFLICT: 'SAM Governance',
+    POLICY_BLOCKED: 'Governance Owner',
+    UNKNOWN_COST_CENTRE: 'Finance Operations',
+  } as Record<string, string>)[type] ?? 'Governance Operations'
+  return { ownerId: name.toLowerCase().replaceAll(' ', '-'), ownerName: name, ownerType: 'TEAM' }
+}
+
+function slaHoursForPriority(priority: string) { return priority === 'HIGH' ? 24 : priority === 'LOW' ? 168 : 72 }
+function dueAtFor(createdAt: string, slaHours: number) { return new Date(new Date(createdAt).getTime() + slaHours * 60 * 60 * 1000).toISOString() }
+function slaStatusFor(task: any, now = new Date()) {
+  if (task.status === 'RESOLVED' || task.status === 'DISMISSED') return 'ON_TRACK'
+  const due = new Date(task.dueAt).getTime()
+  const atRiskAt = due - Number(task.slaHours ?? 72) * 60 * 60 * 1000 * 0.25
+  const current = now.getTime()
+  if (current < atRiskAt) return 'ON_TRACK'
+  if (current <= due) return 'AT_RISK'
+  return 'OVERDUE'
+}
+function escalationFor(task: any, now = new Date()) {
+  if (task.status === 'RESOLVED' || task.status === 'DISMISSED') return 'NONE'
+  if (slaStatusFor(task, now) !== 'OVERDUE') return task.escalationLevel && task.escalationLevel !== 'NONE' ? task.escalationLevel : 'NONE'
+  const overdueHours = (now.getTime() - new Date(task.dueAt).getTime()) / 3_600_000
+  if (task.escalationLevel && task.escalationLevel !== 'NONE') return task.escalationLevel
+  if (overdueHours < 24) return 'MANAGER'
+  if (overdueHours <= 72) return 'DIRECTOR'
+  return 'EXECUTIVE'
+}
+function refreshTaskAccountability(task: any, now = new Date()) {
+  task.slaStatus = slaStatusFor(task, now)
+  task.escalationLevel = escalationFor(task, now)
+  task.accountabilityStatus = task.status === 'RESOLVED' || task.status === 'DISMISSED' ? 'RESOLVED' : task.escalationLevel !== 'NONE' ? 'ESCALATED' : task.slaStatus === 'OVERDUE' ? 'OVERDUE' : task.slaStatus === 'AT_RISK' ? 'AT_RISK' : task.ownerName || task.owner ? 'ASSIGNED' : 'UNASSIGNED'
+  return task
+}
+
+export function recomputeAccountabilityRollup(tasks = getDemoRuntimeState().trustResolutionTasks) {
+  const now = new Date()
+  const refreshed = tasks.map((task: any) => refreshTaskAccountability({ ...task }, now))
+  const active = refreshed.filter((task: any) => task.status !== 'RESOLVED' && task.status !== 'DISMISSED')
+  const rank = { NONE: 0, MANAGER: 1, DIRECTOR: 2, EXECUTIVE: 3 } as Record<string, number>
+  const highestEscalationLevel = active.reduce((highest: string, task: any) => rank[task.escalationLevel] > rank[highest] ? task.escalationLevel : highest, 'NONE')
+  const month = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`
+  return {
+    openTasks: refreshed.filter((task: any) => task.status === 'OPEN').length,
+    inProgressTasks: refreshed.filter((task: any) => task.status === 'IN_PROGRESS').length,
+    overdueTasks: active.filter((task: any) => task.slaStatus === 'OVERDUE').length,
+    atRiskTasks: active.filter((task: any) => task.slaStatus === 'AT_RISK').length,
+    escalatedTasks: active.filter((task: any) => task.escalationLevel !== 'NONE').length,
+    resolvedThisMonth: refreshed.filter((task: any) => String(task.resolvedAt ?? '').startsWith(month)).length,
+    blockedValueOpen: active.reduce((sum: number, task: any) => sum + Number(task.unlockValue ?? 0), 0),
+    blockedValueOverdue: active.filter((task: any) => task.slaStatus === 'OVERDUE').reduce((sum: number, task: any) => sum + Number(task.unlockValue ?? 0), 0),
+    highestEscalationLevel,
+    generatedAt: now.toISOString(),
+  }
+}
+
+export function simulateCreateTrustResolutionTask(finding: any, owner?: string) {
+  let created: any = null
+  setState((draft) => {
+    const existing = draft.trustResolutionTasks.find((task: any) => task.findingId === finding.findingId && task.status !== 'DISMISSED')
+    if (existing) { created = existing; return }
+    const now = new Date().toISOString()
+    const priority = finding.severity === 'HIGH' || finding.severity === 'CRITICAL' ? 'HIGH' : finding.severity === 'LOW' ? 'LOW' : 'MEDIUM'
+    const ownerInfo = owner ? { ownerId: owner.toLowerCase().replaceAll(' ', '-'), ownerName: owner, ownerType: 'TEAM' } : defaultOwnerForFinding(finding.findingType)
+    const slaHours = slaHoursForPriority(priority)
+    created = refreshTaskAccountability({
+      taskId: `trt-demo-${eventCounter++}`,
+      tenantId: finding.tenantId ?? 'demo-sandbox-tenant',
+      findingId: finding.findingId,
+      affectedRecommendationIds: finding.affectedRecommendationIds ?? [],
+      taskType: finding.findingType,
+      title: `Resolve ${String(finding.findingType).replaceAll('_',' ').toLowerCase()}`,
+      description: finding.description,
+      owner: ownerInfo.ownerName,
+      ownerId: ownerInfo.ownerId,
+      ownerName: ownerInfo.ownerName,
+      ownerType: ownerInfo.ownerType,
+      assignedAt: now,
+      status: 'OPEN',
+      priority,
+      unlockValue: finding.affectedValue ?? 0,
+      resolutionHint: finding.remediationHint,
+      slaHours,
+      dueAt: dueAtFor(now, slaHours),
+      escalationLevel: 'NONE',
+      createdAt: now,
+      updatedAt: now,
+      resolvedAt: null,
+    })
+    draft.trustResolutionTasks.unshift(created)
+    draft.activity.unshift({ id: `act-${eventCounter++}`, message: `TRUST_RESOLUTION_TASK_CREATED ${created.title}`, category: 'governance', at: nowAgo(), timestamp: Date.now() })
+  })
+  return created
+}
+
+export function simulateUpdateTrustResolutionTaskStatus(taskId: string, status: 'OPEN'|'IN_PROGRESS'|'RESOLVED'|'DISMISSED') {
+  let updated: any = null
+  setState((draft) => {
+    const task = draft.trustResolutionTasks.find((item: any) => item.taskId === taskId)
+    if (!task) return
+    task.status = status
+    task.updatedAt = new Date().toISOString()
+    if (status === 'RESOLVED' || status === 'DISMISSED') task.resolvedAt = task.updatedAt
+    if (status === 'RESOLVED' || status === 'DISMISSED') task.escalationLevel = 'NONE'
+    updated = refreshTaskAccountability(task)
+    draft.activity.unshift({ id: `act-${eventCounter++}`, message: `${status === 'RESOLVED' ? 'TRUST_FINDING_RESOLVED' : 'TRUST_RESOLUTION_TASK_STATUS_CHANGED'} ${task.title}`, category: 'governance', at: nowAgo(), timestamp: Date.now() })
+  })
+  return updated
+}
+
+export function assignTrustTask(taskId: string, owner: { ownerId?: string; ownerName: string; ownerType?: 'USER'|'TEAM'|'SYSTEM' }) {
+  let updated: any = null
+  setState((draft) => {
+    const task = draft.trustResolutionTasks.find((item: any) => item.taskId === taskId)
+    if (!task || task.status === 'RESOLVED' || task.status === 'DISMISSED') return
+    task.owner = owner.ownerName
+    task.ownerId = owner.ownerId
+    task.ownerName = owner.ownerName
+    task.ownerType = owner.ownerType ?? 'TEAM'
+    task.assignedAt = new Date().toISOString()
+    task.updatedAt = task.assignedAt
+    updated = refreshTaskAccountability(task)
+    draft.activity.unshift({ id: `act-${eventCounter++}`, message: `TRUST_TASK_ASSIGNED ${task.title}`, category: 'governance', at: nowAgo(), timestamp: Date.now() })
+  })
+  return updated
+}
+
+export function escalateTrustTask(taskId: string, reason = 'Operator escalation') {
+  let updated: any = null
+  setState((draft) => {
+    const task = draft.trustResolutionTasks.find((item: any) => item.taskId === taskId)
+    if (!task || task.status === 'RESOLVED' || task.status === 'DISMISSED') return
+    task.escalationLevel = task.escalationLevel && task.escalationLevel !== 'NONE' ? task.escalationLevel : 'MANAGER'
+    task.escalatedAt = new Date().toISOString()
+    task.escalationReason = reason
+    task.updatedAt = task.escalatedAt
+    updated = refreshTaskAccountability(task)
+    draft.activity.unshift({ id: `act-${eventCounter++}`, message: `TRUST_TASK_ESCALATED ${task.title}`, category: 'governance', at: nowAgo(), timestamp: Date.now() })
+  })
+  return updated
 }

@@ -9,6 +9,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useRecommendationsData } from '@/hooks/useRecommendationsData'
 import { submitRecommendationForApproval, broadcastLiveReadRefresh } from '@/lib/recommendationApprovalBridge'
 import { useWorkspace } from '@/lib/workspaceContext'
+import { RecommendationExplainabilityDrawer } from '@/components/RecommendationExplainabilityDrawer'
 
 export default function Recommendations() {
   const workspace = useWorkspace()
@@ -22,6 +23,7 @@ export default function Recommendations() {
   const [notice, setNotice] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [pendingSubmit, setPendingSubmit] = useState<string | null>(null)
+  const [explainId, setExplainId] = useState<string | null>(null)
   const rows = useMemo(() => data.filter((r: any) => (domain === 'all' || r.domain === domain) && (verdict === 'all' || r.verdict === verdict)), [data, domain, verdict])
   if (error) return <Layout><LiveDataError error={error} onRetry={refresh} /></Layout>
   if (isEmptyLive) return <Layout><EmptyState title='No recommendations yet' description='No recommendations yet — run your first M365 governance evaluation.' /></Layout>
@@ -42,7 +44,8 @@ export default function Recommendations() {
     {submitError && <div role='alert' className='border rounded p-2 text-sm'>{submitError}</div>}
     <Tabs value={domain} onValueChange={setDomain}><TabsList>{['all','saas','cloud','ai','data','itam'].map((d)=><TabsTrigger key={d} value={d}>{d.toUpperCase()}</TabsTrigger>)}</TabsList></Tabs>
     <div className='flex gap-2 text-xs'><button onClick={()=>setVerdict('all')}>All</button><button onClick={()=>setVerdict('eligible')}>Eligible</button><button onClick={()=>setVerdict('approval-required')}>Approval required</button></div>
-    <div className='text-xs font-medium grid grid-cols-8 gap-2'><span>Action</span><span>Domain</span><span>Saving</span><span>Confidence</span><span>Blast</span><span>Rollback</span><span>Verdict</span><span>Approval</span></div>
-    {rows.map((r:any)=><details key={r.id} className='border rounded p-2 text-sm'><summary className='grid grid-cols-8 gap-2'><span>{r.action}</span><span>{r.domain}</span><span>${r.saving.toLocaleString()}</span><span><span className='inline-block h-2 bg-emerald-500' style={{width:`${r.confidence}%`}} /> {r.confidence}%</span><span>{r.blast}</span><span>{r.rollback}</span><span>{r.verdict}</span><span>{workspace.mode === 'live' && r.approvalWorkflowId ? `Approval pending · ${r.currentApprovalStage ?? r.approvalState}` : workspace.mode === 'live' && canApproveRecommendation(r) ? <button onClick={(event)=>{event.preventDefault(); void submit(r.id)}} disabled={pendingSubmit===r.id}>{pendingSubmit===r.id?'Submitting…':'Submit for approval'}</button> : '—'}</span></summary><div className='text-xs mt-2'>Governance proof chain: {r.proofChain.join(' → ')}</div></details>)}
+    <div className='text-xs font-medium grid grid-cols-9 gap-2'><span>Action</span><span>Domain</span><span>Saving</span><span>Confidence</span><span>Blast</span><span>Rollback</span><span>Verdict</span><span>Approval</span><span>Explain</span></div>
+    {rows.map((r:any)=><details key={r.id} className='border rounded p-2 text-sm'><summary className='grid grid-cols-9 gap-2'><span>{r.action}</span><span>{r.domain}</span><span>${r.saving.toLocaleString()}</span><span><span className='inline-block h-2 bg-emerald-500' style={{width:`${r.confidence}%`}} /> {r.confidence}%</span><span>{r.blast}</span><span>{r.rollback}</span><span>{r.verdict}</span><span>{workspace.mode === 'live' && r.approvalWorkflowId ? `Approval pending · ${r.currentApprovalStage ?? r.approvalState}` : workspace.mode === 'live' && canApproveRecommendation(r) ? <button onClick={(event)=>{event.preventDefault(); void submit(r.id)}} disabled={pendingSubmit===r.id}>{pendingSubmit===r.id?'Submitting…':'Submit for approval'}</button> : '—'}</span><span><button onClick={(event)=>{event.preventDefault(); setExplainId(r.id)}}>Explain</button></span></summary><div className='text-xs mt-2'>Governance proof chain: {r.proofChain.join(' → ')}</div></details>)}
+  <RecommendationExplainabilityDrawer recommendationId={explainId} onClose={()=>setExplainId(null)} />
   </div></Layout>
 }

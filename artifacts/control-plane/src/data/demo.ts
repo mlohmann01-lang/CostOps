@@ -1,5 +1,5 @@
 export const demoWorkspace = { mode: 'demo' as const, tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true }
-export const demoCommandMetrics = { totalIdentified: 25000, eligibleNow: 11000, pendingApproval: 7000, blockedManual: 2000 }
+export const demoCommandMetrics = { totalIdentified: 25000, eligibleNow: 11000, pendingApproval: 7000, blockedManual: 2000, verifiedSavings: 4200, pendingVerification: 3, failedVerification: 1, projectedValuePendingProof: 11200 }
 export const demoPostureSignals = [
   { id: 'governance', label: 'Governance posture', value: '2 approval bottlenecks', href: '/approval-workflows', tone: 'amber' as const },
   { id: 'connectors', label: 'Connector health', value: '4/5 connectors healthy', href: '/connectors', tone: 'amber' as const },
@@ -146,12 +146,12 @@ export const demoExecution = { awaiting:[
   {id:'c4', action:'Datadog retention tier', actor:'system', at:'3d ago', saving:1040, rollback:'Full', certId:'GEC-2026-05-23-DATA-006'},
 ]}
 
-export const demoOutcomes = { stats:[24800,4200,-20600,2,0,1], ledger:[
-  {id:'o1', action:'OpenAI route policy update', projected:11200, verified:4200, evidence:'Evidence-backed', state:'Verified'},
-  {id:'o2', action:'Snowflake auto-suspend', projected:9240, verified:null, evidence:'Evidence-backed', state:'Pending'},
-  {id:'o3', action:'M365 Wave 1 licence reclaim', projected:14280, verified:8400, evidence:'Evidence-backed', state:'Verified'},
-  {id:'o4', action:'Model downgrade GPT-4 → 3.5', projected:1240, verified:null, evidence:'—', state:'Pending'},
-  {id:'o5', action:'Zoom consolidation — Q2', projected:3100, verified:null, evidence:'—', state:'Pending'},
+export const demoOutcomes = { stats:[24800,4200,-20600,3,1,1], ledger:[
+  {id:'o1', action:'OpenAI route policy update', projected:11200, verified:4200, variance:-7000, confidence:'HIGH', evidence:'Available', state:'Verified', verificationStatus:'VERIFIED', verificationAge:'2h old', evidencePack:{ beforeState:{ monthlyCost:11200, routePolicy:'premium-default' }, afterState:{ monthlyCost:7000, routePolicy:'cost-optimised' }, verificationMethod:'Policy telemetry and invoice snapshot', evidenceSources:['Execution timeline','Usage telemetry','Invoice reference'], verificationConfidence:'HIGH', verificationStatus:'VERIFIED', executionTimeline:['Discovery','Recommendation','Approval','Execution','Verification','Outcome'], supportingEvidence:['Before snapshot','After snapshot','Invoice reference'] }},
+  {id:'o2', action:'Snowflake auto-suspend', projected:9240, verified:null, variance:null, confidence:'MEDIUM', evidence:'Available', state:'Pending', verificationStatus:'PENDING', verificationAge:'Pending', evidencePack:{ beforeState:{ warehouses:4, monthlyCost:9240 }, afterState:{ warehouses:4, policy:'auto-suspend pending readback' }, verificationMethod:'Warehouse telemetry readback', evidenceSources:['Execution timeline','Snowflake warehouse snapshot'], verificationConfidence:'MEDIUM', verificationStatus:'PENDING', executionTimeline:['Discovery','Recommendation','Approval','Execution'], supportingEvidence:['Before snapshot'] }},
+  {id:'o3', action:'M365 Wave 1 licence reclaim', projected:14280, verified:8400, variance:-5880, confidence:'HIGH', evidence:'Available', state:'Verified', verificationStatus:'VERIFIED', verificationAge:'1h old', evidencePack:{ beforeState:{ assignedLicenses:47, monthlyCost:3290 }, afterState:{ assignedLicenses:35, monthlyCost:2450 }, verificationMethod:'Graph assignment snapshot and SKU pricing', evidenceSources:['Graph assignment snapshot','Graph post-execution snapshot','SKU pricing reference'], verificationConfidence:'HIGH', verificationStatus:'VERIFIED', executionTimeline:['Discovery','Recommendation','Approval','Execution','Verification','Outcome'], supportingEvidence:['Before snapshot','After snapshot','Pricing reference'] }},
+  {id:'o4', action:'Model downgrade GPT-4 → 3.5', projected:1240, verified:null, variance:null, confidence:'LOW', evidence:'—', state:'Failed', verificationStatus:'FAILED', verificationAge:'4h old', evidencePack:{ beforeState:{}, afterState:{}, verificationMethod:'Expected outcome only', evidenceSources:['Outcome ledger evidence'], verificationConfidence:'LOW', verificationStatus:'FAILED', executionTimeline:['Discovery','Recommendation','Approval','Execution','Verification'], supportingEvidence:['Failure reason: missing usage evidence'] }},
+  {id:'o5', action:'Zoom consolidation — Q2', projected:3100, verified:null, variance:null, confidence:'LOW', evidence:'—', state:'Pending', verificationStatus:'PENDING', verificationAge:'Pending', evidencePack:{ beforeState:{}, afterState:{}, verificationMethod:'Expected outcome only', evidenceSources:['Outcome ledger evidence'], verificationConfidence:'LOW', verificationStatus:'PENDING', executionTimeline:['Discovery','Recommendation'], supportingEvidence:['Awaiting execution readback'] }},
 ]}
 
 export const demoDrift = [
@@ -162,3 +162,172 @@ export const demoDrift = [
 ]
 
 export const demoIntelligence = { funnel:{ identified:76000, eligible:53320, pending:22440, realised:11730 } }
+
+export const demoTrustSummary = {
+  tenantId: 'demo-sandbox-tenant',
+  globalTrustScore: 83,
+  globalTrustBand: 'HIGH' as const,
+  globalTrustLabel: 'High confidence with minor review items',
+  globalTrustReasons: ['Most sources are fresh; ServiceNow requires review.', '4 stale sources and 2 identity conflicts affect readiness.'],
+  executionEligibleValue: 42000,
+  approvalRequiredValue: 18000,
+  blockedByTrustValue: 9000,
+  blockedByPolicyValue: 4000,
+  manualOnlyValue: 2000,
+  trustIssueCount: 13,
+  identityConflictCount: 4,
+  missingOwnerCount: 7,
+  staleSourceCount: 2,
+  connectorDegradedCount: 1,
+  generatedAt: '2026-05-30T09:00:00.000Z',
+}
+
+export const demoConnectorTrust = [
+  { connectorId: 'm365', connectorName: 'M365', platform: 'M365', trustScore: 92, trustBand: 'TRUSTED' as const, trustLabel: 'Trusted for governed execution', trustReasons: ['Identity, license and usage evidence are fresh.'], status: 'TRUSTED', lastSyncAt: '12m ago', freshnessStatus: 'Fresh', identityIssues: 0, missingOwnership: 1, staleRecords: 0, blockedRecommendationCount: 0, affectedValue: 18000 },
+  { connectorId: 'aws', connectorName: 'AWS', platform: 'AWS', trustScore: 88, trustBand: 'HIGH' as const, trustLabel: 'High confidence with minor review items', trustReasons: ['Cost Explorer and inventory evidence are current.'], status: 'HIGH', lastSyncAt: '18m ago', freshnessStatus: 'Fresh', identityIssues: 1, missingOwnership: 1, staleRecords: 0, blockedRecommendationCount: 1, affectedValue: 22000 },
+  { connectorId: 'snowflake', connectorName: 'Snowflake', platform: 'Snowflake', trustScore: 84, trustBand: 'HIGH' as const, trustLabel: 'High confidence with minor review items', trustReasons: ['Warehouse usage evidence is fresh; ownership review remains open.'], status: 'HIGH', lastSyncAt: '25m ago', freshnessStatus: 'Fresh', identityIssues: 0, missingOwnership: 2, staleRecords: 0, blockedRecommendationCount: 0, affectedValue: 15000 },
+  { connectorId: 'servicenow', connectorName: 'ServiceNow', platform: 'ServiceNow', trustScore: 61, trustBand: 'INVESTIGATE' as const, trustLabel: 'Investigate before execution', trustReasons: ['Connector degraded and CMDB ownership evidence is stale.'], status: 'INVESTIGATE', lastSyncAt: '1d ago', freshnessStatus: 'Stale', identityIssues: 3, missingOwnership: 3, staleRecords: 2, blockedRecommendationCount: 3, affectedValue: 18000 },
+]
+
+export const demoTrustFindings = [
+  { findingId: 'tf-identity-1', tenantId: 'demo-sandbox-tenant', findingType: 'IDENTITY_CONFLICT' as const, severity: 'HIGH' as const, entityType: 'USER', entityId: 'u-119', sourceSystem: 'ServiceNow', description: 'Identity Conflict blocks three reclaim recommendations.', affectedRecommendationIds: ['r-1','r-2','r-3'], affectedValue: 12400, status: 'OPEN' as const, remediationHint: 'Resolve Entra-to-CMDB identity mapping.', detectedAt: '2026-05-30T08:00:00.000Z' },
+  { findingId: 'tf-owner-1', tenantId: 'demo-sandbox-tenant', findingType: 'MISSING_OWNER' as const, severity: 'MEDIUM' as const, entityType: 'COST_CENTRE', entityId: 'CC-220', sourceSystem: 'Snowflake', description: 'Missing Owner prevents approval routing.', affectedRecommendationIds: ['r-4'], affectedValue: 7200, status: 'OPEN' as const, remediationHint: 'Assign a cost owner for CC-220.', detectedAt: '2026-05-30T08:10:00.000Z' },
+  { findingId: 'tf-stale-1', tenantId: 'demo-sandbox-tenant', findingType: 'STALE_SOURCE' as const, severity: 'MEDIUM' as const, entityType: 'CONNECTOR', entityId: 'servicenow', sourceSystem: 'ServiceNow', description: 'Stale Source exceeds freshness policy.', affectedRecommendationIds: ['r-5'], affectedValue: 5000, status: 'OPEN' as const, remediationHint: 'Refresh ServiceNow read-only sync.', detectedAt: '2026-05-30T08:20:00.000Z' },
+  { findingId: 'tf-connector-1', tenantId: 'demo-sandbox-tenant', findingType: 'CONNECTOR_DEGRADED' as const, severity: 'MEDIUM' as const, entityType: 'CONNECTOR', entityId: 'servicenow', sourceSystem: 'ServiceNow', description: 'Connector Degraded reduces execution readiness.', affectedRecommendationIds: ['r-6'], affectedValue: 3800, status: 'OPEN' as const, remediationHint: 'Review connector credentials and last sync error.', detectedAt: '2026-05-30T08:30:00.000Z' },
+]
+
+export const demoExecutionReadiness = {
+  executionEligibleValue: 42000,
+  approvalRequiredValue: 18000,
+  blockedByTrustValue: 9000,
+  blockedByPolicyValue: 4000,
+  manualOnlyValue: 2000,
+  breakdown: [
+    { category: 'EXECUTION_ELIGIBLE' as const, label: 'Execution Eligible', value: 42000, recommendationCount: 8, reasons: ['Trust and policy gates cleared.'] },
+    { category: 'APPROVAL_REQUIRED' as const, label: 'Approval Required', value: 18000, recommendationCount: 4, reasons: ['Approver required for blast radius.'] },
+    { category: 'BLOCKED_BY_TRUST' as const, label: 'Blocked By Trust', value: 9000, recommendationCount: 3, reasons: ['Identity and ownership evidence gaps.'] },
+    { category: 'BLOCKED_BY_POLICY' as const, label: 'Blocked By Policy', value: 4000, recommendationCount: 2, reasons: ['Governance policy requires exception.'] },
+    { category: 'MANUAL_ONLY' as const, label: 'Manual Only', value: 2000, recommendationCount: 1, reasons: ['No governed action adapter.'] },
+  ],
+}
+
+export const demoRecommendationExplainability = {
+  '1': { recommendationId: '1', tenantId: 'demo-sandbox-tenant', actionType: 'REMOVE_LICENSE', playbookId: 'M365_INACTIVE_USER_LICENSE_RECLAIM', currentState: 'BLOCKED', readinessState: 'BLOCKED_BY_TRUST', trustBand: 'INVESTIGATE', projectedSavings: 24000, blockedValue: 24000, unlockValue: 24000, explanationSummary: 'Blocked because usage evidence is stale. Resolve this issue to unlock $24,000 projected annual savings.', evidenceChain: [{ step: 'DISCOVERY_SOURCE', label: 'Discovery source', state: 'STALE', evidence: { source: 'M365 / Entra ID' } }, { step: 'READINESS_DECISION', label: 'Readiness decision', state: 'BLOCKED_BY_TRUST', evidence: { reason: 'STALE_SOURCE' } }, { step: 'POLICY_GATE', label: 'Policy gate', state: 'CLEARED', evidence: {} }], trustFindings: [{ findingId: 'tf-stale-identity', findingType: 'STALE_SOURCE', severity: 'MEDIUM', description: 'M365 reclaim blocked by stale identity evidence', affectedValue: 24000, status: 'OPEN' }], policyFindings: [], affectedEntities: [{ entityType: 'USER', entityId: 'u-m365-1', label: 'Inactive M365 user cohort' }], resolutionSteps: [{ blockerType: 'STALE_SOURCE', title: 'Refresh connector sync', description: 'Refresh M365 identity and license sync.', linkTarget: '/connector-ops', unlockValue: 24000, remediationOnly: true }] },
+  '6': { recommendationId: '6', tenantId: 'demo-sandbox-tenant', actionType: 'RECLAIM_COPILOT_LICENSE', playbookId: 'M365_COPILOT_UTILISATION_V1', currentState: 'BLOCKED', readinessState: 'BLOCKED_BY_TRUST', trustBand: 'LOW_CONFIDENCE', projectedSavings: 18000, blockedValue: 18000, unlockValue: 18000, explanationSummary: 'Blocked because usage evidence is stale. Resolve this issue to unlock $18,000 projected annual savings.', evidenceChain: [{ step: 'DISCOVERY_SOURCE', label: 'Discovery source', state: 'PRESENT', evidence: { source: 'M365 usage reports' } }, { step: 'TRUST_SCORE_INPUTS', label: 'Trust score inputs', state: 'LOW_CONFIDENCE', evidence: { usageEvidence: 'STALE' } }, { step: 'READINESS_DECISION', label: 'Readiness decision', state: 'BLOCKED_BY_TRUST', evidence: { reason: 'MISSING_USAGE_EVIDENCE' } }], trustFindings: [{ findingId: 'tf-usage-copilot', findingType: 'MISSING_USAGE_EVIDENCE', severity: 'MEDIUM', description: 'Copilot reclaim blocked by stale usage data', affectedValue: 18000, status: 'OPEN' }], policyFindings: [], affectedEntities: [{ entityType: 'USER', entityId: 'u-copilot-1', label: 'Copilot Wave 2 cohort' }], resolutionSteps: [{ blockerType: 'MISSING_USAGE_EVIDENCE', title: 'Run usage ingestion', description: 'Run Copilot usage ingestion before reclaim.', linkTarget: '/connector-ops', unlockValue: 18000, remediationOnly: true }] },
+  '2': { recommendationId: '2', tenantId: 'demo-sandbox-tenant', actionType: 'RIGHTSIZE_INSTANCE', playbookId: 'AWS_RIGHTSIZE_V1', currentState: 'APPROVAL_REQUIRED', readinessState: 'APPROVAL_REQUIRED', trustBand: 'HIGH', projectedSavings: 84000, blockedValue: 0, unlockValue: 0, explanationSummary: 'Approval required because blast radius is medium and owner evidence is incomplete.', evidenceChain: [{ step: 'DISCOVERY_SOURCE', label: 'Discovery source', state: 'PRESENT', evidence: { source: 'AWS Cost Explorer' } }, { step: 'POLICY_GATE', label: 'Policy gate', state: 'APPROVAL_REQUIRED', evidence: { reason: 'MISSING_OWNER' } }], trustFindings: [{ findingId: 'tf-owner-aws', findingType: 'MISSING_OWNER', severity: 'MEDIUM', description: 'AWS rightsizing blocked by missing owner', affectedValue: 84000, status: 'OPEN' }], policyFindings: [], affectedEntities: [{ entityType: 'ACCOUNT', entityId: 'aws-prod', label: 'AWS production account' }], resolutionSteps: [{ blockerType: 'MISSING_OWNER', title: 'Assign business owner or cost centre', description: 'Assign owner for AWS production account.', linkTarget: '/data-trust?findingType=MISSING_OWNER', unlockValue: 84000, remediationOnly: true }] },
+}
+
+export const demoTrustResolutionFindings = [
+  { findingId: 'tf-identity-1', findingType: 'IDENTITY_CONFLICT', sourceSystem: 'ServiceNow', blockedValue: 12400, affectedRecommendations: [demoRecommendationExplainability['1'], demoRecommendationExplainability['6'], demoRecommendationExplainability['2']].slice(0, 3), resolutionSteps: [{ blockerType: 'IDENTITY_CONFLICT', title: 'Resolve identity match', description: 'Resolve ServiceNow identity mapping across affected recommendations.', linkTarget: '/connector-ops', unlockValue: 12400, remediationOnly: true }] },
+  { findingId: 'tf-owner-1', findingType: 'MISSING_OWNER', sourceSystem: 'Snowflake', blockedValue: 7200, affectedRecommendations: [demoRecommendationExplainability['2']], resolutionSteps: demoRecommendationExplainability['2'].resolutionSteps },
+  { findingId: 'tf-stale-1', findingType: 'STALE_SOURCE', sourceSystem: 'ServiceNow', blockedValue: 5000, affectedRecommendations: [demoRecommendationExplainability['1']], resolutionSteps: demoRecommendationExplainability['1'].resolutionSteps },
+  { findingId: 'tf-connector-1', findingType: 'CONNECTOR_DEGRADED', sourceSystem: 'ServiceNow', blockedValue: 3800, affectedRecommendations: [demoRecommendationExplainability['1'], demoRecommendationExplainability['6']], resolutionSteps: [{ blockerType: 'CONNECTOR_DEGRADED', title: 'Refresh connector sync', description: 'Review connector credentials and rerun sync.', linkTarget: '/connector-ops', unlockValue: 3800, remediationOnly: true }] },
+  { findingId: 'tf-servicenow-multi', findingType: 'IDENTITY_CONFLICT', sourceSystem: 'ServiceNow', blockedValue: 12400, affectedRecommendations: [demoRecommendationExplainability['1'], demoRecommendationExplainability['6'], demoRecommendationExplainability['2']].slice(0, 3), resolutionSteps: [{ blockerType: 'IDENTITY_CONFLICT', title: 'Resolve identity match', description: 'Resolve ServiceNow identity mapping across affected recommendations.', linkTarget: '/connector-ops', unlockValue: 12400, remediationOnly: true }] },
+  { findingId: 'tf-owner-aws', findingType: 'MISSING_OWNER', sourceSystem: 'AWS', blockedValue: 84000, affectedRecommendations: [demoRecommendationExplainability['2']], resolutionSteps: demoRecommendationExplainability['2'].resolutionSteps },
+  { findingId: 'tf-stale-identity', findingType: 'STALE_SOURCE', sourceSystem: 'M365', blockedValue: 24000, affectedRecommendations: [demoRecommendationExplainability['1']], resolutionSteps: demoRecommendationExplainability['1'].resolutionSteps },
+]
+
+
+export const demoTrustResolutionTasks = [
+  { taskId: 'trt-demo-1', tenantId: 'demo-sandbox-tenant', findingId: 'tf-identity-1', affectedRecommendationIds: ['1','6'], taskType: 'IDENTITY_CONFLICT', title: 'Resolve identity match', description: 'Resolve Entra-to-CMDB identity mapping.', owner: 'IAM Team', ownerId: 'iam-team', ownerName: 'IAM Team', ownerType: 'TEAM' as const, assignedAt: '2026-05-27T08:00:00.000Z', status: 'OPEN' as const, priority: 'HIGH' as const, unlockValue: 12400, resolutionHint: 'Resolve identity mapping in Data Trust / Connector Ops.', slaHours: 24, dueAt: '2026-05-28T08:00:00.000Z', slaStatus: 'OVERDUE' as const, escalationLevel: 'MANAGER' as const, escalatedAt: '2026-05-29T08:00:00.000Z', escalationReason: 'Identity conflict exceeded high-priority SLA.', accountabilityStatus: 'ESCALATED' as const, createdAt: '2026-05-27T08:00:00.000Z', updatedAt: '2026-05-29T08:00:00.000Z', resolvedAt: null },
+  { taskId: 'trt-demo-2', tenantId: 'demo-sandbox-tenant', findingId: 'tf-owner-1', affectedRecommendationIds: ['2'], taskType: 'MISSING_OWNER', title: 'Assign business owner', description: 'Assign business owner or cost centre before approval.', owner: 'IT Asset Management', ownerId: 'it-asset-management', ownerName: 'IT Asset Management', ownerType: 'TEAM' as const, assignedAt: '2026-05-28T12:00:00.000Z', status: 'OPEN' as const, priority: 'MEDIUM' as const, unlockValue: 7200, resolutionHint: 'Assign business owner or cost centre.', slaHours: 72, dueAt: '2026-05-31T12:00:00.000Z', slaStatus: 'AT_RISK' as const, escalationLevel: 'NONE' as const, accountabilityStatus: 'AT_RISK' as const, createdAt: '2026-05-28T12:00:00.000Z', updatedAt: '2026-05-28T12:00:00.000Z', resolvedAt: null },
+  { taskId: 'trt-demo-3', tenantId: 'demo-sandbox-tenant', findingId: 'tf-stale-1', affectedRecommendationIds: ['1'], taskType: 'STALE_SOURCE', title: 'Refresh connector sync', description: 'Refresh source sync to restore evidence freshness.', owner: 'Connector Operations', ownerId: 'connector-operations', ownerName: 'Connector Operations', ownerType: 'TEAM' as const, assignedAt: '2026-05-30T06:00:00.000Z', status: 'IN_PROGRESS' as const, priority: 'MEDIUM' as const, unlockValue: 5000, resolutionHint: 'Refresh connector sync.', slaHours: 72, dueAt: '2026-06-02T06:00:00.000Z', slaStatus: 'ON_TRACK' as const, escalationLevel: 'NONE' as const, accountabilityStatus: 'ASSIGNED' as const, createdAt: '2026-05-30T06:00:00.000Z', updatedAt: '2026-05-30T06:00:00.000Z', resolvedAt: null },
+  { taskId: 'trt-demo-4', tenantId: 'demo-sandbox-tenant', findingId: 'tf-connector-1', affectedRecommendationIds: ['1','6'], taskType: 'CONNECTOR_DEGRADED', title: 'Restore ServiceNow connector', description: 'Restore degraded connector before automated execution readiness.', owner: 'Platform Operations', ownerId: 'platform-operations', ownerName: 'Platform Operations', ownerType: 'TEAM' as const, assignedAt: '2026-05-27T03:00:00.000Z', status: 'OPEN' as const, priority: 'HIGH' as const, unlockValue: 3800, resolutionHint: 'Review connector credentials and rerun sync.', slaHours: 24, dueAt: '2026-05-28T03:00:00.000Z', slaStatus: 'OVERDUE' as const, escalationLevel: 'DIRECTOR' as const, escalatedAt: '2026-05-30T03:00:00.000Z', escalationReason: 'Connector degradation remains unresolved.', accountabilityStatus: 'ESCALATED' as const, createdAt: '2026-05-27T03:00:00.000Z', updatedAt: '2026-05-30T03:00:00.000Z', resolvedAt: null },
+]
+
+export const demoVendorIntelligence = {
+  summary: { vendorChangesDetected: 12, highImpact: 3, affectedSpend: 420000, generatedOpportunities: 18 },
+  changes: [
+    { id: 'vc-microsoft-copilot-pricing', vendor: 'MICROSOFT', category: 'LICENSING_CHANGE', title: 'Copilot Pricing Update', description: 'Packaging and pricing update creates reclaim and reallocation review.', effectiveDate: '2026-07-01', sourceUrl: 'https://www.microsoft.com/licensing/news', impactSeverity: 'HIGH', detectedAt: '2026-05-30T08:00:00.000Z', status: 'NEW', affectedSpend: 32000, generatedOpportunityCount: 6, potentialImpact: 28000 },
+    { id: 'vc-aws-graviton-savings', vendor: 'AWS', category: 'PRICE_CHANGE', title: 'New Graviton Savings Opportunity', description: 'New generation improves price-performance for eligible compute.', effectiveDate: '2026-06-15', sourceUrl: 'https://aws.amazon.com/about-aws/whats-new/', impactSeverity: 'MEDIUM', detectedAt: '2026-05-30T09:00:00.000Z', status: 'ASSESSED', affectedSpend: 48000, generatedOpportunityCount: 4, potentialImpact: 6200 },
+    { id: 'vc-snowflake-credit-guidance', vendor: 'SNOWFLAKE', category: 'FEATURE_CHANGE', title: 'Warehouse Credit Optimization Guidance', description: 'Updated credit consumption guidance for bursty analytics workloads.', effectiveDate: '2026-06-05', sourceUrl: 'https://docs.snowflake.com/en/release-notes', impactSeverity: 'MEDIUM', detectedAt: '2026-05-30T10:00:00.000Z', status: 'ASSESSED', affectedSpend: 11000, generatedOpportunityCount: 2, potentialImpact: 1800 },
+  ],
+}
+
+export const demoOpportunities = {
+  summary: { openOpportunities: 32, projectedSavings: 184000, critical: 4, eligible: 18 },
+  opportunities: [
+    { id:'opp-copilot-reclaim', rank:1, source:'TRUST', title:'Copilot Reclaim', description:'Resolve stale usage evidence and reclaim inactive Copilot seats.', domain:'M365', projectedMonthlySavings:18000, trustScore:82, confidenceScore:86, urgency:'CRITICAL', readiness:'APPROVAL_REQUIRED', priorityBand:'CRITICAL', score:96, sourceReferenceId:'tf-copilot-stale-usage', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-aws-rightsizing', rank:2, source:'VENDOR_CHANGE', title:'AWS Rightsizing', description:'New Graviton savings opportunity for eligible compute.', domain:'AWS', projectedMonthlySavings:11000, trustScore:84, confidenceScore:82, urgency:'HIGH', readiness:'ELIGIBLE', priorityBand:'HIGH', score:88, sourceReferenceId:'vc-aws-graviton-savings', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-snowflake-auto-suspend', rank:3, source:'DRIFT', title:'Snowflake Auto Suspend', description:'Auto-suspend settings drifted from verified savings baseline.', domain:'SNOWFLAKE', projectedMonthlySavings:9200, trustScore:80, confidenceScore:79, urgency:'HIGH', readiness:'APPROVAL_REQUIRED', priorityBand:'HIGH', score:84, sourceReferenceId:'drift-snowflake-autosuspend', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-databricks-resize', rank:4, source:'UTILIZATION', title:'Databricks Warehouse Resize', description:'Warehouse utilization supports a smaller size.', domain:'DATABRICKS', projectedMonthlySavings:8200, trustScore:80, confidenceScore:81, urgency:'HIGH', readiness:'ELIGIBLE', priorityBand:'HIGH', score:82, sourceReferenceId:'util-databricks-warehouse', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-e5-rightsizing', rank:5, source:'TRUST', title:'E5 Rightsizing', description:'Unused E5 capabilities indicate downgrade candidates.', domain:'M365', projectedMonthlySavings:7600, trustScore:78, confidenceScore:80, urgency:'HIGH', readiness:'APPROVAL_REQUIRED', priorityBand:'HIGH', score:80, sourceReferenceId:'tf-e5-owner', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-servicenow-shelfware', rank:6, source:'TRUST', title:'ServiceNow Shelfware', description:'Unused ServiceNow fulfiller seats blocked by ownership gaps.', domain:'SERVICENOW', projectedMonthlySavings:6400, trustScore:61, confidenceScore:70, urgency:'HIGH', readiness:'BLOCKED', priorityBand:'MEDIUM', score:68, sourceReferenceId:'tf-servicenow-owner', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-openai-routing', rank:7, source:'UTILIZATION', title:'OpenAI Routing Optimization', description:'Route lower-risk AI runtime calls to lower-cost models.', domain:'AI_RUNTIME', projectedMonthlySavings:5800, trustScore:79, confidenceScore:76, urgency:'MEDIUM', readiness:'ELIGIBLE', priorityBand:'MEDIUM', score:66, sourceReferenceId:'util-openai-routing', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-azure-commit', rank:8, source:'UTILIZATION', title:'Azure Commit Coverage', description:'Uncovered Azure workloads are candidates for commitment review.', domain:'AZURE', projectedMonthlySavings:5100, trustScore:77, confidenceScore:75, urgency:'MEDIUM', readiness:'APPROVAL_REQUIRED', priorityBand:'MEDIUM', score:63, sourceReferenceId:'util-azure-commit', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-m365-owner-cleanup', rank:9, source:'TRUST', title:'M365 Owner Cleanup', description:'Missing cost centres block reclaim opportunities.', domain:'M365', projectedMonthlySavings:4300, trustScore:68, confidenceScore:72, urgency:'MEDIUM', readiness:'BLOCKED', priorityBand:'MEDIUM', score:58, sourceReferenceId:'tf-missing-owner', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-license-drift', rank:10, source:'DRIFT', title:'License Reassignment Drift', description:'Previously reclaimed licenses were reassigned.', domain:'M365', projectedMonthlySavings:3900, trustScore:74, confidenceScore:78, urgency:'MEDIUM', readiness:'APPROVAL_REQUIRED', priorityBand:'MEDIUM', score:56, sourceReferenceId:'drift-license-reassigned', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-salesforce-renewal', rank:11, source:'RENEWAL', title:'Salesforce Renewal True-up', description:'Renewal window exposes shelfware reduction opportunity.', domain:'SALESFORCE', projectedMonthlySavings:3400, trustScore:72, confidenceScore:70, urgency:'MEDIUM', readiness:'MANUAL_ONLY', priorityBand:'MEDIUM', score:52, sourceReferenceId:'renewal-salesforce', createdAt:'2026-05-30T12:00:00.000Z' },
+    { id:'opp-adobe-contract', rank:12, source:'CONTRACT', title:'Adobe Contract Consolidation', description:'Contract terms and retired SKUs support consolidation review.', domain:'M365', projectedMonthlySavings:2400, trustScore:75, confidenceScore:74, urgency:'LOW', readiness:'MANUAL_ONLY', priorityBand:'LOW', score:44, sourceReferenceId:'contract-adobe', createdAt:'2026-05-30T12:00:00.000Z' },
+  ],
+}
+
+export const demoRenewalIntelligence = {
+  summary: { upcomingRenewals: 7, renewalSpend: 2400000, recoverable: 184000, highRisk: 2 },
+  renewals: [
+    { id:'ren-microsoft-e5', vendor:'MICROSOFT', contractName:'Microsoft E5', renewalDate:'2026-08-25', annualSpend:420000, renewalRisk:'HIGH', daysRemaining:87, readiness:{ renewalId:'ren-microsoft-e5', readinessScore:72, wasteIdentified:80287, recoverableSpend:68040, projectedSavings:68040, recommendedActions:7, negotiationLeverage:'HIGH' } },
+    { id:'ren-aws-edp', vendor:'AWS', contractName:'AWS Enterprise Discount Program', renewalDate:'2026-09-27', annualSpend:850000, renewalRisk:'MEDIUM', daysRemaining:120, readiness:{ renewalId:'ren-aws-edp', readinessScore:76, wasteIdentified:90270, recoverableSpend:76500, projectedSavings:76500, recommendedActions:8, negotiationLeverage:'MEDIUM' } },
+    { id:'ren-snowflake', vendor:'SNOWFLAKE', contractName:'Snowflake', renewalDate:'2026-07-11', annualSpend:180000, renewalRisk:'HIGH', daysRemaining:42, readiness:{ renewalId:'ren-snowflake', readinessScore:78, wasteIdentified:16567, recoverableSpend:14040, projectedSavings:14040, recommendedActions:3, negotiationLeverage:'HIGH' } },
+    { id:'ren-servicenow', vendor:'SERVICENOW', contractName:'ServiceNow', renewalDate:'2026-08-01', annualSpend:320000, renewalRisk:'MEDIUM', daysRemaining:63, readiness:{ renewalId:'ren-servicenow', readinessScore:82, wasteIdentified:41536, recoverableSpend:35200, projectedSavings:35200, recommendedActions:4, negotiationLeverage:'MEDIUM' } },
+    { id:'ren-salesforce', vendor:'SALESFORCE', contractName:'Salesforce Sales Cloud', renewalDate:'2026-10-15', annualSpend:260000, renewalRisk:'LOW', daysRemaining:138, readiness:{ renewalId:'ren-salesforce', readinessScore:78, wasteIdentified:21476, recoverableSpend:18200, projectedSavings:18200, recommendedActions:3, negotiationLeverage:'LOW' } },
+    { id:'ren-adobe', vendor:'ADOBE', contractName:'Adobe Enterprise', renewalDate:'2026-11-01', annualSpend:140000, renewalRisk:'LOW', daysRemaining:155, readiness:{ renewalId:'ren-adobe', readinessScore:78, wasteIdentified:9912, recoverableSpend:8400, projectedSavings:8400, recommendedActions:3, negotiationLeverage:'LOW' } },
+    { id:'ren-databricks', vendor:'DATABRICKS', contractName:'Databricks Platform', renewalDate:'2026-12-18', annualSpend:230000, renewalRisk:'MEDIUM', daysRemaining:202, readiness:{ renewalId:'ren-databricks', readinessScore:70, wasteIdentified:23069, recoverableSpend:19550, projectedSavings:19550, recommendedActions:3, negotiationLeverage:'MEDIUM' } },
+  ],
+}
+
+export const demoBenchmarkIntelligence = {
+  summary: { benchmarksEvaluated: 24, highImpactGaps: 6, recoverableValue: 114000, generatedOpportunities: 12 },
+  benchmarks: [
+    { id:'bm-copilot-adoption', category:'COPILOT_ADOPTION', tenantValue:18, benchmarkValue:42, variancePercent:-24, impactLevel:'HIGH', createdAt:'2026-05-30T12:00:00.000Z', opportunity:'Copilot Utilization Campaign', recoverableValue:21600 },
+    { id:'bm-e5-utilization', category:'M365_UTILIZATION', tenantValue:31, benchmarkValue:54, variancePercent:-23, impactLevel:'HIGH', createdAt:'2026-05-30T12:00:00.000Z', opportunity:'M365 Rightsizing Opportunity', recoverableValue:20700 },
+    { id:'bm-snowflake-efficiency', category:'SNOWFLAKE_EFFICIENCY', tenantValue:61, benchmarkValue:78, variancePercent:-17, impactLevel:'HIGH', createdAt:'2026-05-30T12:00:00.000Z', opportunity:'Snowflake Efficiency Opportunity', recoverableValue:15300 },
+    { id:'bm-aws-efficiency', category:'AWS_EFFICIENCY', tenantValue:73, benchmarkValue:84, variancePercent:-11, impactLevel:'MEDIUM', createdAt:'2026-05-30T12:00:00.000Z', opportunity:'AWS Efficiency Opportunity', recoverableValue:5720 },
+    { id:'bm-ai-runtime-efficiency', category:'AI_RUNTIME_EFFICIENCY', tenantValue:64, benchmarkValue:81, variancePercent:-17, impactLevel:'HIGH', createdAt:'2026-05-30T12:00:00.000Z', opportunity:'AI Runtime Cost Efficiency Opportunity', recoverableValue:15300 },
+  ],
+  opportunities: [
+    { id:'opp-benchmark-copilot-adoption', source:'BENCHMARK', title:'Copilot Utilization Campaign', projectedMonthlySavings:1800, domain:'M365' },
+    { id:'opp-benchmark-e5-utilization', source:'BENCHMARK', title:'M365 Rightsizing Opportunity', projectedMonthlySavings:1725, domain:'M365' },
+    { id:'opp-benchmark-snowflake-efficiency', source:'BENCHMARK', title:'Snowflake Efficiency Opportunity', projectedMonthlySavings:1275, domain:'SNOWFLAKE' },
+  ],
+}
+
+export const demoContractIntelligence = {
+  summary: { contracts: 18, atRisk: 4, unusedValue: 240000, generatedOpportunities: 16 },
+  contracts: [
+    { id:'con-microsoft-ea', vendor:'MICROSOFT', contractName:'Microsoft Enterprise Agreement', startDate:'2024-09-01', endDate:'2026-08-31', annualValue:420000, autoRenew:true, commitmentValue:390000, unusedValue:68000, riskLevel:'HIGH', intelligence:{ unusedSpend:68000, commitmentExposure:38000, renewalRisk:'HIGH', priceIncreaseExposure:33600, autoRenewalExposure:63000, trueUpExposure:2400 } },
+    { id:'con-aws-edp', vendor:'AWS', contractName:'AWS EDP', startDate:'2024-10-01', endDate:'2026-09-30', annualValue:850000, autoRenew:false, commitmentValue:780000, unusedValue:104000, riskLevel:'HIGH', intelligence:{ unusedSpend:104000, commitmentExposure:34000, renewalRisk:'HIGH', priceIncreaseExposure:68000, autoRenewalExposure:0, trueUpExposure:5600 } },
+    { id:'con-snowflake', vendor:'SNOWFLAKE', contractName:'Snowflake Commitment', startDate:'2025-01-01', endDate:'2026-12-31', annualValue:180000, autoRenew:true, commitmentValue:160000, unusedValue:22000, riskLevel:'HIGH', intelligence:{ unusedSpend:22000, commitmentExposure:2000, renewalRisk:'HIGH', priceIncreaseExposure:14400, autoRenewalExposure:27000, trueUpExposure:1600 } },
+    { id:'con-adobe', vendor:'ADOBE', contractName:'Adobe Enterprise', startDate:'2025-02-01', endDate:'2027-01-31', annualValue:96000, autoRenew:true, commitmentValue:90000, unusedValue:11000, riskLevel:'HIGH', intelligence:{ unusedSpend:11000, commitmentExposure:5000, renewalRisk:'HIGH', priceIncreaseExposure:7680, autoRenewalExposure:14400, trueUpExposure:480 } },
+  ],
+  opportunities: [
+    { id:'opp-contract-snowflake', source:'CONTRACT', title:'Commitment Optimization Opportunity', projectedMonthlySavings:1833, domain:'SNOWFLAKE' },
+    { id:'opp-contract-microsoft', source:'CONTRACT', title:'Renewal Readiness Opportunity', projectedMonthlySavings:5250, domain:'M365' },
+    { id:'opp-contract-adobe', source:'CONTRACT', title:'License Reclaim Opportunity', projectedMonthlySavings:917, domain:'M365' },
+  ],
+}
+
+export const demoExecutivePriorities = [
+  { priorityId:'prio-copilot-inactive', tenantId:'demo', opportunityId:'opp-copilot-inactive', title:'Inactive Copilot Licences', source:'TRUST', domain:'M365', projectedMonthlySavings:18000, projectedAnnualSavings:216000, trustScore:88, confidenceScore:91, readiness:'ELIGIBLE', riskLevel:'LOW', executionEase:'EASY', timeToRealize:'IMMEDIATE', strategicImportance:'HIGH', executiveScore:94, priorityBand:'CRITICAL', priorityRank:1, rationale:['High projected monthly savings','Ready for execution','Fast time-to-realize'], recommendedNextAction:'Move to execution queue', createdAt:'2026-05-30T12:00:00.000Z' },
+  { priorityId:'prio-snowflake-auto-suspend', tenantId:'demo', opportunityId:'opp-snowflake-auto-suspend', title:'Snowflake Auto Suspend', source:'VENDOR_CHANGE', domain:'SNOWFLAKE', projectedMonthlySavings:9200, projectedAnnualSavings:110400, trustScore:84, confidenceScore:88, readiness:'ELIGIBLE', riskLevel:'LOW', executionEase:'EASY', timeToRealize:'SHORT', strategicImportance:'HIGH', executiveScore:88, priorityBand:'CRITICAL', priorityRank:2, rationale:['Ready for execution','Fast time-to-realize','Strategically important opportunity source'], recommendedNextAction:'Move to execution queue', createdAt:'2026-05-30T12:00:00.000Z' },
+  { priorityId:'prio-aws-rightsizing', tenantId:'demo', opportunityId:'opp-aws-rightsizing', title:'AWS Rightsizing Wave', source:'VENDOR_CHANGE', domain:'AWS', projectedMonthlySavings:11000, projectedAnnualSavings:132000, trustScore:82, confidenceScore:76, readiness:'APPROVAL_REQUIRED', riskLevel:'MEDIUM', executionEase:'MODERATE', timeToRealize:'SHORT', strategicImportance:'HIGH', executiveScore:82, priorityBand:'HIGH', priorityRank:3, rationale:['Approval required but high value','Fast time-to-realize'], recommendedNextAction:'Submit for approval', createdAt:'2026-05-30T12:00:00.000Z' },
+  { priorityId:'prio-microsoft-renewal-cleanup', tenantId:'demo', opportunityId:'opp-microsoft-renewal-cleanup', title:'Microsoft Renewal Cleanup', source:'RENEWAL', domain:'M365', projectedMonthlySavings:5667, projectedAnnualSavings:68000, trustScore:86, confidenceScore:89, readiness:'APPROVAL_REQUIRED', riskLevel:'MEDIUM', executionEase:'MODERATE', timeToRealize:'MEDIUM', strategicImportance:'HIGH', executiveScore:78, priorityBand:'HIGH', priorityRank:4, rationale:['Approval required but high value','Strategically important renewal window'], recommendedNextAction:'Submit for approval', createdAt:'2026-05-30T12:00:00.000Z' },
+  { priorityId:'prio-servicenow-shelfware', tenantId:'demo', opportunityId:'opp-servicenow-shelfware', title:'ServiceNow Shelfware', source:'TRUST', domain:'SERVICENOW', projectedMonthlySavings:7000, projectedAnnualSavings:84000, trustScore:61, confidenceScore:70, readiness:'BLOCKED', riskLevel:'HIGH', executionEase:'MODERATE', timeToRealize:'MEDIUM', strategicImportance:'MEDIUM', executiveScore:52, priorityBand:'MEDIUM', priorityRank:5, rationale:['Blocked by readiness constraints','Scoring dimensions estimated from opportunity source'], recommendedNextAction:'Resolve trust blockers', createdAt:'2026-05-30T12:00:00.000Z' },
+]
+
+export const demoExecutivePrioritySummary = { tenantId:'demo', totalOpportunities:32, topFiveMonthlySavings:67000, topFiveAnnualSavings:804000, readyNowCount:2, approvalRequiredCount:2, blockedCount:1, averageTrustScore:82, confidenceBand:'HIGH', executionReadinessPercent:82, topOpportunityTitle:'Inactive Copilot Licences', topOpportunityValue:18000, summaryNarrative:'If you execute the top 5 opportunities, Certen estimates $67,000/month potential savings with HIGH confidence. 2 of the top 5 are ready now; 2 require approval.', generatedAt:'2026-05-30T12:00:00.000Z' }
+
+export const demoUtilizationIntelligence = {
+  summary: { assetsAnalysed: 4200, unusedValue: 164000, lowUtilization: 184, generatedOpportunities: 46 },
+  records: [
+    { id:'util-copilot', platform:'COPILOT', resourceName:'Copilot', assignedCount:320, activeCount:84, utilizationPercent:26, monthlyCost:21000, wasteEstimate:15000, utilizationBand:'MEDIUM', lastActivityAt:'2026-05-29T10:00:00.000Z', opportunity:'Generate Campaign' },
+    { id:'util-m365-e5', platform:'M365', resourceName:'Microsoft 365 E5', assignedCount:860, activeCount:310, utilizationPercent:36, monthlyCost:49200, wasteEstimate:31500, utilizationBand:'MEDIUM', lastActivityAt:'2026-05-28T10:00:00.000Z', opportunity:'Rightsizing Opportunity' },
+    { id:'util-snowflake', platform:'SNOWFLAKE', resourceName:'Snowflake XL Warehouse', assignedCount:12, activeCount:2, utilizationPercent:17, monthlyCost:18000, wasteEstimate:15000, utilizationBand:'LOW', lastActivityAt:'2026-05-20T10:00:00.000Z', opportunity:'Warehouse Optimization Opportunity' },
+    { id:'util-salesforce', platform:'SALESFORCE', resourceName:'Sales Cloud Enterprise', assignedCount:540, activeCount:260, utilizationPercent:48, monthlyCost:37800, wasteEstimate:19600, utilizationBand:'MEDIUM', lastActivityAt:'2026-05-27T10:00:00.000Z', opportunity:'License Reclaim Opportunity' },
+    { id:'util-adobe', platform:'ADOBE', resourceName:'Adobe Creative Cloud', assignedCount:220, activeCount:0, utilizationPercent:0, monthlyCost:15400, wasteEstimate:15400, utilizationBand:'UNUSED', lastActivityAt:'2026-04-30T10:00:00.000Z', opportunity:'License Reclaim Opportunity' },
+  ],
+  opportunities: [
+    { id:'opp-util-copilot', source:'UTILIZATION', title:'Copilot Reclaim Opportunity', projectedMonthlySavings:15000, domain:'M365' },
+    { id:'opp-util-snowflake', source:'UTILIZATION', title:'Warehouse Optimization Opportunity', projectedMonthlySavings:15000, domain:'SNOWFLAKE' },
+    { id:'opp-util-salesforce', source:'UTILIZATION', title:'License Reclaim Opportunity', projectedMonthlySavings:19600, domain:'SALESFORCE' },
+  ],
+}

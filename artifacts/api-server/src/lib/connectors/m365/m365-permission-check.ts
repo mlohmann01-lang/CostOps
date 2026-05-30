@@ -9,7 +9,7 @@ export type PermissionReadinessResult = {
 
 const minimumRead = ["User.Read.All", "Directory.Read.All"];
 const licenceRead = ["Organization.Read.All", "Directory.Read.All"];
-const activityReadAny = ["AuditLog.Read.All", "Reports.Read.All"];
+const activityReadRequired = ["AuditLog.Read.All", "Reports.Read.All"];
 const writeFutureAny = ["Directory.ReadWrite.All", "User.ReadWrite.All"];
 
 function parseGrantedPermissions(): string[] {
@@ -35,20 +35,17 @@ export async function checkM365PermissionReadiness(): Promise<PermissionReadines
   const granted = parseGrantedPermissions();
   const missingMin = minimumRead.filter((p) => !granted.includes(p));
   const missingLicence = licenceRead.filter((p) => !granted.includes(p));
-  const hasActivity = activityReadAny.some((p) => granted.includes(p));
+  const missingActivity = activityReadRequired.filter((p) => !granted.includes(p));
+  const hasActivity = missingActivity.length === 0;
   const hasWriteFuture = writeFutureAny.some((p) => granted.includes(p));
 
-  const missingRequired = Array.from(new Set([...missingMin, ...missingLicence]));
+  const missingRequired = Array.from(new Set([...missingMin, ...missingLicence, ...missingActivity]));
   const missingOptional = [] as string[];
   const warnings: string[] = [];
 
   let status: PermissionReadinessResult["status"] = "READY";
   if (missingRequired.length > 0) {
     status = "BLOCKED";
-  } else if (!hasActivity) {
-    status = "DEGRADED";
-    missingOptional.push("AuditLog.Read.All OR Reports.Read.All");
-    warnings.push("Missing activity-read permission; usage data may be unavailable");
   }
 
   if (!hasWriteFuture) {
@@ -66,7 +63,7 @@ export async function checkM365PermissionReadiness(): Promise<PermissionReadines
       requiredGroups: {
         MINIMUM_READ: minimumRead,
         LICENCE_READ: licenceRead,
-        ACTIVITY_READ_ANY: activityReadAny,
+        ACTIVITY_READ_REQUIRED: activityReadRequired,
         WRITE_EXECUTION_FUTURE_ANY: writeFutureAny,
       },
       hasActivityPermission: hasActivity,
