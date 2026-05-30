@@ -9,6 +9,7 @@ export type ExecutionReadiness = (typeof EXECUTION_READINESS_STATES)[number];
 export type ReliabilityBand = "LOW" | "MEDIUM" | "HIGH";
 export type SavingsConfidence = "LOW" | "MEDIUM" | "HIGH" | "VERIFIED";
 export type ActionRiskClass = "A" | "B" | "C" | "D";
+export type RecommendationSource = "DISCOVERY" | "TRUST" | "DRIFT" | "VENDOR_CHANGE";
 
 export type GovernedRecommendationObject = {
   recommendationId: string;
@@ -41,6 +42,7 @@ export type GovernedRecommendationObject = {
   executionRequestId?: string | null;
   executionRequestCreatedAt?: string | Date | null;
   executionRequestState?: string | null;
+  recommendationSource?: RecommendationSource;
 };
 
 export type GovernedRecommendationInput = Omit<GovernedRecommendationObject, "executionReadiness" | "readinessReasons" | "blockedReasons" | "requiredApprovals" | "recommendationState" | "createdAt" | "updatedAt"> & {

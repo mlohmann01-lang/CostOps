@@ -6,6 +6,7 @@ import { RecommendationGovernanceEventService } from "../lib/recommendations/gov
 import { RecommendationGovernanceEventRepository } from "../lib/recommendations/governance-event-repository";
 import { prioritizeRecommendations } from "../lib/recommendations/opportunity-prioritizer";
 import { RecommendationApprovalError, RecommendationApprovalService } from "../lib/recommendations/recommendation-approval-service";
+import { RecommendationExplainabilityService } from "../lib/recommendations/recommendation-explainability-service";
 
 const router = Router();
 const repo = new GovernedRecommendationRepository();
@@ -16,6 +17,7 @@ const eventRepo = (eventEnv === "production" || eventEnv === "staging")
   : new RecommendationGovernanceEventRepository({ storageMode: "memory" });
 const eventService = new RecommendationGovernanceEventService(eventRepo);
 const approvalService = new RecommendationApprovalService(repo, eventService);
+const explainabilityService = new RecommendationExplainabilityService(repo);
 const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
 
 const recommendationIdParam = z.object({ recommendationId: z.string().min(1) });
@@ -50,6 +52,23 @@ router.get("/:recommendationId", async (req, res) => {
   const row = await repo.getByRecommendationId(tenant(req), parsed.data.recommendationId);
   if (!row) return res.status(404).json({ error: "NOT_FOUND" });
   return res.json(row);
+});
+
+
+router.get("/:recommendationId/explain", async (req, res) => {
+  const parsed = recommendationIdParam.safeParse(req.params);
+  if (!parsed.success) return res.status(400).json({ error: "INVALID_RECOMMENDATION_ID" });
+  const explanation = await explainabilityService.explain(tenant(req), parsed.data.recommendationId);
+  if (!explanation) return res.status(404).json({ error: "NOT_FOUND" });
+  return res.json(explanation);
+});
+
+router.get("/:recommendationId/resolution", async (req, res) => {
+  const parsed = recommendationIdParam.safeParse(req.params);
+  if (!parsed.success) return res.status(400).json({ error: "INVALID_RECOMMENDATION_ID" });
+  const resolution = await explainabilityService.resolution(tenant(req), parsed.data.recommendationId);
+  if (!resolution) return res.status(404).json({ error: "NOT_FOUND" });
+  return res.json(resolution);
 });
 
 router.post("/:recommendationId/submit-approval", async (req, res) => {

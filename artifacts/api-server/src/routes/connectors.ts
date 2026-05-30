@@ -18,6 +18,7 @@ import { evaluateM365LiveExecutionReadiness } from "../lib/connectors/m365/m365-
 import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recommendation-service";
 import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
 import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
+import { M365_PRODUCTION_FAILURE_MATRIX, M365_PRODUCTION_REQUIRED_SCOPES, buildTenantReadinessReport } from "../lib/connectors/m365/m365-production-validation";
 import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-routes.js";
 
 const router = Router();
@@ -80,7 +81,7 @@ router.post("/:id/sync", async (req, res) => {
 
 router.get("/m365/readiness", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";
-  const required = ["User.Read.All", "Directory.Read.All", "AuditLog.Read.All"];
+  const required = [...M365_PRODUCTION_REQUIRED_SCOPES];
   const checks: Array<{ id: string; label: string; status: string; detail: string }> = [];
   const configured = Boolean(process.env.M365_TENANT_ID && process.env.M365_CLIENT_ID && process.env.M365_CLIENT_SECRET);
   checks.push({ id: "GRAPH_CONFIGURED", label: "Graph configuration", status: configured ? "PASSED" : "FAILED", detail: configured ? "Tenant/client credentials configured." : "Missing M365_TENANT_ID / M365_CLIENT_ID / M365_CLIENT_SECRET." });
@@ -91,11 +92,29 @@ router.get("/m365/readiness", async (req, res) => {
     const readiness = await checkM365PermissionReadiness();
     checks.push({ id: "GRAPH_PERMISSION_READY", label: "Permission readiness", status: readiness.status === "READY" ? "PASSED" : readiness.status === "DEGRADED" ? "WARNING" : "FAILED", detail: readiness.warnings?.join('; ') || "Permission checks completed." });
     const status = readiness.status === "READY" ? "READY" : readiness.status === "DEGRADED" ? "DEGRADED" : "BLOCKED";
-    return res.json({ connectorId: "m365", status, mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: required.filter((p) => !(readiness as any).missingPermissions?.includes?.(p)), missing: (readiness as any).missingPermissions ?? [] }, lastCheckedAt: new Date().toISOString(), canSync: status !== "BLOCKED", canSmokeTest: true, canExecute: false });
+    return res.json({ connectorId: "m365", status, mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: required.filter((p) => !readiness.missingRequired.includes(p)), missing: readiness.missingRequired }, lastCheckedAt: new Date().toISOString(), canSync: status !== "BLOCKED", canSmokeTest: true, canExecute: false });
   } catch {
     checks.push({ id: "TOKEN_ACQUISITION", label: "Token acquisition", status: "FAILED", detail: "Graph token acquisition failed." });
     return res.json({ connectorId: "m365", status: "BLOCKED", mode: "LIVE", capability: "READ_ONLY", tenantId, checks, permissions: { required, detected: [], missing: required }, lastCheckedAt: new Date().toISOString(), canSync: false, canSmokeTest: true, canExecute: false });
   }
+});
+
+
+router.get("/m365/production-validation/readiness-report", async (req, res) => {
+  const grantedScopes = String(process.env.M365_GRAPH_GRANTED_PERMISSIONS ?? "").split(/[\s,]+/).filter(Boolean);
+  const token = await getGraphAccessToken();
+  const graphReachable = Boolean(token.accessToken);
+  const report = buildTenantReadinessReport({
+    tokenAcquired: Boolean(token.accessToken),
+    graphReachable,
+    grantedScopes,
+    errors: token.error ? [token.error] : [],
+  });
+  return res.json({ tenantId: (req.query.tenantId as string) ?? "default", report });
+});
+
+router.get("/m365/production-validation/failure-matrix", (_req, res) => {
+  return res.json({ failureMatrix: M365_PRODUCTION_FAILURE_MATRIX });
 });
 
 router.post("/m365/sync", async (req, res) => {

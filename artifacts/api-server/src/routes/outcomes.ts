@@ -1,18 +1,41 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
-import { outcomeLedgerTable } from "@workspace/db";
-import { desc } from "drizzle-orm";
+import { outcomeLedgerTable, outcomeVerificationsTable } from "@workspace/db";
+import { and, desc, eq } from "drizzle-orm";
 import { buildEconomicProofConsole } from "../lib/outcomes/economic-proof-service";
 import { listOutcomeLedger, outcomeLedgerByPlaybook, outcomeLedgerByState, outcomeLedgerSummary } from "../lib/outcomes/outcome-ledger";
+import { verifyOutcome } from "../lib/outcomes/outcome-verification-engine";
 
 const router = Router();
+
+function tenantIdFrom(req: any) {
+  return String(req.tenantId ?? req.query.tenantId ?? "default");
+}
+
+async function getOutcomeForTenant(outcomeId: string, tenantId: string) {
+  const numeric = Number(outcomeId);
+  const [outcome] = await db.select().from(outcomeLedgerTable).where(and(eq(outcomeLedgerTable.id, numeric), eq(outcomeLedgerTable.tenantId, tenantId))).limit(1);
+  return outcome ?? null;
+}
+
+async function latestVerification(tenantId: string, outcomeLedgerId: number) {
+  const [row] = await db.select().from(outcomeVerificationsTable).where(and(eq(outcomeVerificationsTable.tenantId, tenantId), eq(outcomeVerificationsTable.outcomeLedgerId, outcomeLedgerId))).orderBy(desc(outcomeVerificationsTable.createdAt)).limit(1);
+  return row ?? null;
+}
+
+function verificationAge(createdAt?: Date | null) {
+  if (!createdAt) return null;
+  const hours = Math.max(0, Math.round((Date.now() - createdAt.getTime()) / 36_000) / 100);
+  return { hours, label: hours < 1 ? "just now" : `${hours}h old` };
+}
 
 
 router.get('/ledger', async (req, res) => {
   try {
     const tenantId = String(req.query.tenantId ?? 'default');
     const limit = Math.min(parseInt(String(req.query.limit ?? '100')) || 100, 500);
-    return res.json(await listOutcomeLedger(tenantId, limit));
+    const rows = await listOutcomeLedger(tenantId, limit);
+    return res.json((rows as any[]).map((row) => { const verification = verifyOutcome(row); return { ...row, verificationConfidence: verification.verificationConfidence, verificationStatus: verification.verificationStatus, verifiedMonthlySavings: verification.verifiedMonthlySaving, savingsVariance: verification.varianceAmount, evidencePack: verification.evidencePack, verificationAge: verificationAge(row.executedAt ?? row.createdAt) }; }));
   } catch (err) {
     req.log.error({ err }, 'Error fetching outcome ledger');
     return res.status(500).json({ error: 'Internal server error' });
@@ -54,6 +77,60 @@ router.get('/ledger/proof-console', async (req,res)=>{
   return res.json(await buildEconomicProofConsole(tenantId));
 });
 
+
+router.get('/unverified', async (req, res) => {
+  try {
+    const tenantId = tenantIdFrom(req);
+    const rows = await listOutcomeLedger(tenantId, 500);
+    const pending = [];
+    for (const outcome of rows as any[]) {
+      const result = verifyOutcome(outcome);
+      if (result.verificationStatus !== 'VERIFIED') pending.push({ ...result, outcome });
+    }
+    return res.json({ tenantId, count: pending.length, projectedValuePendingProof: pending.reduce((sum, item) => sum + item.projectedMonthlySaving, 0), verificationFailures: pending.filter((item) => item.verificationStatus === 'FAILED').length, outcomes: pending });
+  } catch (err) {
+    req.log.error({ err }, 'Error listing unverified outcomes');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/:id/evidence', async (req, res) => {
+  const tenantId = tenantIdFrom(req);
+  const outcome = await getOutcomeForTenant(String(req.params.id), tenantId);
+  if (!outcome) return res.status(404).json({ error: 'OUTCOME_NOT_FOUND' });
+  const verification = verifyOutcome(outcome);
+  return res.json(verification.evidencePack);
+});
+
+router.get('/:id/verification', async (req, res) => {
+  const tenantId = tenantIdFrom(req);
+  const outcome = await getOutcomeForTenant(String(req.params.id), tenantId);
+  if (!outcome) return res.status(404).json({ error: 'OUTCOME_NOT_FOUND' });
+  const computed = verifyOutcome(outcome);
+  const persisted = await latestVerification(tenantId, outcome.id);
+  return res.json({ ...computed, persistedVerification: persisted, verificationAge: verificationAge(persisted?.createdAt ?? null) });
+});
+
+router.post('/:id/reverify', async (req, res) => {
+  const tenantId = tenantIdFrom(req);
+  const outcome = await getOutcomeForTenant(String(req.params.id), tenantId);
+  if (!outcome) return res.status(404).json({ error: 'OUTCOME_NOT_FOUND' });
+  const computed = verifyOutcome(outcome);
+  const [record] = await db.insert(outcomeVerificationsTable).values({
+    tenantId,
+    outcomeLedgerId: outcome.id,
+    recommendationId: String(outcome.recommendationId),
+    verificationStatus: computed.verificationStatus,
+    verificationConfidence: computed.verificationConfidence,
+    verificationSource: computed.verificationMethod,
+    projectedMonthlySaving: computed.projectedMonthlySaving,
+    verifiedMonthlySaving: computed.verifiedMonthlySaving,
+    varianceAmount: computed.varianceAmount,
+    variancePct: computed.variancePct,
+    evidence: computed.evidencePack,
+  }).returning();
+  return res.status(201).json({ ...computed, persistedVerification: record, verificationAge: verificationAge(record.createdAt) });
+});
 
 router.get("/", async (req, res) => {
   try {
