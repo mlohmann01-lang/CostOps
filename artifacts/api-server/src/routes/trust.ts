@@ -7,6 +7,7 @@ import { buildConnectorTrustRows, buildTrustSummary } from "../lib/trust/trust-s
 import { GovernedRecommendationRepository } from "../lib/recommendations/recommendation-repository";
 import { RecommendationExplainabilityService } from "../lib/recommendations/recommendation-explainability-service";
 import { TrustResolutionTaskService } from "../lib/trust/trust-resolution-task-service";
+import { platformEventService } from "../lib/events/platform-event-service";
 import type { ConnectorRuntimeSignal, TrustFinding, TrustRecommendation } from "../lib/trust/trust-types";
 
 const router = Router();
@@ -127,6 +128,7 @@ router.post("/tasks/:taskId/assign", async (req, res) => {
   const result = taskService.assign({ tenantId: tenantIdFrom(req), taskId: String(req.params.taskId), ownerId: body.ownerId ? String(body.ownerId) : undefined, ownerName, ownerType });
   if (!result) return res.status(404).json({ error: "TRUST_RESOLUTION_TASK_NOT_FOUND" });
   if ("error" in result) return res.status(409).json({ error: result.error });
+  void platformEventService.recordTrustEvent(tenantIdFrom(req), "TRUST_TASK_STARTED", { entityType: "TRUST_TASK", entityId: String(req.params.taskId), title: "Trust task assigned", description: `Trust task assigned to ${ownerName}`, sourceSystem: "trust-resolution-task-service", metadata: { ownerType } }).catch(() => undefined);
   return res.json(result);
 });
 
@@ -137,6 +139,7 @@ router.post("/tasks/:taskId/escalate", async (req, res) => {
   const result = taskService.escalate({ tenantId: tenantIdFrom(req), taskId: String(req.params.taskId), escalationLevel: requested as any, reason: body.reason ? String(body.reason) : undefined });
   if (!result) return res.status(404).json({ error: "TRUST_RESOLUTION_TASK_NOT_FOUND" });
   if ("error" in result) return res.status(409).json({ error: result.error });
+  void platformEventService.recordTrustEvent(tenantIdFrom(req), "TRUST_TASK_STARTED", { entityType: "TRUST_TASK", entityId: String(req.params.taskId), title: "Trust task escalated", description: body.reason ? String(body.reason) : "Trust task escalated", sourceSystem: "trust-resolution-task-service", metadata: { escalationLevel: requested } }).catch(() => undefined);
   return res.json(result);
 });
 
@@ -145,6 +148,7 @@ router.post("/tasks/:taskId/status", async (req, res) => {
   if (!["OPEN", "IN_PROGRESS", "RESOLVED", "DISMISSED"].includes(status)) return res.status(400).json({ error: "INVALID_TASK_STATUS" });
   const result = taskService.setStatus({ tenantId: tenantIdFrom(req), taskId: String(req.params.taskId), status: status as any });
   if (!result) return res.status(404).json({ error: "TRUST_RESOLUTION_TASK_NOT_FOUND" });
+  void platformEventService.recordTrustEvent(tenantIdFrom(req), status === "RESOLVED" ? "TRUST_TASK_RESOLVED" : "TRUST_TASK_STARTED", { entityType: "TRUST_TASK", entityId: String(req.params.taskId), title: `Trust task ${status.toLowerCase()}`, description: `Trust task status changed to ${status}`, sourceSystem: "trust-resolution-task-service", metadata: { status } }).catch(() => undefined);
   return res.json(result);
 });
 
@@ -156,6 +160,7 @@ router.post("/findings/:findingId/tasks", async (req, res) => {
   if (!finding) return res.status(404).json({ error: "TRUST_FINDING_NOT_FOUND" });
   const body = req.body ?? {};
   const result = taskService.createFromFinding({ tenantId, finding, owner: body.owner ? String(body.owner) : undefined, ownerId: body.ownerId ? String(body.ownerId) : undefined, ownerName: body.ownerName ? String(body.ownerName) : undefined, ownerType: body.ownerType, title: body.title, description: body.description });
+  void platformEventService.recordTrustEvent(tenantId, result.duplicate ? "TRUST_FINDING_CREATED" : "TRUST_TASK_CREATED", { entityType: "TRUST_FINDING", entityId: findingId, title: result.duplicate ? "Trust finding observed" : "Trust task created", description: finding.description, sourceSystem: "trust-resolution-task-service", metadata: { duplicate: result.duplicate, taskId: (result as any).task?.taskId ?? (result as any).taskId } }).catch(() => undefined);
   return res.status(result.duplicate ? 200 : 201).json(result);
 });
 

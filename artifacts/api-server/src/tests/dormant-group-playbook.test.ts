@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { DormantGroupPlaybook } from '../lib/playbooks/m365/dormant-group-playbook'; import { seedM365PlaybookSnapshot } from './m365-playbook-fixture'
+test('dormant group playbook emits manual-review cleanup candidate', async()=>{ const {tenantId,snapshotId}=seedM365PlaybookSnapshot('tenant-group'); const out=await new DormantGroupPlaybook().evaluate(tenantId,snapshotId); assert.ok(out.some(c=>c.entityId==='g-dormant')); assert.ok(out[0].blockers.includes('Manual review required before cleanup')); });

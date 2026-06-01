@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { priorityBand, rankOpportunities, scoreOpportunity } from "../lib/opportunities/opportunity-prioritizer";
 import type { Opportunity } from "../lib/opportunities/opportunity-types";
 
-function opp(id: string, savings: number, urgency: Opportunity["urgency"]): Opportunity { return { id, tenantId: "tenant-a", source: "TRUST", title: id, description: id, domain: "M365", projectedMonthlySavings: savings, trustScore: 80, confidenceScore: 80, urgency, readiness: "ELIGIBLE", sourceReferenceId: id, createdAt: "2026-05-30T00:00:00.000Z" }; }
+function opp(id: string, savings: number, urgency: Opportunity["urgency"]): Opportunity { return { id, tenantId: "tenant-a", source: "TRUST", title: id, description: id, domain: "M365", projectedMonthlySavings: savings, trustScore: 80, confidenceScore: 80, urgency, readiness: "ELIGIBLE", sourceReferenceId: id, projectedAnnualSavings: savings * 12, status: "DISCOVERED", createdAt: "2026-05-30T00:00:00.000Z", updatedAt: "2026-05-30T00:00:00.000Z" }; }
 
 test("scores opportunity using savings, trust, confidence, and urgency", () => {
   const score = scoreOpportunity(opp("critical", 20000, "CRITICAL"));

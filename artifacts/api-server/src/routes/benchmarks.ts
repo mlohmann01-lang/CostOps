@@ -1,10 +1,12 @@
 import { Router } from "express";
 import { benchmarkRecoverableValue } from "../lib/benchmarks/benchmark-engine";
 import { generateBenchmarkOpportunities } from "../lib/benchmarks/benchmark-opportunity-engine";
+import { OpportunityRepository } from "../lib/opportunities/opportunity-repository";
 import { BenchmarkRepository } from "../lib/benchmarks/benchmark-repository";
 
 const router = Router();
 const repo = new BenchmarkRepository();
+const opportunityRepo = new OpportunityRepository();
 
 function tenantIdFrom(req: any) { return String(req.tenantId ?? req.query.tenantId ?? "default"); }
 function summary(benchmarks: ReturnType<BenchmarkRepository["list"]>) {
@@ -25,7 +27,7 @@ router.get("/high-impact", (req, res) => {
 
 router.get("/opportunities", (req, res) => {
   const tenantId = tenantIdFrom(req);
-  return res.json({ tenantId, opportunities: generateBenchmarkOpportunities(repo.list(tenantId)) });
+  return res.json({ tenantId, opportunities: opportunityRepo.getBySource(tenantId, "BENCHMARK") });
 });
 
 router.get("/:id", (req, res) => {

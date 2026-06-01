@@ -3,10 +3,12 @@ import { runDryRun } from "./dry-run";
 import { canExecute } from "../governance/authorization";
 import { buildIdempotencyKey } from "./idempotency";
 import { removeUserLicense } from "./m365-graph-actions";
-import { getApprovalStatus } from "../governance/approval-workflow";
+import { ApprovalAuthorityService } from "../approvals/approval-authority-service";
 import { createPolicyEvaluation, evaluateExecutionPolicy } from "../governance/policy-engine";
 import { evaluateExecutionRuntimeControls } from "../security/runtime-controls";
 import { emitPlatformEvent } from "../observability/platform-events";
+
+const approvalAuthority = new ApprovalAuthorityService();
 
 
 export async function runExecutionEngine(input: { recommendation: any; actorId?: string; tenantId: string; mode: "DRY_RUN" | "APPROVAL_EXECUTE"; mvpMode: boolean }) {
@@ -47,9 +49,9 @@ export async function runExecutionEngine(input: { recommendation: any; actorId?:
 
   if (input.mode === "APPROVAL_EXECUTE" && gateResult.actionRiskProfile?.riskClass === "B") {
     const preApproved = input.recommendation?.approvalStatus === "APPROVED";
-    const approval = preApproved ? { status: "APPROVED" } as any : await getApprovalStatus(String(input.recommendation.id));
-    if (!approval || approval.status !== "APPROVED") {
-      return { allowed: false, executed: false, gate: gateResult.gate, denialReasons: ["APPROVAL_MISSING_OR_NOT_APPROVED"], actionRiskProfile: gateResult.actionRiskProfile, dryRunResult, idempotencyKey, duplicateExecution: false, evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: false, authorizationResult, approvalStatus: approval?.status ?? "MISSING" } };
+    const approval = preApproved ? { approvalState: "APPROVED", sourceSystem: "APPROVAL_WORKFLOW" } as any : await approvalAuthority.getApprovalStatus(input.tenantId, "RECOMMENDATION", String(input.recommendation.id));
+    if (!approval || approval.approvalState !== "APPROVED" || approval.sourceSystem !== "APPROVAL_WORKFLOW") {
+      return { allowed: false, executed: false, gate: gateResult.gate, denialReasons: ["APPROVAL_MISSING_OR_NOT_APPROVED"], actionRiskProfile: gateResult.actionRiskProfile, dryRunResult, idempotencyKey, duplicateExecution: false, evidence: { actorId: input.actorId ?? "", mode: input.mode, gatingPassed: false, authorizationResult, approvalStatus: approval?.approvalState ?? "MISSING", approvalSourceSystem: approval?.sourceSystem ?? "NONE" } };
     }
   }
   const runtimeControl = evaluateExecutionRuntimeControls({ tenantId: input.tenantId, actorId: input.actorId, action, licenseOrTarget: input.recommendation?.licenceSku, connectorStatus: input.recommendation?.connectorStatus, recentRollbackRate: input.recommendation?.recentRollbackRate, anomalySeries: input.recommendation?.runtimeSignals, requireEscalation: gateResult.actionRiskProfile?.riskClass === "B" && input.recommendation?.approvalEscalated !== true });

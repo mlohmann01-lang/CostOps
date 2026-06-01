@@ -4,7 +4,7 @@ import type { WorkspaceContext } from '../types/workspace'
 
 export async function fetchRuntimeEvents(options: { tenantId?: string; signal?: AbortSignal } = {}): Promise<RuntimeEvent[]> {
   const params = options.tenantId ? `?tenantId=${encodeURIComponent(options.tenantId)}` : ''
-  const response = await fetch(`/api/events${params}`, { method: 'GET', signal: options.signal })
+  const response = await fetch(`/api/events/recent${params}`, { method: 'GET', signal: options.signal })
   if (!response.ok) throw new Error(`Runtime events unavailable (${response.status})`)
   const body = await response.json().catch(() => [])
   return normalizeRuntimeEvents(body, { tenantId: options.tenantId })

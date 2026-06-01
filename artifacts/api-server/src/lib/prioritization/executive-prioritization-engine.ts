@@ -14,6 +14,7 @@ const sourceDefaults: Record<OpportunitySource, { strategicImportance: Strategic
   CONTRACT: { strategicImportance: "HIGH", timeToRealize: "SHORT", executionEase: "MODERATE" },
   DRIFT: { strategicImportance: "HIGH", timeToRealize: "IMMEDIATE", executionEase: "EASY" },
   UTILIZATION: { strategicImportance: "MEDIUM", timeToRealize: "SHORT", executionEase: "EASY" },
+  M365_PLAYBOOK: { strategicImportance: "HIGH", timeToRealize: "SHORT", executionEase: "MODERATE" },
 };
 
 function clamp(score: number) { return Math.max(0, Math.min(100, Math.round(score))); }

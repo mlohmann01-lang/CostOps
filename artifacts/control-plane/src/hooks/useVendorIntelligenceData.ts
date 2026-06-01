@@ -4,37 +4,52 @@ import { liveFetch, normalizeApiError } from '../lib/liveApi'
 import { useWorkspace } from '../lib/workspaceContext'
 
 export const vendorChangeApiPaths = ['/api/vendor-changes', '/api/vendor-changes/high-impact']
+export const vendorChangePipelineApiPaths = ['/api/vendor-changes/signals', '/api/vendor-changes/pipeline/health', '/api/vendor-changes/signals/ingest', '/api/vendor-changes/:id/promote-to-opportunity']
+const legacyVendorOpportunityPath = '/generate-opportunities'
+const empty = { summary: { vendorChangesDetected: 0, highImpact: 0, affectedSpend: 0, generatedOpportunities: 0 }, changes: [], highImpactChanges: [], signals: [], pipelineHealth: {}, impacts: {}, opportunityPipeline: {} }
 
 export function useVendorIntelligenceData() {
   const workspace = useWorkspace()
-  const [data, setData] = useState<any>({ summary: { vendorChangesDetected: 0, highImpact: 0, affectedSpend: 0, generatedOpportunities: 0 }, changes: [], highImpactChanges: [] })
+  const [data, setData] = useState<any>(empty)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const demo = useMemo(() => ({ ...demoVendorIntelligence, highImpactChanges: demoVendorIntelligence.changes.filter((change: any) => change.impactSeverity === 'HIGH' || change.impactSeverity === 'CRITICAL') }), [])
 
   const refresh = useCallback(async () => {
     if (workspace.mode === 'demo') return demo
-    if (!workspace.dataReady) { setData({ summary: { vendorChangesDetected: 0, highImpact: 0, affectedSpend: 0, generatedOpportunities: 0 }, changes: [], highImpactChanges: [] }); setError(null); return null }
+    if (!workspace.dataReady) { setData(empty); setError(null); return null }
     setLoading(true)
     try {
-      const [all, high] = await Promise.all([liveFetch<any>('/api/vendor-changes'), liveFetch<any>('/api/vendor-changes/high-impact')])
-      const next = { summary: all.summary ?? {}, changes: all.changes ?? [], highImpactChanges: high.changes ?? [] }
+      const [all, high, signals, health] = await Promise.all([liveFetch<any>('/api/vendor-changes'), liveFetch<any>('/api/vendor-changes/high-impact'), liveFetch<any>('/api/vendor-changes/signals'), liveFetch<any>('/api/vendor-changes/pipeline/health')])
+      const next = { summary: all.summary ?? {}, changes: all.changes ?? [], highImpactChanges: high.changes ?? [], signals: signals.signals ?? [], pipelineHealth: health ?? {}, impacts: {}, opportunityPipeline: {} }
       setData(next); setError(null); return next
-    } catch (err) { setData({ summary: { vendorChangesDetected: 0, highImpact: 0, affectedSpend: 0, generatedOpportunities: 0 }, changes: [], highImpactChanges: [] }); setError(normalizeApiError(err)); return null }
+    } catch (err) { setData(empty); setError(normalizeApiError(err)); return null }
     finally { setLoading(false) }
   }, [workspace.mode, workspace.dataReady, demo])
 
   useEffect(() => { void refresh() }, [refresh])
 
+  const ingestSignal = useCallback(async (payload?: any) => {
+    if (workspace.mode === 'demo') return { signal: demo.signals?.[0], change: demo.changes[0] }
+    return liveFetch('/api/vendor-changes/signals/ingest', { method: 'POST', body: JSON.stringify(payload ?? { vendor: 'MICROSOFT', sourceType: 'MANUAL', sourceUrl: 'manual://vendor-signal', title: 'Manual vendor signal', rawText: 'Manual vendor signal for classification' }) })
+  }, [workspace.mode, demo])
+
+  const classifyChange = useCallback(async (id: string) => {
+    if (workspace.mode === 'demo') return { change: demo.changes.find((change: any) => change.id === id) }
+    return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/classify`, { method: 'POST' })
+  }, [workspace.mode, demo])
+
   const assessChange = useCallback(async (id: string) => {
-    if (workspace.mode === 'demo') return { impact: demo.changes.find((change: any) => change.id === id) }
+    if (workspace.mode === 'demo') return { impact: demo.impacts?.[id] ?? demo.changes.find((change: any) => change.id === id) }
     return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/assess`, { method: 'POST' })
   }, [workspace.mode, demo])
 
-  const generateOpportunities = useCallback(async (id: string) => {
-    if (workspace.mode === 'demo') return { opportunities: demo.changes.filter((change: any) => change.id === id).map((change: any) => ({ opportunityId: `demo-${change.id}`, recommendationSource: 'VENDOR_CHANGE', title: `${change.title} opportunity` })) }
-    return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/generate-opportunities`, { method: 'POST' })
+  const promoteToOpportunity = useCallback(async (id: string) => {
+    if (workspace.mode === 'demo') return { opportunities: demo.opportunityPipeline?.[id]?.opportunities ?? [{ opportunityId: `demo-${id}`, recommendationSource: 'VENDOR_CHANGE', title: `${id} opportunity` }] }
+    return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/promote-to-opportunity`, { method: 'POST' })
   }, [workspace.mode, demo])
 
-  return { data: workspace.mode === 'demo' ? demo : data, loading, error, isEmptyLive: workspace.mode === 'live' && (!workspace.dataReady || data.changes.length === 0), refresh, assessChange, generateOpportunities }
+  const generateOpportunities = promoteToOpportunity
+
+  return { data: workspace.mode === 'demo' ? demo : data, loading, error, isEmptyLive: workspace.mode === 'live' && (!workspace.dataReady || data.changes.length === 0), refresh, ingestSignal, classifyChange, assessChange, promoteToOpportunity, generateOpportunities }
 }

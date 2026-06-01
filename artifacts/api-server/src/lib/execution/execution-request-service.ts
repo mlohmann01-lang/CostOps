@@ -52,7 +52,8 @@ export class ExecutionRequestService {
     return /M365|COPILOT|LICENSE/i.test(playbookId) ? "M365" : "UNKNOWN";
   }
 
-  async createFromApprovedWorkflow(workflow: ApprovalWorkflow, actorId = "approval-workflow") {
+  async createFromApprovedWorkflow(workflow: ApprovalWorkflow, actorId = "approval-workflow", sourceSystem: "APPROVAL_WORKFLOW" | "LEGACY_APPROVAL_REQUEST" = "APPROVAL_WORKFLOW") {
+    if (sourceSystem !== "APPROVAL_WORKFLOW") return null;
     if (workflow.approvalState !== "APPROVED" || workflow.targetType !== "RECOMMENDATION") return null;
     const recommendation = await this.recommendationRepo.getByRecommendationId(workflow.tenantId, workflow.targetId);
     if (!recommendation) return null;

@@ -17,14 +17,14 @@ export default function ApprovalWorkflowsView() {
   const approveLive = async (workflowId: string, stage = '', approver = 'OWNER') => {
     setNotice(''); setLiveError('')
     try {
-      await liveFetch(`/api/approval-workflows/${encodeURIComponent(workflowId)}/approve`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ actorId: `operator-${String(stage).toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'approval'}`, actorRoles: String(approver).split(',').map((role) => role.trim()).filter(Boolean) }) })
+      await liveFetch(`/api/approval-authority/workflows/${encodeURIComponent(workflowId)}/approve`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ actorId: `operator-${String(stage).toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'approval'}`, actorRoles: String(approver).split(',').map((role) => role.trim()).filter(Boolean) }) })
       setNotice('Approval granted')
       broadcastLiveReadRefresh()
       await refresh()
     } catch (err) { setLiveError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) }
   }
   return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Approval Workflows</h1>{notice && <div role='status'>{notice}</div>}{liveError && <div role='alert'>{liveError}</div>}<div className='text-sm'>Pending {data.summary.pending} · Approved today {data.summary.approvedToday} · Escalated {data.summary.escalated}</div>
-    <h2 className='font-medium'>Pending approvals</h2>{data.pending.map((p:any)=><div key={p.id} className='border rounded p-2 text-sm'>{p.item} · stage {p.stage} · approver {p.approver} · {p.sla} · {workspace.mode === 'demo' ? <><button onClick={() => simulateApprove(p.actionId ?? p.item)}>Simulate approval</button> <button onClick={() => simulateRejectApproval(p.actionId ?? p.item)}>Reject</button></> : <button onClick={() => approveLive(p.id, p.stage, p.approver)}>Approve</button>}</div>)}
+    <div className='text-xs text-muted-foreground'>Approval authority: Workflow</div><h2 className='font-medium'>Pending approvals</h2>{data.pending.map((p:any)=><div key={p.id} className='border rounded p-2 text-sm'>{p.item} · state PENDING · stage {p.stage} · approver {p.approver} · {p.sla} · {workspace.mode === 'demo' ? <><button onClick={() => simulateApprove(p.actionId ?? p.item)}>Simulate approval</button> <button onClick={() => simulateRejectApproval(p.actionId ?? p.item)}>Reject</button></> : <button onClick={() => approveLive(p.id, p.stage, p.approver)}>Approve</button>}</div>)}
     <h2 className='font-medium'>History</h2>{data.history.map((h:any)=><div key={h.id} className='border rounded p-2 text-sm'>{h.item} · {h.result} · {h.approver}</div>)}
   </div></Layout>
 }

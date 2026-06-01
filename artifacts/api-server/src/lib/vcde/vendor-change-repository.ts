@@ -30,9 +30,24 @@ export class VendorChangeRepository {
   get(tenantId: string, id: string) { return this.list(tenantId).find((event) => event.id === id) ?? null; }
 
   upsert(tenantId: string, event: VendorChangeEvent & Partial<Pick<StoredVendorChangeEvent, "status" | "affectedSpend" | "generatedOpportunityCount">>) {
-    const stored: StoredVendorChangeEvent = { ...event, tenantId, status: event.status ?? "NEW", affectedSpend: event.affectedSpend ?? 0, generatedOpportunityCount: event.generatedOpportunityCount ?? 0 };
-    VendorChangeRepository.changes.set(this.key(tenantId, event.id), stored);
+    const existing = this.findDuplicate(tenantId, event);
+    const id = existing?.id ?? event.id;
+    const stored: StoredVendorChangeEvent = { ...existing, ...event, id, tenantId, status: event.status ?? existing?.status ?? "NEW", affectedSpend: event.affectedSpend ?? existing?.affectedSpend ?? 0, generatedOpportunityCount: event.generatedOpportunityCount ?? existing?.generatedOpportunityCount ?? 0 };
+    VendorChangeRepository.changes.set(this.key(tenantId, id), stored);
     return stored;
+  }
+
+  findDuplicate(tenantId: string, event: Pick<VendorChangeEvent, "vendor" | "category" | "title" | "effectiveDate"> & { hash?: string }) {
+    const normalizedTitle = event.title.trim().toLowerCase();
+    return this.list(tenantId).find((row) => row.vendor === event.vendor && row.category === event.category && row.effectiveDate === event.effectiveDate && ((event.hash && row.hash === event.hash) || row.title.trim().toLowerCase() === normalizedTitle)) ?? null;
+  }
+
+  update(tenantId: string, id: string, patch: Partial<StoredVendorChangeEvent>) {
+    const event = this.get(tenantId, id);
+    if (!event) return null;
+    const updated = { ...event, ...patch };
+    VendorChangeRepository.changes.set(this.key(tenantId, id), updated);
+    return updated;
   }
 
   setStatus(tenantId: string, id: string, status: VendorChangeStatus) {

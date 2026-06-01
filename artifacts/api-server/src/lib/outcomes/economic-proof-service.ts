@@ -1,24 +1,31 @@
-import { outcomeLedgerByPlaybook, outcomeLedgerByState, outcomeLedgerSummary } from './outcome-ledger';
+import { outcomeLedgerByPlaybook, outcomeLedgerByState } from './outcome-ledger'
+import { outcomeProofService } from './outcome-proof-service'
 
 export async function buildEconomicProofConsole(tenantId: string) {
-  const [summary, byPlaybook, byState] = await Promise.all([
-    outcomeLedgerSummary(tenantId),
+  const [summary, byPlaybook, byState, proofs] = await Promise.all([
+    outcomeProofService.getSummary(tenantId),
     outcomeLedgerByPlaybook(tenantId),
     outcomeLedgerByState(tenantId),
-  ]);
+    outcomeProofService.listProofs(tenantId, { limit: 100 }),
+  ])
   return {
+    proofAuthority: 'OUTCOME_PROOF_AUTHORITY',
     proofLanguage: [
-      'Verified savings',
       'Projected savings',
+      'Approved savings',
+      'Executed savings',
+      'Verified savings',
+      'Retained savings',
+      'Protected savings',
       'Savings variance',
-      'Evidence-backed',
+      'Evidence-backed lifecycle',
       'Verification failed',
       'Drift detected',
-      'Pending verification',
       'Governance-controlled outcome',
     ],
     summary,
+    proofs,
     byPlaybook,
     byState,
-  };
+  }
 }

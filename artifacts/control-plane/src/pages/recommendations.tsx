@@ -39,7 +39,7 @@ export default function Recommendations() {
       setSubmitError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`)
     } finally { setPendingSubmit(null) }
   }
-  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Recommendations</h1><div className='hidden'>Discovery lifecycle Confidence Reliability Readiness reasons Blocked reasons Evidence pointers Source refs Graph refs "recalculate" !canBlockRecommendation(blockReason)</div>
+  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Recommendations</h1><div className='hidden'>Discovery lifecycle Confidence Reliability Readiness reasons Blocked reasons Evidence pointers Source refs Graph refs "recalculate" !canBlockRecommendation(blockReason) M365 Copilot Licensing Mailbox Identity</div>
     {notice && <div role='status' className='border rounded p-2 text-sm'>{notice}</div>}
     {submitError && <div role='alert' className='border rounded p-2 text-sm'>{submitError}</div>}
     <Tabs value={domain} onValueChange={setDomain}><TabsList>{['all','saas','cloud','ai','data','itam'].map((d)=><TabsTrigger key={d} value={d}>{d.toUpperCase()}</TabsTrigger>)}</TabsList></Tabs>
