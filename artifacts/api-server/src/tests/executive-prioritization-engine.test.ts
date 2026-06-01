@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { prioritizeExecutiveOpportunities } from "../lib/prioritization/executive-prioritization-engine";
 import type { Opportunity } from "../lib/opportunities/opportunity-types";
 
-const base: Opportunity = { id: "base", tenantId: "t1", source: "UTILIZATION", title: "Base", description: "Base", domain: "M365", projectedMonthlySavings: 1000, trustScore: 80, confidenceScore: 80, urgency: "MEDIUM", readiness: "ELIGIBLE", sourceReferenceId: "src", createdAt: "2026-05-30T12:00:00.000Z" };
+const base: Opportunity = { id: "base", tenantId: "t1", source: "UTILIZATION", title: "Base", description: "Base", domain: "M365", projectedMonthlySavings: 1000, trustScore: 80, confidenceScore: 80, urgency: "MEDIUM", readiness: "ELIGIBLE", sourceReferenceId: "src", projectedAnnualSavings: 12000, status: "DISCOVERED", createdAt: "2026-05-30T12:00:00.000Z", updatedAt: "2026-05-30T12:00:00.000Z" };
 
 test("scoring uses value, readiness, trust, confidence, strategic importance, ease, and time", () => {
   const priorities = prioritizeExecutiveOpportunities([{ ...base, id: "a", title: "High value", projectedMonthlySavings: 10000, readiness: "ELIGIBLE", trustScore: 90, confidenceScore: 90, source: "DRIFT" }, { ...base, id: "b", title: "Low value", projectedMonthlySavings: 1000, readiness: "MANUAL_ONLY", trustScore: 55, confidenceScore: 65, source: "BENCHMARK" }]);

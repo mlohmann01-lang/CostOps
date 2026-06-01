@@ -1,11 +1,12 @@
 import { Router } from "express";
 import { summarizeRenewals, buildRenewalIntelligenceRow } from "../lib/renewals/renewal-intelligence-engine";
-import { generateRenewalOpportunities } from "../lib/renewals/renewal-opportunity-engine";
+import { OpportunityRepository } from "../lib/opportunities/opportunity-repository";
 import { RenewalRepository } from "../lib/renewals/renewal-repository";
 import { calculateRenewalReadiness } from "../lib/renewals/renewal-readiness-engine";
 
 const router = Router();
 const repo = new RenewalRepository();
+const opportunities = new OpportunityRepository();
 
 function tenantIdFrom(req: any) { return String(req.tenantId ?? req.query.tenantId ?? "default"); }
 function notFound(res: any) { return res.status(404).json({ error: "RENEWAL_NOT_FOUND" }); }
@@ -36,7 +37,7 @@ router.get("/:id/readiness", (req, res) => {
   const renewal = repo.getById(tenantIdFrom(req), String(req.params.id));
   if (!renewal) return notFound(res);
   const readiness = calculateRenewalReadiness(renewal);
-  return res.json({ ...readiness, opportunities: generateRenewalOpportunities(renewal, readiness) });
+  return res.json({ ...readiness, opportunities: opportunities.getBySource(tenantIdFrom(req), "RENEWAL").filter((opportunity) => opportunity.sourceReferenceId === renewal.id) });
 });
 
 export default router;

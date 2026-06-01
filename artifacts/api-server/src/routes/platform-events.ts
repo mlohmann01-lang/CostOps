@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, platformEventsTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { platformEventService } from "../lib/events/platform-event-service";
 const router = Router();
-router.get("/", async (req,res)=>res.json(await db.select().from(platformEventsTable).where(eq(platformEventsTable.tenantId, (req.query.tenantId as string) ?? "default")).orderBy(desc(platformEventsTable.createdAt)).limit(200)));
+const tenant = (req:any)=>String(req.tenantId ?? req.query.tenantId ?? req.header('x-tenant-id') ?? 'default');
+router.get("/", async (req,res)=>res.json(await platformEventService.listEvents(tenant(req), { limit: Number(req.query.limit ?? 200) })));
 export default router;

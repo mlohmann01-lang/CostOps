@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { analyzeContract, buildContractIntelligenceRow, summarizeContracts } from "../lib/contracts/contract-intelligence-engine";
-import { generateContractOpportunities } from "../lib/contracts/contract-opportunity-engine";
+import { OpportunityRepository } from "../lib/opportunities/opportunity-repository";
 import { ContractRepository } from "../lib/contracts/contract-repository";
 
 const router = Router();
 const repo = new ContractRepository();
+const opportunities = new OpportunityRepository();
 
 function tenantIdFrom(req: any) { return String(req.tenantId ?? req.query.tenantId ?? "default"); }
 
@@ -21,8 +22,7 @@ router.get("/high-risk", (req, res) => {
 
 router.get("/opportunities", (req, res) => {
   const tenantId = tenantIdFrom(req);
-  const opportunities = repo.list(tenantId).flatMap((contract) => generateContractOpportunities(contract, analyzeContract(contract)));
-  return res.json({ tenantId, opportunities });
+  return res.json({ tenantId, opportunities: opportunities.getBySource(tenantId, "CONTRACT") });
 });
 
 router.get("/:id", (req, res) => {

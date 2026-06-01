@@ -21,7 +21,7 @@ test('timeline sorts deterministically and tenant/entity filtering works + no mu
   const c = normalizeApprovalWorkflowEvent({ tenantId:'t2', workflowId:'wf1', eventType:'APPROVAL_GRANTED', at:'2026-01-01T00:00:03.000Z' });
   appendUnifiedEvent(a); appendUnifiedEvent(b); appendUnifiedEvent(c);
   const t1 = listUnifiedEvents('t1');
-  assert.equal(t1[0].eventType, 'APPROVAL_GRANTED');
+  assert.equal(t1[0].eventType, 'APPROVAL_APPROVED');
   const entity = getEntityTimeline('t1','APPROVAL_WORKFLOW','wf1');
   assert.equal(entity.length>=2, true);
   assert.equal(listUnifiedEvents('t2').length>=1, true);

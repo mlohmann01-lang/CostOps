@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { buildEconomicProofConsole } from "../lib/outcomes/economic-proof-service";
 import { listOutcomeLedger, outcomeLedgerByPlaybook, outcomeLedgerByState, outcomeLedgerSummary } from "../lib/outcomes/outcome-ledger";
 import { verifyOutcome } from "../lib/outcomes/outcome-verification-engine";
+import { outcomeProofService } from "../lib/outcomes/outcome-proof-service";
 
 const router = Router();
 
@@ -29,13 +30,53 @@ function verificationAge(createdAt?: Date | null) {
   return { hours, label: hours < 1 ? "just now" : `${hours}h old` };
 }
 
+router.get('/proof/summary', async (req, res) => {
+  try {
+    const tenantId = tenantIdFrom(req);
+    return res.json(await outcomeProofService.getSummary(tenantId));
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching outcome proof summary');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/proof', async (req, res) => {
+  try {
+    const tenantId = tenantIdFrom(req);
+    const proofs = await outcomeProofService.listProofs(tenantId, {
+      proofState: req.query.proofState as any,
+      recommendationId: req.query.recommendationId ? String(req.query.recommendationId) : undefined,
+      opportunityId: req.query.opportunityId ? String(req.query.opportunityId) : undefined,
+      executionRequestId: req.query.executionRequestId ? String(req.query.executionRequestId) : undefined,
+      executionResultId: req.query.executionResultId ? String(req.query.executionResultId) : undefined,
+      verificationId: req.query.verificationId ? String(req.query.verificationId) : undefined,
+      limit: Number(req.query.limit ?? 200),
+    });
+    return res.json({ tenantId, proofs, outcomes: proofs });
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching outcome proofs');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.get('/proof/:outcomeId', async (req, res) => {
+  try {
+    const tenantId = tenantIdFrom(req);
+    const proof = await outcomeProofService.getProof(tenantId, String(req.params.outcomeId));
+    if (!proof) return res.status(404).json({ error: 'OUTCOME_PROOF_NOT_FOUND' });
+    return res.json(proof);
+  } catch (err) {
+    req.log.error({ err }, 'Error fetching outcome proof');
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 router.get('/ledger', async (req, res) => {
   try {
     const tenantId = String(req.query.tenantId ?? 'default');
     const limit = Math.min(parseInt(String(req.query.limit ?? '100')) || 100, 500);
     const rows = await listOutcomeLedger(tenantId, limit);
-    return res.json((rows as any[]).map((row) => { const verification = verifyOutcome(row); return { ...row, verificationConfidence: verification.verificationConfidence, verificationStatus: verification.verificationStatus, verifiedMonthlySavings: verification.verifiedMonthlySaving, savingsVariance: verification.varianceAmount, evidencePack: verification.evidencePack, verificationAge: verificationAge(row.executedAt ?? row.createdAt) }; }));
+    return res.json((rows as any[]).map((row) => ({ ...row, verificationConfidence: row.proof?.confidenceBand ?? row.savingConfidence, verificationStatus: row.proof?.proofState ?? row.executionStatus, verifiedMonthlySavings: row.proof?.verifiedMonthlySavings ?? row.evidence?.verifiedSaving ?? 0, savingsVariance: row.proof?.savingsVarianceMonthly ?? 0, evidencePack: { sourceOfTruth: 'OUTCOME_PROOF_AUTHORITY', evidenceSummary: row.proof?.evidenceSummary, proofTimeline: row.proof?.proofTimeline, supportingEvidence: row.evidence }, verificationAge: verificationAge(row.executedAt ?? row.createdAt) })));
   } catch (err) {
     req.log.error({ err }, 'Error fetching outcome ledger');
     return res.status(500).json({ error: 'Internal server error' });
@@ -81,13 +122,9 @@ router.get('/ledger/proof-console', async (req,res)=>{
 router.get('/unverified', async (req, res) => {
   try {
     const tenantId = tenantIdFrom(req);
-    const rows = await listOutcomeLedger(tenantId, 500);
-    const pending = [];
-    for (const outcome of rows as any[]) {
-      const result = verifyOutcome(outcome);
-      if (result.verificationStatus !== 'VERIFIED') pending.push({ ...result, outcome });
-    }
-    return res.json({ tenantId, count: pending.length, projectedValuePendingProof: pending.reduce((sum, item) => sum + item.projectedMonthlySaving, 0), verificationFailures: pending.filter((item) => item.verificationStatus === 'FAILED').length, outcomes: pending });
+    const proofs = await outcomeProofService.listProofs(tenantId, { limit: 500 });
+    const pending = proofs.filter((proof) => !proof.evidenceSummary.hasVerificationEvidence || proof.proofState === 'FAILED');
+    return res.json({ tenantId, count: pending.length, projectedValuePendingProof: pending.reduce((sum, proof) => sum + proof.projectedMonthlySavings, 0), verificationFailures: pending.filter((proof) => proof.proofState === 'FAILED').length, outcomes: pending });
   } catch (err) {
     req.log.error({ err }, 'Error listing unverified outcomes');
     return res.status(500).json({ error: 'Internal server error' });
@@ -96,6 +133,8 @@ router.get('/unverified', async (req, res) => {
 
 router.get('/:id/evidence', async (req, res) => {
   const tenantId = tenantIdFrom(req);
+  const proof = await outcomeProofService.getProof(tenantId, String(req.params.id));
+  if (proof) return res.json({ sourceOfTruth: 'OUTCOME_PROOF_AUTHORITY', evidenceSummary: proof.evidenceSummary, proofTimeline: proof.proofTimeline, evidencePackId: proof.evidencePackId });
   const outcome = await getOutcomeForTenant(String(req.params.id), tenantId);
   if (!outcome) return res.status(404).json({ error: 'OUTCOME_NOT_FOUND' });
   const verification = verifyOutcome(outcome);
@@ -129,34 +168,15 @@ router.post('/:id/reverify', async (req, res) => {
     variancePct: computed.variancePct,
     evidence: computed.evidencePack,
   }).returning();
+  await outcomeProofService.projectFromVerification(tenantId, { ...record, outcomeId: String(outcome.id), recommendationId: String(outcome.recommendationId), verificationStatus: computed.verificationStatus, verificationConfidence: computed.verificationConfidence, projectedMonthlySaving: computed.projectedMonthlySaving, verifiedMonthlySaving: computed.verifiedMonthlySaving, varianceAmount: computed.varianceAmount });
   return res.status(201).json({ ...computed, persistedVerification: record, verificationAge: verificationAge(record.createdAt) });
 });
 
 router.get("/", async (req, res) => {
   try {
-    const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
-    const rows = await db
-      .select()
-      .from(outcomeLedgerTable)
-      .orderBy(desc(outcomeLedgerTable.createdAt))
-      .limit(limit);
-    return res.json(
-      rows.map((o) => ({
-        id: o.id,
-        recommendationId: o.recommendationId,
-        userEmail: o.userEmail,
-        displayName: o.displayName,
-        action: o.action,
-        licenceSku: o.licenceSku,
-        monthlySaving: o.monthlySaving,
-        annualisedSaving: o.annualisedSaving,
-        executionMode: o.executionMode,
-        evidence: o.evidence,
-        approvedAt: o.approvedAt ? o.approvedAt.toISOString() : null,
-        executedAt: o.executedAt ? o.executedAt.toISOString() : null,
-        createdAt: o.createdAt.toISOString(),
-      }))
-    );
+    const tenantId = tenantIdFrom(req);
+    const rows = await listOutcomeLedger(tenantId, Math.min(parseInt(req.query.limit as string) || 50, 200));
+    return res.json(rows);
   } catch (err) {
     req.log.error({ err }, "Error listing outcomes");
     return res.status(500).json({ error: "Internal server error" });
@@ -165,25 +185,15 @@ router.get("/", async (req, res) => {
 
 router.get("/summary", async (req, res) => {
   try {
-    const outcomes = await db.select().from(outcomeLedgerTable);
-    const totalMonthlySaving = outcomes.reduce((acc, o) => acc + (o.monthlySaving ?? 0), 0);
-    const totalAnnualisedSaving = outcomes.reduce((acc, o) => acc + (o.annualisedSaving ?? 0), 0);
-    const totalActionsExecuted = outcomes.length;
-
-    const playbookCounts: Record<string, number> = {};
-    for (const o of outcomes) {
-      playbookCounts[o.action] = (playbookCounts[o.action] || 0) + 1;
-    }
-    const topPlaybook =
-      Object.entries(playbookCounts).sort(([, a], [, b]) => b - a)[0]?.[0] ?? "INACTIVE_USER_LICENCE_RECLAIM";
-    const avgMonthlySavingPerAction = totalActionsExecuted > 0 ? totalMonthlySaving / totalActionsExecuted : 0;
-
+    const tenantId = tenantIdFrom(req);
+    const summary = await outcomeProofService.getSummary(tenantId);
     return res.json({
-      totalMonthlySaving: Math.round(totalMonthlySaving * 100) / 100,
-      totalAnnualisedSaving: Math.round(totalAnnualisedSaving * 100) / 100,
-      totalActionsExecuted,
-      topPlaybook,
-      avgMonthlySavingPerAction: Math.round(avgMonthlySavingPerAction * 100) / 100,
+      ...summary,
+      totalMonthlySaving: Math.round(summary.verifiedMonthlySavings * 100) / 100,
+      totalAnnualisedSaving: Math.round(summary.verifiedAnnualSavings * 100) / 100,
+      totalActionsExecuted: summary.executedMonthlySavings ? Math.max(1, summary.verificationBacklogCount + summary.verificationFailedCount) : 0,
+      topPlaybook: "OUTCOME_PROOF_AUTHORITY",
+      avgMonthlySavingPerAction: summary.executedMonthlySavings,
     });
   } catch (err) {
     req.log.error({ err }, "Error fetching outcomes summary");

@@ -1,5 +1,5 @@
 export type ApprovalState = "DRAFT"|"PENDING_APPROVAL"|"PARTIALLY_APPROVED"|"APPROVED"|"REJECTED"|"ESCALATED"|"EXPIRED"|"CANCELLED";
-export type WorkflowTargetType = "RECOMMENDATION"|"CAMPAIGN"|"EXECUTION_REQUEST"|"SCHEDULE";
-export type ApprovalEventType = "APPROVAL_STAGE_ENTERED"|"APPROVAL_GRANTED"|"APPROVAL_REJECTED"|"APPROVAL_ESCALATED"|"APPROVAL_EXPIRED"|"APPROVAL_DELEGATED";
+export type WorkflowTargetType = "RECOMMENDATION"|"OPPORTUNITY"|"CAMPAIGN"|"EXECUTION_REQUEST"|"SCHEDULE";
+export type ApprovalEventType = "APPROVAL_SUBMITTED"|"APPROVAL_STAGE_ENTERED"|"APPROVAL_GRANTED"|"APPROVAL_APPROVED"|"APPROVAL_REJECTED"|"APPROVAL_ESCALATED"|"APPROVAL_EXPIRED"|"APPROVAL_DELEGATED"|"APPROVAL_AUTHORITY_SYNCED";
 export interface ApprovalStage { stageId:string; stageName:string; requiredRoles:string[]; timeoutMinutes:number; approvalsRequired:number; approvals:{actorId:string; role:string; approvedAt:string}[]; }
 export interface ApprovalWorkflow { workflowId:string; tenantId:string; targetType:WorkflowTargetType; targetId:string; workflowName:string; approvalStages:ApprovalStage[]; currentStage:number; requiredRoles:string[]; approverAssignments:Record<string,string[]>; approvalState:ApprovalState; escalationPolicy:{ escalateAfterMinutes:number; escalateToRoles:string[] }; delegatedApprovalAllowed:boolean; separationOfDutiesRequired:boolean; createdAt:string; updatedAt:string; approvalExpiryAt:string; auditEvents:{eventType:ApprovalEventType; actorId?:string; at:string; detail?:string}[]; }

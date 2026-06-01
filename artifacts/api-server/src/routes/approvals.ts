@@ -2,18 +2,10 @@ import { authMiddleware } from "../middleware/auth";
 import { Router } from "express";
 import { approvalRequestsTable, db } from "@workspace/db";
 import { desc, eq } from "drizzle-orm";
-import { approveRequest, createApprovalRequest, getApprovalStatus, rejectRequest } from "../lib/governance/approval-workflow";
 import { z } from "zod";
-
-const ApproveBodySchema = z.object({
-  actorId: z.string().min(1),
-  reason: z.string().optional(),
-});
-
-const RejectBodySchema = z.object({
-  actorId: z.string().min(1),
-  reason: z.string().optional(),
-});
+import { ApprovalAuthorityError, ApprovalAuthorityService } from "../lib/approvals/approval-authority-service";
+import { RecommendationGovernanceEventRepository } from "../lib/recommendations/governance-event-repository";
+import { RecommendationGovernanceEventService } from "../lib/recommendations/governance-event-service";
 
 const CreateApprovalBodySchema = z.object({
   tenantId: z.string().min(1),
@@ -25,51 +17,34 @@ const CreateApprovalBodySchema = z.object({
 });
 
 const router = Router();
+const eventEnv = String(process.env.RUNTIME_ENV ?? process.env.NODE_ENV ?? "development").toLowerCase();
+const eventRepo = (eventEnv === "production" || eventEnv === "staging") ? new RecommendationGovernanceEventRepository() : new RecommendationGovernanceEventRepository({ storageMode: "memory" });
+const authority = new ApprovalAuthorityService(undefined, new RecommendationGovernanceEventService(eventRepo));
 router.use(authMiddleware);
 
 router.post("/", async (req, res) => {
   const parseResult = CreateApprovalBodySchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ error: "INVALID_REQUEST_BODY", issues: parseResult.error.issues });
-    return;
-  }
-  const body = parseResult.data;
-  return res.json(await createApprovalRequest({ ...body, reason: body.reason ?? "" }));
-});
-
-router.post("/:id/approve", async (req, res) => {
-  const parseResult = ApproveBodySchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ error: "INVALID_REQUEST_BODY", issues: parseResult.error.issues });
-    return;
-  }
+  if (!parseResult.success) return res.status(400).json({ error: "INVALID_REQUEST_BODY", issues: parseResult.error.issues });
   const body = parseResult.data;
   try {
-    return res.json(await approveRequest({ approvalRequestId: Number(req.params.id), actorId: body.actorId, reason: body.reason }));
-  } catch (e: unknown) {
-    return res.status(400).json({ error: e instanceof Error ? e.message : "UNKNOWN_ERROR" });
+    const result = await authority.submitForApproval(body.tenantId, "RECOMMENDATION", body.recommendationId, { actorId: body.requestedBy, actorRole: "OPERATOR", reason: body.reason, riskClass: body.riskClass, duplicateMode: "RETURN_EXISTING" });
+    return res.json({ ...result.approval, compatibility: true });
+  } catch (error) {
+    if (error instanceof ApprovalAuthorityError) return res.status(error.status).json({ error: error.code, message: error.message });
+    return res.status(500).json({ error: "APPROVAL_COMPATIBILITY_SUBMIT_FAILED" });
   }
 });
 
-router.post("/:id/reject", async (req, res) => {
-  const parseResult = RejectBodySchema.safeParse(req.body);
-  if (!parseResult.success) {
-    res.status(400).json({ error: "INVALID_REQUEST_BODY", issues: parseResult.error.issues });
-    return;
-  }
-  const body = parseResult.data;
-  try {
-    return res.json(await rejectRequest({ approvalRequestId: Number(req.params.id), actorId: body.actorId, reason: body.reason }));
-  } catch (e: unknown) {
-    return res.status(400).json({ error: e instanceof Error ? e.message : "UNKNOWN_ERROR" });
-  }
-});
+router.post("/:id/approve", (_req, res) => res.status(410).json({ error: "LEGACY_APPROVAL_MUTATION_DISABLED", message: "Legacy approval_requests are read-only compatibility projections; use /api/approval-authority/workflows/:workflowId/approve.", sourceSystem: "LEGACY_APPROVAL_REQUEST" }));
+router.post("/:id/reject", (_req, res) => res.status(410).json({ error: "LEGACY_APPROVAL_MUTATION_DISABLED", message: "Legacy approval_requests are read-only compatibility projections; use /api/approval-authority/workflows/:workflowId/reject.", sourceSystem: "LEGACY_APPROVAL_REQUEST" }));
 
 router.get("/", async (req, res) => {
   const tenantId = (req.query.tenantId as string) ?? "default";
-  return res.json(await db.select().from(approvalRequestsTable).where(eq(approvalRequestsTable.tenantId, tenantId)).orderBy(desc(approvalRequestsTable.createdAt)).limit(200));
+  const legacy = await db.select().from(approvalRequestsTable).where(eq(approvalRequestsTable.tenantId, tenantId)).orderBy(desc(approvalRequestsTable.createdAt)).limit(200);
+  const canonical = await authority.listApprovals(tenantId);
+  return res.json({ sourceSystem: "LEGACY_APPROVAL_REQUEST", compatibility: true, approvals: canonical, legacy: legacy.map((row) => ({ ...row, sourceSystem: "LEGACY_APPROVAL_REQUEST" })) });
 });
 
-router.get("/recommendation/:recommendationId", async (req, res) => res.json(await getApprovalStatus(String(req.params.recommendationId))));
+router.get("/recommendation/:recommendationId", async (req, res) => res.json(await authority.getApprovalStatus(String(req.query.tenantId ?? "default"), "RECOMMENDATION", String(req.params.recommendationId))));
 
 export default router;

@@ -1,4 +1,4 @@
-import { appendUnifiedEvent } from '../events/evidence-timeline'
+import { platformEventService } from '../events/platform-event-service'
 import { monitoredOutcomeService } from './monitored-outcome-service'
 
 export function evaluateOutcomeDrift(input: { tenantId: string; outcomeId: string; evidence?: Record<string, unknown>; verificationEvidence?: Record<string, unknown> }) {
@@ -13,21 +13,16 @@ export function evaluateOutcomeDrift(input: { tenantId: string; outcomeId: strin
 
   const state = reasons.length ? 'DRIFT_DETECTED' : 'RESOLVED'
   monitoredOutcomeService.update(input.tenantId, input.outcomeId, { monitoringState: state === 'DRIFT_DETECTED' ? 'DRIFT_DETECTED' : 'RESOLVED' })
-  appendUnifiedEvent({
+  void platformEventService.recordDriftEvent(input.tenantId, state === 'DRIFT_DETECTED' ? 'DRIFT_DETECTED' : 'DRIFT_RESOLVED', {
     eventId: `${input.outcomeId}:${state}:${Date.now()}`,
-    tenantId: input.tenantId,
     entityType: 'OUTCOME',
     entityId: input.outcomeId,
-    eventType: state,
-    eventCategory: 'DRIFT',
     actorId: 'system',
-    actorRole: 'SYSTEM',
-    eventReason: reasons.join(',') || 'No drift detected',
-    beforeState: 'MONITORED',
-    afterState: state,
-    evidenceSnapshot: reasons,
+    title: state === 'DRIFT_DETECTED' ? 'Drift detected' : 'Drift resolved',
+    description: reasons.join(',') || 'No drift detected',
     sourceSystem: 'drift-evaluation-runtime',
-    createdAt: new Date().toISOString(),
-  })
+    metadata: { beforeState: 'MONITORED', afterState: state, evidence: reasons },
+    occurredAt: new Date().toISOString(),
+  }).catch(() => undefined)
   return { outcomeId: input.outcomeId, driftState: state, reasons }
 }

@@ -1,32 +1,30 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import { buildOpportunities } from "../lib/opportunities/opportunity-factory";
-import type { TrustFinding } from "../lib/trust/trust-types";
-import type { StoredVendorChangeEvent } from "../lib/vcde/vendor-change-types";
+import { runOpportunityFactory } from "../lib/opportunity-factory/opportunity-factory-service";
+import { OpportunityRepository } from "../lib/opportunities/opportunity-repository";
+import { ExecutivePriorityRepository } from "../lib/prioritization/executive-priority-repository";
 
-const finding: TrustFinding = { findingId: "tf-1", tenantId: "tenant-a", findingType: "IDENTITY_CONFLICT", severity: "HIGH", entityType: "USER", entityId: "u1", sourceSystem: "M365", description: "Identity conflict blocks reclaim", affectedRecommendationIds: ["rec-1"], affectedValue: 12000, status: "OPEN", remediationHint: "Resolve identity", detectedAt: "2026-05-30T00:00:00.000Z" };
-const change: StoredVendorChangeEvent = { id: "vc-1", tenantId: "tenant-a", vendor: "MICROSOFT", category: "LICENSING_CHANGE", title: "Copilot price increase", description: "Copilot pricing changed", effectiveDate: "2026-07-01", sourceUrl: "https://microsoft.com", impactSeverity: "HIGH", detectedAt: "2026-05-30T00:00:00.000Z", status: "NEW", affectedSpend: 32000, generatedOpportunityCount: 6 };
-const drift = { id: "drift-1", tenantId: "tenant-a", title: "License reassignment", domain: "M365", affectedValue: 3600, severity: "MEDIUM", detectedAt: "2026-05-30T00:00:00.000Z" };
-
-test("normalizes trust findings, vendor changes, and drift into canonical opportunities", () => {
-  const rows = buildOpportunities({ trustFindings: [finding], vendorChanges: [change], driftAlerts: [drift] });
-  assert.equal(rows.length, 3);
-  assert.deepEqual(rows.map((row) => row.source), ["TRUST", "VENDOR_CHANGE", "DRIFT"]);
-  assert.ok(rows.every((row) => row.tenantId === "tenant-a"));
+test("factory runs all providers, persists canonical opportunities, and preserves tenant isolation", async () => {
+  const repository = new OpportunityRepository();
+  repository.clearForTests();
+  const a = await runOpportunityFactory("tenant-a", { repository, now: "2026-06-01T00:00:00.000Z" });
+  const b = await runOpportunityFactory("tenant-b", { repository, now: "2026-06-01T00:00:00.000Z" });
+  assert.equal(a.providerResults.length, 7);
+  assert.equal(a.providerResults.every((provider) => provider.succeeded), true);
+  assert.ok(a.persisted > 0);
+  assert.ok(repository.list("tenant-a").length > 0);
+  assert.ok(repository.list("tenant-b").length > 0);
+  assert.equal(repository.list("tenant-a").every((opportunity) => opportunity.tenantId === "tenant-a"), true);
+  assert.equal(repository.list("tenant-b").every((opportunity) => opportunity.tenantId === "tenant-b"), true);
+  assert.notEqual(repository.list("tenant-a")[0].tenantId, repository.list("tenant-b")[0].tenantId);
+  assert.ok(b.summary.openOpportunities > 0);
 });
 
-test("trust findings become blocked opportunities with source reference", () => {
-  const [row] = buildOpportunities({ trustFindings: [finding] });
-  assert.equal(row.readiness, "BLOCKED");
-  assert.equal(row.sourceReferenceId, "tf-1");
-  assert.equal(row.domain, "M365");
-});
-
-test("no execution mutation", async () => {
-  const files = ["src/lib/opportunities/opportunity-factory.ts", "src/lib/opportunities/opportunity-normalizer.ts"];
-  for (const file of files) {
-    const body = await readFile(file, "utf8");
-    assert.equal(/executionRequestsTable|executionResultsTable|\.delete\(|removeUserLicenses|assignLicense|approveRecommendation/.test(body), false);
-  }
+test("priorities consume factory output from the opportunity store", async () => {
+  const repository = new OpportunityRepository();
+  repository.clearForTests();
+  await runOpportunityFactory("tenant-priority", { repository, now: "2026-06-01T00:00:00.000Z" });
+  const priorities = new ExecutivePriorityRepository(repository).listPriorities("tenant-priority");
+  assert.ok(priorities.length > 0);
+  assert.equal(priorities.every((priority) => repository.getById("tenant-priority", priority.opportunityId)), true);
 });

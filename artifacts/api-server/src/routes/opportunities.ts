@@ -18,6 +18,11 @@ router.get("/top", (req, res) => {
   return res.json({ tenantId, opportunities: repo.top(tenantId, Number.isFinite(limit) ? limit : 3) });
 });
 
+router.get("/source/:source", (req, res) => {
+  const tenantId = tenantIdFrom(req);
+  return res.json({ tenantId, source: String(req.params.source).toUpperCase(), opportunities: repo.getBySource(tenantId, String(req.params.source).toUpperCase() as any) });
+});
+
 router.get("/domain/:domain", (req, res) => {
   const tenantId = tenantIdFrom(req);
   return res.json({ tenantId, domain: String(req.params.domain).toUpperCase(), opportunities: repo.getByDomain(tenantId, req.params.domain) });

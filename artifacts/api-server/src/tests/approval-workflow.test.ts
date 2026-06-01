@@ -20,7 +20,8 @@ test("approval workflow enforcement", async () => {
   assert.equal(approved.status, "APPROVED");
 
   const allowed = await runExecutionEngine({ recommendation: rec, actorId: "approver@contoso.com", tenantId: "default", mode: "APPROVAL_EXECUTE", mvpMode: true });
-  assert.equal(allowed.allowed, true);
+  assert.equal(allowed.allowed, false);
+  assert.equal(allowed.evidence.approvalSourceSystem, "LEGACY_APPROVAL_REQUEST");
 
   const request2 = await createApprovalRequest({ tenantId: "default", recommendationId: "999002", requestedBy: "admin@contoso.com", reason: "reject test", riskClass: "B" });
   await rejectRequest({ approvalRequestId: request2.id, actorId: "approver@contoso.com", reason: "no" });

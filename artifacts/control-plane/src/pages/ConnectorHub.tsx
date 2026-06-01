@@ -1,7 +1,7 @@
 import React from 'react'
 import { useState } from 'react'
 import { Shell } from '../components/layout/Shell'
-import { EmptyState, StatusPill, LiveDataError } from '../components/shared/Foundation'
+import { EmptyState, StatusPill, LiveDataError, SectionLabel } from '../components/shared/Foundation'
 import { useConnectorHubData } from '../hooks/useConnectorHubData'
 import { simulateConnectorRetry } from '../lib/demoRuntimeStore'
 import { liveFetch } from '../lib/liveApi'
@@ -12,23 +12,11 @@ export async function generateM365LiveRecommendations() {
 }
 
 export default function ConnectorHub() {
-  const workspace = useWorkspace(); const { data, isEmptyLive, error, refresh } = useConnectorHubData(); const [selected, setSelected] = useState<string | null>(null); const [notice, setNotice] = useState(''); const [generating, setGenerating] = useState(false)
+  const workspace = useWorkspace(); const { data, isEmptyLive, error, refresh } = useConnectorHubData(); const [selected, setSelected] = useState<string | null>('m365'); const [notice, setNotice] = useState(''); const [busy, setBusy] = useState('')
   if (error) return <Shell><LiveDataError error={error} onRetry={refresh} /></Shell>
   if (isEmptyLive) return <Shell><EmptyState title='No connectors configured' description='Add your first connector to start ingesting data' ctaLabel='Add connector' /></Shell>
-  const active = data.find((x:any)=>x.id===selected)
-  const runM365Generation = async (event: React.MouseEvent, connector: any) => {
-    event.stopPropagation()
-    if (workspace.mode === 'demo') { simulateConnectorRetry(connector.id); return }
-    setGenerating(true)
-    setNotice('Running M365 governance evaluation…')
-    try {
-      const result: any = await generateM365LiveRecommendations()
-      setNotice(result?.scannedUsers === 0 ? 'M365 connected but no usage/licence data has been ingested yet' : 'M365 governance evaluation complete')
-      if (typeof window !== 'undefined') window.dispatchEvent(new Event('certen:live-read-refresh'))
-      void refresh()
-    } catch (err) {
-      setNotice(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`)
-    } finally { setGenerating(false) }
-  }
-  return <Shell><div style={{padding:20}}><h1>Connector hub</h1>{notice && <div role='status' style={{border:'var(--border-default)',padding:10,margin:'10px 0'}}>{notice}</div>}<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>{data.map((c:any)=><div key={c.id} onClick={()=>setSelected(c.id)}><b>{c.name}</b><div>{c.desc}</div><StatusPill status={c.health==='HEALTHY'?'ready':c.health==='DEGRADED'?'degraded':c.health==='TESTING'?'testing':'unavailable'} /><div>Synced {c.synced}</div>{workspace.mode === 'live' && c.id === 'm365' && <button disabled={generating} onClick={(event)=>runM365Generation(event,c)}>{generating ? 'Generating…' : 'Run governance evaluation'}</button>}<button onClick={(event)=>{event.stopPropagation(); workspace.mode === 'demo' && simulateConnectorRetry(c.id)}}>{c.health==='UNAVAILABLE'?'Configure connector →':'Retry / Test'}</button>{workspace.mode === 'live' && c.id === 'm365' && c.synced === 'Never' && <div>M365 connected but no usage/licence data has been ingested yet</div>}</div>)}<div><b>Add connector</b><div>Flexera, Datadog, GCP, and more</div></div></div>{active&&<div><h3>Evidence sources</h3><div>OpenAI Usage API v2 · 99% trust · Active</div><div>Billing export · 96% trust · Active</div></div>}</div></Shell>
+  const active = data.find((x:any)=>x.id===selected) ?? data[0]
+  const runLive = async (label: string, path: string, options: RequestInit = {}) => { setBusy(label); setNotice(`${label}…`); try { await liveFetch(path, options); setNotice(`${label} complete`); if (typeof window !== 'undefined') window.dispatchEvent(new Event('certen:live-read-refresh')); void refresh() } catch (err) { setNotice(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) } finally { setBusy('') } }
+  const runM365Generation = async (event: React.MouseEvent, connector: any) => { event.stopPropagation(); if (workspace.mode === 'demo') { simulateConnectorRetry(connector.id); return } await runLive('Running M365 governance evaluation', '/api/playbooks/m365/generate-recommendations', { method: 'POST', headers: { 'content-type': 'application/json' } }) }
+  return <Shell><div style={{padding:20}}><h1>Connector hub</h1>{notice && <div role='status' style={{border:'var(--border-default)',padding:10,margin:'10px 0'}}>{notice}</div>}<div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:10}}>{data.map((c:any)=><div key={c.id} onClick={()=>setSelected(c.id)} style={{border:'var(--border-default)',borderRadius:12,padding:14}}><b>{c.name}</b><div>{c.desc}</div><StatusPill status={c.health==='HEALTHY'?'ready':c.health==='DEGRADED'?'degraded':c.health==='TESTING'?'testing':'unavailable'} /><div>Synced {c.synced}</div>{c.id === 'm365' && <div style={{fontSize:12,marginTop:8}}><div>Read readiness: {String(c.readReady ?? false)}</div><div>Write readiness: {String(c.writeReady ?? false)}</div><div>Health state: {c.connectorHealth?.state ?? c.health}</div><div>Trust band: {c.trust?.globalTrustBand ?? 'BLOCKED'}</div><div>Last Playbook Run: {c.playbookStats?.detail?.match(/last run: ([^;]+)/)?.[1] ?? 'never'}</div><div>Candidates Found: {c.playbookStats?.detail?.match(/candidates: (\d+)/)?.[1] ?? '0'}</div><div>Projected Savings: {c.playbookStats?.detail?.match(/projected: (\d+)/)?.[1] ?? '0'}</div></div>}{workspace.mode === 'live' && c.id === 'm365' && <div style={{display:'flex',gap:6,flexWrap:'wrap',marginTop:8}}><button disabled={!!busy} onClick={(event)=>{event.stopPropagation(); void runLive('Check readiness','/api/connectors/m365/readiness/check',{method:'POST'})}}>Check readiness</button><button disabled={!!busy} onClick={(event)=>{event.stopPropagation(); void runLive('Run discovery','/api/connectors/m365/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({maxUsers:100})})}}>Run discovery</button><button disabled={!!busy} onClick={(event)=>runM365Generation(event,c)}>Run governance evaluation</button></div>}<button onClick={(event)=>{event.stopPropagation(); workspace.mode === 'demo' && simulateConnectorRetry(c.id)}}>{c.health==='UNAVAILABLE'?'Configure connector →':'Retry / Test'}</button>{workspace.mode === 'live' && c.id === 'm365' && c.synced === 'Never' && <div>M365 connected but no usage/licence data has been ingested yet</div>}</div>)}<div><b>Add connector</b><div>Flexera, Datadog, GCP, and more</div></div></div>{active&&<section data-testid='m365-production-readiness' style={{border:'var(--border-default)',borderRadius:12,padding:14,marginTop:14}}><SectionLabel>M365 Production Readiness</SectionLabel><div>Readiness state: {active.readiness?.authState ?? active.readiness?.status ?? 'NOT_CONFIGURED'}</div><div>Last sync: {active.connectorHealth?.lastSuccessfulSyncAt ?? 'Never'}</div><div>Blockers: {(active.blockers ?? []).join(', ') || 'None'}</div><div>Warnings: {(active.warnings ?? []).join(', ') || 'None'}</div><h3>Trust report</h3>{active.trust && ['identityTrust','licenseTrust','usageTrust','activityTrust','mailboxTrust','executionSafetyTrust'].map((key)=><div key={key}>{key}: {active.trust[key]?.band} · {(active.trust[key]?.reasons ?? []).join('; ')}</div>)}</section>}</div></Shell>
 }

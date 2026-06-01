@@ -15,6 +15,7 @@ import { verifyM365RemoveLicense } from './outcome-verifier'
 import { ExecutionOutcomeRepository } from './execution-outcome-repository'
 import { outcomeProjectionService } from './outcome-projection-service'
 import { monitoredOutcomeService } from '../drift/monitored-outcome-service'
+import { outcomeProofService } from './outcome-proof-service'
 
 export class ExecutionOutcomeVerificationError extends Error { constructor(public readonly code:string, message:string, public readonly status=400){ super(message) } }
 
@@ -85,6 +86,12 @@ export class ExecutionOutcomeVerificationService {
     const now = new Date()
     const outcome = await this.outcomes.upsert({ outcomeId: `outcome_${executionResultId}`, tenantId, executionResultId, executionRequestId: request.requestId, recommendationId: request.recommendationId, verificationState: finalState, projectedMonthlySavings: projectedMonthly, verifiedMonthlySavings: verifiedMonthly, projectedAnnualSavings: projectedMonthly * 12, verifiedAnnualSavings: verifiedMonthly * 12, savingsVariance: verifiedMonthly - projectedMonthly, driftDetected: false, driftReason: null, rollbackAvailable: Boolean(result.rollbackReference), rollbackReference: String(result.rollbackReference ?? ''), verificationEvidence: { ...(verifier?.verificationEvidence ?? {}), userId: parsed.userId, removedSkuIds: parsed.removedSku ? [parsed.removedSku] : [], beforeAssignedSkuIds: parsed.beforeSkus ?? [], afterAssignedSkuIds: parsed.afterSkus ?? [], failureReason, savingsConfidence: finalState === 'VERIFIED' ? 'VERIFIED' : finalState === 'PARTIALLY_VERIFIED' ? 'PARTIAL' : 'FAILED' }, verifiedAt: now, lastCheckedAt: now })
     const projection = outcomeProjectionService.project(outcome)
+    try {
+      await outcomeProofService.projectFromExecutionResult(tenantId, { ...result, recommendationId: request.recommendationId, projectedMonthlySavings: projectedMonthly, executedMonthlySavings: projectedMonthly })
+      await outcomeProofService.projectFromVerification(tenantId, outcome)
+    } catch (err) {
+      appendUnifiedEvent({ eventId: `${executionResultId}:OUTCOME_PROOF_PROJECTION_FAILED:${now.toISOString()}`, tenantId, entityType: 'EXECUTION_RESULT', entityId: executionResultId, eventType: 'OUTCOME_PROOF_UPDATED', eventCategory: 'OUTCOME', actorId, actorRole: 'OPERATOR', eventReason: `Outcome proof projection failed: ${(err as Error).message}`, beforeState: 'UNKNOWN', afterState: finalState, evidenceSnapshot: result.executionEvidence ?? [], sourceSystem: 'outcome-proof-authority', createdAt: now.toISOString() })
+    }
     if (finalState === 'VERIFIED') monitoredOutcomeService.register({ outcomeId: (outcome as any).outcomeId, tenantId, entityType: 'M365_USER', entityId: String((outcome as any).verificationEvidence?.userId ?? request.recommendationId), verificationDate: projection.verificationDate, lastCheckDate: projection.verificationDate })
     await this.requests.updateExecutionRequest(tenantId, request.requestId, { metadata: { ...(request.metadata ?? {}), latestOutcomeId: (outcome as any).outcomeId, latestOutcomeState: finalState, verifiedMonthlySavings: verifiedMonthly, savingsVariance: verifiedMonthly - projectedMonthly } })
     await this.events.emit({ tenantId, recommendationId: request.recommendationId, eventType: stateEvent(finalState) as any, actorId, actorRole: 'OPERATOR', eventReason: failureReason || 'Outcome verification completed', afterState: finalState, evidenceSnapshot: result.executionEvidence as unknown[], approvalSnapshot: { executionRequestId: request.requestId, executionResultId, outcomeId: (outcome as any).outcomeId } })

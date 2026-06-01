@@ -19,6 +19,11 @@ import { PlaybookRecommendationService } from "../lib/playbooks/playbook-recomme
 import { ConnectorTrustService } from "../lib/connectors/m365/connector-trust-service";
 import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-reconciliation-service";
 import { M365_PRODUCTION_FAILURE_MATRIX, M365_PRODUCTION_REQUIRED_SCOPES, buildTenantReadinessReport } from "../lib/connectors/m365/m365-production-validation";
+import { checkM365Readiness } from "../lib/connectors/m365/m365-readiness";
+import { m365DiscoveryService } from "../lib/connectors/m365/m365-discovery-service";
+import { m365SnapshotRepository } from "../lib/connectors/m365/m365-snapshot-repository";
+import { m365HealthService } from "../lib/connectors/m365/m365-health";
+import { m365TrustService } from "../lib/connectors/m365/m365-trust";
 import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-routes.js";
 
 const router = Router();
@@ -99,6 +104,60 @@ router.get("/m365/readiness", async (req, res) => {
   }
 });
 
+
+
+router.post("/m365/readiness/check", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    return res.json(await checkM365Readiness({ tenantId }));
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_READINESS_FAILED" });
+  }
+});
+
+router.post("/m365/discover", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    return res.status(202).json(await m365DiscoveryService.discover({ tenantId, maxUsers: Number((req.body ?? {}).maxUsers ?? 100), perPage: Number((req.body ?? {}).perPage ?? 100) }));
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_DISCOVERY_FAILED" });
+  }
+});
+
+router.get("/m365/discovery-runs", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  return res.json({ tenantId, runs: m365SnapshotRepository.listRuns(tenantId) });
+});
+
+router.get("/m365/snapshots/latest", async (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  const snapshot = m365SnapshotRepository.getLatest(tenantId);
+  if (!snapshot) return res.status(404).json({ error: "M365_SNAPSHOT_NOT_FOUND", tenantId });
+  return res.json(snapshot);
+});
+
+router.get("/m365/health", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    return res.json(await m365HealthService.getHealth(tenantId));
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_HEALTH_FAILED" });
+  }
+});
+
+router.get("/m365/trust/report", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    return res.json(await m365TrustService.generateTrustReport(tenantId));
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_TRUST_FAILED" });
+  }
+});
+
+router.get("/m365/users", (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; return res.json({ tenantId, users: m365SnapshotRepository.listUsers(tenantId) }); });
+router.get("/m365/licenses", (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; return res.json({ tenantId, licenses: m365SnapshotRepository.listLicenses(tenantId) }); });
+router.get("/m365/usage", (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; return res.json({ tenantId, usage: m365SnapshotRepository.listUsage(tenantId) }); });
+router.get("/m365/mailboxes", (req, res) => { const tenantId = (req.query.tenantId as string) ?? "default"; return res.json({ tenantId, mailboxes: m365SnapshotRepository.listMailboxes(tenantId) }); });
 
 router.get("/m365/production-validation/readiness-report", async (req, res) => {
   const grantedScopes = String(process.env.M365_GRAPH_GRANTED_PERMISSIONS ?? "").split(/[\s,]+/).filter(Boolean);
@@ -507,7 +566,9 @@ router.post("/m365/evaluate-playbooks", async (req, res) => {
 router.get("/m365/trust", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
-    return res.json(await trustService.listTrustSnapshots(tenantId));
+    const report = await m365TrustService.generateTrustReport(tenantId);
+    const legacySnapshots = await trustService.listTrustSnapshots(tenantId).catch(() => []);
+    return res.json({ ...report, legacySnapshots });
   } catch (err) {
     return res.status(500).json({ error: "Internal server error" });
   }

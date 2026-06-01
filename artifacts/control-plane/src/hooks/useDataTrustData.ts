@@ -16,13 +16,13 @@ const emptyData: DataTrustData = {
   readiness: { ...demoExecutionReadiness, executionEligibleValue: 0, approvalRequiredValue: 0, blockedByTrustValue: 0, blockedByPolicyValue: 0, manualOnlyValue: 0, breakdown: [] },
 }
 
-export const trustApiPaths = ['/api/trust/summary', '/api/trust/connectors', '/api/trust/findings', '/api/trust/readiness']
+export const trustApiPaths = ['/api/trust/summary', '/api/trust/connectors', '/api/trust/findings', '/api/trust/readiness', '/api/connectors/m365/trust']
 
 function normalizeTrustPayload(payload: unknown): DataTrustData {
-  const [summary, connectors, findings, readiness] = Array.isArray(payload) ? payload : []
+  const [summary, connectors, findings, readiness, m365Trust] = Array.isArray(payload) ? payload : []
   return {
     summary: (summary ?? emptyData.summary) as DataTrustData['summary'],
-    connectors: (Array.isArray(connectors) ? connectors : []) as DataTrustData['connectors'],
+    connectors: ([...(Array.isArray(connectors) ? connectors : []), ...(m365Trust ? [{ connectorId: 'm365', connectorName: 'Microsoft 365', trustScore: m365Trust.globalTrustScore, trustBand: m365Trust.globalTrustBand, dimensions: { identityTrust: m365Trust.identityTrust, licenseTrust: m365Trust.licenseTrust, usageTrust: m365Trust.usageTrust, activityTrust: m365Trust.activityTrust, mailboxTrust: m365Trust.mailboxTrust, executionSafetyTrust: m365Trust.executionSafetyTrust } }] : [])]) as DataTrustData['connectors'],
     findings: (Array.isArray(findings) ? findings : []) as DataTrustData['findings'],
     readiness: (readiness ?? emptyData.readiness) as DataTrustData['readiness'],
   }

@@ -1,7 +1,8 @@
 import type { RuntimeEvent, RuntimeEventCategory, RuntimeEventSeverity, RuntimeEventType } from '../types/runtimeEvents'
 
-const categories: RuntimeEventCategory[] = ['RECOMMENDATION', 'APPROVAL', 'EXECUTION', 'OUTCOME', 'DRIFT', 'CONNECTOR', 'GOVERNANCE', 'AUDIT', 'SYSTEM']
+const categories: RuntimeEventCategory[] = ['TRUST', 'OPPORTUNITY', 'PRIORITY', 'RECOMMENDATION', 'APPROVAL', 'EXECUTION', 'OUTCOME', 'DRIFT', 'CONNECTOR', 'GOVERNANCE', 'AUDIT', 'SYSTEM']
 const types: RuntimeEventType[] = [
+  'TRUST_FINDING_CREATED', 'TRUST_TASK_CREATED', 'TRUST_TASK_STARTED', 'TRUST_TASK_RESOLVED', 'OPPORTUNITY_DISCOVERED', 'OPPORTUNITY_UPDATED', 'OPPORTUNITY_DEDUPLICATED', 'OPPORTUNITY_CLOSED', 'APPROVAL_APPROVED', 'APPROVAL_EXPIRED', 'EXECUTION_REQUEST_CREATED', 'OUTCOME_PROOF_PROJECTED', 'OUTCOME_PROOF_APPROVED', 'OUTCOME_PROOF_EXECUTED', 'OUTCOME_PROOF_VERIFIED', 'OUTCOME_PROOF_PROTECTED', 'OUTCOME_PROOF_DRIFTED', 'RUNTIME_DEGRADED', 'RUNTIME_RECOVERED',
   'RECOMMENDATION_CREATED', 'RECOMMENDATION_UPDATED', 'APPROVAL_SUBMITTED', 'APPROVAL_GRANTED', 'APPROVAL_REJECTED',
   'EXECUTION_REQUESTED', 'DRY_RUN_STARTED', 'DRY_RUN_COMPLETED', 'DRY_RUN_BLOCKED', 'EXECUTION_STARTED', 'EXECUTION_COMPLETED', 'EXECUTION_FAILED', 'OUTCOME_VERIFICATION_STARTED', 'OUTCOME_VERIFIED', 'OUTCOME_PARTIALLY_VERIFIED', 'OUTCOME_VERIFICATION_FAILED', 'OUTCOME_FAILED', 'DRIFT_DETECTED',
   'DRIFT_RESOLVED', 'DRIFT_ESCALATED', 'CONNECTOR_DEGRADED', 'CONNECTOR_RECOVERED', 'GOVERNANCE_POLICY_CHANGED', 'AUDIT_PACK_GENERATED', 'SYSTEM_HEALTH_CHANGED', 'SCHEDULE_CREATED', 'SCHEDULE_READY', 'SCHEDULE_BLOCKED', 'SCHEDULE_CANCELLED',
@@ -28,6 +29,9 @@ function inferCategory(input: any): RuntimeEventCategory {
   const raw = upper(value(input, ['category', 'eventCategory', 'domain', 'source']))
   if (categories.includes(raw as RuntimeEventCategory)) return raw as RuntimeEventCategory
   const text = textFrom(input, ['type', 'eventType', 'action', 'title', 'summary', 'message', 'verdict', 'result'])
+  if (text.includes('trust')) return 'TRUST'
+  if (text.includes('opportunity')) return 'OPPORTUNITY'
+  if (text.includes('priority')) return 'PRIORITY'
   if (text.includes('approval') || text.includes('cab')) return 'APPROVAL'
   if (text.includes('execution') || text.includes('rollback')) return 'EXECUTION'
   if (text.includes('outcome') || text.includes('verified')) return 'OUTCOME'
@@ -61,6 +65,9 @@ function inferType(input: any, category: RuntimeEventCategory): RuntimeEventType
   if (text.includes('recovered') || text.includes('ready')) return 'CONNECTOR_RECOVERED'
   if (text.includes('audit') || text.includes('pack')) return 'AUDIT_PACK_GENERATED'
   if (text.includes('policy')) return 'GOVERNANCE_POLICY_CHANGED'
+  if (category === 'TRUST') return 'TRUST_TASK_CREATED'
+  if (category === 'OPPORTUNITY') return 'OPPORTUNITY_UPDATED'
+  if (category === 'PRIORITY') return 'RECOMMENDATION_UPDATED'
   if (category === 'RECOMMENDATION') return 'RECOMMENDATION_UPDATED'
   if (category === 'APPROVAL') return 'APPROVAL_SUBMITTED'
   if (category === 'EXECUTION') return 'EXECUTION_REQUESTED'
@@ -89,8 +96,8 @@ export function normalizeRuntimeEvent(input: unknown, defaults: { tenantId?: str
   const row = (input && typeof input === 'object') ? input as any : {}
   const category = inferCategory(row)
   const type = inferType(row, category)
-  const message = String(value(row, ['message', 'summary', 'title', 'action', 'event', 'description']) ?? type.replace(/_/g, ' ').toLowerCase())
-  const createdAt = String(value(row, ['createdAt', 'timestamp', 'at', 'time']) ?? new Date(0).toISOString())
+  const message = String(value(row, ['message', 'summary', 'title', 'description', 'action', 'event']) ?? type.replace(/_/g, ' ').toLowerCase())
+  const createdAt = String(value(row, ['occurredAt', 'createdAt', 'timestamp', 'at', 'time']) ?? new Date(0).toISOString())
   return {
     eventId: stableId(row),
     tenantId: String(value(row, ['tenantId', 'tenant_id']) ?? defaults.tenantId ?? 'unknown'),
