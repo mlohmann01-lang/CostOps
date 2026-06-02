@@ -27,6 +27,9 @@ import ExecutivePrioritiesView from './pages/ExecutivePrioritiesView'
 import UtilizationIntelligenceView from './pages/UtilizationIntelligenceView'
 import OpportunitiesView from './pages/OpportunitiesView'
 import RenewalsView from './pages/RenewalsView'
+import M365OnboardingView from './pages/M365OnboardingView'
+import EvidencePacksView from './pages/EvidencePacksView'
+import ExecutiveValueDashboard from './pages/ExecutiveValueDashboard'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -258,6 +261,10 @@ function ExecutivePrioritiesRoute() {
   return <RequireRuntime><ExecutivePrioritiesView /></RequireRuntime>
 }
 
+function ExecutiveValueRoute() {
+  return <RequireRuntime><ExecutiveValueDashboard /></RequireRuntime>
+}
+
 function UtilizationIntelligenceRoute() {
   return <RequireRuntime><UtilizationIntelligenceView /></RequireRuntime>
 }
@@ -310,6 +317,14 @@ function SettingsRoute() {
   return <RequireRuntime><SettingsPage /></RequireRuntime>
 }
 
+function M365OnboardingRoute() {
+  return <RequireRuntime><M365OnboardingView /></RequireRuntime>
+}
+
+function EvidencePacksRoute() {
+  return <RequireRuntime><EvidencePacksView /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <Redirect to="/connector-ops" />
 }
@@ -334,6 +349,7 @@ function Router() {
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
+      <Route path="/onboarding/m365" component={M365OnboardingRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
       <Route path="/:domain/governance" component={GovernanceRoute} />
       <Route path="/:domain/execution" component={ExecutionRoute} />
@@ -345,6 +361,7 @@ function Router() {
       <Route path="/contract-intelligence" component={ContractIntelligenceRoute} />
       <Route path="/utilization-intelligence" component={UtilizationIntelligenceRoute} />
       <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
+      <Route path="/executive-value" component={ExecutiveValueRoute} />
       <Route path="/opportunities" component={OpportunitiesRoute} />
       <Route path="/renewals" component={RenewalsRoute} />
       <Route path="/drift" component={DriftRoute} />
@@ -352,6 +369,7 @@ function Router() {
       <Route path="/campaigns" component={CampaignsRoute} />
       <Route path="/scheduling" component={SchedulingRoute} />
       <Route path="/approval-workflows" component={ApprovalWorkflowsRoute} />
+      <Route path="/evidence-packs" component={EvidencePacksRoute} />
       <Route path="/runtime-health" component={RuntimeHealthRoute} />
       <Route path="/connector-ops" component={ConnectorOpsRoute} />
       <Route path="/security" component={SecurityRoute} />

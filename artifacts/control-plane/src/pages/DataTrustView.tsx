@@ -30,7 +30,7 @@ export default function DataTrustView() {
   const rollup = accountability?.rollup ?? { openTasks:0, overdueTasks:0, atRiskTasks:0, resolvedThisMonth:0, blockedValueOverdue:0, highestEscalationLevel:'NONE' }
   const accountableTasks = accountability?.tasks ?? tasksState.tasks
 
-  return <Shell><div style={{padding:'16px 20px'}}><h1>Data Trust</h1><p style={{color:'var(--text-secondary)',fontSize:13}}>Operational trust surface for recommendations, execution readiness, and trapped value.</p>
+  return <Shell><div style={{padding:'16px 20px'}}><h1>Data Trust</h1><p style={{color:'var(--text-secondary)',fontSize:13}}>Operational trust surface for recommendations, execution readiness, and trapped value.</p><p data-testid='m365-investigate-warning' style={{color:'var(--amber)',fontSize:12}}>Investigate trust is not sufficient for live M365 execution.</p>
     {workspace.mode === 'live' && error && <LiveDataError error={error} onRetry={() => void refresh()} />}
     {workspace.mode === 'live' && isEmptyLive ? <EmptyState title='Data trust not available yet' description='Connect and sync your first data source to calculate trust, readiness, and blocked value.' /> : <>
       <section data-testid='trust-summary-cards' style={{display:'grid',gridTemplateColumns:'repeat(4, minmax(0, 1fr))',gap:12}}>

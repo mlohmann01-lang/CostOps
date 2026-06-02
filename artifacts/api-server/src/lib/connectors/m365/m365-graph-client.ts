@@ -191,6 +191,14 @@ export class M365GraphClient {
   getOrganization() { return this.getPaged(`/organization?$select=id,displayName&$top=1`) }
   async getOffice365ActiveUserDetail(period = 'D30') { return this.getReport(`/reports/getOffice365ActiveUserDetail(period='${period}')`) }
   async getMailboxUsageDetail(period = 'D30') { return this.getReport(`/reports/getMailboxUsageDetail(period='${period}')`) }
+
+  async removeLicense(input: { userId: string; skuId: string; calledBy: 'M365LicenseExecutionService' }) {
+    if (input.calledBy !== 'M365LicenseExecutionService') throw new Error('M365_GRAPH_MUTATION_FORBIDDEN_CALLER')
+    if (process.env.M365_ENABLE_LIVE_LICENSE_MUTATION !== 'true') throw new Error('MUTATION_DISABLED')
+    const response = await this.request(`/users/${encodeURIComponent(input.userId)}/assignLicense`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ addLicenses: [], removeLicenses: [input.skuId] }) })
+    const requestId = response.headers.get('request-id') ?? response.headers.get('x-ms-request-id') ?? undefined
+    return { status: 'REMOVED' as const, userId: input.userId, skuId: input.skuId, requestId }
+  }
   private async getReport(path: string) {
     const response = await this.request(path)
     const location = response.headers.get('location')

@@ -54,6 +54,8 @@ export default function Outcomes() {
         </div>
 
         {/* Summary Cards */}
+        <Card data-testid="m365-outcome-proof-timeline"><CardContent className="p-4 text-sm"><p className="text-xs text-muted-foreground uppercase tracking-widest">M365 Outcome Proof Timeline</p><div className="grid grid-cols-4 gap-2 mt-2"><span>Projected</span><span>Approved</span><span>Executed</span><span>Verified</span></div></CardContent></Card>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-5">

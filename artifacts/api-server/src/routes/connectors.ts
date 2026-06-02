@@ -24,9 +24,13 @@ import { m365DiscoveryService } from "../lib/connectors/m365/m365-discovery-serv
 import { m365SnapshotRepository } from "../lib/connectors/m365/m365-snapshot-repository";
 import { m365HealthService } from "../lib/connectors/m365/m365-health";
 import { m365TrustService } from "../lib/connectors/m365/m365-trust";
+import { getM365PlaybookHealth } from "../lib/playbooks/m365/m365-playbook-runtime";
 import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-routes.js";
+import connectorSdkRouter from "./connector-sdk";
 
 const router = Router();
+
+router.use("/sdk", connectorSdkRouter);
 
 router.get("/", async (req, res) => {
   try {
@@ -359,7 +363,8 @@ router.get("/m365/status", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
     const status = await m365ReadOnlySyncService.getSyncStatus(tenantId);
-    return res.json(status ?? { connectorId: "m365", tenantId, status: "NEVER_SYNCED", summary: { usersScanned: 0, licensedUsers: 0, disabledLicensedUsers: 0, inactiveLicensedUsers: 0, skusSeen: 0, activityCoveragePercent: 0 }, stale: false, canGenerateRecommendations: false });
+    const playbookHealth = getM365PlaybookHealth(tenantId);
+    return res.json({ ...(status ?? { connectorId: "m365", tenantId, status: "NEVER_SYNCED", summary: { usersScanned: 0, licensedUsers: 0, disabledLicensedUsers: 0, inactiveLicensedUsers: 0, skusSeen: 0, activityCoveragePercent: 0 }, stale: false, canGenerateRecommendations: false }), productionReadinessCounts: playbookHealth.productionReadinessCounts ?? { readyForApproval: 0, needsHardening: 0, notReady: 0 } });
   } catch (err) {
     return res.status(500).json({ error: "Internal server error" });
   }

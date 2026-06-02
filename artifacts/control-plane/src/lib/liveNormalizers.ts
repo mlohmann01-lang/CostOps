@@ -48,6 +48,13 @@ export function normalizeRecommendation(row: any) {
     currentApprovalStage: row?.currentApprovalStage ?? null,
     executionRequestId: row?.executionRequestId ?? null,
     executionRequestState: row?.executionRequestState ?? null,
+    savingsConfidence: s(row?.savingsConfidence ?? row?.economicAssessment?.savingsConfidence, 'UNKNOWN'),
+    evidenceQuality: s(row?.evidenceQuality ?? row?.economicAssessment?.evidenceQuality, 'INSUFFICIENT'),
+    executionSafety: s(row?.executionSafety ?? row?.economicAssessment?.executionSafety, 'REVIEW_REQUIRED'),
+    falsePositiveRisk: s(row?.falsePositiveRisk ?? row?.economicAssessment?.falsePositiveRisk, 'HIGH'),
+    productionReadiness: s(row?.productionReadiness ?? row?.economicAssessment?.productionReadiness, 'NEEDS_HARDENING'),
+    allowedNextStep: s(row?.allowedNextStep ?? row?.economicAssessment?.allowedNextStep, 'REVIEW_ONLY'),
+    requiredHumanReview: Boolean(row?.requiredHumanReview ?? row?.economicAssessment?.requiredHumanReview ?? true),
   }
 }
 

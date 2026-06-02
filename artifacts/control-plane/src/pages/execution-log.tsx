@@ -19,6 +19,8 @@ export default function ExecutionLog() {
           </p>
         </div>
 
+        <Card data-testid="m365-execution-validation"><CardContent className="p-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-sm"><div><strong>Execution Eligibility</strong><p>Inactive User Reclaim only · one user · one license</p></div><div><strong>Dry Run Result</strong><p>Required before mutation</p></div><div><strong>Rollback Plan</strong><p>ADD_LICENSE readiness only</p></div><div><strong>Verification Result</strong><p>assignedLicenses and licenseDetails proof</p></div></CardContent></Card>
+
         <div className="relative">
           {outcomes.isLoading ? (
             <div className="space-y-4">

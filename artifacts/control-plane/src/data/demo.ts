@@ -341,3 +341,73 @@ export const demoUtilizationIntelligence = {
     { id:'opp-util-salesforce', source:'UTILIZATION', title:'License Reclaim Opportunity', projectedMonthlySavings:19600, domain:'SALESFORCE' },
   ],
 }
+
+export const demoM365Onboarding = {
+  tenantId: 'demo-sandbox-tenant', onboardingId: 'onboarding-m365-demo-sandbox-tenant', provider: 'M365', currentStep: 'PILOT_MODE', status: 'READY_FOR_PILOT', pilotMode: 'DRY_RUN', createdAt: '2026-06-02T00:00:00.000Z', updatedAt: '2026-06-02T00:00:00.000Z', blockers: ['Write permission not granted', 'Live mutation disabled'], warnings: ['Execution safety trust not high'],
+  readiness: { readReady: true, writeReady: false, graphReachable: true, permissions: ['User.Read.All', 'Directory.Read.All', 'Reports.Read.All'], blockers: [], warnings: ['Write permission not granted'] },
+  discovery: { status: 'COMPLETED', snapshotId: 'demo-m365-snapshot', counts: { users: 1840, licensedUsers: 1320, skus: 9, usageRecords: 1190, mailboxes: 1210, groups: 240 }, completedAt: '2026-06-02T00:00:00.000Z' },
+  trust: { identityTrust: { band: 'HIGH' }, licenseTrust: { band: 'HIGH' }, usageTrust: { band: 'HIGH' }, activityTrust: { band: 'HIGH' }, mailboxTrust: { band: 'HIGH' }, executionSafetyTrust: { band: 'INVESTIGATE' } },
+  opportunityAssessment: { candidates: 17, opportunitiesGenerated: 12, readyForApproval: 0, reviewRequired: 12, blocked: 0, projectedMonthlySavings: 42000, economicAssessmentPresent: true },
+  steps: [
+    ['WORKSPACE_SETUP','Workspace Setup','PASSED','Workspace configured'], ['CONNECT_M365','Connect M365','PASSED','M365 connector configured'], ['READINESS_CHECK','Readiness Check','PASSED','Read permissions granted'], ['DISCOVERY','Discovery','PASSED','Discovery completed'], ['TRUST_ASSESSMENT','Trust Assessment','WARNING','Execution safety trust not high'], ['OPPORTUNITY_ASSESSMENT','Opportunity Assessment','PASSED','Opportunities assessed'], ['PILOT_MODE','Pilot Mode','PASSED','DRY_RUN selected'], ['GO_LIVE_CHECKLIST','Go-Live Checklist','WARNING','Dry-run ready']
+  ].map(([stepId,label,state,summary]) => ({ stepId, label, state, summary, blockers: [], warnings: state === 'WARNING' ? ['Execution safety trust not high'] : [], evidenceRefs: [`demo:${stepId}`] }))
+}
+
+export const demoM365GoLiveChecklist = {
+  tenantId: 'demo-sandbox-tenant', provider: 'M365', generatedAt: '2026-06-02T00:00:00.000Z', summary: { total: 20, passed: 17, warning: 3, blocked: 0, readiness: 'DRY_RUN_READY' },
+  items: ['Workspace configured','M365 connector configured','Required read permissions granted','Optional write permissions identified','Graph reachable','Discovery completed','Latest snapshot available','Identity trust acceptable','License trust acceptable','Usage trust acceptable','Activity trust acceptable','Mailbox trust acceptable','Playbooks run','Opportunities generated','Economic assessment present','Execution safety gates configured','Pilot mode selected','Runtime health not failed','Platform events recording','Outcome proof authority available'].map((label, index) => ({ id: `demo-check-${index + 1}`, label, status: ['Optional write permissions identified','Execution safety gates configured'].includes(label) ? 'WARNING' : 'PASSED', reason: label === 'Optional write permissions identified' ? 'Write permission not granted' : label === 'Execution safety gates configured' ? 'Execution safety trust not high; live mutation disabled' : 'Passed in demo onboarding evidence.', evidenceRef: `demo-check:${index + 1}` }))
+}
+
+export const demoEvidencePacks = {
+  summary: { projectedSavings: 42000, approvedSavings: 18000, executedSavings: 12000, verifiedSavings: 9500, protectedSavings: 3200, trustScore: 84, connectorCoverage: 92, opportunities: 12, approvals: 4, executions: 2, verificationRate: 75, driftStatus: 'MONITORED' },
+  coverage: { Discovery: 'HIGH', Trust: 'HIGH', Opportunity: 'HIGH', Approval: 'MEDIUM', Execution: 'MEDIUM', Verification: 'LOW', Outcome: 'MEDIUM', Drift: 'MEDIUM' },
+  packs: [{ evidencePackId: 'ep-demo-tenant', scope: 'TENANT', generatedAt: '2026-06-02T00:00:00.000Z', status: 'COMPLETE', metrics: { completeness: 78 }, summary: { projectedSavings: 42000, approvedSavings: 18000, executedSavings: 12000, verifiedSavings: 9500, protectedSavings: 3200 } }]
+}
+
+export const demoExecutiveValueSummary = {
+  tenantId: 'demo-sandbox-tenant',
+  generatedAt: '2026-06-02T00:00:00.000Z',
+  valueMetrics: {
+    projectedMonthlySavings: 48000,
+    approvedMonthlySavings: 18000,
+    executedMonthlySavings: 1200,
+    verifiedMonthlySavings: 1200,
+    retainedMonthlySavings: 1200,
+    protectedMonthlySavings: 250,
+    projectedAnnualSavings: 576000,
+    approvedAnnualSavings: 216000,
+    executedAnnualSavings: 14400,
+    verifiedAnnualSavings: 14400,
+    retainedAnnualSavings: 14400,
+    protectedAnnualSavings: 3000,
+  },
+  metricSources: {
+    projectedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Projected savings sourced from Outcome Proof Authority.' },
+    approvedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Approved savings sourced from Outcome Proof Authority.' },
+    executedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Executed savings sourced from Outcome Proof Authority.' },
+    verifiedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Verified savings sourced from Outcome Proof Authority.' },
+    retainedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Retained savings sourced from Outcome Proof Authority.' },
+    protectedMonthlySavings: { source: 'OUTCOME_PROOF', reason: 'Protected savings sourced from Outcome Proof Authority.' },
+  },
+  conversionRates: { approvedVsProjectedPercent: 38, executedVsApprovedPercent: 7, verifiedVsExecutedPercent: 100, retainedVsVerifiedPercent: 100, protectedVsVerifiedPercent: 21 },
+  confidence: { evidenceCompletenessPercent: 82, outcomeConfidenceBand: 'MEDIUM', trustCoveragePercent: 76, connectorCoveragePercent: 85, executionCoveragePercent: 6 },
+  counts: { openOpportunities: 22, priorityOpportunities: 5, approvalsPending: 2, executionsCompleted: 1, outcomesVerified: 1, driftAlertsOpen: 1, evidencePacksGenerated: 3 },
+  byDomain: [{ domain: 'M365', projectedMonthlySavings: 48000, verifiedMonthlySavings: 1200, protectedMonthlySavings: 250, confidenceBand: 'MEDIUM' }],
+  topValueDrivers: [
+    { id: 'm365-reclaim-1', title: 'Inactive user license reclaim pilot', source: 'M365_PLAYBOOK', domain: 'M365', projectedMonthlySavings: 1200, verifiedMonthlySavings: 1200, status: 'VERIFIED', evidencePackId: 'ep-executive-demo' },
+    { id: 'm365-copilot-review', title: 'Copilot rightsizing review queue', source: 'M365_PLAYBOOK', domain: 'M365', projectedMonthlySavings: 18000, verifiedMonthlySavings: 0, status: 'APPROVAL_PENDING' },
+  ],
+  blockers: [{ id: 'usage-trust', title: 'Usage trust coverage', type: 'TRUST', blockedValue: 18000, reason: 'Execution safety trust is not yet high for broader M365 playbooks.', recommendedAction: 'Resolve usage-trust blockers before controlled execution expands.' }],
+  narrative: {
+    headline: 'Certen has identified $48,000/month in potential savings, with $1,200/month verified and $250/month protected from drift.',
+    executiveSummary: 'Early pilot value has been verified for controlled M365 execution; broader savings remain projected until approved and executed.',
+    valueRealizationSummary: 'The current wedge proves one inactive-user reclaim path while the broader opportunity queue remains in review.',
+    confidenceSummary: 'Evidence confidence is medium because execution coverage is intentionally early-stage and controlled.',
+    riskSummary: 'Blocked value is concentrated in trust and approval gaps. Controlled execution remains limited to inactive-user reclaim.',
+    nextBestActions: ['Complete M365 onboarding', 'Generate evidence pack for verified outcomes', 'Resolve usage-trust blockers', 'Review approval backlog'],
+  },
+}
+
+export const demoExecutiveValueDomains = demoExecutiveValueSummary.byDomain
+export const demoExecutiveValueTopDrivers = demoExecutiveValueSummary.topValueDrivers
+export const demoExecutiveValueBlockers = demoExecutiveValueSummary.blockers

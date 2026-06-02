@@ -2,14 +2,14 @@ import { useWorkspace } from '../lib/workspaceContext'
 import { useDemoRuntimeStore } from '../lib/demoRuntimeStore'
 import { useLiveResource } from './useLiveResource'
 
-export const m365ConnectorProductionApiPaths = ['/api/connectors/m365/readiness', '/api/connectors/m365/health', '/api/connectors/m365/trust', '/api/connectors/m365/snapshots/latest', '/api/runtime/health']
+export const m365ConnectorProductionApiPaths = ['/api/connectors/m365/readiness', '/api/connectors/m365/health', '/api/connectors/m365/trust', '/api/connectors/m365/snapshots/latest', '/api/runtime/health', '/api/onboarding/m365/summary']
 
 function normalizeConnectorHub(payload: unknown) {
- const [readiness, health, trust, snapshot, runtime] = Array.isArray(payload) ? payload as any[] : []
+ const [readiness, health, trust, snapshot, runtime, onboarding] = Array.isArray(payload) ? payload as any[] : []
  const playbookStats = (runtime?.components ?? []).find((component:any) => component.id === 'm365-playbook-engine')
  return [{
   id: 'm365', name: 'Microsoft 365', health: health?.state === 'HEALTHY' ? 'HEALTHY' : health?.state === 'PARTIAL' || health?.state === 'DEGRADED' ? 'DEGRADED' : 'UNAVAILABLE', synced: health?.lastSuccessfulSyncAt ?? snapshot?.snapshot?.capturedAt ?? 'Never', desc: `readiness ${readiness?.authState ?? readiness?.status ?? 'NOT_CONFIGURED'} · trust ${trust?.globalTrustBand ?? 'BLOCKED'}`,
-  readiness, connectorHealth: health, trust, snapshot, playbookStats, readReady: Boolean(readiness?.readReady), writeReady: Boolean(readiness?.writeReady), blockers: [...(readiness?.blockers ?? []), ...(health?.blockers ?? [])], warnings: [...(readiness?.warnings ?? []), ...(health?.warnings ?? [])]
+  readiness, connectorHealth: health, trust, snapshot, playbookStats, readReady: Boolean(readiness?.readReady), writeReady: Boolean(readiness?.writeReady), onboardingStatus: onboarding?.status ?? 'NOT_STARTED', blockers: [...(readiness?.blockers ?? []), ...(health?.blockers ?? [])], warnings: [...(readiness?.warnings ?? []), ...(health?.warnings ?? [])]
  }]
 }
 

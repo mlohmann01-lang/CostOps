@@ -36,7 +36,7 @@ export class M365TrustService {
     const globalTrustScore = Math.round(dimensions.reduce((sum, d) => sum + d.score, 0) / dimensions.length)
     const blockers = readReady ? [] : ['Read readiness is not complete']
     const warnings = [...(readiness?.warnings ?? []), ...dimensions.filter((d) => d.band === 'LOW_CONFIDENCE' || d.band === 'BLOCKED').flatMap((d) => d.reasons)]
-    const report: M365TrustReport = { tenantId, globalTrustScore, globalTrustBand: blockers.length ? 'LOW_CONFIDENCE' : band(globalTrustScore), identityTrust, licenseTrust, usageTrust, activityTrust, mailboxTrust, executionSafetyTrust, blockers, warnings, recommendations: ['Complete Reports API coverage before production confidence', 'Keep execution disabled until write readiness and rollback evidence are proven'], generatedAt: new Date().toISOString() }
+    const report: M365TrustReport = { tenantId, globalTrustScore, globalTrustBand: blockers.length ? 'LOW_CONFIDENCE' : band(globalTrustScore), identityTrust, licenseTrust, usageTrust, activityTrust, mailboxTrust, executionSafetyTrust, blockers, warnings, recommendations: ['Complete Reports API coverage before production confidence', 'Keep execution disabled until write readiness and rollback evidence are proven', 'Investigate trust is not sufficient for live M365 execution.'], generatedAt: new Date().toISOString() }
     await this.emit(report)
     return report
   }
