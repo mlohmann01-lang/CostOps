@@ -6,7 +6,7 @@ import { getSession, clearSession } from '../../lib/auth/session'
 type Item = { label:string; href:string; icon: ElementType; muted?: boolean; badge?: string }
 
 export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
-  { items: [{ label: 'Command', icon: LayoutDashboard, href: '/all/command' }] },
+  { items: [{ label: 'Command', icon: LayoutDashboard, href: '/all/command' }, { label: 'Pilot Workspace', icon: ClipboardCheck, href: '/pilot-workspace' }] },
   { label: 'OPERATIONAL', items: [
     { label: 'Intelligence', icon: TrendingUp, href: '/all/intelligence' },
     { label: 'Vendor Intelligence', icon: RadioTower, href: '/vendor-intelligence' },
