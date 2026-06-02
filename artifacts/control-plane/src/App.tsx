@@ -30,6 +30,7 @@ import RenewalsView from './pages/RenewalsView'
 import M365OnboardingView from './pages/M365OnboardingView'
 import EvidencePacksView from './pages/EvidencePacksView'
 import ExecutiveValueDashboard from './pages/ExecutiveValueDashboard'
+import PilotWorkspace from './pages/PilotWorkspace'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -325,6 +326,10 @@ function EvidencePacksRoute() {
   return <RequireRuntime><EvidencePacksView /></RequireRuntime>
 }
 
+function PilotWorkspaceRoute() {
+  return <RequireRuntime><PilotWorkspace /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <Redirect to="/connector-ops" />
 }
@@ -348,6 +353,7 @@ function Router() {
       <Route path="/login" component={LoginRoute} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
+      <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/onboarding/m365" component={M365OnboardingRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
