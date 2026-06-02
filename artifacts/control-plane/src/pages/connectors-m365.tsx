@@ -39,7 +39,7 @@ export default function ConnectorsM365() {
 
   return <Layout><div className="space-y-4"><h1 className="text-2xl font-semibold">M365 Connector</h1>
     <Badge>Read-only connector mode. No licence changes or user changes can be made from this connector.</Badge>
-    <p className="text-sm text-muted-foreground">Trust score determines whether evidence can safely generate executable recommendations.</p>
+    <p className="text-sm text-muted-foreground">Trust score determines whether evidence can safely generate executable recommendations.</p><p className="text-xs text-amber-600">Investigate trust is not sufficient for live M365 execution.</p>
 
     <div className="flex gap-2"><Button onClick={async()=>{setSummary(await (await fetch('/api/connectors/m365/sync/read-only',{method:'POST'})).json()); await load();}}>Run Read-only Sync</Button>
     <Button variant="outline" onClick={async()=>setSummary(await (await fetch('/api/connectors/m365/evaluate-playbooks',{method:'POST'})).json())}>Evaluate Playbooks</Button></div>
@@ -51,7 +51,7 @@ export default function ConnectorsM365() {
         <div>Freshness: {Number(latestTrust?.freshnessScore ?? 0).toFixed(1)} · Completeness: {Number(latestTrust?.completenessScore ?? 0).toFixed(1)} · Consistency: {Number(latestTrust?.consistencyScore ?? 0).toFixed(1)}</div>
         <div>Identity confidence: {Number(latestTrust?.identityMatchScore ?? 0).toFixed(1)} · Source reliability: {Number(latestTrust?.sourceReliabilityScore ?? 0).toFixed(1)}</div>
         <div>Critical findings: {(latestTrust?.criticalFindings ?? []).length} {(latestTrust?.criticalFindings ?? []).join(", ")}</div>
-        <div>Warning findings: {(latestTrust?.warningFindings ?? []).length} {(latestTrust?.warningFindings ?? []).join(", ")}</div>
+        <div>Warning findings: {(latestTrust?.warningFindings ?? []).length} {(latestTrust?.warningFindings ?? []).join(", ")}</div><div className="grid grid-cols-3 gap-2 border rounded p-2"><div>Ready for approval: {summary?.productionReadinessCounts?.readyForApproval ?? summary?.summary?.productionReadinessCounts?.readyForApproval ?? 0}</div><div>Needs hardening: {summary?.productionReadinessCounts?.needsHardening ?? summary?.summary?.productionReadinessCounts?.needsHardening ?? 0}</div><div>Not ready: {summary?.productionReadinessCounts?.notReady ?? summary?.summary?.productionReadinessCounts?.notReady ?? 0}</div></div>
       </CardContent>
     </Card>
 

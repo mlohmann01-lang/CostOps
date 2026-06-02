@@ -1,6 +1,6 @@
 import type { ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Activity, FileText, Settings, Plug, LogOut, BookOpen, Waves, Target, Calendar, Shield, Server, DatabaseZap, RadioTower, ListChecks, Gauge } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Activity, FileText, Settings, Plug, LogOut, BookOpen, Waves, Target, Calendar, Shield, Server, DatabaseZap, RadioTower, ListChecks, Gauge, ClipboardCheck } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
 type Item = { label:string; href:string; icon: ElementType; muted?: boolean; badge?: string }
@@ -14,6 +14,7 @@ export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
     { label: 'Contract Intelligence', icon: FileText, href: '/contract-intelligence' },
     { label: 'Utilization Intelligence', icon: Gauge, href: '/utilization-intelligence' },
     { label: 'Executive Priorities', icon: ListChecks, href: '/executive-priorities' },
+    { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
     { label: 'Opportunities', icon: Target, href: '/opportunities' },
     { label: 'Renewals', icon: Calendar, href: '/renewals' },
     { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
@@ -28,10 +29,12 @@ export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
   { label: 'GOVERNANCE', items: [
     { label: 'Governance', icon: Award, href: '/all/governance' },
     { label: 'Approval workflows', icon: Shield, href: '/approval-workflows' },
+    { label: 'Evidence Packs', icon: FileText, href: '/evidence-packs' },
     { label: 'Scheduling', icon: Calendar, href: '/scheduling' },
   ]},
   { label: 'PLATFORM', items: [
     { label: 'Connector hub', icon: Plug, href: '/connectors', muted: true, badge: '1' },
+    { label: 'M365 Onboarding', icon: ClipboardCheck, href: '/onboarding/m365', muted: true },
     { label: 'Runtime health', icon: Server, href: '/runtime-health', muted: true },
     { label: 'Connector ops', icon: Activity, href: '/connector-ops', muted: true },
     { label: 'Evidence & audit', icon: FileText, href: '/audit-log', muted: true },

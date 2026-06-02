@@ -1,5 +1,5 @@
 import type { M365Playbook } from './m365-playbook-types'
-import { candidate, confidenceFor, COPILOT_SKU_HINTS, daysSince, hasSku, lastActivityFor, latestSnapshotOrThrow, monthlySkuCost } from './m365-playbook-utils'
+import { candidate, confidenceFor, COPILOT_SKU_HINTS, costEstimateFor, daysSince, hasSku, lastActivityFor, latestSnapshotOrThrow, skuPartFor } from './m365-playbook-utils'
 
 function usageBand(records: any[], upn: string, inactive: boolean) {
   const row = records.find((record) => String(record.userPrincipalName).toLowerCase() === upn.toLowerCase())
@@ -18,9 +18,12 @@ export class CopilotRightsizingPlaybook implements M365Playbook {
       const band = usageBand(snapshot.usageRecords, user.userPrincipalName, inactive)
       if (band === 'HIGH_USAGE') return []
       const action = band === 'NO_USAGE' ? 'Remove' : band === 'LOW_USAGE' ? 'Reassign' : 'Review'
-      const monthly = band === 'MEDIUM_USAGE' ? Math.round(monthlySkuCost('COPILOT') * 0.4) : monthlySkuCost('COPILOT')
-      const evidence = [`user:${user.id}`, `copilotUsage:${band}`, `lastSignIn:${lastActivityFor(user) ?? 'missing'}`, ...user.assignedLicenses.map((skuId) => `license:${skuId}`)]
-      return [candidate({ playbookId: this.playbookId, entityId: user.id, entityType: 'COPILOT_USER', title: `Copilot ${action} opportunity: ${user.userPrincipalName}`, description: `${user.userPrincipalName} is assigned Copilot with ${band.replace('_', ' ').toLowerCase()} evidence.`, monthly, confidenceBand: confidenceFor(true, evidence.length), evidence, snapshotId, opportunityType: `Copilot ${band}`, affectedUsers: 1, recommendationKey: `m365-copilot-${band.toLowerCase()}`, costObjectKey: 'COPILOT' })]
+      const copilotSku = user.assignedLicenses.find((skuId) => skuPartFor(snapshot, skuId).toUpperCase().includes('COPILOT')) ?? 'COPILOT'
+      const costEstimates = [costEstimateFor(snapshot, copilotSku, 'COPILOT')]
+      const monthly = band === 'MEDIUM_USAGE' ? Math.round(costEstimates[0].monthlyUnitCost * 0.4) : costEstimates[0].monthlyUnitCost
+      const usageMissing = !snapshot.usageRecords.some((record) => String(record.userPrincipalName).toLowerCase() === user.userPrincipalName.toLowerCase())
+      const evidence = [`user:${user.id}`, `copilotUsage:${band}`, `usageEvidence:${usageMissing ? 'missing' : 'present'}`, `lastSignIn:${lastActivityFor(user) ?? 'missing'}`, ...user.assignedLicenses.map((skuId) => `license:${skuId}`)]
+      return [candidate({ playbookId: this.playbookId, entityId: user.id, entityType: 'COPILOT_USER', title: `Copilot ${action} opportunity: ${user.userPrincipalName}`, description: `${user.userPrincipalName} is assigned Copilot with ${band.replace('_', ' ').toLowerCase()} evidence.`, monthly, confidenceBand: confidenceFor(true, evidence.length), evidence, snapshotId, opportunityType: `Copilot ${band}`, affectedUsers: 1, recommendationKey: `m365-copilot-${band.toLowerCase()}`, costObjectKey: 'COPILOT', snapshot, costEstimates })]
     })
   }
 }

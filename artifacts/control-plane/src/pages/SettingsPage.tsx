@@ -11,7 +11,7 @@ export default function SettingsPage() {
   if (isEmptyLive) return <Shell><EmptyState title='No workspace settings yet' description='Settings will appear once a live workspace configuration is available.' /></Shell>
 
   return <Shell><div style={{ padding: 20, display: 'grid', gap: 16 }}>
-    <div><SectionLabel>Platform administration</SectionLabel><h1>Settings</h1><p style={{ color: 'var(--text-secondary)' }}>{readOnly ? 'Demo mode is read-only. Controls are disabled.' : 'Workspace controls are editable.'}</p></div>
+    <div><SectionLabel>Platform administration</SectionLabel><h1>Settings</h1><a href='/onboarding/m365'>M365 onboarding</a><p style={{ color: 'var(--text-secondary)' }}>{readOnly ? 'Demo mode is read-only. Controls are disabled.' : 'Workspace controls are editable.'}</p></div>
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}><SettingGroup title='Workspace config' values={data.workspace} readOnly={readOnly} /><SettingGroup title='Governance defaults' values={data.governanceDefaults} readOnly={readOnly} /><SettingGroup title='Notification settings' values={data.notifications} readOnly={readOnly} /><SettingGroup title='Retention settings' values={data.retention} readOnly={readOnly} /></div>
     <section style={{ border: '1px solid var(--red)', borderRadius: 10, padding: 12, opacity: 0.7 }}><SectionLabel>Danger zone</SectionLabel>{Object.entries(data.dangerZone).map(([key, value]) => <button key={key} disabled style={{ marginRight: 8, opacity: 0.6 }}>{key}: {String(value)}</button>)}</section>
   </div></Shell>

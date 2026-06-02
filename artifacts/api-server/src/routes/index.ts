@@ -46,6 +46,8 @@ import trustRouter from "./trust";
 import vendorChangesRouter from "./vendor-changes";
 import opportunitiesRouter from "./opportunities";
 import opportunityFactoryRouter from "./opportunity-factory";
+import evidencePacksRouter from "./evidence-packs";
+import executiveValueRouter from "./executive-value";
 import renewalsRouter from "./renewals";
 import benchmarksRouter from "./benchmarks";
 import contractsRouter from "./contracts";
@@ -63,6 +65,8 @@ router.use("/trust", requireTenantContext(), requireCapability("READ_RECOMMENDAT
 router.use("/vendor-changes", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), vendorChangesRouter);
 router.use("/opportunities", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), opportunitiesRouter);
 router.use("/opportunity-factory", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), opportunityFactoryRouter);
+router.use("/evidence-packs", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), evidencePacksRouter);
+router.use("/executive-value", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveValueRouter);
 router.use("/renewals", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), renewalsRouter);
 router.use("/benchmarks", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), benchmarksRouter);
 router.use("/contracts", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), contractsRouter);
