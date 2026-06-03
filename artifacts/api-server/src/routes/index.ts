@@ -54,10 +54,15 @@ import contractsRouter from "./contracts";
 import prioritiesRouter from "./priorities";
 import utilizationRouter from "./utilization";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
+import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
+import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
+import { buildExecutiveRiskCommandCenter } from "../lib/executive-risk/executive-risk-command-center";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.get("/governance-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), (_req, res) => res.json(buildGovernanceGraph(demoGovernanceGraphInput)));
+router.get("/executive-risk", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), (_req, res) => res.json(buildExecutiveRiskCommandCenter(buildGovernanceGraph(demoGovernanceGraphInput))));
 router.use("/dashboard", dashboardRouter);
 router.use("/connectors", requireTenantContext(), requireCapability("READ_CONNECTORS"), connectorsRouter);
 router.use("/recommendations", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), recommendationsRouter);

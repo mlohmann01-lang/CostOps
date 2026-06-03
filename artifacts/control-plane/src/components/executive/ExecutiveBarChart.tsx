@@ -1,0 +1,4 @@
+export function ExecutiveBarChart({ title, data, valuePrefix='', valueSuffix='' }: { title:string; data:Array<{label:string; value:number}>; valuePrefix?:string; valueSuffix?:string }) {
+  const max = Math.max(1, ...data.map((d)=>d.value))
+  return <div style={{ display:'grid', gap:10 }}><strong>{title}</strong>{data.map((item)=><div key={item.label} style={{ display:'grid', gap:5 }}><div style={{ display:'flex', justifyContent:'space-between', gap:10, color:'var(--text-secondary)', fontSize:12 }}><span>{item.label}</span><span>{valuePrefix}{Math.round(item.value).toLocaleString()}{valueSuffix}</span></div><div style={{ height:8, borderRadius:999, background:'rgba(148,163,184,.14)', overflow:'hidden' }}><div style={{ width:`${Math.max(3,(item.value/max)*100)}%`, height:'100%', borderRadius:999, background:'linear-gradient(90deg, var(--teal), #60a5fa)' }} /></div></div>)}</div>
+}

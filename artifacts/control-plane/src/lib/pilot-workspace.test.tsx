@@ -8,7 +8,7 @@ const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), '
 
 test('PilotWorkspace renders customer-facing cockpit sections and KPI row', () => {
   const page = read('../pages/PilotWorkspace.tsx')
-  for (const snippet of ['Pilot Workspace', 'Tenant Status', 'Trust Status', 'Projected Annual Value', 'Verified Annual Value', 'Open Actions', 'Evidence Packs', 'Pilot Readiness', 'Value Summary', 'Execution Control', 'Evidence & Proof', 'Open Executive Value Dashboard', 'Open Evidence Packs']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Workspace Control Center', 'Workspace Mode', 'Sample governance dataset', 'Tenant Status', 'Trust Status', 'Projected Annual Value', 'Verified Annual Value', 'Open Actions', 'Evidence Packs', 'Pilot Readiness', 'Value Summary', 'Execution Control', 'Evidence & Proof', 'Open Executive Value Dashboard', 'Open Evidence Packs']) assert.equal(page.includes(snippet), true)
   assert.equal(page.includes("data-testid='pilot-workspace-kpis'"), true)
 })
 
@@ -17,7 +17,7 @@ test('Pilot Workspace route and sidebar link are wired', () => {
   assert.equal(app.includes("import PilotWorkspace from './pages/PilotWorkspace'"), true)
   assert.equal(app.includes('/pilot-workspace'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Pilot Workspace:\/pilot-workspace/)
+  assert.match(labels, /Workspace:\/pilot-workspace/)
 })
 
 test('Open Actions render from blocked and incomplete state', () => {
