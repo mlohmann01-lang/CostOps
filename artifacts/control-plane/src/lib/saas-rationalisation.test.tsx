@@ -29,7 +29,7 @@ test('SaaS Rationalisation route and sidebar link are wired', () => {
   assert.equal(app.includes("import SaaSRationalisation from './pages/SaaSRationalisation'"), true)
   assert.equal(app.includes('/saas-rationalisation'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /SaaS Rationalisation:\/saas-rationalisation/)
+  assert.match(labels, /Technology Portfolio:\/technology-portfolio/)
 })
 
 test('SaaS Rationalisation page survives missing API/live data', () => {

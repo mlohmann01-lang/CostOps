@@ -16,8 +16,8 @@ test('Utilization Intelligence page route and nav render', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/utilization-intelligence'), true)
-  assert.equal(sidebar.includes('Utilization Intelligence'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Technology Portfolio'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Utilization Intelligence page renders summary and table columns', () => {

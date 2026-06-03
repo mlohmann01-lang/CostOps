@@ -22,7 +22,7 @@ test('Evidence Packs are wired into sidebar routes and existing action surfaces'
   const execution = fs.readFileSync(new URL('../pages/ExecutionView.tsx', import.meta.url), 'utf8')
   const onboarding = fs.readFileSync(new URL('../pages/M365OnboardingView.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/evidence-packs'), true)
-  assert.equal(sidebar.includes('Evidence Packs'), true)
+  assert.equal(sidebar.includes('Evidence'), true)
   assert.equal(outcomes.includes('Generate Evidence Pack'), true)
   assert.equal(execution.includes('Generate Evidence Pack'), true)
   assert.equal(onboarding.includes('Generate Tenant Evidence Pack'), true)

@@ -1,62 +1,54 @@
-import type { ElementType } from 'react'
+import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Activity, FileText, Settings, Plug, LogOut, BookOpen, Waves, Target, Calendar, Shield, Server, DatabaseZap, RadioTower, ListChecks, Gauge, ClipboardCheck, RefreshCw, Bot, UserCheck, Network, Crown } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Settings, Plug, LogOut, BookOpen, Target, FileText, ListChecks, ChevronDown, ChevronRight, Crown } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
-type Item = { label:string; href:string; icon: ElementType; muted?: boolean; badge?: string }
-// OPERATIONAL legacy grouping retained for route/test compatibility; visible groups are now executive demo-oriented.
+type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
+type NavGroup = { label:string; defaultOpen?: boolean; items: NavItem[] }
 
-export const NAV_GROUPS: {label?: string; items: Item[]}[] = [
-  { label: 'EXECUTIVE', items: [
-    { label: 'Executive Risk', icon: Crown, href: '/executive-risk' },
-    { label: 'Workspace', icon: ClipboardCheck, href: '/pilot-workspace' },
-    { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
-    { label: 'Executive Priorities', icon: ListChecks, href: '/executive-priorities' },
-    { label: 'Command', icon: LayoutDashboard, href: '/all/command' },
+export const NAV_GROUPS: NavGroup[] = [
+  { label: 'Command', defaultOpen: true, items: [
+    { label: 'Overview', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/all/command'] },
+    { label: 'Actions', icon: Target, href: '/actions', badge: 'In progress', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling'] },
   ]},
-  { label: 'INTELLIGENCE', items: [
-    { label: 'Governance Graph', icon: Network, href: '/governance-graph' },
-    { label: 'Shadow IT Exposure', icon: ShieldCheck, href: '/shadow-it-exposure' },
-    { label: 'SaaS Rationalisation', icon: RefreshCw, href: '/saas-rationalisation' },
-    { label: 'AI Governance', icon: Bot, href: '/ai-governance' },
-    { label: 'Renewals', icon: Calendar, href: '/renewals' },
-    { label: 'Ownership', icon: UserCheck, href: '/ownership' },
-    { label: 'Intelligence', icon: TrendingUp, href: '/all/intelligence' },
-    { label: 'Vendor Intelligence', icon: RadioTower, href: '/vendor-intelligence' },
-    { label: 'Benchmark Intelligence', icon: Activity, href: '/benchmark-intelligence' },
-    { label: 'Contract Intelligence', icon: FileText, href: '/contract-intelligence' },
-    { label: 'Utilization Intelligence', icon: Gauge, href: '/utilization-intelligence' },
+  { label: 'Executive', defaultOpen: true, items: [
+    { label: 'Risk', icon: Crown, href: '/executive-risk' },
+    { label: 'Value', icon: TrendingUp, href: '/executive-value' },
+    { label: 'Priorities', icon: ListChecks, href: '/executive-priorities' },
+  ]},
+  { label: 'Intelligence', defaultOpen: true, items: [
+    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
+    { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
     { label: 'Opportunities', icon: Target, href: '/opportunities' },
   ]},
-  { label: 'PROOF & OPERATIONS', items: [
-    { label: 'Evidence Packs', icon: FileText, href: '/evidence-packs' },
-    { label: 'Connector hub', icon: Plug, href: '/connectors', muted: true, badge: '1' },
-    { label: 'Data Trust', icon: DatabaseZap, href: '/data-trust' },
-    { label: 'Execution', icon: Play, href: '/all/execution' },
+  { label: 'Operations', defaultOpen: false, items: [
+    { label: 'Evidence', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
+    { label: 'Execution', icon: Play, href: '/execution', aliases: ['/all/execution', '/drift', '/drift-monitor'] },
     { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
-    { label: 'Recommendations', icon: Target, href: '/all/command', badge: 'In progress' },
-    { label: 'Campaigns', icon: Target, href: '/campaigns' },
-    { label: 'Drift monitor', icon: Waves, href: '/drift' },
-    { label: 'Approval workflows', icon: Shield, href: '/approval-workflows' },
-    { label: 'Scheduling', icon: Calendar, href: '/scheduling' },
   ]},
-  { label: 'PLATFORM', items: [
-    { label: 'Governance', icon: Award, href: '/all/governance' },
-    { label: 'M365 Onboarding', icon: ClipboardCheck, href: '/onboarding/m365', muted: true },
-    { label: 'Runtime health', icon: Server, href: '/runtime-health', muted: true },
-    { label: 'Connector ops', icon: Activity, href: '/connector-ops', muted: true },
-    { label: 'Evidence & audit', icon: FileText, href: '/audit-log', muted: true },
-    { label: 'Security', icon: ShieldCheck, href: '/security', muted: true },
-    { label: 'Settings', icon: Settings, href: '/settings', muted: true },
+  { label: 'Admin', defaultOpen: false, items: [
+    { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
+    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs'] },
+    { label: 'Settings', icon: Settings, href: '/settings', aliases: ['/security'] },
   ]},
 ]
 
+const normalizedPath = (value:string) => (value.split('?')[0] || '/')
+const isItemActive = (location:string, item:NavItem) => {
+  const current = normalizedPath(location)
+  const targets = [item.href, ...(item.aliases ?? [])].map(normalizedPath)
+  return targets.some((target) => current === target)
+}
+
 export function Sidebar(){
  const [location]=useLocation(); const session=getSession()
- const active=(href:string)=> location===href || location.endsWith(href.split('/').pop()||'')
- return <nav style={{width:220,background:'#0a0c0b',borderRight:'var(--border-default)',display:'flex',flexDirection:'column'}}>
+ const activeGroupLabel = useMemo(() => NAV_GROUPS.find((group) => group.items.some((item) => isItemActive(location, item)))?.label, [location])
+ const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => Object.fromEntries(NAV_GROUPS.map((group) => [group.label, Boolean(group.defaultOpen)])))
+ useEffect(() => { if (activeGroupLabel) setOpenGroups((previous) => ({ ...previous, [activeGroupLabel]: true })) }, [activeGroupLabel])
+ const toggleGroup = (label:string) => setOpenGroups((previous) => ({ ...previous, [label]: !previous[label] }))
+ return <nav aria-label='Primary navigation' style={{width:236,background:'#0a0c0b',borderRight:'var(--border-default)',display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
   <div style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'var(--border-default)'}}><ShieldCheck size={14}/><b>Certen</b></div>
-  <div style={{flex:1,overflow:'auto',paddingTop:8}}>{NAV_GROUPS.map(g=><div key={g.label||'top'}>{g.label&&<div style={{fontSize:9,color:'var(--text-tertiary)',letterSpacing:'0.08em',padding:'8px 16px'}}>{g.label}</div>}{g.items.map(i=>{const a=active(i.href);const Icon=i.icon;return <Link key={i.label} href={i.href}><div title={i.badge==='In progress'?'In progress':undefined} style={{display:'flex',alignItems:'center',gap:8,padding:'7px 16px',fontSize:i.muted?12:13,color:a?'var(--text-primary)':(i.muted?'var(--text-tertiary)':'var(--text-secondary)'),background:a?'var(--teal-bg)':'transparent',borderLeft:a?'2px solid var(--teal)':'2px solid transparent'}}><Icon size={13}/><span style={{flex:1}}>{i.label}</span>{i.badge&&<span style={{fontSize:10,color:'var(--amber)'}}>{i.badge}</span>}</div></Link>})}</div>)}</div>
-  <div style={{borderTop:'var(--border-default)',padding:12}}><div style={{display:'inline-flex',padding:'3px 8px',border:'var(--border-teal)',borderRadius:999,color:'var(--teal)',fontSize:11}}>Data trust: 83 HIGH</div>{session&&<button onClick={()=>{clearSession();window.location.href='/login'}} style={{marginLeft:8,fontSize:11}}><LogOut size={12}/></button>}</div>
+  <div style={{flex:1,overflowY:'auto',padding:'8px 8px 10px',minHeight:0}}>{NAV_GROUPS.map((group)=>{const open=Boolean(openGroups[group.label]);const containsActive=group.label===activeGroupLabel;return <div key={group.label} style={{marginBottom:6}}><button type='button' aria-expanded={open} onClick={()=>toggleGroup(group.label)} style={{width:'100%',display:'flex',alignItems:'center',gap:7,padding:'8px 8px',border:0,background:containsActive?'rgba(45,212,191,.08)':'transparent',color:containsActive?'var(--teal)':'var(--text-tertiary)',fontSize:10,fontWeight:800,letterSpacing:'0.11em',textTransform:'uppercase',borderRadius:9,cursor:'pointer',fontFamily:'inherit'}}>{open?<ChevronDown size={13}/>:<ChevronRight size={13}/>}<span style={{flex:1,textAlign:'left'}}>{group.label}</span></button>{open&&<div style={{display:'grid',gap:3,marginTop:3}}>{group.items.map((item)=>{const active=isItemActive(location,item);const Icon=item.icon;return <Link key={item.label} href={item.href}><div title={item.badge==='In progress'?'In progress':undefined} style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px 8px 14px',fontSize:13,color:active?'var(--text-primary)':'var(--text-secondary)',background:active?'var(--teal-bg)':'transparent',border:'1px solid',borderColor:active?'rgba(45,212,191,.28)':'transparent',borderLeft:active?'3px solid var(--teal)':'3px solid transparent',borderRadius:10}}><Icon size={14}/><span style={{flex:1}}>{item.label}</span>{item.badge&&<span style={{fontSize:10,color:item.badge==='1'?'var(--teal)':'var(--amber)',border:'1px solid rgba(245,158,11,.28)',borderRadius:999,padding:'2px 6px'}}>{item.badge}</span>}</div></Link>})}</div>}</div>})}</div>
+  <div style={{borderTop:'var(--border-default)',padding:12,background:'#0a0c0b'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}><div style={{display:'inline-flex',padding:'6px 10px',border:'var(--border-teal)',borderRadius:999,color:'var(--teal)',background:'rgba(45,212,191,.08)',fontSize:11,fontWeight:800}}>Data trust: 83 HIGH</div>{session&&<button aria-label='Sign out' onClick={()=>{clearSession();window.location.href='/login'}} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',border:'var(--border-default)',borderRadius:8,background:'transparent',color:'var(--text-secondary)',padding:6}}><LogOut size={12}/></button>}</div></div>
  </nav>
 }

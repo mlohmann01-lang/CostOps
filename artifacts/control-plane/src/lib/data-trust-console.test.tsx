@@ -57,12 +57,11 @@ test('live empty state renders when dataReady=false', () => {
   assert.match(html, /Data trust not available yet/)
 })
 
-test('nav item appears under OPERATIONAL', () => {
+test('Data Trust is a footer chip and platform alias, not primary nav', () => {
   const source = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
-  const opIndex = source.indexOf("label: 'OPERATIONAL'")
-  const trustIndex = source.indexOf("label: 'Data Trust'")
-  const executionIndex = source.indexOf("label: 'EXECUTION'")
-  assert.ok(opIndex >= 0 && trustIndex > opIndex && trustIndex < executionIndex)
+  assert.equal(source.includes('Data trust: 83 HIGH'), true)
+  assert.equal(source.includes("label: 'Data Trust'"), false)
+  assert.equal(source.includes("href: '/platform'"), true)
 })
 
 test('execution readiness demo values are realistic', () => {

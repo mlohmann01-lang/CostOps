@@ -17,7 +17,7 @@ test('Pilot Workspace route and sidebar link are wired', () => {
   assert.equal(app.includes("import PilotWorkspace from './pages/PilotWorkspace'"), true)
   assert.equal(app.includes('/pilot-workspace'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Workspace:\/pilot-workspace/)
+  assert.match(labels, /Overview:\/workspace/)
 })
 
 test('Open Actions render from blocked and incomplete state', () => {

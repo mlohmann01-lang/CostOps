@@ -19,9 +19,9 @@ test('DemoBanner hides in live mode', () => {
 
 test('Sidebar grouped and renamed nav labels render', () => {
   const labels = NAV_GROUPS.flatMap(g => [g.label, ...g.items.map(i => i.label)]).filter(Boolean).join(' | ')
-  assert.match(labels, /OPERATIONAL/)
-  assert.match(labels, /Connector ops/)
-  assert.match(labels, /Evidence & audit/)
+  assert.match(labels, /Operations/)
+  assert.match(labels, /Platform/)
+  assert.match(labels, /Evidence/)
 })
 
 test('ActionButton demo label behavior', () => {

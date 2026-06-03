@@ -37,5 +37,5 @@ test('Ownership Intelligence sidebar route works', () => {
   assert.equal(app.includes("import OwnershipIntelligence from './pages/OwnershipIntelligence'"), true)
   assert.equal(app.includes('/ownership'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Ownership:\/ownership/)
+  assert.match(labels, /Technology Portfolio:\/technology-portfolio/)
 })

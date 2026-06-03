@@ -228,6 +228,33 @@ function ConnectorsRoute() {
   return <RequireRuntime><ConnectorHub /></RequireRuntime>
 }
 
+
+function ActionsRoute() {
+  return <RequireRuntime><Recommendations /></RequireRuntime>
+}
+
+function TechnologyPortfolioRoute() {
+  return <RequireRuntime><IntelligenceView /></RequireRuntime>
+}
+
+function PlatformRoute() {
+  return <RequireRuntime><RuntimeHealthView /></RequireRuntime>
+}
+
+function EvidenceRoute() {
+  return <RequireRuntime><EvidencePacksView /></RequireRuntime>
+}
+
+function ExecutionConsolidatedRoute() {
+  return <RequireRuntime><ExecutionView /></RequireRuntime>
+}
+
+function RedirectRoute({ to }: { to: string }) {
+  const session = getSession()
+  if (!session) return <Redirect to="/login" />
+  return <Redirect to={to} />
+}
+
 function CommandRoute({ params }: { params?: { domain?: string } }) {
   return <RequireRuntime><CommandView params={params} /></RequireRuntime>
 }
@@ -361,7 +388,7 @@ function AIGovernanceRoute() {
 }
 
 function SyncJobsRedirectRoute() {
-  return <Redirect to="/connector-ops" />
+  return <RedirectRoute to="/platform" />
 }
 
 function StubRoute() {
@@ -384,39 +411,50 @@ function Router() {
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
-      <Route path="/shadow-it-exposure" component={ShadowITRoute} />
-      <Route path="/saas-rationalisation" component={SaaSRationalisationRoute} />
-      <Route path="/ai-governance" component={AIGovernanceRoute} />
+      <Route path="/shadow-it-exposure"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
+      <Route path="/shadow-it"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
+      <Route path="/saas-rationalisation"><RedirectRoute to="/technology-portfolio?tab=saas" /></Route>
+      <Route path="/ai-governance"><RedirectRoute to="/governance?tab=ai" /></Route>
       <Route path="/connectors" component={ConnectorsRoute} />
-      <Route path="/onboarding/m365" component={M365OnboardingRoute} />
+      <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
+      <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>
+      <Route path="/onboarding/m365"><RedirectRoute to="/connectors" /></Route>
+      <Route path="/actions" component={ActionsRoute} />
+      <Route path="/technology-portfolio" component={TechnologyPortfolioRoute} />
+      <Route path="/governance" component={GovernanceRoute} />
+      <Route path="/execution" component={ExecutionConsolidatedRoute} />
+      <Route path="/platform" component={PlatformRoute} />
+      <Route path="/evidence" component={EvidenceRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
       <Route path="/:domain/governance" component={GovernanceRoute} />
       <Route path="/:domain/execution" component={ExecutionRoute} />
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
-      <Route path="/data-trust" component={DataTrustRoute} />
-      <Route path="/vendor-intelligence" component={VendorIntelligenceRoute} />
-      <Route path="/benchmark-intelligence" component={BenchmarkIntelligenceRoute} />
-      <Route path="/contract-intelligence" component={ContractIntelligenceRoute} />
-      <Route path="/utilization-intelligence" component={UtilizationIntelligenceRoute} />
+      <Route path="/data-trust"><RedirectRoute to="/platform" /></Route>
+      <Route path="/vendor-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
+      <Route path="/benchmark-intelligence"><RedirectRoute to="/technology-portfolio?tab=benchmarks" /></Route>
+      <Route path="/contract-intelligence"><RedirectRoute to="/technology-portfolio?tab=contracts" /></Route>
+      <Route path="/utilization-intelligence"><RedirectRoute to="/technology-portfolio?tab=utilisation" /></Route>
       <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
       <Route path="/executive-value" component={ExecutiveValueRoute} />
       <Route path="/opportunities" component={OpportunitiesRoute} />
-      <Route path="/renewals" component={RenewalsRoute} />
-      <Route path="/ownership" component={OwnershipRoute} />
-      <Route path="/governance-graph" component={GovernanceGraphRoute} />
+      <Route path="/renewals"><RedirectRoute to="/technology-portfolio?tab=renewals" /></Route>
+      <Route path="/ownership"><RedirectRoute to="/technology-portfolio?tab=ownership" /></Route>
+      <Route path="/governance-graph"><RedirectRoute to="/governance?tab=graph" /></Route>
       <Route path="/executive-risk" component={ExecutiveRiskRoute} />
-      <Route path="/drift" component={DriftRoute} />
-      <Route path="/recommendations" component={RecommendationsRoute} />
-      <Route path="/campaigns" component={CampaignsRoute} />
-      <Route path="/scheduling" component={SchedulingRoute} />
-      <Route path="/approval-workflows" component={ApprovalWorkflowsRoute} />
-      <Route path="/evidence-packs" component={EvidencePacksRoute} />
-      <Route path="/runtime-health" component={RuntimeHealthRoute} />
-      <Route path="/connector-ops" component={ConnectorOpsRoute} />
+      <Route path="/drift"><RedirectRoute to="/execution" /></Route>
+      <Route path="/drift-monitor"><RedirectRoute to="/execution" /></Route>
+      <Route path="/recommendations"><RedirectRoute to="/actions" /></Route>
+      <Route path="/campaigns"><RedirectRoute to="/actions" /></Route>
+      <Route path="/scheduling"><RedirectRoute to="/actions" /></Route>
+      <Route path="/approval-workflows"><RedirectRoute to="/actions" /></Route>
+      <Route path="/evidence-packs"><RedirectRoute to="/evidence" /></Route>
+      <Route path="/evidence-audit"><RedirectRoute to="/evidence" /></Route>
+      <Route path="/runtime-health"><RedirectRoute to="/platform" /></Route>
+      <Route path="/connector-ops"><RedirectRoute to="/platform" /></Route>
       <Route path="/security" component={SecurityRoute} />
       <Route path="/sync-jobs" component={SyncJobsRedirectRoute} />
-      <Route path="/audit-log" component={EvidenceAuditRoute} />
+      <Route path="/audit-log"><RedirectRoute to="/evidence" /></Route>
       <Route path="/settings" component={SettingsRoute} />
       <Route component={CatchAllRoute} />
     </Switch>

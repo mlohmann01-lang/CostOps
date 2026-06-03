@@ -7,13 +7,13 @@ const read = (path:string) => fs.readFileSync(new URL(path, import.meta.url), 'u
 
 test('Executive Risk Command Center header and KPIs render', () => {
   const page = read('../pages/ExecutiveRiskCommandCenter.tsx')
-  for (const snippet of ['Executive Portfolio Risk & Governance Command Center','Prioritise ownership gaps, risky renewals, AI governance exposure, SaaS sprawl, and value opportunities across the technology portfolio.','Read-only executive intelligence', 'Workspace Mode', 'Sample governance dataset','Portfolio Risk Score','Critical Issues','Ownerless Spend','Renewals At Risk','AI Governance Gaps','Potential Annual Savings','Evidence Confidence']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Executive Risk','Portfolio-level risk, exposed spend, renewal urgency and governance action priorities.','Demo Mode','Execution Disabled','Data Trust HIGH','Portfolio Risk Score','Exposed Spend','Ownerless Spend','Potential Annual Savings','Renewals at Risk','Evidence Confidence']) assert.equal(page.includes(snippet), true)
   assert.equal(page.includes("data-testid='executive-risk-kpis'"), true)
 })
 
 test('Executive Risk Command Center sections render', () => {
   const page = read('../pages/ExecutiveRiskCommandCenter.tsx')
-  for (const snippet of ['Top Governance Risks','Domain Breakdown','Leadership Action Queue','Exposed Spend & Value','Evidence Readiness','Executive Narrative','Assign Owners','Review AI Policy','Renegotiate Renewals','Consolidate Vendors','Generate Evidence','Executive Review']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Top Governance Risks','Risk by Domain','Leadership Action Queue','Evidence Readiness','Executive narrative','Assign Owners','Review AI Policy','Renegotiate Renewals','Consolidate Vendors','Retire Unused Tools','Validate Data','Generate Evidence']) assert.equal(page.includes(snippet), true)
 })
 
 test('Executive Risk demo payload and fallback work', () => {
@@ -28,5 +28,5 @@ test('Executive Risk sidebar route works', () => {
   assert.equal(app.includes("import ExecutiveRiskCommandCenter from './pages/ExecutiveRiskCommandCenter'"), true)
   assert.equal(app.includes('/executive-risk'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Executive Risk:\/executive-risk/)
+  assert.match(labels, /Risk:\/executive-risk/)
 })

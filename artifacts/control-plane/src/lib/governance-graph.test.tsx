@@ -32,5 +32,5 @@ test('Governance Graph sidebar route works', () => {
   assert.equal(app.includes("import GovernanceGraph from './pages/GovernanceGraph'"), true)
   assert.equal(app.includes('/governance-graph'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Governance Graph:\/governance-graph/)
+  assert.match(labels, /Governance:\/governance/)
 })

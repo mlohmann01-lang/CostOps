@@ -16,8 +16,8 @@ test('Vendor Intelligence route and nav render', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/vendor-intelligence'), true)
-  assert.equal(sidebar.includes('Vendor Intelligence'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Technology Portfolio'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Vendor Intelligence page renders summary and change feed', () => {

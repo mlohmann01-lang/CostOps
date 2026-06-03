@@ -18,8 +18,8 @@ test('Contract Intelligence page route and nav render', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/contract-intelligence'), true)
-  assert.equal(sidebar.includes('Contract Intelligence'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Technology Portfolio'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Contract Intelligence page renders summary cards and table', () => {
