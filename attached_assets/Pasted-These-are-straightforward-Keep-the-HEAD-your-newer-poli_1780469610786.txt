@@ -1,0 +1,155 @@
+These are straightforward. Keep the HEAD (your newer polished version) almost everywhere.
+
+1. artifacts/control-plane/package.json
+
+Keep the HEAD version:
+
+"test": "node ./scripts/run-control-plane-tests.mjs"
+
+Delete the giant origin/main test command and remove conflict markers.
+
+2. artifacts/control-plane/src/App.tsx
+Import section
+
+Keep:
+
+import ShadowITExposure from './pages/ShadowITExposure'
+import SaaSRationalisation from './pages/SaaSRationalisation'
+import AIGovernanceExposure from './pages/AIGovernanceExposure'
+
+Delete the conflict markers.
+
+Route wrappers
+
+Keep:
+
+function ShadowITRoute() {
+  return <RequireRuntime><ShadowITExposure /></RequireRuntime>
+}
+
+function SaaSRationalisationRoute() {
+  return <RequireRuntime><SaaSRationalisation /></RequireRuntime>
+}
+
+function AIGovernanceRoute() {
+  return <RequireRuntime><AIGovernanceExposure /></RequireRuntime>
+}
+
+Delete conflict markers.
+
+Router section
+
+Keep:
+
+<Route path="/shadow-it-exposure" component={ShadowITRoute} />
+<Route path="/saas-rationalisation" component={SaaSRationalisationRoute} />
+<Route path="/ai-governance" component={AIGovernanceRoute} />
+
+Delete conflict markers.
+
+3. artifacts/control-plane/src/components/layout/Sidebar.tsx
+
+Keep the HEAD version entirely.
+
+Specifically keep:
+
+EXECUTIVE
+INTELLIGENCE
+PROOF & OPERATIONS
+PLATFORM
+
+and:
+
+Workspace
+Governance Graph
+Shadow IT Exposure
+SaaS Rationalisation
+AI Governance
+Executive Risk
+Executive Value
+
+Do NOT revert to:
+
+Pilot Workspace
+OPERATIONAL
+
+Delete everything between:
+
+=======
+
+and
+
+>>>>>>> origin/main
+
+inside that conflict block.
+
+4. artifacts/control-plane/src/lib/pilot-workspace.test.tsx
+
+Keep the HEAD assertions.
+
+Keep:
+
+'Workspace Control Center'
+'Workspace Mode'
+'Sample governance dataset'
+
+and:
+
+assert.match(labels, /Workspace:\/pilot-workspace/)
+
+Delete the origin/main versions.
+
+5. artifacts/control-plane/src/pages/PilotWorkspace.tsx
+
+Keep the HEAD version entirely.
+
+It is the newer polished version with:
+
+ExecutivePageShell
+WorkspaceModeBanner
+ExecutiveKpiCard
+ExecutiveSection
+StatusBadge
+demoStory
+
+Delete the entire origin/main implementation starting at:
+
+import type { ReactNode, ElementType } from 'react'
+
+through the end of the conflict block.
+
+Keep the HEAD implementation only.
+
+After editing
+
+Run:
+
+git add artifacts/control-plane/package.json
+
+git add artifacts/control-plane/src/App.tsx
+
+git add artifacts/control-plane/src/components/layout/Sidebar.tsx
+
+git add artifacts/control-plane/src/lib/pilot-workspace.test.tsx
+
+git add artifacts/control-plane/src/pages/PilotWorkspace.tsx
+
+git status
+
+You should see:
+
+All conflicts fixed but you are still merging.
+
+Then:
+
+git commit -m "Resolve PR 93 merge conflicts"
+
+Then:
+
+git push origin resolve-pr-93:codex/add-pilot-workspace-operational-cockpit-1zlga2
+
+After that, run:
+
+pnpm --dir artifacts/control-plane test -- pilot-workspace
+
+and paste the result before merging the PR.
