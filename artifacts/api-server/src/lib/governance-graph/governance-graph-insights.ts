@@ -1,0 +1,28 @@
+import type { GovernanceGraphEdge, GovernanceGraphInsight, GovernanceGraphNode } from "./governance-graph-types";
+
+const edgesFrom = (edges: GovernanceGraphEdge[], sourceId: string, type?: string) => edges.filter((edge) => edge.sourceId === sourceId && (!type || edge.type === type));
+const edgesTo = (edges: GovernanceGraphEdge[], targetId: string, type?: string) => edges.filter((edge) => edge.targetId === targetId && (!type || edge.type === type));
+const evidenceFor = (nodes: GovernanceGraphNode[], edges: GovernanceGraphEdge[], nodeIds: string[]) => Array.from(new Set(nodeIds.flatMap((id) => [...edgesFrom(edges, id, "SUPPORTED_BY_EVIDENCE"), ...edgesTo(edges, id, "SUPPORTED_BY_EVIDENCE")].map((edge) => nodes.find((node) => node.id === edge.targetId || node.id === edge.sourceId)?.label).filter(Boolean) as string[])));
+
+export function generateGovernanceGraphInsights(nodes: GovernanceGraphNode[], edges: GovernanceGraphEdge[]): GovernanceGraphInsight[] {
+  const insights: GovernanceGraphInsight[] = [];
+  const apps = nodes.filter((node) => node.type === "APPLICATION");
+  for (const app of apps) {
+    const ownerEdges = edgesFrom(edges, app.id, "HAS_OWNER");
+    const findingEdges = edgesFrom(edges, app.id, "HAS_FINDING");
+    const findingNodes = findingEdges.map((edge) => nodes.find((node) => node.id === edge.targetId)).filter(Boolean) as GovernanceGraphNode[];
+    const domains = new Set(findingNodes.map((node) => node.domain).filter(Boolean));
+    const highRisk = findingNodes.some((node) => node.riskLevel === "HIGH" || node.riskLevel === "CRITICAL") || app.riskLevel === "HIGH" || app.riskLevel === "CRITICAL";
+    if ((app.annualCost ?? 0) > 25000 && ownerEdges.length === 0) insights.push({ id: `insight-ownerless-${app.id}`, type: "OWNERLESS_HIGH_SPEND", title: `${app.label} has exposed spend without an owner`, severity: (app.annualCost ?? 0) > 100000 ? "CRITICAL" : "HIGH", relatedNodeIds: [app.id], rationale: `${app.label} maps ${app.annualCost?.toLocaleString()} in annual cost without an owner relationship.`, recommendedAction: "Assign accountable business and budget owners.", evidenceRefs: evidenceFor(nodes, edges, [app.id, ...findingNodes.map((node) => node.id)]) });
+    if (domains.size >= 2) insights.push({ id: `insight-multidomain-${app.id}`, type: "MULTI_DOMAIN_RISK", title: `${app.label} appears across multiple governance domains`, severity: "HIGH", relatedNodeIds: [app.id, ...findingNodes.map((node) => node.id)], rationale: `${app.label} has findings sourced from ${Array.from(domains).join(", ")}.`, recommendedAction: "Review the shared governance issue across contributing domains.", evidenceRefs: evidenceFor(nodes, edges, [app.id, ...findingNodes.map((node) => node.id)]) });
+    if (highRisk && Array.from(domains).includes("AI_GOVERNANCE")) insights.push({ id: `insight-ai-${app.id}`, type: "AI_GOVERNANCE_CLUSTER", title: `${app.label} is part of an AI governance risk cluster`, severity: "HIGH", relatedNodeIds: [app.id, ...findingNodes.map((node) => node.id)], rationale: `${app.label} has high-risk AI governance findings or relationships.`, recommendedAction: "Review AI ownership, policy coverage, and evidence.", evidenceRefs: evidenceFor(nodes, edges, [app.id, ...findingNodes.map((node) => node.id)]) });
+    const renewalEdges = edgesFrom(edges, app.id, "HAS_RENEWAL");
+    if (renewalEdges.some((edge) => Number(edge.metadata?.daysToRenewal ?? 999) <= 120) && highRisk) insights.push({ id: `insight-renewal-${app.id}`, type: "RENEWAL_RISK_CLUSTER", title: `${app.label} has renewal-linked risk`, severity: "HIGH", relatedNodeIds: [app.id, ...findingNodes.map((node) => node.id)], rationale: `${app.label} has a near-term renewal connected to high-risk findings.`, recommendedAction: "Prepare renewal review with risk, owner, cost, and evidence context.", evidenceRefs: evidenceFor(nodes, edges, [app.id, ...findingNodes.map((node) => node.id)]) });
+    if (edgesFrom(edges, app.id).some((edge) => edge.type === "DUPLICATES" || edge.type === "OVERLAPS_WITH")) insights.push({ id: `insight-duplicate-${app.id}`, type: "DUPLICATE_CAPABILITY_CLUSTER", title: `${app.label} is part of a duplicate capability cluster`, severity: "MEDIUM", relatedNodeIds: [app.id, ...edgesFrom(edges, app.id).filter((edge) => edge.type === "DUPLICATES" || edge.type === "OVERLAPS_WITH").map((edge) => edge.targetId)], rationale: `${app.label} overlaps with other applications in the portfolio.`, recommendedAction: "Assess preferred tool and consolidation opportunity.", evidenceRefs: evidenceFor(nodes, edges, [app.id]) });
+  }
+  for (const finding of nodes.filter((node) => node.type === "FINDING")) {
+    if ((finding.riskLevel === "HIGH" || finding.riskLevel === "CRITICAL") && edgesFrom(edges, finding.id, "SUPPORTED_BY_EVIDENCE").length === 0) insights.push({ id: `insight-evidence-gap-${finding.id}`, type: "EVIDENCE_GAP", title: `${finding.label} lacks evidence linkage`, severity: finding.riskLevel === "CRITICAL" ? "HIGH" : "MEDIUM", relatedNodeIds: [finding.id], rationale: "A high-risk finding should be evidence-backed before executive review.", recommendedAction: "Attach supporting evidence references.", evidenceRefs: [] });
+  }
+  for (const opportunity of nodes.filter((node) => node.type === "OPPORTUNITY" && (node.potentialAnnualSavings ?? 0) > 25000)) insights.push({ id: `insight-value-${opportunity.id}`, type: "HIGH_VALUE_OPPORTUNITY", title: `${opportunity.label} maps a high-value opportunity`, severity: "HIGH", relatedNodeIds: [opportunity.id], rationale: `Potential savings mapped exceed $25,000.`, recommendedAction: "Prioritize executive value review and supporting evidence.", evidenceRefs: evidenceFor(nodes, edges, [opportunity.id]) });
+  return insights;
+}

@@ -1,0 +1,7 @@
+const palette = ['#2dd4bf','#60a5fa','#f59e0b','#f87171','#a78bfa','#34d399']
+export function ExecutiveDonutChart({ title, data, centerLabel, centerValue }: { title:string; data:Array<{label:string; value:number}>; centerLabel?:string; centerValue?:string|number }) {
+  const total = data.reduce((sum,item)=>sum+item.value,0) || 1
+  let cursor = 0
+  const gradient = data.map((item,index)=>{const start=cursor; const end=cursor+(item.value/total)*100; cursor=end; return `${palette[index%palette.length]} ${start}% ${end}%`}).join(', ')
+  return <div style={{ display:'grid', gap:12 }}><strong>{title}</strong><div style={{ display:'flex', gap:16, alignItems:'center', flexWrap:'wrap' }}><div style={{ width:118, height:118, borderRadius:'50%', background:`conic-gradient(${gradient})`, display:'grid', placeItems:'center' }}><div style={{ width:72, height:72, borderRadius:'50%', background:'var(--surface-1)', display:'grid', placeItems:'center', textAlign:'center' }}><strong>{centerValue ?? total}</strong><span style={{ fontSize:10, color:'var(--text-tertiary)' }}>{centerLabel ?? 'Total'}</span></div></div><div style={{ display:'grid', gap:7 }}>{data.map((item,index)=><span key={item.label} style={{ color:'var(--text-secondary)', fontSize:12 }}><i style={{ display:'inline-block', width:8, height:8, borderRadius:999, background:palette[index%palette.length], marginRight:6 }} />{item.label}: {item.value}</span>)}</div></div></div>
+}

@@ -26,10 +26,17 @@ import ContractIntelligenceView from './pages/ContractIntelligenceView'
 import ExecutivePrioritiesView from './pages/ExecutivePrioritiesView'
 import UtilizationIntelligenceView from './pages/UtilizationIntelligenceView'
 import OpportunitiesView from './pages/OpportunitiesView'
-import RenewalsView from './pages/RenewalsView'
+import RenewalContractIntelligence from './pages/RenewalContractIntelligence'
+import OwnershipIntelligence from './pages/OwnershipIntelligence'
+import GovernanceGraph from './pages/GovernanceGraph'
+import ExecutiveRiskCommandCenter from './pages/ExecutiveRiskCommandCenter'
 import M365OnboardingView from './pages/M365OnboardingView'
 import EvidencePacksView from './pages/EvidencePacksView'
 import ExecutiveValueDashboard from './pages/ExecutiveValueDashboard'
+import PilotWorkspace from './pages/PilotWorkspace'
+import ShadowITExposure from './pages/ShadowITExposure'
+import SaaSRationalisation from './pages/SaaSRationalisation'
+import AIGovernanceExposure from './pages/AIGovernanceExposure'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -274,7 +281,19 @@ function OpportunitiesRoute() {
 }
 
 function RenewalsRoute() {
-  return <RequireRuntime><RenewalsView /></RequireRuntime>
+  return <RequireRuntime><RenewalContractIntelligence /></RequireRuntime>
+}
+
+function OwnershipRoute() {
+  return <RequireRuntime><OwnershipIntelligence /></RequireRuntime>
+}
+
+function GovernanceGraphRoute() {
+  return <RequireRuntime><GovernanceGraph /></RequireRuntime>
+}
+
+function ExecutiveRiskRoute() {
+  return <RequireRuntime><ExecutiveRiskCommandCenter /></RequireRuntime>
 }
 
 function DriftRoute() {
@@ -325,6 +344,22 @@ function EvidencePacksRoute() {
   return <RequireRuntime><EvidencePacksView /></RequireRuntime>
 }
 
+function PilotWorkspaceRoute() {
+  return <RequireRuntime><PilotWorkspace /></RequireRuntime>
+}
+
+function ShadowITRoute() {
+  return <RequireRuntime><ShadowITExposure /></RequireRuntime>
+}
+
+function SaaSRationalisationRoute() {
+  return <RequireRuntime><SaaSRationalisation /></RequireRuntime>
+}
+
+function AIGovernanceRoute() {
+  return <RequireRuntime><AIGovernanceExposure /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <Redirect to="/connector-ops" />
 }
@@ -348,6 +383,10 @@ function Router() {
       <Route path="/login" component={LoginRoute} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
+      <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
+      <Route path="/shadow-it-exposure" component={ShadowITRoute} />
+      <Route path="/saas-rationalisation" component={SaaSRationalisationRoute} />
+      <Route path="/ai-governance" component={AIGovernanceRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/onboarding/m365" component={M365OnboardingRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
@@ -364,6 +403,9 @@ function Router() {
       <Route path="/executive-value" component={ExecutiveValueRoute} />
       <Route path="/opportunities" component={OpportunitiesRoute} />
       <Route path="/renewals" component={RenewalsRoute} />
+      <Route path="/ownership" component={OwnershipRoute} />
+      <Route path="/governance-graph" component={GovernanceGraphRoute} />
+      <Route path="/executive-risk" component={ExecutiveRiskRoute} />
       <Route path="/drift" component={DriftRoute} />
       <Route path="/recommendations" component={RecommendationsRoute} />
       <Route path="/campaigns" component={CampaignsRoute} />

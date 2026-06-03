@@ -4,6 +4,11 @@ import { buildExplainabilityEnvelope } from "../lib/recommendations/explainabili
 import { RecommendationRationalePersistenceService } from "../lib/recommendations/recommendation-rationale-persistence-service";
 import { RecommendationOutcomeResolutionService } from "../lib/recommendations/recommendation-outcome-resolution-service";
 import { M365RecommendationService } from "../lib/playbooks/m365/m365-recommendation-service";
+import { demoShadowITDiscoveryInput, runShadowITDiscoveryPlaybook } from "../lib/playbooks/shadow-it/shadow-it-discovery-playbook";
+import { demoSaaSRationalisationInput, runSaaSRationalisationPlaybook } from "../lib/playbooks/saas-rationalisation/saas-rationalisation-playbook";
+import { demoAIGovernanceDiscoveryInput, runAIApplicationDiscoveryPlaybook } from "../lib/playbooks/ai-governance/ai-application-discovery-playbook";
+import { demoRenewalContractInput, runRenewalContractPlaybook } from "../lib/playbooks/renewals/renewal-contract-playbook";
+import { demoOwnershipInput, runOwnershipIntelligencePlaybook } from "../lib/playbooks/ownership/ownership-intelligence-playbook";
 
 const router = Router();
 const svc = new PlaybookRecommendationService();
@@ -12,6 +17,77 @@ const outcomeSvc = new RecommendationOutcomeResolutionService();
 const m365RecommendationSvc = new M365RecommendationService();
 const scope = (req:any)=>({ tenantId: String(req.tenantId ?? req.query.tenantId ?? req.body?.tenantId ?? "default"), actorId: String(req.query.actorId ?? req.body?.actorId ?? "system") });
 
+router.get("/shadow-it/exposure", async (_req, res) => {
+  const result = runShadowITDiscoveryPlaybook(demoShadowITDiscoveryInput);
+  return res.json({
+    summary: result.dashboardTile,
+    findings: result.findings,
+    opportunities: result.opportunities,
+    governanceExposureScore: result.dashboardTile.governanceExposureScore,
+    evidenceRefs: Array.from(new Set(result.findings.flatMap((finding) => finding.evidenceRefs))),
+    executionRequired: result.executionRequired,
+    platformLayer: result.platformLayer,
+  });
+});
+
+
+router.get("/saas-rationalisation/exposure", async (_req, res) => {
+  const result = runSaaSRationalisationPlaybook(demoSaaSRationalisationInput);
+  return res.json({
+    summary: result.summary,
+    findings: result.findings,
+    opportunity: result.opportunity,
+    overlapGroups: result.overlapGroups,
+    governanceExposureScore: result.governanceExposureScore,
+    evidenceRefs: result.evidenceRefs,
+    executionRequired: result.executionRequired,
+    platformLayer: result.platformLayer,
+  });
+});
+
+router.get("/ai-governance/exposure", async (_req, res) => {
+  const result = runAIApplicationDiscoveryPlaybook(demoAIGovernanceDiscoveryInput);
+  return res.json({
+    summary: result.summary,
+    inventory: result.inventory,
+    findings: result.findings,
+    opportunity: result.opportunity,
+    governanceExposureScore: result.governanceExposureScore,
+    policyCoverageScore: result.policyCoverageScore,
+    evidenceRefs: result.evidenceRefs,
+    executionRequired: result.executionRequired,
+    platformLayer: result.platformLayer,
+  });
+});
+
+router.get("/renewals/exposure", async (_req, res) => {
+  const result = runRenewalContractPlaybook(demoRenewalContractInput);
+  return res.json({
+    summary: result.summary,
+    findings: result.findings,
+    opportunity: result.opportunity,
+    upcomingRenewals: result.upcomingRenewals,
+    renewalCalendar: result.renewalCalendar,
+    riskBreakdown: result.riskBreakdown,
+    evidenceRefs: result.evidenceRefs,
+    executionRequired: result.executionRequired,
+    platformLayer: result.platformLayer,
+  });
+});
+
+router.get("/ownership/exposure", async (_req, res) => {
+  const result = runOwnershipIntelligencePlaybook(demoOwnershipInput);
+  return res.json({
+    summary: result.summary,
+    findings: result.findings,
+    opportunity: result.opportunity,
+    ownershipStatusBreakdown: result.ownershipStatusBreakdown,
+    accountabilityRiskScore: result.accountabilityRiskScore,
+    evidenceRefs: result.evidenceRefs,
+    executionRequired: result.executionRequired,
+    platformLayer: result.platformLayer,
+  });
+});
 
 router.post("/m365/generate-recommendations", async (req,res)=>{
   const { tenantId, actorId } = scope(req);
