@@ -432,7 +432,7 @@ function Router() {
       <Route path="/outcomes" component={OutcomesRoute} />
       <Route path="/data-trust"><RedirectRoute to="/platform" /></Route>
       <Route path="/vendor-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
-      <Route path="/benchmark-intelligence"><RedirectRoute to="/technology-portfolio?tab=benchmarks" /></Route>
+      <Route path="/benchmark-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
       <Route path="/contract-intelligence"><RedirectRoute to="/technology-portfolio?tab=contracts" /></Route>
       <Route path="/utilization-intelligence"><RedirectRoute to="/technology-portfolio?tab=utilisation" /></Route>
       <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
@@ -452,10 +452,10 @@ function Router() {
       <Route path="/evidence-audit"><RedirectRoute to="/evidence" /></Route>
       <Route path="/runtime-health"><RedirectRoute to="/platform" /></Route>
       <Route path="/connector-ops"><RedirectRoute to="/platform" /></Route>
-      <Route path="/security" component={SecurityRoute} />
+      <Route path="/security"><RedirectRoute to="/platform?tab=security" /></Route>
       <Route path="/sync-jobs" component={SyncJobsRedirectRoute} />
       <Route path="/audit-log"><RedirectRoute to="/evidence" /></Route>
-      <Route path="/settings" component={SettingsRoute} />
+      <Route path="/settings"><RedirectRoute to="/platform?tab=configuration" /></Route>
       <Route component={CatchAllRoute} />
     </Switch>
   )
