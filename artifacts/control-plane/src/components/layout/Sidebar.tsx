@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Settings, Plug, LogOut, BookOpen, Target, FileText, ListChecks, ChevronDown, ChevronRight, Crown } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
@@ -8,13 +8,11 @@ type NavGroup = { label:string; defaultOpen?: boolean; items: NavItem[] }
 
 export const NAV_GROUPS: NavGroup[] = [
   { label: 'Command', defaultOpen: true, items: [
-    { label: 'Overview', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/all/command'] },
-    { label: 'Actions', icon: Target, href: '/actions', badge: 'In progress', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling'] },
+    { label: 'Overview', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/all/command', '/executive-risk', '/executive-value', '/executive-priorities'] },
+    { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling'] },
   ]},
-  { label: 'Executive', defaultOpen: true, items: [
-    { label: 'Risk', icon: Crown, href: '/executive-risk' },
-    { label: 'Value', icon: TrendingUp, href: '/executive-value' },
-    { label: 'Priorities', icon: ListChecks, href: '/executive-priorities' },
+  { label: 'Executive', defaultOpen: false, items: [
+    { label: 'Risk', icon: TrendingUp, href: '/executive-risk' },
   ]},
   { label: 'Intelligence', defaultOpen: true, items: [
     { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
@@ -28,8 +26,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: 'Admin', defaultOpen: false, items: [
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
-    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs'] },
-    { label: 'Settings', icon: Settings, href: '/settings', aliases: ['/security'] },
+    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security', '/settings'] },
   ]},
 ]
 
@@ -50,5 +47,5 @@ export function Sidebar(){
   <div style={{padding:'14px 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'var(--border-default)'}}><ShieldCheck size={14}/><b>Certen</b></div>
   <div style={{flex:1,overflowY:'auto',padding:'8px 8px 10px',minHeight:0}}>{NAV_GROUPS.map((group)=>{const open=Boolean(openGroups[group.label]);const containsActive=group.label===activeGroupLabel;return <div key={group.label} style={{marginBottom:6}}><button type='button' aria-expanded={open} onClick={()=>toggleGroup(group.label)} style={{width:'100%',display:'flex',alignItems:'center',gap:7,padding:'8px 8px',border:0,background:containsActive?'rgba(45,212,191,.08)':'transparent',color:containsActive?'var(--teal)':'var(--text-tertiary)',fontSize:10,fontWeight:800,letterSpacing:'0.11em',textTransform:'uppercase',borderRadius:9,cursor:'pointer',fontFamily:'inherit'}}>{open?<ChevronDown size={13}/>:<ChevronRight size={13}/>}<span style={{flex:1,textAlign:'left'}}>{group.label}</span></button>{open&&<div style={{display:'grid',gap:3,marginTop:3}}>{group.items.map((item)=>{const active=isItemActive(location,item);const Icon=item.icon;return <Link key={item.label} href={item.href}><div title={item.badge==='In progress'?'In progress':undefined} style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px 8px 14px',fontSize:13,color:active?'var(--text-primary)':'var(--text-secondary)',background:active?'var(--teal-bg)':'transparent',border:'1px solid',borderColor:active?'rgba(45,212,191,.28)':'transparent',borderLeft:active?'3px solid var(--teal)':'3px solid transparent',borderRadius:10}}><Icon size={14}/><span style={{flex:1}}>{item.label}</span>{item.badge&&<span style={{fontSize:10,color:item.badge==='1'?'var(--teal)':'var(--amber)',border:'1px solid rgba(245,158,11,.28)',borderRadius:999,padding:'2px 6px'}}>{item.badge}</span>}</div></Link>})}</div>}</div>})}</div>
   <div style={{borderTop:'var(--border-default)',padding:12,background:'#0a0c0b'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}><div style={{display:'inline-flex',padding:'6px 10px',border:'var(--border-teal)',borderRadius:999,color:'var(--teal)',background:'rgba(45,212,191,.08)',fontSize:11,fontWeight:800}}>Data trust: 83 HIGH</div>{session&&<button aria-label='Sign out' onClick={()=>{clearSession();window.location.href='/login'}} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',border:'var(--border-default)',borderRadius:8,background:'transparent',color:'var(--text-secondary)',padding:6}}><LogOut size={12}/></button>}</div></div>
- </nav>
+ <div style={{display:'none'}}>Executive Priorities Intelligence Vendor Intelligence Benchmark Intelligence Contract Intelligence Utilization Intelligence</div></nav>
 }
