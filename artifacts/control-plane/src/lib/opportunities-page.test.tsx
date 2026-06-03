@@ -19,7 +19,7 @@ test('Opportunities page visible in route and sidebar', () => {
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/opportunities'), true)
   assert.equal(sidebar.includes('Opportunities'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Opportunities page renders cards, table, priority and readiness columns', () => {

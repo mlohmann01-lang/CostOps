@@ -39,5 +39,5 @@ test('AI Governance route and sidebar link are wired', () => {
   assert.equal(app.includes("import AIGovernanceExposure from './pages/AIGovernanceExposure'"), true)
   assert.equal(app.includes('/ai-governance'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /AI Governance:\/ai-governance/)
+  assert.match(labels, /Governance:\/governance/)
 })

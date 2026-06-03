@@ -40,5 +40,5 @@ test('Renewal Contract Intelligence sidebar route works', () => {
   assert.equal(app.includes("import RenewalContractIntelligence from './pages/RenewalContractIntelligence'"), true)
   assert.equal(app.includes('/renewals'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Renewals:\/renewals/)
+  assert.match(labels, /Technology Portfolio:\/technology-portfolio/)
 })

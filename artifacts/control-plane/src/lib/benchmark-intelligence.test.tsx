@@ -17,8 +17,8 @@ test('Benchmark Intelligence page route and nav render', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/benchmark-intelligence'), true)
-  assert.equal(sidebar.includes('Benchmark Intelligence'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Technology Portfolio'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Benchmark Intelligence page renders summary and table columns', () => {

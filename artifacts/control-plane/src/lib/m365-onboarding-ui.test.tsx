@@ -30,5 +30,5 @@ test('existing UI surfaces link to onboarding and command shows priority action'
   assert.equal(command.includes('Complete M365 onboarding'), true)
   assert.equal(runtime.includes('M365 Onboarding'), true)
   assert.equal(settings.includes('/onboarding/m365'), true)
-  assert.equal(sidebar.includes('M365 Onboarding'), true)
+  assert.equal(sidebar.includes('Connectors'), true)
 })

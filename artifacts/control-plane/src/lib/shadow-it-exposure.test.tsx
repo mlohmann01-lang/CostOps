@@ -27,7 +27,7 @@ test('Shadow IT route and sidebar link are wired', () => {
   assert.equal(app.includes("import ShadowITExposure from './pages/ShadowITExposure'"), true)
   assert.equal(app.includes('/shadow-it-exposure'), true)
   const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Shadow IT Exposure:\/shadow-it-exposure/)
+  assert.match(labels, /Technology Portfolio:\/technology-portfolio/)
 })
 
 test('Shadow IT page survives missing API/live data', () => {

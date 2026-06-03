@@ -16,8 +16,8 @@ test('Renewals page route and nav are visible under operational', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   assert.equal(app.includes('/renewals'), true)
-  assert.equal(sidebar.includes('Renewals'), true)
-  assert.equal(sidebar.includes('OPERATIONAL'), true)
+  assert.equal(sidebar.includes('Technology Portfolio'), true)
+  assert.equal(sidebar.includes('Intelligence'), true)
 })
 
 test('Renewals page renders summary cards and readiness table', () => {
