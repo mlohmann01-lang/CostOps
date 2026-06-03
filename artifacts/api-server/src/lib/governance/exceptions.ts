@@ -6,17 +6,32 @@ const mem:any[] = [];
 export async function createExceptionRequest(input:any){ if(!input.expiresAt) throw new Error("EXPIRES_AT_REQUIRED"); const now=new Date(); if(new Date(input.expiresAt)<=now) throw new Error("EXPIRES_AT_IN_FUTURE_REQUIRED"); const row={ tenantId:input.tenantId??"default", exceptionType:input.exceptionType, targetType:input.targetType, targetId:input.targetId, recommendationId:input.recommendationId??null, policyId:input.policyId??null, requestedBy:input.requestedBy, approvedBy:null, status:"PENDING", reason:input.reason??"", businessJustification:input.businessJustification??"", riskAccepted:input.riskAccepted??"", startsAt:new Date(input.startsAt??now), expiresAt:new Date(input.expiresAt), evidence:input.evidence??{}, updatedAt:new Date()};
 try{ const [r]=await db.insert(governanceExceptionsTable).values(row).returning(); await db.insert(governanceExceptionEventsTable).values({exceptionId:r.id,tenantId:r.tenantId,actorId:r.requestedBy,eventType:"REQUESTED",reason:r.reason,evidence:r.evidence}); return r;}catch{ const r={id:mem.length+1,...row}; mem.push(r); return r; }
 }
+function assertApprovalAllowed(row:any, actorId:string, eventType:string) {
+  if (eventType !== "APPROVED") return;
+  if (row.requestedBy === actorId) throw new Error("SELF_APPROVAL_BLOCKED");
+  const approval = canApprove(actorId, row.tenantId, { actionRiskProfile: { riskClass: "B" } });
+  if (!approval.allowed) throw new Error(`AUTH_${approval.reason}`);
+}
 async function act(id:number,actorId:string,eventType:string,status:string,reason?:string){
+  const memoryRow = () => mem.find((m) => m.id === id);
   try {
-    const [r]=await db.select().from(governanceExceptionsTable).where(eq(governanceExceptionsTable.id,id)).limit(1); if(!r) throw new Error("NOT_FOUND");
-    if(eventType==="APPROVED"){ if(r.requestedBy===actorId) throw new Error("SELF_APPROVAL_BLOCKED"); const a=canApprove(actorId,r.tenantId,{actionRiskProfile:{riskClass:"B"}}); if(!a.allowed) throw new Error(`AUTH_${a.reason}`);} 
-    const [u]=await db.update(governanceExceptionsTable).set({status,approvedBy:eventType==="APPROVED"?actorId:r.approvedBy,updatedAt:new Date()}).where(eq(governanceExceptionsTable.id,id)).returning();
-    await db.insert(governanceExceptionEventsTable).values({exceptionId:id,tenantId:r.tenantId,actorId,eventType,reason:reason??"",evidence:{}}); return u;
-  } catch {
-    const r = mem.find((m)=>m.id===id); if(!r) throw new Error("NOT_FOUND");
-    if(eventType==="APPROVED"){ if(r.requestedBy===actorId) throw new Error("SELF_APPROVAL_BLOCKED"); const a=canApprove(actorId,r.tenantId,{actionRiskProfile:{riskClass:"B"}}); if(!a.allowed) throw new Error(`AUTH_${a.reason}`);} 
-    r.status=status; if(eventType==="APPROVED") r.approvedBy=actorId; return r;
+    const [r] = await db.select().from(governanceExceptionsTable).where(eq(governanceExceptionsTable.id, id)).limit(1);
+    if (r) {
+      assertApprovalAllowed(r, actorId, eventType);
+      const [u] = await db.update(governanceExceptionsTable).set({ status, approvedBy: eventType === "APPROVED" ? actorId : r.approvedBy, updatedAt: new Date() }).where(eq(governanceExceptionsTable.id, id)).returning();
+      await db.insert(governanceExceptionEventsTable).values({ exceptionId: id, tenantId: r.tenantId, actorId, eventType, reason: reason ?? "", evidence: {} });
+      return u;
+    }
+  } catch (err) {
+    if (err instanceof Error && ["SELF_APPROVAL_BLOCKED"].some((message) => err.message.includes(message))) throw err;
+    if (err instanceof Error && err.message.startsWith("AUTH_")) throw err;
   }
+  const r = memoryRow();
+  if (!r) throw new Error("NOT_FOUND");
+  assertApprovalAllowed(r, actorId, eventType);
+  r.status = status;
+  if (eventType === "APPROVED") r.approvedBy = actorId;
+  return r;
 }
 export const approveException=(i:any)=>act(i.exceptionId,i.actorId,"APPROVED","APPROVED",i.reason);
 export const rejectException=(i:any)=>act(i.exceptionId,i.actorId,"REJECTED","REJECTED",i.reason);

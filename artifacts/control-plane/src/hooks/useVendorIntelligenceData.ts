@@ -6,6 +6,10 @@ import { useWorkspace } from '../lib/workspaceContext'
 export const vendorChangeApiPaths = ['/api/vendor-changes', '/api/vendor-changes/high-impact']
 export const vendorChangePipelineApiPaths = ['/api/vendor-changes/signals', '/api/vendor-changes/pipeline/health', '/api/vendor-changes/signals/ingest', '/api/vendor-changes/:id/promote-to-opportunity']
 const legacyVendorOpportunityPath = '/generate-opportunities'
+type DemoVendorIntelligence = typeof demoVendorIntelligence
+type DemoImpact = DemoVendorIntelligence['impacts'][keyof DemoVendorIntelligence['impacts']]
+type DemoOpportunityPipeline = DemoVendorIntelligence['opportunityPipeline'][keyof DemoVendorIntelligence['opportunityPipeline']]
+
 const empty = { summary: { vendorChangesDetected: 0, highImpact: 0, affectedSpend: 0, generatedOpportunities: 0 }, changes: [], highImpactChanges: [], signals: [], pipelineHealth: {}, impacts: {}, opportunityPipeline: {} }
 
 export function useVendorIntelligenceData() {
@@ -14,6 +18,8 @@ export function useVendorIntelligenceData() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const demo = useMemo(() => ({ ...demoVendorIntelligence, highImpactChanges: demoVendorIntelligence.changes.filter((change: any) => change.impactSeverity === 'HIGH' || change.impactSeverity === 'CRITICAL') }), [])
+  const demoImpacts = useMemo<Record<string, DemoImpact>>(() => demo.impacts, [demo])
+  const demoOpportunityPipeline = useMemo<Record<string, DemoOpportunityPipeline>>(() => demo.opportunityPipeline, [demo])
 
   const refresh = useCallback(async () => {
     if (workspace.mode === 'demo') return demo
@@ -40,14 +46,14 @@ export function useVendorIntelligenceData() {
   }, [workspace.mode, demo])
 
   const assessChange = useCallback(async (id: string) => {
-    if (workspace.mode === 'demo') return { impact: demo.impacts?.[id] ?? demo.changes.find((change: any) => change.id === id) }
+    if (workspace.mode === 'demo') return { impact: demoImpacts[id] ?? demo.changes.find((change: any) => change.id === id) }
     return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/assess`, { method: 'POST' })
-  }, [workspace.mode, demo])
+  }, [workspace.mode, demo, demoImpacts])
 
   const promoteToOpportunity = useCallback(async (id: string) => {
-    if (workspace.mode === 'demo') return { opportunities: demo.opportunityPipeline?.[id]?.opportunities ?? [{ opportunityId: `demo-${id}`, recommendationSource: 'VENDOR_CHANGE', title: `${id} opportunity` }] }
+    if (workspace.mode === 'demo') return { opportunities: demoOpportunityPipeline[id]?.opportunities ?? [{ opportunityId: `demo-${id}`, recommendationSource: 'VENDOR_CHANGE', title: `${id} opportunity` }] }
     return liveFetch(`/api/vendor-changes/${encodeURIComponent(id)}/promote-to-opportunity`, { method: 'POST' })
-  }, [workspace.mode, demo])
+  }, [workspace.mode, demoOpportunityPipeline])
 
   const generateOpportunities = promoteToOpportunity
 
