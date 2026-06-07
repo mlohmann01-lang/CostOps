@@ -39,7 +39,7 @@ export default function WorkspaceSelection() {
 
   function enter(env: 'DEMO' | 'LIVE') {
     runtime.selectEnvironment(env)
-    navigate('/all/command')
+    navigate('/workspace')
   }
 
   return (
@@ -66,7 +66,7 @@ export default function WorkspaceSelection() {
         </div>
 
         <h1 style={{ fontSize: 22, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-          Choose your workspace
+          Choose your overview mode
         </h1>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', margin: '0 0 28px' }}>
           Select whether you want to explore Certen safely with synthetic data, or connect to a live governed tenant.
@@ -74,7 +74,7 @@ export default function WorkspaceSelection() {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
 
-          {/* Demo Workspace */}
+          {/* Demo Mode */}
           <div
             style={card}
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-medium)')}
@@ -95,7 +95,7 @@ export default function WorkspaceSelection() {
 
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Demo Workspace
+                Demo Mode
               </h2>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
                 Explore Certen using deterministic synthetic evidence, simulated execution, governed approvals, and drift scenarios. No production systems are connected.
@@ -134,11 +134,11 @@ export default function WorkspaceSelection() {
               onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
               onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
             >
-              Enter Demo Workspace
+              Enter Demo Mode
             </button>
           </div>
 
-          {/* Live Workspace */}
+          {/* Live Tenant */}
           <div
             style={card}
             onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-medium)')}
@@ -159,7 +159,7 @@ export default function WorkspaceSelection() {
 
             <div>
               <h2 style={{ fontSize: 16, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 8px' }}>
-                Live Workspace
+                Live Tenant
               </h2>
               <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
                 Connect to real tenant data, live connectors, governance controls, approvals, dry-runs, outcome ledgering, and drift monitoring.
@@ -198,14 +198,14 @@ export default function WorkspaceSelection() {
               onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245,158,11,0.1)' }}
               onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
             >
-              Enter Live Workspace
+              Enter Live Tenant
             </button>
           </div>
 
         </div>
 
         <p style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 24, textAlign: 'center' }}>
-          You can switch workspaces at any time from the sidebar settings.
+          You can switch modes at any time from platform settings.
         </p>
       </div>
     </div>

@@ -220,8 +220,10 @@ function RequireRuntime({ children }: { children: React.ReactNode }) {
 
 function WorkspaceRoute() {
   const session = getSession()
+  const runtime = useRuntimeContext()
   if (!session) return <Redirect to="/login" />
-  return <WorkspaceSelection />
+  if (!runtime.hasSelectedEnvironment) return <WorkspaceSelection />
+  return <PilotWorkspace />
 }
 
 function ConnectorsRoute() {
