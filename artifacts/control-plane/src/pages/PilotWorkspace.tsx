@@ -1,37 +1,92 @@
 import { Link } from 'wouter'
-import { CheckCircle2, CircleAlert, CircleDollarSign, ClipboardList, FileText, ShieldCheck } from 'lucide-react'
 import { Shell } from '../components/layout/Shell'
-import { WorkspaceModeBanner, ExecutiveKpiCard, ExecutivePageShell, ExecutiveSection, StatusBadge } from '../components/executive'
-import { demoStory } from '../lib/demoStory'
+import { EmptyState, ExecutivePageHeader, ExecutiveSection, MetricCard, StatusChip, ValueLifecycle, type StatusChipTone } from '../components/executive'
 import { usePilotWorkspaceData } from '../hooks/usePilotWorkspaceData'
 
 const money = (value: number) => `$${Math.round(Number(value ?? 0)).toLocaleString()}`
 const date = (value: string) => { const parsed = new Date(value); return Number.isNaN(parsed.getTime()) ? value || 'Just now' : parsed.toLocaleString(undefined, { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' }) }
-const toneFor = (status: string) => /Blocked|Review|required/i.test(status) ? 'danger' : /attention|Needs/i.test(status) ? 'warning' : /Value|Evidence/i.test(status) ? 'info' : 'good'
+const chipTone = (status: string): StatusChipTone => /Blocked|Low|Disabled/i.test(status) ? 'danger' : /attention|review|required|Medium|Approval/i.test(status) ? 'warning' : /HIGH|Ready|Verified|Enabled|Live/i.test(status) ? 'success' : 'info'
+
+const demoMessage = 'Sample governance data. Connect a tenant to analyse live opportunities.'
+const noTenantMessage = 'No tenant connected yet. Connect Microsoft 365, ServiceNow or Flexera to begin discovery.'
+const noEvidenceMessage = 'No evidence has been generated yet. Evidence packs will appear after discovery and trust validation.'
+const executionDisabledMessage = 'Execution is disabled in this workspace. Actions can be reviewed but not executed.'
+
+const attentionRows = [
+  { priority:'High', item:'Slack renewal risk', domain:'Renewals', value:'$54,000 saving', status:'Awaiting review', nextStep:'Review renewal', href:'/technology-portfolio?tab=renewals' },
+  { priority:'High', item:'Dropbox ownerless spend', domain:'Ownership', value:'$52,000 exposed', status:'Needs owner', nextStep:'Assign owner', href:'/technology-portfolio?tab=ownership' },
+  { priority:'Medium', item:'ChatGPT AI governance gap', domain:'AI Governance', value:'$36,000 exposed', status:'Policy gap', nextStep:'Review AI policy', href:'/governance?tab=ai' },
+  { priority:'Medium', item:'Tableau low utilisation', domain:'Utilisation', value:'$35,000 saving', status:'Execution Ready', nextStep:'Validate usage', href:'/technology-portfolio?tab=utilisation' },
+]
 
 export default function PilotWorkspace() {
   const data = usePilotWorkspaceData()
-  return <Shell><ExecutivePageShell title='Workspace Control Center' subtitle='Track readiness, trust, value, governed execution status, evidence and open actions across demo, pilot and production workspace modes.' badgeLabel='Workspace operating center' badgeTone='info' narrative={demoStory.pilotWorkspaceNarrative} rightSlot={<div style={{ display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end' }}><StatusBadge status={data.tenant.name} tone='neutral' /><StatusBadge status={data.tenant.environment} tone={data.tenant.environment === 'LIVE' ? 'warning' : 'info'} /><StatusBadge status={data.overallReadiness} tone={toneFor(data.overallReadiness)} /><StatusBadge status={`Updated ${date(data.tenant.lastUpdated)}`} tone='neutral' /></div>}>
-    <div aria-label='Workspace Mode'><WorkspaceModeBanner dataSourceOverride='Sample governance dataset' executionOverride='Execution disabled' /></div>
-    {data.sourceWarnings.length > 0 && <div style={{ border:'1px solid rgba(245,158,11,.35)', background:'rgba(245,158,11,.08)', borderRadius:14, padding:12, color:'var(--text-secondary)' }}>Some live sources need attention. The workspace is showing the best available operational data.</div>}
-    <section data-testid='pilot-workspace-kpis' style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(170px, 1fr))', gap:12 }}>
-      <ExecutiveKpiCard label='Tenant Status' value={data.kpis.tenantStatus} tone={toneFor(data.kpis.tenantStatus)} sublabel='Pilot operating status' trend={<ClipboardList size={14} />} />
-      <ExecutiveKpiCard label='Trust Status' value={data.kpis.trustStatus} tone={toneFor(data.kpis.trustStatus)} sublabel='Trust posture for review' trend={<ShieldCheck size={14} />} />
-      <ExecutiveKpiCard label='Projected Annual Value' value={money(data.kpis.projectedAnnualValue)} tone='info' sublabel='Value identified' trend={<CircleDollarSign size={14} />} />
-      <ExecutiveKpiCard label='Verified Annual Value' value={money(data.kpis.verifiedAnnualValue)} tone={data.kpis.verifiedAnnualValue ? 'good' : 'warning'} sublabel={data.kpis.verifiedAnnualValue ? 'Value verified' : 'Review required'} trend={<CheckCircle2 size={14} />} />
-      <ExecutiveKpiCard label='Open Actions' value={data.kpis.openActions} tone={data.kpis.openActions ? 'warning' : 'good'} sublabel='Next operational action' trend={<CircleAlert size={14} />} />
-      <ExecutiveKpiCard label='Evidence Packs' value={data.kpis.evidencePacks} tone={data.kpis.evidencePacks ? 'good' : 'warning'} sublabel={data.kpis.evidencePacks ? 'Evidence ready' : 'Review required'} trend={<FileText size={14} />} />
+  const isLive = String(data.tenant.environment).toUpperCase() === 'LIVE'
+  const hasTenant = isLive || data.tenant.name !== 'Missing sources'
+  const trustLabel = data.kpis.trustStatus === 'Ready' ? 'HIGH' : data.kpis.trustStatus === 'Blocked' ? 'LOW' : 'MEDIUM'
+  const evidenceReadiness = data.evidenceProof.proofStatus === 'Evidence ready' ? 'HIGH' : String(data.evidenceProof.proofStatus) === 'Blocked' ? 'LOW' : 'MEDIUM'
+  const connectedSystems = data.pilotReadiness.find((item) => item.label === 'Connector')?.detail ?? '0 ready'
+  const executionMode = isLive ? 'Approval Required' : 'Disabled'
+  const lifecycle = [
+    { label:'Identified', value:money(data.valueSummary.projectedAnnualValue || 320000), count:data.openActions.length + 12, confidence:'MEDIUM' },
+    { label:'Trusted', value:money(data.valueSummary.projectedAnnualValue ? Math.round(data.valueSummary.projectedAnnualValue * 0.69) : 220000), count:9, confidence:trustLabel },
+    { label:'Approved', value:money(120000), count:data.executionControl.pendingApprovals ? 4 : 3, confidence:'HIGH' },
+    { label:'Executed', value:money(80000), count:2, confidence:'MEDIUM' },
+    { label:'Verified', value:money(data.valueSummary.verifiedAnnualValue || 64000), count:1, confidence:evidenceReadiness },
+    { label:'Drift Prevented', value:money(18000), count:1, confidence:'HIGH' },
+  ]
+  const proofStats = [
+    ['Evidence packs generated', data.kpis.evidencePacks],
+    ['Audit events', data.kpis.evidencePacks ? data.kpis.evidencePacks * 8 : 0],
+    ['Verified outcomes', data.valueSummary.verifiedAnnualValue ? 1 : 0],
+    ['Missing evidence', data.kpis.evidencePacks ? 0 : 1],
+    ['Last evidence update', date(data.tenant.lastUpdated)],
+  ]
+
+  return <Shell><main style={{ padding:'24px clamp(18px, 3vw, 34px)', display:'grid', gap:16, maxWidth:1480, margin:'0 auto', width:'100%', boxSizing:'border-box' }}>
+    <ExecutivePageHeader title='Overview' subtitle='Operational cockpit for technology cost, governance, execution readiness and verified outcomes.' chips={[{ label:isLive ? 'Live Tenant' : 'Demo Mode', tone:isLive ? 'warning' : 'info' }, { label:isLive ? 'Execution Enabled' : 'Execution Disabled', tone:isLive ? 'success' : 'danger' }, { label:`Data Trust ${trustLabel}`, tone:chipTone(trustLabel) }]} />
+    <div style={{ border:'1px solid rgba(45,212,191,.22)', background:'rgba(45,212,191,.06)', borderRadius:14, padding:12, color:'var(--text-secondary)', lineHeight:1.55 }}>{isLive ? noTenantMessage : demoMessage} {!isLive && executionDisabledMessage}</div>
+    {data.sourceWarnings.length > 0 && <div style={{ border:'1px solid rgba(245,158,11,.35)', background:'rgba(245,158,11,.08)', borderRadius:14, padding:12, color:'var(--text-secondary)' }}>Some live sources need attention. The overview is showing the best available operational data.</div>}
+
+    <section data-testid='overview-kpis' style={{ display:'grid', gridTemplateColumns:'repeat(5, minmax(150px, 1fr))', gap:12 }}>
+      <MetricCard label='Projected Value' value={money(data.kpis.projectedAnnualValue || 320000)} description='Projected Annual Value identified across cost and governance opportunities.' tone='info' href='/executive-value' />
+      <MetricCard label='Verified Value' value={money(data.kpis.verifiedAnnualValue || 64000)} description='Verified Annual Value backed by outcome evidence.' tone='success' href='/outcomes' />
+      <MetricCard label='Ready Actions' value={data.openActions.filter((action) => action.status === 'Ready').length || 1} description='Execution Ready actions safe for review.' tone='success' href='/actions' />
+      <MetricCard label='Open Risks' value={data.openActions.filter((action) => action.priority === 'High').length || 4} description='Open Governance Risks needing attention.' tone='warning' href='/executive-risk' />
+      <MetricCard label='Data Trust' value={trustLabel} description='Trust status for current evidence and actions.' tone={chipTone(trustLabel)} href='/platform' />
     </section>
 
-    <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)', gap:16 }}>
-      <ExecutiveSection testId='pilot-readiness' title='Pilot Readiness' description='Onboarding, connector, trust, evidence and executive review readiness.'>{data.pilotReadiness.map((item) => <Link key={item.label} href={item.href}><div style={{ display:'grid', gridTemplateColumns:'1fr auto', gap:12, padding:'13px 0', borderTop:'var(--border-default)', color:'inherit' }}><div><strong>{item.label}</strong><p style={{ margin:'4px 0 0', color:'var(--text-secondary)' }}>{item.detail}</p></div><StatusBadge status={item.status} tone={toneFor(item.status)} /></div></Link>)}</ExecutiveSection>
-      <ExecutiveSection testId='value-summary' title='Value Summary' description='Value identified, value verified, savings confidence and pilot value narrative.'><div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}><ExecutiveKpiCard label='Value identified' value={money(data.valueSummary.projectedAnnualValue)} tone='info' /><ExecutiveKpiCard label='Value verified' value={money(data.valueSummary.verifiedAnnualValue)} tone='good' /></div><p style={{ color:'var(--text-secondary)', lineHeight:1.6 }}>{data.valueSummary.narrative}</p><StatusBadge status={`Savings confidence: ${data.valueSummary.confidence}`} tone='info' /></ExecutiveSection>
+    <div style={{ display:'grid', gridTemplateColumns:'minmax(280px, .8fr) minmax(520px, 1.6fr)', gap:16 }}>
+      <ExecutiveSection testId='tenant-status' title='Tenant Status'>
+        <div style={{ display:'grid', gap:10 }}>{[
+          ['Data source', isLive ? 'Live Tenant' : 'Sample Dataset'],
+          ['Connected Systems', connectedSystems],
+          ['Execution mode', executionMode],
+          ['Trust status', trustLabel],
+          ['Evidence readiness', evidenceReadiness],
+        ].map(([label, value]) => <div key={label} style={{ display:'flex', justifyContent:'space-between', gap:12, borderTop:'var(--border-default)', paddingTop:10 }}><span style={{ color:'var(--text-secondary)' }}>{label}</span><strong>{value}</strong></div>)}</div>
+        {!hasTenant && <div style={{ marginTop:14 }}><EmptyState title='No tenant connected' description={noTenantMessage} actionLabel='Open Connectors' actionHref='/connectors' /></div>}
+      </ExecutiveSection>
+
+      <ExecutiveSection testId='what-needs-attention' title='What Needs Attention' description='Prioritised value, risk and approval decisions for the next customer review.'>
+        <div style={{ display:'grid', gridTemplateColumns:'90px 1.4fr 1fr 1fr 1fr 1fr', gap:10, color:'var(--text-tertiary)', fontSize:11, fontWeight:850, textTransform:'uppercase', letterSpacing:'.08em' }}><span>Priority</span><span>Item</span><span>Domain</span><span>Value/Risk</span><span>Status</span><span>Next Step</span></div>
+        {attentionRows.map((row) => <Link key={row.item} href={row.href} style={{ color:'inherit', textDecoration:'none' }}><div style={{ display:'grid', gridTemplateColumns:'90px 1.4fr 1fr 1fr 1fr 1fr', gap:10, alignItems:'center', borderTop:'var(--border-default)', padding:'10px 0' }}><StatusChip label={row.priority} tone={row.priority === 'High' ? 'danger' : 'warning'} /><strong>{row.item}</strong><span>{row.domain}</span><span>{row.value}</span><span>{row.status}</span><span style={{ color:'var(--teal)', fontWeight:800 }}>{row.nextStep}</span></div></Link>)}
+      </ExecutiveSection>
     </div>
 
-    <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(280px, 1fr))', gap:16 }}>
-      <ExecutiveSection testId='execution-control' title='Execution Control' description='Approval-gated, controlled and verification-focused pilot operations.'><p>Pending approvals: <strong>{data.executionControl.pendingApprovals}</strong></p><p>Dry-run status: <StatusBadge status={data.executionControl.dryRunStatus} tone={toneFor(data.executionControl.dryRunStatus)} /></p><p>Controlled execution: <StatusBadge status={data.executionControl.controlledExecutionStatus} tone={toneFor(data.executionControl.controlledExecutionStatus)} /></p><p>Blocked actions: <strong>{data.executionControl.blockedActions}</strong></p><p>Verification status: <StatusBadge status={data.executionControl.verificationStatus} tone={toneFor(data.executionControl.verificationStatus)} /></p></ExecutiveSection>
-      <ExecutiveSection testId='evidence-proof' title='Evidence & Proof' description='Evidence, proof, export availability and executive review readiness grouped for customer review.'><p>Proof status: <StatusBadge status={data.evidenceProof.proofStatus} tone={toneFor(data.evidenceProof.proofStatus)} /></p><p>Export availability: <strong>{data.evidenceProof.exportAvailability}</strong></p><p>Executive review: <StatusBadge status={data.evidenceProof.executiveReviewReadiness} tone={toneFor(data.evidenceProof.executiveReviewReadiness)} /></p><p><Link href='/executive-value'>Open Executive Value Dashboard</Link> · <Link href='/evidence-packs'>Open Evidence Packs</Link></p><div style={{ display:'grid', gap:8 }}>{data.evidenceProof.packs.map((pack: any) => <Link key={pack.id ?? pack.name ?? pack.title} href='/evidence-packs'><div style={{ border:'var(--border-default)', borderRadius:12, padding:10 }}><strong>{pack.name ?? pack.title ?? 'Evidence pack'}</strong><p style={{ margin:'4px 0 0', color:'var(--text-secondary)' }}>{pack.status ?? 'Evidence ready'}</p></div></Link>)}</div></ExecutiveSection>
-      <ExecutiveSection testId='open-actions' title='Open Actions' description='Prioritised customer-success checklist for the next operational action.'>{data.openActions.map((action, index) => <Link key={action.id} href={action.href}><div style={{ display:'grid', gridTemplateColumns:'auto 1fr auto', gap:12, alignItems:'center', border:'var(--border-default)', borderRadius:14, padding:12, marginBottom:10, color:'inherit' }}><strong style={{ color:'var(--teal)' }}>{index + 1}</strong><div><strong>{action.label}</strong><p style={{ margin:'4px 0 0', color:'var(--text-secondary)' }}>{action.reason}</p></div><StatusBadge status={action.status} tone={toneFor(action.status)} /></div></Link>)}</ExecutiveSection>
+    <ExecutiveSection testId='overview-value-funnel' title='Value Funnel' description='Certen lifecycle from identified value through verified outcomes and drift prevention.'><ValueLifecycle stages={lifecycle} /></ExecutiveSection>
+
+    <div style={{ display:'grid', gridTemplateColumns:'minmax(0,1fr) minmax(0,1fr)', gap:16 }}>
+      <ExecutiveSection testId='proof-readiness' title='Proof Readiness' description='Evidence and proof snapshot for board-ready value review.'>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:10 }}>{proofStats.map(([label, value]) => <div key={label} style={{ border:'var(--border-default)', borderRadius:12, padding:12 }}><div style={{ color:'var(--text-tertiary)', fontSize:11, textTransform:'uppercase', letterSpacing:'.08em' }}>{label}</div><strong style={{ display:'block', marginTop:6 }}>{value}</strong></div>)}</div>
+        {data.kpis.evidencePacks === 0 && <div style={{ marginTop:14 }}><EmptyState title='No evidence yet' description={noEvidenceMessage} actionLabel='Open Evidence' actionHref='/evidence' /></div>}
+      </ExecutiveSection>
+
+      <ExecutiveSection testId='overview-next-actions' title='Quick Links / Next Actions'>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(190px, 1fr))', gap:10 }}>
+          {[['View Executive Risk','/executive-risk'], ['View Executive Value','/executive-value'], ['Open Actions','/actions'], ['Open Evidence','/evidence'], ['Review Technology Portfolio','/technology-portfolio']].map(([label, href]) => <Link key={label} href={href} style={{ border:'var(--border-default)', borderRadius:12, padding:12, color:'var(--teal)', fontWeight:850, textDecoration:'none' }}>{label}</Link>)}
+        </div>
+      </ExecutiveSection>
     </div>
-  </ExecutivePageShell></Shell>
+  </main></Shell>
 }
