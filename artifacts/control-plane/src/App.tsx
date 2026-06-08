@@ -37,6 +37,8 @@ import PilotWorkspace from './pages/PilotWorkspace'
 import ShadowITExposure from './pages/ShadowITExposure'
 import SaaSRationalisation from './pages/SaaSRationalisation'
 import AIGovernanceExposure from './pages/AIGovernanceExposure'
+import AIEconomicCommandDashboard from './pages/AIEconomicCommandDashboard'
+import EconomicOutcomeDashboard from './pages/EconomicOutcomeDashboard'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -389,6 +391,14 @@ function AIGovernanceRoute() {
   return <RequireRuntime><AIGovernanceExposure /></RequireRuntime>
 }
 
+function AIEconomicCommandRoute({ params }: { params?: { id?: string } }) {
+  return <RequireRuntime><AIEconomicCommandDashboard params={params} /></RequireRuntime>
+}
+
+function EconomicOutcomeDashboardRoute() {
+  return <RequireRuntime><EconomicOutcomeDashboard /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <RedirectRoute to="/platform" />
 }
@@ -417,6 +427,9 @@ function Router() {
       <Route path="/shadow-it"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/saas-rationalisation"><RedirectRoute to="/technology-portfolio?tab=saas" /></Route>
       <Route path="/ai-governance"><RedirectRoute to="/governance?tab=ai" /></Route>
+      <Route path="/ai-economic-command/recommendations/:id" component={AIEconomicCommandRoute} />
+      <Route path="/ai-economic-command" component={AIEconomicCommandRoute} />
+      <Route path="/economic-outcomes" component={EconomicOutcomeDashboardRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>

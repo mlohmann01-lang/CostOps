@@ -53,6 +53,8 @@ import benchmarksRouter from "./benchmarks";
 import contractsRouter from "./contracts";
 import prioritiesRouter from "./priorities";
 import utilizationRouter from "./utilization";
+import aiRouter from "./ai";
+import economicOutcomesRouter from "./economic-outcomes";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -77,6 +79,8 @@ router.use("/benchmarks", requireTenantContext(), requireCapability("READ_RECOMM
 router.use("/contracts", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), contractsRouter);
 router.use("/priorities", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), prioritiesRouter);
 router.use("/utilization", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), utilizationRouter);
+router.use("/ai", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiRouter);
+router.use("/economic-outcomes", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), economicOutcomesRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
