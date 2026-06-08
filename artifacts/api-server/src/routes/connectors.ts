@@ -24,6 +24,7 @@ import { m365DiscoveryService } from "../lib/connectors/m365/m365-discovery-serv
 import { m365SnapshotRepository } from "../lib/connectors/m365/m365-snapshot-repository";
 import { m365HealthService } from "../lib/connectors/m365/m365-health";
 import { m365TrustService } from "../lib/connectors/m365/m365-trust";
+import { buildM365ProductionAuthorityConnector, getM365OnboardingExperience } from "../lib/connectors/m365/m365-production-authority";
 import { getM365PlaybookHealth } from "../lib/playbooks/m365/m365-playbook-runtime";
 import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-routes.js";
 import connectorSdkRouter from "./connector-sdk";
@@ -85,6 +86,41 @@ router.post("/:id/sync", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error syncing connector");
     return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+router.get("/m365/authority/onboarding", (_req, res) => {
+  return res.json({ connectorId: "m365", flow: getM365OnboardingExperience() });
+});
+
+router.get("/m365/authority/capabilities", (req, res) => {
+  const tenantId = (req.query.tenantId as string) ?? "default";
+  return res.json(buildM365ProductionAuthorityConnector(tenantId).capabilities());
+});
+
+router.post("/m365/authority/connect", async (req, res) => {
+  try {
+    const body = (req.body ?? {}) as { authorizationCode?: string; redirectUri?: string; tenantId?: string; clientId?: string; clientSecret?: string; scopes?: string[] };
+    const tenantId = body.tenantId ?? (req.query.tenantId as string) ?? "default";
+    if (!body.clientId || !body.clientSecret) return res.status(400).json({ error: "M365_CLIENT_ID_AND_SECRET_REQUIRED" });
+    if (body.authorizationCode && !body.redirectUri) return res.status(400).json({ error: "M365_REDIRECT_URI_REQUIRED_FOR_AUTHORIZATION_CODE" });
+    return res.json(await buildM365ProductionAuthorityConnector(tenantId).connect({ tenantId, clientId: body.clientId, clientSecret: body.clientSecret, authorizationCode: body.authorizationCode, redirectUri: body.redirectUri, scopes: body.scopes }));
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_AUTHORITY_CONNECT_FAILED" });
+  }
+});
+
+router.post("/m365/authority/run", async (req, res) => {
+  try {
+    const tenantId = (req.query.tenantId as string) ?? "default";
+    const body = (req.body ?? {}) as { maxUsers?: number; perPage?: number; useCachedSnapshot?: boolean };
+    const useCachedSnapshot = body.useCachedSnapshot === true && process.env.NODE_ENV !== "production";
+    const run = await buildM365ProductionAuthorityConnector(tenantId).runEndToEnd({ maxUsers: body.maxUsers, perPage: body.perPage, skipDiscovery: useCachedSnapshot, actor: "api:m365-authority" });
+    if (!run.productionGates.passed) return res.status(409).json(run);
+    return res.json(run);
+  } catch (error) {
+    return res.status(500).json({ error: error instanceof Error ? error.message : "M365_AUTHORITY_RUN_FAILED" });
   }
 });
 
