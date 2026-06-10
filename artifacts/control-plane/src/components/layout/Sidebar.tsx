@@ -8,7 +8,7 @@ type NavGroup = { label:string; defaultOpen?: boolean; items: NavItem[] }
 
 export const NAV_GROUPS: NavGroup[] = [
   { label: 'Command', defaultOpen: true, items: [
-    { label: 'Overview', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/all/command', '/executive-priorities'] },
+    { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
     { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
   ]},
   { label: 'Executive', defaultOpen: false, items: [
@@ -20,11 +20,14 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
   ]},
   { label: 'Operations', defaultOpen: false, items: [
+    { label: 'Approval Center', icon: Target, href: '/approvals', aliases: ['/approval-workflows'] },
     { label: 'Evidence', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
     { label: 'Execution', icon: Play, href: '/execution', aliases: ['/all/execution', '/drift', '/drift-monitor'] },
     { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
+    { label: 'Outcome Protection', icon: ShieldCheck, href: '/outcome-protection' },
   ]},
   { label: 'Admin', defaultOpen: false, items: [
+    { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
     { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security', '/settings'] },
   ]},

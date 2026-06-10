@@ -4,6 +4,7 @@ import { ApprovalAuthorityError, ApprovalAuthorityService } from '../lib/approva
 import { RecommendationGovernanceEventRepository } from '../lib/recommendations/governance-event-repository';
 import { RecommendationGovernanceEventService } from '../lib/recommendations/governance-event-service';
 import type { ApprovalAuthorityTargetType } from '../lib/approvals/approval-authority-types';
+import { approvalAuthorityEngine } from '../lib/approval-authority/approval-authority';
 
 const router = Router();
 const eventEnv = String(process.env.RUNTIME_ENV ?? process.env.NODE_ENV ?? 'development').toLowerCase();
@@ -11,6 +12,18 @@ const eventRepo = (eventEnv === 'production' || eventEnv === 'staging') ? new Re
 const authority = new ApprovalAuthorityService(undefined, new RecommendationGovernanceEventService(eventRepo));
 const tenant = (req:any)=>String(req.tenantId ?? req.query.tenantId ?? req.header('x-tenant-id') ?? 'default');
 const targetParam = z.object({ targetType:z.enum(['RECOMMENDATION','OPPORTUNITY','EXECUTION_REQUEST','SCHEDULE','CAMPAIGN']), targetId:z.string().min(1) });
+const createRequestBody = z.object({ actionId:z.string().min(1), requestedBy:z.string().optional(), approverIds:z.array(z.string()).optional(), reason:z.string().optional(), expiresAt:z.string().optional(), approvalType:z.enum(['STANDARD','CAB','EXECUTIVE','EMERGENCY']).optional(), riskLevel:z.enum(['LOW','MEDIUM','HIGH','CRITICAL']).optional(), evidenceIds:z.array(z.string()).optional() });
+const decisionBody = z.object({ approverId:z.string().optional(), comment:z.string().optional() });
+
+router.get('/dashboard', async (req,res)=>res.json(await approvalAuthorityEngine.dashboard(tenant(req))));
+router.get('/actions/:actionId', async (req,res)=>{ try { const report=await approvalAuthorityEngine.evaluateApprovalAuthority(tenant(req), req.params.actionId); return res.json(report); } catch(error) { return res.status(404).json({error:String((error as Error).message ?? 'APPROVAL_AUTHORITY_NOT_FOUND')}); } });
+router.post('/actions/:actionId/evaluate', async (req,res)=>{ try { const report=await approvalAuthorityEngine.evaluateApprovalAuthority(tenant(req), req.params.actionId, req.body ?? {}); return res.json(report); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_AUTHORITY_EVALUATE_FAILED')}); } });
+router.post('/requests', async (req,res)=>{ const parsed=createRequestBody.safeParse(req.body ?? {}); if(!parsed.success) return res.status(400).json({error:'INVALID_APPROVAL_REQUEST'}); try { return res.status(201).json(await approvalAuthorityEngine.createApprovalRequest({ tenantId:tenant(req), ...parsed.data })); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_REQUEST_CREATE_FAILED')}); } });
+router.get('/requests/:id', (req,res)=>{ const detail=approvalAuthorityEngine.getRequest(tenant(req), req.params.id); if(!detail) return res.status(404).json({error:'APPROVAL_REQUEST_NOT_FOUND'}); return res.json(detail); });
+router.post('/requests/:id/submit', async (req,res)=>{ try { return res.json(await approvalAuthorityEngine.submitApprovalRequest(tenant(req), req.params.id)); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_SUBMIT_FAILED')}); } });
+router.post('/requests/:id/approve', async (req,res)=>{ const parsed=decisionBody.safeParse(req.body ?? {}); if(!parsed.success) return res.status(400).json({error:'INVALID_APPROVAL_DECISION'}); try { return res.json(await approvalAuthorityEngine.approveRequest(tenant(req), req.params.id, parsed.data.approverId ?? String(req.header('x-user-id') ?? 'approver'), parsed.data.comment)); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_APPROVE_FAILED')}); } });
+router.post('/requests/:id/reject', async (req,res)=>{ const parsed=decisionBody.safeParse(req.body ?? {}); if(!parsed.success) return res.status(400).json({error:'INVALID_APPROVAL_DECISION'}); try { return res.json(await approvalAuthorityEngine.rejectRequest(tenant(req), req.params.id, parsed.data.approverId ?? String(req.header('x-user-id') ?? 'approver'), parsed.data.comment)); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_REJECT_FAILED')}); } });
+router.post('/requests/:id/cancel', async (req,res)=>{ try { return res.json(await approvalAuthorityEngine.cancelRequest(tenant(req), req.params.id, String(req.header('x-user-id') ?? 'operator'))); } catch(error) { return res.status(400).json({error:String((error as Error).message ?? 'APPROVAL_CANCEL_FAILED')}); } });
 
 router.get('/', async (req,res)=>res.json({ tenantId: tenant(req), approvals: await authority.listApprovals(tenant(req), req.query.targetType ? { targetType: String(req.query.targetType).toUpperCase() as ApprovalAuthorityTargetType } : {}) }));
 router.get('/:targetType/:targetId', async (req,res)=>{ const parsed=targetParam.safeParse({ targetType:String(req.params.targetType).toUpperCase(), targetId:req.params.targetId }); if(!parsed.success) return res.status(400).json({error:'INVALID_TARGET'}); return res.json(await authority.getApprovalStatus(tenant(req), parsed.data.targetType, parsed.data.targetId)); });

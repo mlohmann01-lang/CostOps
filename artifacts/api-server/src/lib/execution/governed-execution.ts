@@ -1,0 +1,202 @@
+import { platformEventService } from "../events/platform-event-service";
+import { governedActionService, type GovernedAction } from "../actions/governed-actions";
+import { connectorSupportsCapability, createDefaultExecutionConnector } from "./execution-connectors";
+import { evaluateReadinessAuthority } from "../trust-readiness/trust-readiness-authority";
+import { approvalAuthorityEngine } from "../approval-authority/approval-authority";
+
+export type ExecutionConnectorType = "M365" | "SERVICENOW" | "JIRA" | "AI" | "AWS" | "AZURE" | "GCP" | "SNOWFLAKE" | "OTHER";
+export type ExecutionConnectorStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
+export type ExecutionConnectorMode = "READ_ONLY" | "APPROVAL_REQUIRED" | "AUTO_EXECUTE_SAFE";
+export type GovernedExecutionType = "LICENSE_REMOVE" | "LICENSE_ASSIGN" | "OWNER_ASSIGN" | "AI_ASSET_RETIRE" | "AI_ASSET_APPROVE" | "TICKET_CREATE" | "WORKFLOW_DISABLE" | "OTHER";
+export type GovernedExecutionStatus = "PLANNED" | "DRY_RUN" | "APPROVED" | "EXECUTING" | "COMPLETED" | "FAILED" | "ROLLED_BACK";
+export type GovernedExecutionMode = "SIMULATION" | "MANUAL" | "CONTROLLED";
+export type ExecutionBlastRadius = "LOW" | "MEDIUM" | "HIGH";
+export type ExecutionEvidenceType = "PRE_STATE" | "POST_STATE" | "DRY_RUN" | "EXECUTION_RESULT" | "ROLLBACK_RESULT";
+export type ExecutionReadinessVerdict = "ELIGIBLE" | "APPROVAL_REQUIRED" | "BLOCKED" | "NEVER_ELIGIBLE";
+
+export type ExecutionConnector = {
+  id: string;
+  tenantId: string;
+  connectorType: ExecutionConnectorType;
+  name: string;
+  status: ExecutionConnectorStatus;
+  executionMode: ExecutionConnectorMode;
+  capabilities: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GovernedExecution = {
+  id: string;
+  tenantId: string;
+  actionId: string;
+  connectorId: string;
+  executionType: GovernedExecutionType;
+  status: GovernedExecutionStatus;
+  executionMode: GovernedExecutionMode;
+  blastRadius: ExecutionBlastRadius;
+  rollbackSupported: boolean;
+  executedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ExecutionEvidence = {
+  id: string;
+  executionId: string;
+  evidenceType: ExecutionEvidenceType;
+  summary: string;
+  payload?: Record<string, unknown>;
+  createdAt: string;
+};
+
+export type ExecutionReadinessInput = {
+  action?: Pick<GovernedAction, "id" | "status" | "readiness" | "trustScore" | "blastRadius" | "rollbackCapability"> | null;
+  trust?: boolean | number | null;
+  approval?: boolean | null;
+  connector?: ExecutionConnector | null;
+  executionMode?: ExecutionConnectorMode | GovernedExecutionMode;
+  rollbackSupported?: boolean;
+};
+
+export type ExecutionReadiness = { verdict: ExecutionReadinessVerdict; reasons: string[] };
+export type SimulateExecutionInput = { tenantId: string; actionId: string; connectorId?: string; executionType?: GovernedExecutionType; estimatedValue?: number; actor?: string };
+export type ExecuteGovernedActionInput = SimulateExecutionInput & { approved?: boolean; executionMode?: GovernedExecutionMode };
+
+const allowedExecutionTypes = new Set<GovernedExecutionType>(["OWNER_ASSIGN", "AI_ASSET_APPROVE", "AI_ASSET_RETIRE", "TICKET_CREATE"]);
+const capabilityByExecutionType: Partial<Record<GovernedExecutionType, string>> = {
+  OWNER_ASSIGN: "ASSIGN_OWNER",
+  AI_ASSET_APPROVE: "APPROVE_AI_ASSET",
+  AI_ASSET_RETIRE: "RETIRE_AI_ASSET",
+  TICKET_CREATE: "CREATE_TICKET",
+  LICENSE_ASSIGN: "ASSIGN_LICENSE",
+  LICENSE_REMOVE: "REMOVE_LICENSE",
+};
+
+function now() { return new Date().toISOString(); }
+function id(prefix: string) { return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`; }
+function trustSatisfied(trust: ExecutionReadinessInput["trust"], action?: ExecutionReadinessInput["action"]) {
+  if (typeof trust === "boolean") return trust;
+  if (typeof trust === "number") return trust > 0;
+  if (typeof action?.trustScore === "number") return action.trustScore > 0;
+  return false;
+}
+function needsApproval(action?: ExecutionReadinessInput["action"], mode?: ExecutionReadinessInput["executionMode"]) {
+  return action?.readiness === "APPROVAL_REQUIRED" || mode === "APPROVAL_REQUIRED" || mode === "MANUAL";
+}
+function eventCategory(type: string) { return type.includes("FAILED") ? "EXECUTION" as const : "EXECUTION" as const; }
+
+export function evaluateExecutionReadiness(input: ExecutionReadinessInput): ExecutionReadiness {
+  const reasons: string[] = [];
+  if (!input.connector) reasons.push("No connector available");
+  else if (input.connector.status === "DISCONNECTED") reasons.push("Connector disconnected");
+  else if (input.connector.status === "DEGRADED") reasons.push("Connector degraded");
+  if (!trustSatisfied(input.trust, input.action)) reasons.push("No trust evidence available");
+  if (needsApproval(input.action, input.executionMode) && !input.approval) reasons.push("Approval required but absent");
+  const noRollbackHighBlast = (input.rollbackSupported === false || input.action?.rollbackCapability === "NONE") && input.action?.blastRadius === "HIGH";
+  if (noRollbackHighBlast) reasons.push("No rollback and high blast radius");
+  if (input.connector?.executionMode === "READ_ONLY") reasons.push("Connector is read-only");
+
+  if (!input.connector || input.connector.status === "DISCONNECTED" || !trustSatisfied(input.trust, input.action)) return { verdict: "BLOCKED", reasons };
+  if (input.connector.executionMode === "READ_ONLY" && input.action?.blastRadius === "HIGH") return { verdict: "NEVER_ELIGIBLE", reasons };
+  if (input.connector.status === "DEGRADED" || reasons.some((reason) => reason.includes("Approval required") || reason.includes("No rollback") || reason.includes("read-only"))) return { verdict: "APPROVAL_REQUIRED", reasons };
+  return { verdict: "ELIGIBLE", reasons: reasons.length ? reasons : ["Connector, trust, approval, and rollback checks passed"] };
+}
+
+export class GovernedExecutionRepository {
+  private readonly connectors = new Map<string, ExecutionConnector>();
+  private readonly executions = new Map<string, GovernedExecution>();
+  private readonly evidence = new Map<string, ExecutionEvidence[]>();
+  private connectorKey(tenantId: string, connectorId: string) { return `${tenantId}:${connectorId}`; }
+  private executionKey(tenantId: string, executionId: string) { return `${tenantId}:${executionId}`; }
+
+  registerConnector(connector: ExecutionConnector) { this.connectors.set(this.connectorKey(connector.tenantId, connector.id), connector); return connector; }
+  seedDefaultConnectors(tenantId: string) { return ["M365", "AI", "SERVICENOW", "JIRA"].map((connectorType) => this.registerConnector(createDefaultExecutionConnector({ tenantId, connectorType: connectorType as ExecutionConnectorType }))); }
+  listConnectors(tenantId: string) {
+    const rows = Array.from(this.connectors.values()).filter((connector) => connector.tenantId === tenantId);
+    return rows.length ? rows : this.seedDefaultConnectors(tenantId);
+  }
+  getConnector(tenantId: string, connectorId: string) { return this.connectors.get(this.connectorKey(tenantId, connectorId)) ?? null; }
+  findConnectorForExecution(tenantId: string, executionType: GovernedExecutionType) {
+    const capability = capabilityByExecutionType[executionType];
+    return this.listConnectors(tenantId).find((connector) => !capability || connectorSupportsCapability(connector, capability)) ?? null;
+  }
+  upsertExecution(execution: GovernedExecution) { this.executions.set(this.executionKey(execution.tenantId, execution.id), execution); return execution; }
+  getExecution(tenantId: string, executionId: string) { return this.executions.get(this.executionKey(tenantId, executionId)) ?? null; }
+  appendEvidence(execution: GovernedExecution, evidence: ExecutionEvidence) {
+    const key = this.executionKey(execution.tenantId, execution.id);
+    this.evidence.set(key, [...(this.evidence.get(key) ?? []), evidence]);
+    return evidence;
+  }
+  listEvidence(tenantId: string, executionId: string) { return [...(this.evidence.get(this.executionKey(tenantId, executionId)) ?? [])]; }
+  clear() { this.connectors.clear(); this.executions.clear(); this.evidence.clear(); }
+}
+
+export class GovernedExecutionService {
+  constructor(private readonly repository = new GovernedExecutionRepository()) {}
+  registerConnector(connector: ExecutionConnector) { return this.repository.registerConnector(connector); }
+  listConnectors(tenantId: string) { return this.repository.listConnectors(tenantId); }
+  getExecution(tenantId: string, executionId: string) { return this.repository.getExecution(tenantId, executionId); }
+  listEvidence(tenantId: string, executionId: string) { return this.repository.listEvidence(tenantId, executionId); }
+  clear() { this.repository.clear(); }
+
+  async readiness(tenantId: string, actionId: string, connectorId?: string, executionType: GovernedExecutionType = "TICKET_CREATE", approved = false) {
+    const action = await governedActionService.get(tenantId, actionId);
+    const connector = connectorId ? this.repository.getConnector(tenantId, connectorId) : this.repository.findConnectorForExecution(tenantId, executionType);
+    const readiness = evaluateExecutionReadiness({ action, connector, approval: approved || action?.status === "APPROVED", trust: action?.trustScore, executionMode: connector?.executionMode, rollbackSupported: action?.rollbackCapability !== "NONE" });
+    await governedActionService.updateExecutionMetadata(tenantId, actionId, { executionReadiness: readiness.verdict, dryRunAvailable: readiness.verdict !== "BLOCKED" && readiness.verdict !== "NEVER_ELIGIBLE" });
+    return readiness;
+  }
+
+  async simulateExecution(input: SimulateExecutionInput) {
+    const action = await governedActionService.get(input.tenantId, input.actionId);
+    if (!action) throw new Error("ACTION_NOT_FOUND");
+    const executionType = input.executionType ?? "TICKET_CREATE";
+    const connector = input.connectorId ? this.repository.getConnector(input.tenantId, input.connectorId) : this.repository.findConnectorForExecution(input.tenantId, executionType);
+    const readiness = evaluateExecutionReadiness({ action, connector, approval: action.status === "APPROVED", trust: action.trustScore, executionMode: connector?.executionMode, rollbackSupported: action.rollbackCapability !== "NONE" });
+    if (!connector) throw new Error("EXECUTION_CONNECTOR_REQUIRED");
+    const timestamp = now();
+    const execution = this.repository.upsertExecution({ id: id("gexec"), tenantId: input.tenantId, actionId: input.actionId, connectorId: connector.id, executionType, status: "DRY_RUN", executionMode: "SIMULATION", blastRadius: action.blastRadius, rollbackSupported: action.rollbackCapability !== "NONE", executedBy: input.actor, createdAt: timestamp, updatedAt: timestamp });
+    const evidence = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "DRY_RUN", summary: `Dry run for ${executionType}: expected controlled change only; no production changes made.`, payload: { expectedChange: executionType, affectedObjects: [action.sourceId, ...action.recommendationIds], estimatedValue: input.estimatedValue ?? action.projectedAnnualValue ?? action.projectedMonthlyValue ?? 0, blastRadius: action.blastRadius, rollbackAvailable: execution.rollbackSupported, readiness }, createdAt: timestamp });
+    await this.recordEvent(input.tenantId, "EXECUTION_DRY_RUN", execution, { evidenceId: evidence.id });
+    await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: execution.status, latestExecutionId: execution.id, dryRunAvailable: true, evidenceIds: [evidence.id] });
+    return { execution, dryRun: evidence.payload, evidence, readiness };
+  }
+
+  async executeGovernedAction(input: ExecuteGovernedActionInput) {
+    const action = await governedActionService.get(input.tenantId, input.actionId);
+    if (!action) throw new Error("ACTION_NOT_FOUND");
+    const executionType = input.executionType ?? "TICKET_CREATE";
+    if (!allowedExecutionTypes.has(executionType)) throw new Error("EXECUTION_TYPE_NOT_ALLOWED_V1");
+    const connector = input.connectorId ? this.repository.getConnector(input.tenantId, input.connectorId) : this.repository.findConnectorForExecution(input.tenantId, executionType);
+    const readiness = evaluateExecutionReadiness({ action, connector, approval: Boolean(input.approved) || action.status === "APPROVED", trust: action.trustScore, executionMode: connector?.executionMode, rollbackSupported: action.rollbackCapability !== "NONE" });
+    if (!connector) throw new Error("EXECUTION_CONNECTOR_REQUIRED");
+    const approvalPresent = approvalAuthorityEngine.isActionApproved(input.tenantId, input.actionId) || Boolean(input.approved) || action.status === "APPROVED";
+    const authority = await evaluateReadinessAuthority(input.tenantId, input.actionId, { connectorStatus: connector.status, executionMode: connector.executionMode, executionType, rollbackSupported: action.rollbackCapability !== "NONE", approvalPresent });
+    if (authority.verdict === "BLOCKED" || authority.verdict === "NEVER_ELIGIBLE") throw new Error(`READINESS_AUTHORITY_DENIED:${authority.verdict}`);
+    const approvalReport = await approvalAuthorityEngine.evaluateApprovalAuthority(input.tenantId, input.actionId, { executionType });
+    const approvalGranted = approvalReport.verdict === "APPROVAL_NOT_REQUIRED" || approvalReport.verdict === "APPROVED" || approvalAuthorityEngine.isActionApproved(input.tenantId, input.actionId);
+    if ((authority.verdict === "APPROVAL_REQUIRED" || action.readiness === "APPROVAL_REQUIRED" || readiness.verdict === "APPROVAL_REQUIRED") && !approvalGranted) throw new Error("APPROVAL_AUTHORITY_REQUIRED");
+    if (readiness.verdict === "BLOCKED" || readiness.verdict === "NEVER_ELIGIBLE") throw new Error(`EXECUTION_NOT_READY:${readiness.verdict}`);
+    if (readiness.verdict === "APPROVAL_REQUIRED" && !approvalGranted) throw new Error("EXECUTION_APPROVAL_REQUIRED");
+    const timestamp = now();
+    const execution = this.repository.upsertExecution({ id: id("gexec"), tenantId: input.tenantId, actionId: input.actionId, connectorId: connector.id, executionType, status: "EXECUTING", executionMode: input.executionMode ?? "CONTROLLED", blastRadius: action.blastRadius, rollbackSupported: action.rollbackCapability !== "NONE", executedBy: input.actor, createdAt: timestamp, updatedAt: timestamp });
+    await this.recordEvent(input.tenantId, "EXECUTION_PLANNED", execution);
+    await this.recordEvent(input.tenantId, "EXECUTION_STARTED", execution);
+    const preState = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "PRE_STATE", summary: "Pre-state captured before governed execution.", payload: { actionStatus: action.status, sourceId: action.sourceId, evidenceIds: action.evidenceIds }, createdAt: timestamp });
+    const result = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "EXECUTION_RESULT", summary: `Controlled execution completed for ${executionType}.`, payload: { destructive: false, autonomous: false, permissioned: true }, createdAt: now() });
+    const postState = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "POST_STATE", summary: "Post-state captured after governed execution.", payload: { actionStatus: "EXECUTED", connectorId: connector.id, outcomeEligible: true }, createdAt: now() });
+    const completed = this.repository.upsertExecution({ ...execution, status: "COMPLETED", updatedAt: now() });
+    await this.recordEvent(input.tenantId, "EXECUTION_COMPLETED", completed, { evidenceIds: [preState.id, result.id, postState.id] });
+    await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: [preState.id, result.id, postState.id] });
+    return { execution: completed, evidence: [preState, result, postState], readiness };
+  }
+
+  private recordEvent(tenantId: string, type: string, execution: GovernedExecution, metadata: Record<string, unknown> = {}) {
+    return platformEventService.recordEvent({ tenantId, category: eventCategory(type), type, entityType: "GovernedExecution", entityId: execution.id, actorId: execution.executedBy, sourceSystem: "governed-execution-engine", metadata: { ...metadata, actionId: execution.actionId, executionType: execution.executionType, status: execution.status, autonomous: false } });
+  }
+}
+
+export const governedExecutionService = new GovernedExecutionService();
+export const simulateExecution = (input: SimulateExecutionInput) => governedExecutionService.simulateExecution(input);
+export const executeGovernedAction = (input: ExecuteGovernedActionInput) => governedExecutionService.executeGovernedAction(input);
