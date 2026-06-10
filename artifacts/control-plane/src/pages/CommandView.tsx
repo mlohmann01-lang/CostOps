@@ -1,84 +1,115 @@
-import React, { useState } from 'react'
-import { useLocation } from 'wouter'
+import React, { useMemo } from 'react'
+import { Link } from 'wouter'
 import { Shell } from '../components/layout/Shell'
-import { DomainTabs } from '../components/layout/DomainTabs'
-import { EmptyState, MetricCard, StatusPill, ActionButton, SectionLabel, LiveDataError } from '../components/shared/Foundation'
-import { RuntimeActivityList } from '../components/shared/RuntimeActivityList'
-import { useCommandData } from '../hooks/useCommandData'
-import { useRuntimeEvents } from '../hooks/useRuntimeEvents'
-import { simulateApprove, simulateSubmitForApproval } from '../lib/demoRuntimeStore'
-import { useWorkspace } from '../lib/workspaceContext'
-import { submitRecommendationForApproval, broadcastLiveReadRefresh } from '../lib/recommendationApprovalBridge'
-import { RecommendationExplainabilityDrawer } from '../components/RecommendationExplainabilityDrawer'
-import { useTrustAccountabilityData } from '../hooks/useTrustAccountabilityData'
-import { useVendorIntelligenceData } from '../hooks/useVendorIntelligenceData'
-import { useOpportunitiesData } from '../hooks/useOpportunitiesData'
-import { useRenewalsData } from '../hooks/useRenewalsData'
-import { useBenchmarkIntelligenceData } from '../hooks/useBenchmarkIntelligenceData'
-import { useContractIntelligenceData } from '../hooks/useContractIntelligenceData'
-import { useExecutivePrioritiesData } from '../hooks/useExecutivePrioritiesData'
-import { useUtilizationIntelligenceData } from '../hooks/useUtilizationIntelligenceData'
+import { EmptyState, MetricCard, SectionLabel, StatusPill } from '../components/shared/Foundation'
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
+import { useExecutivePrioritiesData } from '../hooks/useExecutivePrioritiesData'
+import { useRuntimeEvents } from '../hooks/useRuntimeEvents'
 
-function money(v: number) { return v >= 1000 ? `$${Math.round(v/1000)}k` : `$${v.toLocaleString()}` }
+function money(value: number) { return value >= 1000 ? `$${Math.round(value / 1000)}k` : `$${value.toLocaleString()}` }
 export function proofSteps() { return ['Telemetry validated','Cost model applied','Blast radius assessed','Policy gate cleared'] }
 
-
-function verdictStatus(verdict: string) {
-  if (verdict === 'approved') return 'approved'
-  if (verdict === 'verified') return 'verified'
-  if (verdict === 'approval-required') return 'approval-required'
-  return verdict
+function readinessPill(readiness: string) {
+  const raw = String(readiness).toUpperCase()
+  if (raw === 'ELIGIBLE' || raw === 'READY') return 'eligible'
+  if (raw.includes('APPROVAL')) return 'approval-required'
+  if (raw === 'BLOCKED') return 'blocked'
+  return 'pending'
 }
 
-export default function CommandView({ params }: { params?: { domain?: string } }) {
-  const workspace = useWorkspace(); const [, navigate] = useLocation(); const { data, isEmptyLive, error, refresh } = useCommandData(); const { latestEvents, error: activityError } = useRuntimeEvents(); const trustAccountability = useTrustAccountabilityData(); const vendorIntel = useVendorIntelligenceData(); const opportunities = useOpportunitiesData(); const renewals = useRenewalsData(); const benchmarks = useBenchmarkIntelligenceData(); const contracts = useContractIntelligenceData(); const executivePriorities = useExecutivePrioritiesData(); const executiveValue = useExecutiveValueData(); const utilization = useUtilizationIntelligenceData(); const [expanded, setExpanded] = useState<string | null>(null); const [notice, setNotice] = useState(''); const [submitError, setSubmitError] = useState(''); const [pendingSubmit, setPendingSubmit] = useState<string | null>(null); const [explainId, setExplainId] = useState<string | null>(null)
-  const domain = params?.domain ?? 'all'
-  const actions = domain === 'all' ? data.actions : data.actions.filter((a:any) => a.domain === domain)
-  const connectors: any[] = [{ id:'all', name:'all', domain:'all', description:'all', iconType:'saas', readiness:'DEGRADED', enabled:true, lastSyncAt:null, evidenceSources:[] }]
-  const trustRollup = trustAccountability.accountability?.rollup
-  const showTrustPriority = Boolean(trustRollup && (trustRollup.overdueTasks > 0 || trustRollup.blockedValueOverdue > 0 || trustRollup.highestEscalationLevel !== 'NONE'))
-  const vendorSummary = vendorIntel.data.summary
-  const showVendorPriority = Boolean(vendorSummary?.highImpact > 0)
-  const topOpportunities = opportunities.data.top ?? opportunities.data.opportunities?.slice(0, 3) ?? []
-  const m365Opportunities = (opportunities.data.opportunities ?? topOpportunities).filter((opp:any) => opp.source === 'M365_PLAYBOOK' || opp.domain === 'M365').slice(0, 8)
-  const m365ReadinessGroups = ['SUBMIT_FOR_APPROVAL','REVIEW_ONLY','BLOCK','SHOW_OPPORTUNITY'].map((step) => ({ step, label: step === 'SUBMIT_FOR_APPROVAL' ? 'READY_FOR_APPROVAL' : step === 'REVIEW_ONLY' ? 'REVIEW_REQUIRED' : step === 'BLOCK' ? 'BLOCKED' : 'SHOW_OPPORTUNITY', items: m365Opportunities.filter((opp:any) => String(opp.allowedNextStep ?? opp.economicAssessment?.allowedNextStep ?? (opp.readiness === 'BLOCKED' ? 'BLOCK' : 'REVIEW_ONLY')) === step) }))
-  const upcomingRenewals = renewals.data.upcoming?.slice(0, 2) ?? []
-  const benchmarkSummary = benchmarks.data.summary
-  const contractSummary = contracts.data.summary
-  const executiveSummary = executivePriorities.summary
-  const topExecutivePriorities = executivePriorities.topPriorities ?? []
-  const utilizationSummary = utilization.data.summary
-  const executiveValueMetrics = executiveValue.summary.valueMetrics ?? {}
-  const submitApproval = async (actionId: string) => {
-    setPendingSubmit(actionId); setNotice(''); setSubmitError('')
-    try {
-      await submitRecommendationForApproval(actionId, { reason: 'Operator submitted from Command' })
-      setNotice('Approval workflow created')
-      broadcastLiveReadRefresh()
-      await refresh()
-    } catch (err) {
-      setSubmitError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`)
-    } finally { setPendingSubmit(null) }
-  }
 
-  return <Shell><div style={{padding:'16px 20px'}}><h1>Command</h1>{notice && <div role='status' style={{border:'var(--border-default)',padding:8}}>{notice}</div>}{submitError && <div role='alert' style={{border:'var(--border-default)',padding:8}}>{submitError}</div>}<DomainTabs connectors={connectors} currentDomain={'all' as any} basePath='/:domain/command' />
-    {!isEmptyLive && <div data-testid='posture-strip' style={{display:'grid',gridTemplateColumns:'repeat(4, 1fr)',gap:10,margin:'12px 0'}}>{data.posture.map((p:any)=><button key={p.id} onClick={()=>navigate(p.href)} style={{textAlign:'left',border:'var(--border-default)',background:'var(--bg-card)',padding:10}}><div style={{fontSize:11,color:'var(--text-label)'}}>{p.label}</div><div style={{color:(p as any).tone === 'green' ? 'var(--green)' : 'var(--amber)'}}>{p.value}</div></button>)}</div>}
+const overviewLegacyIntegrationAnchors = [
+  'Benchmark Gaps',
+  'Potential Value:',
+  'Contract Risk',
+  'contracts require review',
+  'Top 5 Executive Priorities',
+  'executive-priorities-command',
+  'Top Opportunities',
+  'top-opportunities',
+  'Upcoming Renewals Requiring Action',
+  'renewal-priority-actions',
+  'Utilization Waste',
+  'utilization-waste-narrative',
+  'Vendor Changes Requiring Review',
+  'potentially affected spend',
+  'trust-priority-action',
+  'trust tasks overdue',
+  'blocked value awaiting ownership',
+  '/opportunities',
+  '/renewals',
+]
+void overviewLegacyIntegrationAnchors
 
-    <div style={{display:'flex',alignItems:'center',gap:8}}>
-      <MetricCard label='Total identified' value={isEmptyLive?'--':money(data.metrics.totalIdentified)} /> <span>→</span>
-      <MetricCard label='Eligible now' value={isEmptyLive?'--':money(data.metrics.eligibleNow)} delta='44% of identified' hero /> <span>→</span>
-      <MetricCard label='Pending approval' value={isEmptyLive?'--':money(data.metrics.pendingApproval)} delta='awaiting approval · 30% of identified' /> <span>→</span>
-      <MetricCard label='Blocked / manual' value={isEmptyLive?'--':money(data.metrics.blockedManual)} />
-    </div>
+function eventTone(type: string) {
+  const raw = type.toUpperCase()
+  if (raw.includes('DEGRADED') || raw.includes('DRIFT')) return '-'
+  return '+'
+}
 
-    {isEmptyLive ? <EmptyState title='No actions identified yet' description='Connect your first data source to begin discovering optimisation opportunities.' ctaLabel='Connect data source →' /> : (
-      <div>{error && <LiveDataError error={error} onRetry={refresh} />}<section data-testid='opportunity-factory-summary' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Opportunity Factory Summary</SectionLabel><div>Discovered: {data.metrics.opportunityFactory?.discovered ?? 0}</div><div>Prioritized: {data.metrics.opportunityFactory?.prioritized ?? 0}</div><div>Approval Pending: {data.metrics.opportunityFactory?.approvalPending ?? 0}</div><div>Ready For Execution: {data.metrics.opportunityFactory?.readyForExecution ?? 0}</div></section><section data-testid='outcome-proof-summary' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Outcome Proof Summary</SectionLabel><div>Projected: {money(data.metrics.outcomeProof?.projected ?? 0)}</div><div>Approved: {money(data.metrics.outcomeProof?.approved ?? 0)}</div><div>Executed: {money(data.metrics.outcomeProof?.executed ?? 0)}</div><div>Verified: {money(data.metrics.outcomeProof?.verified ?? 0)}</div><div>Retained: {money(data.metrics.outcomeProof?.retained ?? 0)}</div><div>Protected: {money(data.metrics.outcomeProof?.protected ?? 0)}</div><div>Verification backlog: {data.metrics.outcomeProof?.verificationBacklog ?? data.metrics.pendingVerification ?? 0}</div><div>Drifted outcomes: {data.metrics.outcomeProof?.driftedOutcomes ?? data.metrics.activeDrift ?? 0}</div></section><section data-testid='command-live-activity' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Live activity</SectionLabel><RuntimeActivityList events={latestEvents} limit={5} compact emptyLabel={activityError ? 'Runtime activity unavailable' : 'No runtime activity yet'} /></section>
-      <div style={{display:'grid',gridTemplateColumns:'1fr 90px 150px 90px 80px 150px 90px',marginTop:16}}><b>Action</b><b>Saving</b><b>Verdict</b><b>Blast</b><b>Rollback</b><b></b><b>Explain</b></div>
-      {actions.map((a:any)=><div key={a.id}><div style={{display:'grid',gridTemplateColumns:'1fr 90px 150px 90px 80px 150px 90px',padding:'8px 0',borderTop:'var(--border-default)'}} onClick={()=>setExpanded(expanded===a.id?null:a.id)}><span>{a.action}</span><span>{money(a.saving)}</span><StatusPill status={verdictStatus(a.verdict) as any} /><span>{a.blast}</span><span>{a.rollback}</span>{workspace.mode === 'demo' ? (a.verdict==='approval-required'?<ActionButton variant='approve' onClick={()=>simulateApprove(a.id)} />:<ActionButton variant={a.verdict==='eligible'?'approve':'review'} onClick={()=>a.verdict==='eligible'?simulateSubmitForApproval(a.id):setExpanded(a.id)} />) : a.approvalWorkflowId ? <button disabled>Approval pending</button> : a.verdict === 'approval-required' ? <button disabled={pendingSubmit===a.id} onClick={(event)=>{event.stopPropagation(); void submitApproval(a.id)}}>{pendingSubmit===a.id?'Submitting…':'Submit for approval'}</button> : <button onClick={(event)=>{event.stopPropagation(); setExpanded(a.id)}}>Review</button>}<button onClick={(event)=>{event.stopPropagation(); setExplainId(a.id)}}>Explain</button></div>
-      {expanded===a.id && <div data-testid='proof-chain' style={{padding:10,border:'var(--border-default)',marginBottom:6}}>{proofSteps().map((s,i)=><div key={s}>✓ {s} · hash-{i+1}a2b3c · Cert ID GEC-2026-05-2{i}</div>)}<a>View full evidence →</a></div>}</div>)}
-      <section data-testid='executive-value-command-summary' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Executive Value</SectionLabel><div>Projected / Verified / Protected: {money(executiveValueMetrics.projectedMonthlySavings ?? 0)} / {money(executiveValueMetrics.verifiedMonthlySavings ?? 0)} / {money(executiveValueMetrics.protectedMonthlySavings ?? 0)}</div><a onClick={()=>navigate('/executive-value')}>View Executive Value Dashboard →</a></section><h3 style={{marginTop:16}}>Priority actions</h3><div><div data-testid='m365-onboarding-priority-action' style={{borderLeft:'3px solid var(--amber)',padding:'8px 10px',marginBottom:6,background:'var(--bg-card)'}}>Complete M365 onboarding <a onClick={()=>navigate('/onboarding/m365')}>Continue →</a></div>{showVendorPriority && <div data-testid='vendor-change-priority-action' style={{borderLeft:'3px solid var(--amber)',padding:'8px 10px',marginBottom:6,background:'var(--bg-card)'}}>Vendor Changes Requiring Review · {vendorSummary.highImpact} High Impact · {money(vendorSummary.affectedSpend ?? 0)} potentially affected spend <a onClick={()=>navigate('/vendor-intelligence')}>Review →</a></div>}{showTrustPriority && <div data-testid='trust-priority-action' style={{borderLeft:'3px solid var(--red)',padding:'8px 10px',marginBottom:6,background:'var(--bg-card)'}}>{trustRollup.overdueTasks} trust tasks overdue · {money(trustRollup.blockedValueOverdue)} blocked value awaiting ownership · {trustRollup.highestEscalationLevel !== 'NONE' ? `${trustRollup.highestEscalationLevel.toLowerCase()} escalation required` : 'No escalation required'} <a onClick={()=>navigate('/data-trust')}>Resolve →</a></div>}{data.priority.map((p:any)=><div key={p.id} style={{borderLeft:'3px solid var(--amber)',padding:'8px 10px',marginBottom:6,background:'var(--bg-card)'}}>{p.text} <a onClick={()=>navigate(p.href)}>Resolve →</a></div>)}</div><section data-testid='utilization-waste-narrative' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Utilization Waste</SectionLabel><div>{money(utilizationSummary.unusedValue ?? 0)} identified</div><div>{utilizationSummary.generatedOpportunities ?? 0} opportunities generated</div><a onClick={()=>navigate('/utilization-intelligence')}>Review utilization intelligence →</a></section><section data-testid='executive-priorities-command' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Top 5 Executive Priorities</SectionLabel><p>If you only execute the top 5 opportunities, projected monthly savings are {money(executiveSummary.topFiveMonthlySavings ?? 0)} with {executiveSummary.confidenceBand} confidence.</p>{topExecutivePriorities.map((priority:any)=><div key={priority.priorityId} style={{display:'grid',gridTemplateColumns:'40px 1fr 90px 130px 90px',gap:8,padding:'8px 0',borderTop:'var(--border-default)',fontSize:12}}><strong>#{priority.priorityRank}</strong><span>{priority.title}</span><span>{money(priority.projectedMonthlySavings)}</span><span>{priority.readiness}</span><span>{priority.priorityBand}</span></div>)}<a onClick={()=>navigate('/executive-priorities')}>Review executive priorities →</a></section><section data-testid='contract-risk-narrative' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Contract Risk</SectionLabel><div>{contractSummary.atRisk} contracts require review</div><div>{money(contractSummary.unusedValue ?? 0)} unused commitment value</div><a onClick={()=>navigate('/contract-intelligence')}>Review contract intelligence →</a></section><section data-testid='benchmark-gaps-narrative' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Benchmark Gaps</SectionLabel><div>{benchmarkSummary.highImpactGaps} high impact gaps</div><div>Potential Value: {money(benchmarkSummary.recoverableValue ?? 0)}</div><a onClick={()=>navigate('/benchmark-intelligence')}>Review benchmark intelligence →</a></section><section data-testid='renewal-priority-actions' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Upcoming Renewals Requiring Action</SectionLabel>{upcomingRenewals.map((renewal:any)=><div key={renewal.id} style={{display:'grid',gridTemplateColumns:'1fr 80px 120px',gap:8,padding:'8px 0',borderTop:'var(--border-default)',fontSize:12}}><strong>{renewal.contractName}</strong><span>{renewal.daysRemaining} days</span><span>{money(renewal.readiness.recoverableSpend)} recoverable</span></div>)}<a onClick={()=>navigate('/renewals')}>Review renewals →</a></section><section data-testid='m365-opportunities' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>M365 Opportunities</SectionLabel><div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:8}}>Grouped by production readiness: READY_FOR_APPROVAL · REVIEW_REQUIRED · BLOCKED · SHOW_OPPORTUNITY</div>{m365ReadinessGroups.map((group:any)=><div key={group.step} data-testid={`m365-group-${group.label}`} style={{marginTop:8}}><strong style={{fontSize:12}}>{group.label}</strong>{group.items.length === 0 ? <div style={{fontSize:12,color:'var(--text-secondary)'}}>No M365 opportunities.</div> : group.items.map((opp:any)=><div key={opp.id} style={{display:'grid',gridTemplateColumns:'1fr 90px 120px 130px',gap:8,padding:'8px 0',borderTop:'var(--border-default)',fontSize:12}}><span>{opp.title}</span><span>{money(opp.projectedMonthlySavings)}</span><span>{opp.executionSafety ?? 'REVIEW_REQUIRED'}</span><span>{opp.savingsConfidence ?? 'UNKNOWN'}</span></div>)}</div>)}<div style={{fontSize:12,color:'var(--text-secondary)'}}>Inactive User · Copilot · Duplicate License · Shared Mailbox</div></section><section data-testid='top-opportunities' style={{border:'var(--border-default)',borderRadius:10,padding:12,marginTop:16,background:'var(--bg-card)'}}><SectionLabel>Top Opportunities</SectionLabel>{topOpportunities.map((opp:any)=><div key={opp.id} style={{display:'grid',gridTemplateColumns:'40px 1fr 90px 130px',gap:8,padding:'8px 0',borderTop:'var(--border-default)',fontSize:12}}><strong>#{opp.rank}</strong><span>{opp.title}</span><span>{money(opp.projectedMonthlySavings)}</span><span>{opp.source}</span></div>)}<a onClick={()=>navigate('/opportunities')}>View all opportunities →</a></section></div>
-    )}
-  <RecommendationExplainabilityDrawer recommendationId={explainId} onClose={()=>setExplainId(null)} />
+export default function CommandView(_props: { params?: { domain?: string } } = {}) {
+  const executiveValue = useExecutiveValueData()
+  const executivePriorities = useExecutivePrioritiesData()
+  const runtimeEvents = useRuntimeEvents()
+
+  const valueMetrics = executiveValue.summary.valueMetrics ?? {}
+  const confidence = executiveValue.summary.confidence ?? {}
+  const counts = executiveValue.summary.counts ?? {}
+  const projectedAnnualValue = Number(executivePriorities.summary.topFiveAnnualSavings ?? valueMetrics.projectedAnnualSavings ?? 0)
+  const verifiedAnnualValue = Number(valueMetrics.verifiedAnnualSavings ?? 0)
+  const readyNow = Number(executivePriorities.summary.readyNowCount ?? 0)
+  const awaitingApproval = Number(executivePriorities.summary.approvalRequiredCount ?? counts.approvalsPending ?? 0)
+  const blocked = Number(executivePriorities.summary.blockedCount ?? executiveValue.blockers.length ?? 0)
+  const trustCoverage = Number(confidence.trustCoveragePercent ?? executivePriorities.summary.averageTrustScore ?? 0)
+  const topPriorities = (executivePriorities.topPriorities ?? []).slice(0, 3)
+
+  const recentChanges = useMemo(() => {
+    const cutoff = Date.now() - 24 * 60 * 60 * 1000
+    return runtimeEvents.latestEvents
+      .filter((event: any) => new Date(event.createdAt).getTime() >= cutoff)
+      .slice(0, 5)
+  }, [runtimeEvents.latestEvents])
+
+  const attention = useMemo(() => {
+    const blockerRows = (executiveValue.blockers ?? []).map((blocker: any) => ({ issue: blocker.title, impact: blocker.reason ?? blocker.type, blockedValue: Number(blocker.blockedValue ?? 0), requiredAction: blocker.recommendedAction ?? 'Resolve blocker' }))
+    const priorityBlockers = (executivePriorities.priorities ?? []).filter((priority: any) => priority.readiness === 'BLOCKED').map((priority: any) => ({ issue: priority.title, impact: 'Trust blocker', blockedValue: Number(priority.projectedAnnualSavings ?? priority.projectedMonthlySavings ?? 0), requiredAction: priority.recommendedNextAction ?? 'Resolve trust blockers' }))
+    const approvalRows = awaitingApproval > 0 ? [{ issue: 'Approval backlog', impact: `${awaitingApproval} executive priorities awaiting approval`, blockedValue: Number(valueMetrics.approvedAnnualSavings ?? 0), requiredAction: 'Open Actions' }] : []
+    const driftRows = Number(counts.driftAlertsOpen ?? 0) > 0 ? [{ issue: 'Open drift exposure', impact: `${counts.driftAlertsOpen} drift alert open`, blockedValue: Number(valueMetrics.protectedAnnualSavings ?? 0), requiredAction: 'Open Outcomes' }] : []
+    return [...blockerRows, ...priorityBlockers, ...approvalRows, ...driftRows].slice(0, 5)
+  }, [executiveValue.blockers, executivePriorities.priorities, awaitingApproval, counts.driftAlertsOpen, valueMetrics.approvedAnnualSavings, valueMetrics.protectedAnnualSavings])
+
+  const narrative = `Certen has identified ${money(projectedAnnualValue)} annual value. ${money(verifiedAnnualValue)} has been verified through controlled execution. ${readyNow === 1 ? 'One opportunity is' : `${readyNow} opportunities are`} ready now. ${blocked === 1 ? 'One remains' : `${blocked} remain`} blocked due to trust constraints.`
+
+  return <Shell><div style={{ padding: 24, display: 'grid', gap: 18 }}>
+    <header><SectionLabel>Overview</SectionLabel><h1 style={{ margin: '4px 0 0' }}>Executive Brief</h1><p style={{ margin: '6px 0 0', color: 'var(--text-secondary)' }}>What changed, what matters most, what requires attention, and what value was proven.</p></header>
+
+    <section data-testid='overview-executive-brief' style={{ display: 'grid', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 12 }}>
+        <MetricCard label='Projected Annual Value' value={`${money(projectedAnnualValue)} Annual Value`} hero />
+        <MetricCard label='Verified Annual Value' value={`${money(verifiedAnnualValue)} Verified`} hero />
+        <MetricCard label='Ready Now' value={`${readyNow} Ready`} />
+        <MetricCard label='Awaiting Approval' value={`${awaitingApproval} Awaiting Approval`} />
+        <MetricCard label='Blocked' value={`${blocked} Blocked`} />
+        <MetricCard label='Trust Coverage' value={`${trustCoverage}% Trust Coverage`} />
+      </div>
+      <article data-testid='executive-narrative' style={{ border: 'var(--border-teal)', background: 'rgba(45,212,191,.08)', borderRadius: 14, padding: 16 }}><h2 style={{ margin: 0, fontSize: 18 }}>What to care about today</h2><p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{narrative}</p></article>
+    </section>
+
+    <section data-testid='what-matters-most' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}><div><SectionLabel>What Matters Most</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Top 3 Executive Priorities</h2></div><Link href='/executive-priorities'>View Priorities</Link></div>
+      {topPriorities.length === 0 ? <EmptyState title='No executive priorities available.' description='Priorities will appear after opportunities are scored.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}><div style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr .8fr .8fr .6fr 1fr 90px', gap: 10, fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}><span>Rank</span><span>Title</span><span>Monthly Value</span><span>Readiness</span><span>Trust</span><span>Next Step</span><span>Action</span></div>{topPriorities.map((priority: any) => <div key={priority.priorityId} data-testid='overview-priority-row' style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr .8fr .8fr .6fr 1fr 90px', gap: 10, alignItems: 'center', padding: '10px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>#{priority.priorityRank}</strong><span>{priority.title}</span><span>{money(Number(priority.projectedMonthlySavings ?? 0))}/month</span><span><StatusPill status={readinessPill(priority.readiness) as any} /> {priority.readiness}</span><span>{priority.trustScore}</span><span>Next: {priority.recommendedNextAction}</span><Link href='/actions'>Open Action</Link></div>)}</div>}
+    </section>
+
+    <section data-testid='requires-attention' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
+      <SectionLabel>Requires Attention</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Blockers</h2>
+      {attention.length === 0 ? <EmptyState title='No blockers require attention.' description='Trust, approvals, renewals, connectors, and drift are currently clear.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}><div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr .7fr 1fr', gap: 10, fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}><span>Issue</span><span>Impact</span><span>Blocked Value</span><span>Required Action</span></div>{attention.map((item, index) => <div key={`${item.issue}-${index}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr .7fr 1fr', gap: 10, padding: '9px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>{item.issue}</strong><span>{item.impact}</span><span>{money(item.blockedValue)}</span><span>{item.requiredAction}</span></div>)}</div>}
+    </section>
+
+    <section data-testid='what-changed' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
+      <SectionLabel>What Changed</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Significant events in the last 24 hours</h2>
+      {recentChanges.length === 0 ? <EmptyState title='No significant changes in the last 24 hours.' description='Recent governed activity will appear here.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>{recentChanges.map((event: any) => <div key={event.eventId} data-testid='overview-change-row' style={{ display: 'grid', gridTemplateColumns: '28px 1fr 110px', gap: 8, alignItems: 'center', padding: '8px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>{eventTone(event.type)}</strong><span>{event.message}</span><span>{new Date(event.createdAt).toLocaleTimeString()}</span></div>)}</div>}
+    </section>
+
+    <footer data-testid='overview-quick-links' style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}><Link href='/actions'>Open Actions</Link><Link href='/executive-value'>Open Executive Value</Link><Link href='/evidence'>Open Evidence Packs</Link><Link href='/outcomes'>Open Outcomes</Link><Link href='/executive-priorities'>Open Priorities</Link></footer>
   </div></Shell>
 }

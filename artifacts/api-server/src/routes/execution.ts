@@ -2,8 +2,57 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { recommendationsTable, outcomeLedgerTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
+import { z } from "zod";
+import { governedExecutionService, type GovernedExecutionType } from "../lib/execution/governed-execution";
 
 const router = Router();
+
+const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
+const executionBodySchema = z.object({ connectorId: z.string().optional(), executionType: z.enum(["LICENSE_REMOVE", "LICENSE_ASSIGN", "OWNER_ASSIGN", "AI_ASSET_RETIRE", "AI_ASSET_APPROVE", "TICKET_CREATE", "WORKFLOW_DISABLE", "OTHER"]).default("TICKET_CREATE"), estimatedValue: z.number().optional(), actor: z.string().optional(), approved: z.boolean().optional() });
+
+router.get("/connectors", async (req, res) => res.json(governedExecutionService.listConnectors(tenant(req))));
+
+router.get("/readiness/:actionId", async (req, res) => {
+  try {
+    const executionType = String(req.query.executionType ?? "TICKET_CREATE") as GovernedExecutionType;
+    const readiness = await governedExecutionService.readiness(tenant(req), req.params.actionId, typeof req.query.connectorId === "string" ? req.query.connectorId : undefined, executionType, String(req.query.approved ?? "false") === "true");
+    return res.json(readiness);
+  } catch (error) {
+    return res.status(500).json({ error: "READINESS_EVALUATION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+router.post("/dry-run/:actionId", async (req, res) => {
+  const parsed = executionBodySchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: "INVALID_DRY_RUN_REQUEST", details: parsed.error.flatten() });
+  try {
+    const result = await governedExecutionService.simulateExecution({ tenantId: tenant(req), actionId: req.params.actionId, ...parsed.data });
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "DRY_RUN_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+router.post("/execute/:actionId", async (req, res) => {
+  const parsed = executionBodySchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: "INVALID_EXECUTION_REQUEST", details: parsed.error.flatten() });
+  try {
+    const result = await governedExecutionService.executeGovernedAction({ tenantId: tenant(req), actionId: req.params.actionId, ...parsed.data });
+    return res.status(201).json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "EXECUTION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+router.get("/:executionId/evidence", async (req, res) => res.json(governedExecutionService.listEvidence(tenant(req), req.params.executionId)));
+
+router.get("/:executionId", async (req, res, next) => {
+  if (["approve", "reject", "m365"].includes(req.params.executionId)) return next();
+  const execution = governedExecutionService.getExecution(tenant(req), req.params.executionId);
+  if (!execution) return res.status(404).json({ error: "NOT_FOUND" });
+  return res.json(execution);
+});
+
 
 router.get("/", async (req, res) => {
   try {

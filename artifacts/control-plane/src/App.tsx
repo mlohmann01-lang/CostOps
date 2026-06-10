@@ -39,6 +39,9 @@ import SaaSRationalisation from './pages/SaaSRationalisation'
 import AIGovernanceExposure from './pages/AIGovernanceExposure'
 import AIEconomicCommandDashboard from './pages/AIEconomicCommandDashboard'
 import EconomicOutcomeDashboard from './pages/EconomicOutcomeDashboard'
+import ActionCenter from './pages/ActionCenter'
+import OutcomeProtectionView from './pages/OutcomeProtectionView'
+import ApprovalCenter from './pages/ApprovalCenter'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -66,7 +69,7 @@ function LoginPage() {
     setTimeout(() => {
       if (email.trim().toLowerCase() === DEMO_EMAIL && password === DEMO_PASSWORD) {
         saveSession(createDemoSession(email.trim().toLowerCase()))
-        setLoc('/workspace')
+        setLoc('/overview')
       } else {
         setError('Invalid email or password.')
       }
@@ -204,12 +207,12 @@ function LoginPage() {
 
 function LoginRoute() {
   const session = getSession()
-  return session ? <Redirect to="/workspace" /> : <LoginPage />
+  return session ? <Redirect to="/overview" /> : <LoginPage />
 }
 
 function HomeRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/workspace' : '/login'} />
+  return <Redirect to={session ? '/overview' : '/login'} />
 }
 
 function RequireRuntime({ children }: { children: React.ReactNode }) {
@@ -234,7 +237,7 @@ function ConnectorsRoute() {
 
 
 function ActionsRoute() {
-  return <RequireRuntime><Recommendations /></RequireRuntime>
+  return <RequireRuntime><ActionCenter /></RequireRuntime>
 }
 
 function TechnologyPortfolioRoute() {
@@ -277,6 +280,14 @@ function IntelligenceRoute({ params }: { params?: { domain?: string } }) {
 
 function OutcomesRoute() {
   return <RequireRuntime><OutcomeLedgerView /></RequireRuntime>
+}
+
+function OutcomeProtectionRoute() {
+  return <RequireRuntime><OutcomeProtectionView /></RequireRuntime>
+}
+
+function ApprovalCenterRoute() {
+  return <RequireRuntime><ApprovalCenter /></RequireRuntime>
 }
 
 function DataTrustRoute() {
@@ -406,12 +417,12 @@ function SyncJobsRedirectRoute() {
 function StubRoute() {
   const session = getSession()
   if (!session) return <Redirect to="/login" />
-  return <Redirect to="/workspace" />
+  return <Redirect to="/overview" />
 }
 
 function CatchAllRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/workspace' : '/login'} />
+  return <Redirect to={session ? '/overview' : '/login'} />
 }
 
 // ─── Router ────────────────────────────────────────────────────────────────────
@@ -422,6 +433,8 @@ function Router() {
       <Route path="/login" component={LoginRoute} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
+      <Route path="/overview" component={CommandRoute} />
+      <Route path="/command"><RedirectRoute to="/overview" /></Route>
       <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
       <Route path="/shadow-it-exposure"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/shadow-it"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
@@ -435,6 +448,7 @@ function Router() {
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>
       <Route path="/onboarding/m365"><RedirectRoute to="/connectors" /></Route>
       <Route path="/actions" component={ActionsRoute} />
+      <Route path="/approvals" component={ApprovalCenterRoute} />
       <Route path="/technology-portfolio" component={TechnologyPortfolioRoute} />
       <Route path="/governance" component={GovernanceRoute} />
       <Route path="/execution" component={ExecutionConsolidatedRoute} />
@@ -445,6 +459,7 @@ function Router() {
       <Route path="/:domain/execution" component={ExecutionRoute} />
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
+      <Route path="/outcome-protection" component={OutcomeProtectionRoute} />
       <Route path="/data-trust"><RedirectRoute to="/platform" /></Route>
       <Route path="/vendor-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
       <Route path="/benchmark-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
@@ -462,7 +477,7 @@ function Router() {
       <Route path="/recommendations"><RedirectRoute to="/actions" /></Route>
       <Route path="/campaigns"><RedirectRoute to="/actions" /></Route>
       <Route path="/scheduling"><RedirectRoute to="/actions" /></Route>
-      <Route path="/approval-workflows"><RedirectRoute to="/actions" /></Route>
+      <Route path="/approval-workflows"><RedirectRoute to="/approvals" /></Route>
       <Route path="/evidence-packs"><RedirectRoute to="/evidence" /></Route>
       <Route path="/evidence-audit"><RedirectRoute to="/evidence" /></Route>
       <Route path="/runtime-health"><RedirectRoute to="/platform" /></Route>
