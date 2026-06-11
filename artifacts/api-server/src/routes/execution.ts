@@ -6,11 +6,15 @@ import { z } from "zod";
 import { governedExecutionService, type GovernedExecutionType } from "../lib/execution/governed-execution";
 import { rollbackM365LicenseExecution, verifyM365Execution } from "../lib/connectors/m365/m365-graph-execution";
 import { rollbackServiceNowExecution, verifyServiceNowExecution } from "../lib/connectors/servicenow/servicenow-execution";
+import { rollbackSnowflakeWarehouseConfig, verifySnowflakeExecution } from "../lib/connectors/snowflake/snowflake-execution";
+import { rollbackDatabricksClusterConfig, verifyDatabricksExecution } from "../lib/connectors/databricks/databricks-execution";
+import { rollbackAwsExecution, verifyAwsExecution } from "../lib/connectors/aws/aws-execution";
+import { rollbackAzureExecution, verifyAzureExecution } from "../lib/connectors/azure/azure-execution";
 
 const router = Router();
 
 const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
-const executionBodySchema = z.object({ connectorId: z.string().optional(), executionType: z.enum(["LICENSE_REMOVE", "LICENSE_ASSIGN", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "OWNER_ASSIGN", "AI_ASSET_RETIRE", "AI_ASSET_APPROVE", "TICKET_CREATE", "WORKFLOW_DISABLE", "OTHER"]).default("TICKET_CREATE"), estimatedValue: z.number().optional(), actor: z.string().optional(), approved: z.boolean().optional(), userId: z.string().optional(), skuId: z.string().optional(), targetSkuId: z.string().optional(), dryRun: z.boolean().optional(), ownerId: z.string().optional(), policyId: z.string().optional(), artifactType: z.enum(["CHANGE", "TASK", "APPROVAL"]).optional(), expectedState: z.string().optional(), assignedTo: z.string().optional(), approvalGroup: z.string().optional() });
+const executionBodySchema = z.object({ connectorId: z.string().optional(), executionType: z.enum(["LICENSE_REMOVE", "LICENSE_ASSIGN", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "AZURE_RIGHTSIZE_VM", "AZURE_STOP_VM", "AZURE_START_VM", "AZURE_MODIFY_SQL", "AZURE_STOP_SQL", "AZURE_START_SQL", "AZURE_DELETE_MANAGED_DISK", "AZURE_RELEASE_PUBLIC_IP", "AZURE_TAG_OWNER", "AZURE_CREATE_RI_REVIEW", "AZURE_CREATE_SAVINGS_PLAN_REVIEW", "AZURE_VERIFY_RESOURCE_STATE", "AZURE_ROLLBACK_RESOURCE", "AWS_RIGHTSIZE_EC2", "AWS_STOP_EC2", "AWS_START_EC2", "AWS_MODIFY_RDS", "AWS_STOP_RDS", "AWS_START_RDS", "AWS_DELETE_EBS", "AWS_RELEASE_EIP", "AWS_TAG_OWNER", "AWS_CREATE_SAVINGS_PLAN_REVIEW", "AWS_CREATE_RI_REVIEW", "AWS_VERIFY_AWS_STATE", "AWS_ROLLBACK_RESOURCE", "SNOWFLAKE_SET_AUTO_SUSPEND", "SNOWFLAKE_RESIZE_WAREHOUSE", "SNOWFLAKE_SUSPEND_WAREHOUSE", "SNOWFLAKE_TAG_COST_OWNER", "SNOWFLAKE_CREATE_SPEND_REVIEW", "SNOWFLAKE_ROLLBACK_WAREHOUSE_CONFIG", "SNOWFLAKE_VERIFY_WAREHOUSE_STATE", "DATABRICKS_SET_AUTO_TERMINATION", "DATABRICKS_RESIZE_CLUSTER", "DATABRICKS_TERMINATE_CLUSTER", "DATABRICKS_TAG_COST_OWNER", "DATABRICKS_CREATE_JOB_REVIEW", "DATABRICKS_ROLLBACK_CLUSTER_CONFIG", "DATABRICKS_VERIFY_CLUSTER_STATE", "OWNER_ASSIGN", "AI_ASSET_RETIRE", "AI_ASSET_APPROVE", "TICKET_CREATE", "WORKFLOW_DISABLE", "OTHER"]).default("TICKET_CREATE"), estimatedValue: z.number().optional(), actor: z.string().optional(), approved: z.boolean().optional(), userId: z.string().optional(), skuId: z.string().optional(), targetSkuId: z.string().optional(), dryRun: z.boolean().optional(), ownerId: z.string().optional(), policyId: z.string().optional(), artifactType: z.enum(["CHANGE", "TASK", "APPROVAL"]).optional(), expectedState: z.string().optional(), assignedTo: z.string().optional(), approvalGroup: z.string().optional() });
 
 router.get("/connectors", async (req, res) => res.json(governedExecutionService.listConnectors(tenant(req))));
 
@@ -84,10 +88,48 @@ router.post("/servicenow/:executionId/rollback", async (req, res) => {
   }
 });
 
+
+
+
+router.post("/azure/:executionId/verify", async (req, res) => {
+  try { return res.json(await verifyAzureExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "AZURE_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+router.post("/azure/:executionId/rollback", async (req, res) => {
+  try { return res.json(await rollbackAzureExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "AZURE_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+
+router.post("/aws/:executionId/verify", async (req, res) => {
+  try { return res.json(await verifyAwsExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "AWS_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+router.post("/aws/:executionId/rollback", async (req, res) => {
+  try { return res.json(await rollbackAwsExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "AWS_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+
+router.post("/snowflake/:executionId/verify", async (req, res) => {
+  try { return res.json(await verifySnowflakeExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "SNOWFLAKE_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+router.post("/snowflake/:executionId/rollback", async (req, res) => {
+  try { return res.json(await rollbackSnowflakeWarehouseConfig(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "SNOWFLAKE_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+router.post("/databricks/:executionId/verify", async (req, res) => {
+  try { return res.json(await verifyDatabricksExecution(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "DATABRICKS_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+router.post("/databricks/:executionId/rollback", async (req, res) => {
+  try { return res.json(await rollbackDatabricksClusterConfig(tenant(req), req.params.executionId)); }
+  catch (error) { return res.status(409).json({ error: "DATABRICKS_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) }); }
+});
+
 router.get("/:executionId/evidence", async (req, res) => res.json(governedExecutionService.listEvidence(tenant(req), req.params.executionId)));
 
 router.get("/:executionId", async (req, res, next) => {
-  if (["approve", "reject", "m365", "servicenow"].includes(req.params.executionId)) return next();
+  if (["approve", "reject", "m365", "servicenow", "aws", "azure", "snowflake", "databricks"].includes(req.params.executionId)) return next();
   const execution = governedExecutionService.getExecution(tenant(req), req.params.executionId);
   if (!execution) return res.status(404).json({ error: "NOT_FOUND" });
   return res.json(execution);

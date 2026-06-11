@@ -27,6 +27,8 @@ test('data hook consumes runtime APIs and exposes demo fallback', () => {
   assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.m365, true)
   assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.ai, true)
   assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.servicenow, true)
+  assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.aws, true)
+  assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.azure, true)
   assert.equal(demoLiveTenantReadiness.connectorHealth.some((row) => row.status === 'DEGRADED'), true)
   assert.equal(demoLiveTenantReadiness.evidenceExportReadiness.some((row) => !row.ready), true)
   assert.equal(demoLiveTenantReadiness.readiness.auditCompleteness.incomplete > 0, true)
@@ -39,7 +41,7 @@ test('header mode and readiness badges render', () => {
 
 test('executive readiness summary and certified wedge cards render', () => {
   const page = read('../pages/LiveTenantReadinessView.tsx')
-  for (const text of ['Certified Wedges', 'Connector Health', 'Execution Allowed', 'Dry Run Only', 'Execution Blocked', 'Audit Complete', 'Evidence Export Ready', 'M365', 'AI', 'ServiceNow']) assert.equal(page.includes(text), true)
+  for (const text of ['Certified Wedges', 'Connector Health', 'Execution Allowed', 'Dry Run Only', 'Execution Blocked', 'Audit Complete', 'Evidence Export Ready', 'M365', 'AI', 'ServiceNow', 'AWS', 'Azure']) assert.equal(page.includes(text), true)
 })
 
 test('tenant execution policy renders and editing is disabled in demo mode', () => {

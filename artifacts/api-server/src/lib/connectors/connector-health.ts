@@ -7,13 +7,13 @@ export function freshnessBandFromDays(days?: number | null): FreshnessBand { if 
 export function freshnessScoreFromBand(band: FreshnessBand) { return band === "0_7" ? 100 : band === "8_30" ? 80 : band === "31_90" ? 50 : band === "GT_90" ? 20 : 0; }
 
 export type ConnectorHealthStatus = "HEALTHY" | "DEGRADED" | "DISCONNECTED" | "EXPIRED_CREDENTIALS" | "MISSING_SCOPES" | "RATE_LIMITED";
-export type ConnectorHealthReport = { tenantId: string; connectorId: string; connectorType: "M365" | "AI" | "SERVICENOW"; status: ConnectorHealthStatus; lastCheckedAt: string; credentialExpiresAt?: string; scopes?: string[]; missingScopes?: string[]; rateLimitResetAt?: string; errors: string[] };
+export type ConnectorHealthReport = { tenantId: string; connectorId: string; connectorType: "M365" | "AI" | "SERVICENOW" | "AWS" | "AZURE" | "SNOWFLAKE" | "DATABRICKS"; status: ConnectorHealthStatus; lastCheckedAt: string; credentialExpiresAt?: string; scopes?: string[]; missingScopes?: string[]; rateLimitResetAt?: string; errors: string[] };
 type CredentialMetadata = { credentialExpiresAt?: string; scopes?: string[]; requiredScopes?: string[]; rateLimitResetAt?: string; statusOverride?: ConnectorHealthStatus; errors?: string[] };
 const reports = new Map<string, ConnectorHealthReport>();
 const metadata = new Map<string, CredentialMetadata>();
 function key(tenantId: string, connectorId: string) { return `${tenantId}:${connectorId}`; }
 function now() { return new Date().toISOString(); }
-function isLiveType(type: ExecutionConnectorType): type is "M365" | "AI" | "SERVICENOW" { return ["M365", "AI", "SERVICENOW"].includes(type); }
+function isLiveType(type: ExecutionConnectorType): type is "M365" | "AI" | "SERVICENOW" | "AWS" | "AZURE" | "SNOWFLAKE" | "DATABRICKS" { return ["M365", "AI", "SERVICENOW", "AWS", "AZURE", "SNOWFLAKE", "DATABRICKS"].includes(type); }
 function assertTenantScopedResource<T extends { tenantId?: string } | null>(tenantId: string, resource: T): T { if (resource && resource.tenantId !== tenantId) throw new Error("TENANT_SCOPE_VIOLATION"); return resource; }
 function assertTenantScopedCollection<T extends { tenantId?: string }>(tenantId: string, rows: T[]) { rows.forEach((row) => assertTenantScopedResource(tenantId, row)); return rows; }
 export function refreshConnectorCredentialMetadata(tenantId: string, connectorId: string, input: CredentialMetadata) { metadata.set(key(tenantId, connectorId), input); return input; }
