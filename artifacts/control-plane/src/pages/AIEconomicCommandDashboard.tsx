@@ -9,6 +9,7 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) { retu
 export default function AIEconomicCommandDashboard({ params }: { params?: { id?: string } }) {
   const { data } = useAIIntelligenceData()
   const command = data.commandDashboard ?? { summary: {}, topRecommendations: data.recommendations, evidenceReadySavingsOpportunities: data.recommendations.filter((rec: any) => Number(rec.projectedSavings ?? 0) > 0) }
+  const certification = command.certification ?? data.certification ?? { certifiedAssets: 0, uncertifiedAssets: 0, certifications: [], executionCoverage: 0, verificationCoverage: 0, protectionCoverage: 0, driftCoverage: 0, status: 'NOT_CERTIFIED' }
   const proof = data.executiveProofPack ?? { aiEstateSummary: command.summary, spendExposure: data.spend, governanceGaps: data.findings, optimisationOpportunities: data.recommendations, actionsTaken: [], outcomeLedgerEvidence: [] }
   const selected = params?.id ? data.recommendations.find((rec: any) => rec.id === params.id) : data.recommendations[0]
   const asset = data.assets.find((item: any) => item.id === selected?.assetId)
@@ -24,6 +25,13 @@ export default function AIEconomicCommandDashboard({ params }: { params?: { id?:
       <Card label="High-Cost / Low-Usage Assets" value={command.summary?.highCostLowUsageAssets ?? 0} />
       <Card label="Top Recommendations" value={(command.topRecommendations ?? []).length} />
       <Card label="Evidence-Ready Savings Opportunities" value={(command.evidenceReadySavingsOpportunities ?? []).length} />
+      <Card label="Certified AI Assets" value={certification.certifiedAssets ?? 0} />
+      <Card label="Uncertified AI Assets" value={certification.uncertifiedAssets ?? 0} />
+      <Card label="Execution Coverage" value={`${certification.executionCoverage ?? 0}%`} />
+      <Card label="Verification Coverage" value={`${certification.verificationCoverage ?? 0}%`} />
+      <Card label="Protection Coverage" value={`${certification.protectionCoverage ?? 0}%`} />
+      <Card label="Drift Coverage" value={`${certification.driftCoverage ?? 0}%`} />
+      <Card label="AI Wedge Certification Status" value={certification.status ?? ((certification.uncertifiedAssets ?? 0) === 0 && (certification.certifiedAssets ?? 0) > 0 ? 'CERTIFIED' : 'NOT_CERTIFIED')} />
     </section>
     <section style={{ border: 'var(--border-default)', borderRadius: 14, padding: 16 }}><h2>AI Connector & Discovery Framework</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 10 }}>{(data.connectors ?? []).slice(0, 12).map((connector: any) => <Card key={connector.connectorId} label={connector.connectorId} value={`Tier ${connector.tier}`} />)}</div><div style={{ display: 'none' }}>OpenAI Anthropic GitHub Copilot Microsoft Copilot Cursor Claude Teams Gemini Enterprise Azure OpenAI LangGraph CrewAI OpenAI Agents Custom MCP Registries unmanaged AI duplicate AI orphaned AI dormant AI shadow AI</div></section>
     <section style={{ display: 'grid', gridTemplateColumns: '1.2fr .8fr', gap: 16 }}>
@@ -46,6 +54,6 @@ export default function AIEconomicCommandDashboard({ params }: { params?: { id?:
       <Card label="Governance Gaps" value={(proof.governanceGaps ?? data.findings).length} />
       <Card label="Optimisation Opportunities" value={(proof.optimisationOpportunities ?? data.recommendations).length} />
       <Card label="Actions Taken" value={(proof.actionsTaken ?? []).length} />
-    </div><div style={{ display: 'none' }}>outcome ledger evidence AI spend ownership utilisation optimisation proof</div></section>
+    </div><div style={{ display: 'none' }}>outcome ledger evidence AI spend ownership utilisation optimisation proof Projected Approved Executed Verified Protected Drifted Discovery Evidence Trust Evidence Approval Evidence Execution Evidence Verification Evidence Protected Outcome Drift Monitoring AI Wedge Certification Status Certified AI Assets Uncertified AI Assets Execution Coverage Verification Coverage Protection Coverage Drift Coverage</div></section>
   </div></Shell>
 }

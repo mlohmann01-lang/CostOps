@@ -14,7 +14,7 @@ test('AI utilisation and spend dashboard labels are present', () => {
 })
 
 test('AI intelligence hook wires required tenant-scoped API paths', () => {
-  assert.deepEqual([...aiIntelligenceApiPaths], ['/api/ai/connectors', '/api/ai/assets', '/api/ai/utilisation', '/api/ai/spend', '/api/ai/governance/findings', '/api/ai/recommendations', '/api/ai/dashboard', '/api/ai/command-dashboard', '/api/ai/executive-proof-pack'])
+  assert.deepEqual([...aiIntelligenceApiPaths], ['/api/ai/connectors', '/api/ai/assets', '/api/ai/utilisation', '/api/ai/spend', '/api/ai/governance/findings', '/api/ai/recommendations', '/api/ai/dashboard', '/api/ai/command-dashboard', '/api/ai/executive-proof-pack', '/api/ai/certification'])
   const normalized = normalizeAIIntelligencePayload({})
   assert.equal(normalized.assets.length, demoAIIntelligenceData.assets.length)
   assert.ok(JSON.stringify(normalized).includes('ASSIGN_AI_OWNER'))
@@ -23,7 +23,7 @@ test('AI intelligence hook wires required tenant-scoped API paths', () => {
 
 test('AI Economic Command Dashboard renders executive metrics detail page playbooks and proof pack', () => {
   const page = fs.readFileSync(new URL('../pages/AIEconomicCommandDashboard.tsx', import.meta.url), 'utf8')
-  for (const text of ['AI Economic Command Dashboard', 'Approved vs Unapproved', 'Owned vs Unowned', 'Active vs Inactive', 'Total AI Spend', 'High-Cost / Low-Usage Assets', 'Top AI Optimisation Recommendations', 'Evidence-Ready Savings Opportunities', 'AI Recommendation Detail Page', 'Finding', 'Evidence', 'Affected Asset', 'Owner', 'Expected Saving', 'Action Path', 'Governance Status', 'Ledger History', 'AI Optimisation Playbooks v1', 'Assign owner', 'Review unapproved AI asset', 'Retire inactive AI asset', 'Review high-cost / low-usage asset', 'Consolidate duplicate AI capability', 'AI Executive Proof Pack', 'AI Estate Summary', 'Spend Exposure', 'Governance Gaps', 'Optimisation Opportunities', 'Actions Taken', 'AI Connector & Discovery Framework', 'OpenAI', 'Anthropic', 'GitHub Copilot', 'Microsoft Copilot', 'Cursor', 'Claude Teams', 'Gemini Enterprise', 'Azure OpenAI', 'Custom MCP Registries']) assert.equal(page.includes(text), true)
+  for (const text of ['AI Economic Command Dashboard', 'Approved vs Unapproved', 'Owned vs Unowned', 'Active vs Inactive', 'Total AI Spend', 'High-Cost / Low-Usage Assets', 'Top AI Optimisation Recommendations', 'Evidence-Ready Savings Opportunities', 'AI Recommendation Detail Page', 'Finding', 'Evidence', 'Affected Asset', 'Owner', 'Expected Saving', 'Action Path', 'Governance Status', 'Ledger History', 'AI Optimisation Playbooks v1', 'Assign owner', 'Review unapproved AI asset', 'Retire inactive AI asset', 'Review high-cost / low-usage asset', 'Consolidate duplicate AI capability', 'AI Executive Proof Pack', 'AI Estate Summary', 'Spend Exposure', 'Governance Gaps', 'Optimisation Opportunities', 'Actions Taken', 'AI Connector & Discovery Framework', 'OpenAI', 'Anthropic', 'GitHub Copilot', 'Microsoft Copilot', 'Cursor', 'Claude Teams', 'Gemini Enterprise', 'Azure OpenAI', 'Custom MCP Registries', 'Certified AI Assets', 'Uncertified AI Assets', 'Execution Coverage', 'Verification Coverage', 'Protection Coverage', 'Drift Coverage', 'AI Wedge Certification Status']) assert.equal(page.includes(text), true)
 })
 
 test('AI Economic Command Dashboard route is wired', () => {

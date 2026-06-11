@@ -36,6 +36,7 @@ export const navRegistry: NavItem[] = [
   { label: "Governance", path: "/governance", icon: BookOpen, enabled: true, pageExists: true, stability: "stable", group: "GOVERNANCE" },
   { label: "Jobs / Orchestration", path: "/jobs", icon: Workflow, enabled: true, pageExists: true, stability: "stable", group: "PLATFORM" },
   { label: "Pilot Readiness", path: "/pilot-readiness", icon: Zap, enabled: true, pageExists: true, stability: "stable", group: "PLATFORM" },
+  { label: "Live Tenant Readiness", path: "/live-tenant-readiness", icon: ShieldCheck, enabled: true, pageExists: true, stability: "stable", group: "PLATFORM" },
   { label: "Support Diagnostics", path: "/support-diagnostics", icon: Activity, enabled: true, pageExists: true, stability: "stable", group: "PLATFORM" },
 ];
 

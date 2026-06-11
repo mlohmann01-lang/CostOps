@@ -67,7 +67,7 @@ test('demo mode does not enable real execution actions', () => {
   const page = read('../pages/ActionCenter.tsx')
   assert.equal(page.includes('Demo Mode · Execution disabled · Sample governed action lifecycle data'), true)
   assert.equal(page.includes("disabled={isDemo || pending || blocked}"), true)
-  assert.equal(page.includes('Simulated only'), true)
+  for (const label of ['Simulated only', 'Controlled ServiceNow Execution', 'ServiceNow Artifact', 'ServiceNow Artifact State', 'ServiceNow Rollback', 'ServiceNow Verification', 'ServiceNow Protection', 'ServiceNow Drift', 'ServiceNow Executive Proof']) assert.equal(page.includes(label), true)
 })
 
 test('detail panel renders history and evidence fields', () => {

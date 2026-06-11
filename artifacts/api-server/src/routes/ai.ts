@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import { aiIntelligenceService, type AIAssetType } from '../lib/ai-economic-control/ai-intelligence'
 import { aiConnectorDiscoveryService, type AIDiscoveryConnectorId } from '../lib/ai-economic-control/ai-discovery-connectors'
+import { getAIWedgeCertification } from '../lib/ai-economic-control/ai-wedge-certification'
 
 const router = Router()
 function tenantIdFrom(req: any) { return String(req.tenantId ?? req.query.tenantId ?? 'default') }
@@ -20,11 +21,12 @@ router.post('/spend/ingest', (req, res) => { try { return res.status(201).json(a
 router.get('/governance/findings', (req, res) => res.json({ tenantId: tenantIdFrom(req), findings: aiIntelligenceService.findings(tenantIdFrom(req)) }))
 router.get('/recommendations', (req, res) => res.json({ tenantId: tenantIdFrom(req), recommendations: aiIntelligenceService.recommendations(tenantIdFrom(req)) }))
 router.get('/dashboard', (req, res) => res.json(aiIntelligenceService.dashboard(tenantIdFrom(req))))
-router.get('/command-dashboard', (req, res) => res.json(aiIntelligenceService.commandDashboard(tenantIdFrom(req))))
+router.get('/command-dashboard', async (req, res) => { const tenantId = tenantIdFrom(req); const command = aiIntelligenceService.commandDashboard(tenantId); const certification = await getAIWedgeCertification(tenantId); const total = certification.certifications.length || 1; return res.json({ ...command, certification: { ...certification, executionCoverage: Math.round((certification.certifications.filter((row) => ['CONTROLLED_EXECUTION', 'REAL_PROVIDER_EXECUTION'].includes(row.execution)).length / total) * 100), verificationCoverage: Math.round((certification.certifications.filter((row) => row.verification === 'COMPLETE').length / total) * 100), protectionCoverage: Math.round((certification.certifications.filter((row) => row.protection === 'COMPLETE').length / total) * 100), driftCoverage: Math.round((certification.certifications.filter((row) => row.drift === 'COMPLETE').length / total) * 100), status: certification.uncertifiedAssets === 0 && certification.certifiedAssets > 0 ? 'CERTIFIED' : 'NOT_CERTIFIED' } }) })
 router.get('/recommendations/:id/detail', (req, res) => { const detail = aiIntelligenceService.recommendationDetail(tenantIdFrom(req), req.params.id); if (!detail) return res.status(404).json({ error: 'AI_RECOMMENDATION_NOT_FOUND' }); return res.json(detail) })
 router.get('/optimisation/playbooks', (req, res) => res.json({ tenantId: tenantIdFrom(req), playbooks: aiIntelligenceService.optimisationPlaybooks(tenantIdFrom(req)) }))
 router.post('/optimisation/playbooks/:recommendationId/run', (req, res) => { const result = aiIntelligenceService.completeRecommendationAction(tenantIdFrom(req), req.params.recommendationId, String(req.body?.actor ?? 'ai-economic-operator')); if (!result) return res.status(404).json({ error: 'AI_RECOMMENDATION_NOT_FOUND' }); return res.json(result) })
 router.get('/executive-proof-pack', (req, res) => res.json(aiIntelligenceService.executiveProofPack(tenantIdFrom(req))))
+router.get('/certification', async (req, res) => res.json(await getAIWedgeCertification(tenantIdFrom(req))))
 router.get('/technology-portfolio', (req, res) => res.json(aiIntelligenceService.technologyPortfolio(tenantIdFrom(req))))
 
 export default router
