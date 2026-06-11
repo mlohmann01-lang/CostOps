@@ -1,17 +1,22 @@
 import { platformEventService } from "../events/platform-event-service";
 import { governedActionService, type GovernedAction } from "../actions/governed-actions";
 import { connectorSupportsCapability, createDefaultExecutionConnector } from "./execution-connectors";
-import { evaluateReadinessAuthority } from "../trust-readiness/trust-readiness-authority";
+import { evaluateReadinessAuthority, trustReadinessAuthorityService } from "../trust-readiness/trust-readiness-authority";
 import { approvalAuthorityEngine } from "../approval-authority/approval-authority";
+import { executeM365GraphOperation } from "../connectors/m365/m365-graph-execution";
+import { executeAIProviderOperation } from "../ai-economic-control/ai-provider-execution";
+import { executeServiceNowOperation } from "../connectors/servicenow/servicenow-execution";
+import { assertLiveTenantExecutionAllowed, evaluateLiveTenantExecutionGate, getTenantExecutionPolicy } from "../runtime/live-tenant-safety";
+import { getConnectorHealth } from "../connectors/connector-health";
 
 export type ExecutionConnectorType = "M365" | "SERVICENOW" | "JIRA" | "AI" | "AWS" | "AZURE" | "GCP" | "SNOWFLAKE" | "OTHER";
 export type ExecutionConnectorStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
 export type ExecutionConnectorMode = "READ_ONLY" | "APPROVAL_REQUIRED" | "AUTO_EXECUTE_SAFE";
-export type GovernedExecutionType = "LICENSE_REMOVE" | "LICENSE_ASSIGN" | "OWNER_ASSIGN" | "AI_ASSET_RETIRE" | "AI_ASSET_APPROVE" | "TICKET_CREATE" | "WORKFLOW_DISABLE" | "OTHER";
+export type GovernedExecutionType = "LICENSE_REMOVE" | "LICENSE_ASSIGN" | "REMOVE_M365_LICENSE" | "ASSIGN_M365_LICENSE" | "REASSIGN_M365_LICENSE" | "RESTORE_M365_LICENSE" | "REMOVE_COPILOT_LICENSE" | "RESTORE_COPILOT_LICENSE" | "DOWNGRADE_M365_LICENSE" | "CONVERT_SHARED_MAILBOX_REVIEW" | "APPROVE_AI_ASSET" | "RETIRE_AI_ASSET" | "ASSIGN_AI_OWNER" | "ENFORCE_AI_POLICY" | "DISABLE_AI_ASSET" | "ENABLE_AI_ASSET" | "CREATE_SERVICENOW_CHANGE" | "UPDATE_SERVICENOW_CHANGE" | "CLOSE_SERVICENOW_CHANGE" | "CREATE_SERVICENOW_TASK" | "UPDATE_SERVICENOW_TASK" | "CLOSE_SERVICENOW_TASK" | "CREATE_SERVICENOW_APPROVAL" | "UPDATE_SERVICENOW_APPROVAL" | "WITHDRAW_SERVICENOW_APPROVAL" | "VERIFY_SERVICENOW_ARTIFACT" | "OWNER_ASSIGN" | "AI_ASSET_RETIRE" | "AI_ASSET_APPROVE" | "TICKET_CREATE" | "WORKFLOW_DISABLE" | "OTHER";
 export type GovernedExecutionStatus = "PLANNED" | "DRY_RUN" | "APPROVED" | "EXECUTING" | "COMPLETED" | "FAILED" | "ROLLED_BACK";
 export type GovernedExecutionMode = "SIMULATION" | "MANUAL" | "CONTROLLED";
 export type ExecutionBlastRadius = "LOW" | "MEDIUM" | "HIGH";
-export type ExecutionEvidenceType = "PRE_STATE" | "POST_STATE" | "DRY_RUN" | "EXECUTION_RESULT" | "ROLLBACK_RESULT";
+export type ExecutionEvidenceType = "PRE_STATE" | "POST_STATE" | "DRY_RUN" | "EXECUTION_RESULT" | "ROLLBACK_RESULT" | "VERIFICATION_RESULT" | "ROLLBACK_PAYLOAD";
 export type ExecutionReadinessVerdict = "ELIGIBLE" | "APPROVAL_REQUIRED" | "BLOCKED" | "NEVER_ELIGIBLE";
 
 export type ExecutionConnector = {
@@ -60,17 +65,42 @@ export type ExecutionReadinessInput = {
 };
 
 export type ExecutionReadiness = { verdict: ExecutionReadinessVerdict; reasons: string[] };
-export type SimulateExecutionInput = { tenantId: string; actionId: string; connectorId?: string; executionType?: GovernedExecutionType; estimatedValue?: number; actor?: string };
+export type SimulateExecutionInput = { tenantId: string; actionId: string; connectorId?: string; executionType?: GovernedExecutionType; estimatedValue?: number; actor?: string; userId?: string; skuId?: string; targetSkuId?: string; dryRun?: boolean; ownerId?: string; policyId?: string; artifactType?: "CHANGE" | "TASK" | "APPROVAL"; expectedState?: string; assignedTo?: string; approvalGroup?: string };
 export type ExecuteGovernedActionInput = SimulateExecutionInput & { approved?: boolean; executionMode?: GovernedExecutionMode };
 
-const allowedExecutionTypes = new Set<GovernedExecutionType>(["OWNER_ASSIGN", "AI_ASSET_APPROVE", "AI_ASSET_RETIRE", "TICKET_CREATE"]);
+const allowedExecutionTypes = new Set<GovernedExecutionType>(["OWNER_ASSIGN", "AI_ASSET_APPROVE", "AI_ASSET_RETIRE", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "TICKET_CREATE", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW"]);
 const capabilityByExecutionType: Partial<Record<GovernedExecutionType, string>> = {
   OWNER_ASSIGN: "ASSIGN_OWNER",
   AI_ASSET_APPROVE: "APPROVE_AI_ASSET",
   AI_ASSET_RETIRE: "RETIRE_AI_ASSET",
+  APPROVE_AI_ASSET: "APPROVE_AI_ASSET",
+  RETIRE_AI_ASSET: "RETIRE_AI_ASSET",
+  ASSIGN_AI_OWNER: "ASSIGN_AI_OWNER",
+  ENFORCE_AI_POLICY: "ENFORCE_AI_POLICY",
+  DISABLE_AI_ASSET: "DISABLE_AI_ASSET",
+  ENABLE_AI_ASSET: "ENABLE_AI_ASSET",
+
+  CREATE_SERVICENOW_CHANGE: "CREATE_CHANGE",
+  UPDATE_SERVICENOW_CHANGE: "UPDATE_CHANGE",
+  CLOSE_SERVICENOW_CHANGE: "CLOSE_CHANGE",
+  CREATE_SERVICENOW_TASK: "CREATE_TASK",
+  UPDATE_SERVICENOW_TASK: "UPDATE_TASK",
+  CLOSE_SERVICENOW_TASK: "CLOSE_TASK",
+  CREATE_SERVICENOW_APPROVAL: "CREATE_APPROVAL",
+  UPDATE_SERVICENOW_APPROVAL: "UPDATE_APPROVAL",
+  WITHDRAW_SERVICENOW_APPROVAL: "WITHDRAW_APPROVAL",
+  VERIFY_SERVICENOW_ARTIFACT: "VERIFY_STATE",
   TICKET_CREATE: "CREATE_TICKET",
   LICENSE_ASSIGN: "ASSIGN_LICENSE",
   LICENSE_REMOVE: "REMOVE_LICENSE",
+  REMOVE_M365_LICENSE: "REMOVE_LICENSE",
+  ASSIGN_M365_LICENSE: "ASSIGN_LICENSE",
+  REASSIGN_M365_LICENSE: "REASSIGN_LICENSE",
+  RESTORE_M365_LICENSE: "RESTORE_LICENSE",
+  REMOVE_COPILOT_LICENSE: "REMOVE_COPILOT_LICENSE",
+  RESTORE_COPILOT_LICENSE: "RESTORE_COPILOT_LICENSE",
+  DOWNGRADE_M365_LICENSE: "REASSIGN_LICENSE",
+  CONVERT_SHARED_MAILBOX_REVIEW: "VERIFY_LICENSE_STATE",
 };
 
 function now() { return new Date().toISOString(); }
@@ -123,6 +153,7 @@ export class GovernedExecutionRepository {
   }
   upsertExecution(execution: GovernedExecution) { this.executions.set(this.executionKey(execution.tenantId, execution.id), execution); return execution; }
   getExecution(tenantId: string, executionId: string) { return this.executions.get(this.executionKey(tenantId, executionId)) ?? null; }
+  listExecutions(tenantId: string) { return Array.from(this.executions.values()).filter((execution) => execution.tenantId === tenantId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); }
   appendEvidence(execution: GovernedExecution, evidence: ExecutionEvidence) {
     const key = this.executionKey(execution.tenantId, execution.id);
     this.evidence.set(key, [...(this.evidence.get(key) ?? []), evidence]);
@@ -137,6 +168,9 @@ export class GovernedExecutionService {
   registerConnector(connector: ExecutionConnector) { return this.repository.registerConnector(connector); }
   listConnectors(tenantId: string) { return this.repository.listConnectors(tenantId); }
   getExecution(tenantId: string, executionId: string) { return this.repository.getExecution(tenantId, executionId); }
+  listExecutions(tenantId: string) { return this.repository.listExecutions(tenantId); }
+  appendEvidence(execution: GovernedExecution, evidence: ExecutionEvidence) { return this.repository.appendEvidence(execution, evidence); }
+  updateExecution(execution: GovernedExecution) { return this.repository.upsertExecution(execution); }
   listEvidence(tenantId: string, executionId: string) { return this.repository.listEvidence(tenantId, executionId); }
   clear() { this.repository.clear(); }
 
@@ -172,17 +206,44 @@ export class GovernedExecutionService {
     const readiness = evaluateExecutionReadiness({ action, connector, approval: Boolean(input.approved) || action.status === "APPROVED", trust: action.trustScore, executionMode: connector?.executionMode, rollbackSupported: action.rollbackCapability !== "NONE" });
     if (!connector) throw new Error("EXECUTION_CONNECTOR_REQUIRED");
     const approvalPresent = approvalAuthorityEngine.isActionApproved(input.tenantId, input.actionId) || Boolean(input.approved) || action.status === "APPROVED";
-    const authority = await evaluateReadinessAuthority(input.tenantId, input.actionId, { connectorStatus: connector.status, executionMode: connector.executionMode, executionType, rollbackSupported: action.rollbackCapability !== "NONE", approvalPresent });
+    const authority = trustReadinessAuthorityService.getReport(input.tenantId, input.actionId) ?? await evaluateReadinessAuthority(input.tenantId, input.actionId, { connectorStatus: connector.status, executionMode: connector.executionMode, executionType, rollbackSupported: action.rollbackCapability !== "NONE", approvalPresent });
     if (authority.verdict === "BLOCKED" || authority.verdict === "NEVER_ELIGIBLE") throw new Error(`READINESS_AUTHORITY_DENIED:${authority.verdict}`);
     const approvalReport = await approvalAuthorityEngine.evaluateApprovalAuthority(input.tenantId, input.actionId, { executionType });
     const approvalGranted = approvalReport.verdict === "APPROVAL_NOT_REQUIRED" || approvalReport.verdict === "APPROVED" || approvalAuthorityEngine.isActionApproved(input.tenantId, input.actionId);
     if ((authority.verdict === "APPROVAL_REQUIRED" || action.readiness === "APPROVAL_REQUIRED" || readiness.verdict === "APPROVAL_REQUIRED") && !approvalGranted) throw new Error("APPROVAL_AUTHORITY_REQUIRED");
     if (readiness.verdict === "BLOCKED" || readiness.verdict === "NEVER_ELIGIBLE") throw new Error(`EXECUTION_NOT_READY:${readiness.verdict}`);
     if (readiness.verdict === "APPROVAL_REQUIRED" && !approvalGranted) throw new Error("EXECUTION_APPROVAL_REQUIRED");
+    const liveDomain = connector.connectorType === "SERVICENOW" ? "SERVICENOW" : connector.connectorType === "M365" ? "M365" : connector.connectorType === "AI" ? "AI" : undefined;
+    if (liveDomain && !input.dryRun) assertLiveTenantExecutionAllowed({ policy: getTenantExecutionPolicy(input.tenantId), action, trustAuthorityReport: authority, approvalAuthorityReport: approvalReport, connector, connectorHealth: getConnectorHealth(input.tenantId, connector.id), request: { tenantId: input.tenantId, domain: liveDomain, executionMode: input.executionMode ?? "CONTROLLED", dryRun: Boolean(input.dryRun), destructive: action.rollbackCapability !== "NONE", blastRadius: action.blastRadius } });
+    else if (liveDomain) evaluateLiveTenantExecutionGate({ policy: getTenantExecutionPolicy(input.tenantId), action, trustAuthorityReport: authority, approvalAuthorityReport: approvalReport, connector, connectorHealth: getConnectorHealth(input.tenantId, connector.id), request: { tenantId: input.tenantId, domain: liveDomain, executionMode: "SIMULATION", dryRun: true, destructive: false, blastRadius: action.blastRadius } });
     const timestamp = now();
     const execution = this.repository.upsertExecution({ id: id("gexec"), tenantId: input.tenantId, actionId: input.actionId, connectorId: connector.id, executionType, status: "EXECUTING", executionMode: input.executionMode ?? "CONTROLLED", blastRadius: action.blastRadius, rollbackSupported: action.rollbackCapability !== "NONE", executedBy: input.actor, createdAt: timestamp, updatedAt: timestamp });
     await this.recordEvent(input.tenantId, "EXECUTION_PLANNED", execution);
     await this.recordEvent(input.tenantId, "EXECUTION_STARTED", execution);
+    if (connector.connectorType === "M365" && (executionType.includes("M365") || executionType.includes("COPILOT") || executionType === "DOWNGRADE_M365_LICENSE" || executionType === "CONVERT_SHARED_MAILBOX_REVIEW")) {
+      const graph = await executeM365GraphOperation({ tenantId: input.tenantId, action, execution, executionType, userId: input.userId ?? action.sourceId, skuId: input.skuId, targetSkuId: input.targetSkuId, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector });
+      const completed = this.repository.upsertExecution({ ...execution, status: graph.status, updatedAt: now() });
+      for (const evidence of graph.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, graph.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: graph.evidence.map((e) => e.id) });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: graph.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: graph.evidence, readiness, rollbackPayload: graph.rollbackPayload };
+    }
+    if (connector.connectorType === "AI" && ["APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET"].includes(executionType)) {
+      const provider = await executeAIProviderOperation({ tenantId: input.tenantId, action, execution, executionType, assetId: action.sourceId, ownerId: input.ownerId ?? action.ownerId, policyId: input.policyId, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector });
+      const completed = this.repository.upsertExecution({ ...execution, status: provider.status, updatedAt: now() });
+      for (const evidence of provider.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, provider.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: provider.evidence.map((e) => e.id) });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: provider.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: provider.evidence, readiness, rollbackPayload: provider.rollbackPayload };
+    }
+    if (connector.connectorType === "SERVICENOW" && ["CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT"].includes(executionType)) {
+      const serviceNow = await executeServiceNowOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, artifactType: input.artifactType, expectedState: input.expectedState as any, assignedTo: input.assignedTo, approvalGroup: input.approvalGroup });
+      const completed = this.repository.upsertExecution({ ...execution, status: serviceNow.status, updatedAt: now() });
+      for (const evidence of serviceNow.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, serviceNow.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: serviceNow.evidence.map((e) => e.id), artifactId: serviceNow.artifact?.id });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: serviceNow.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: serviceNow.evidence, readiness, rollbackPayload: serviceNow.rollbackPayload, artifact: serviceNow.artifact };
+    }
     const preState = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "PRE_STATE", summary: "Pre-state captured before governed execution.", payload: { actionStatus: action.status, sourceId: action.sourceId, evidenceIds: action.evidenceIds }, createdAt: timestamp });
     const result = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "EXECUTION_RESULT", summary: `Controlled execution completed for ${executionType}.`, payload: { destructive: false, autonomous: false, permissioned: true }, createdAt: now() });
     const postState = this.repository.appendEvidence(execution, { id: id("exevidence"), executionId: execution.id, evidenceType: "POST_STATE", summary: "Post-state captured after governed execution.", payload: { actionStatus: "EXECUTED", connectorId: connector.id, outcomeEligible: true }, createdAt: now() });

@@ -4,11 +4,13 @@ import { recommendationsTable, outcomeLedgerTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod";
 import { governedExecutionService, type GovernedExecutionType } from "../lib/execution/governed-execution";
+import { rollbackM365LicenseExecution, verifyM365Execution } from "../lib/connectors/m365/m365-graph-execution";
+import { rollbackServiceNowExecution, verifyServiceNowExecution } from "../lib/connectors/servicenow/servicenow-execution";
 
 const router = Router();
 
 const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
-const executionBodySchema = z.object({ connectorId: z.string().optional(), executionType: z.enum(["LICENSE_REMOVE", "LICENSE_ASSIGN", "OWNER_ASSIGN", "AI_ASSET_RETIRE", "AI_ASSET_APPROVE", "TICKET_CREATE", "WORKFLOW_DISABLE", "OTHER"]).default("TICKET_CREATE"), estimatedValue: z.number().optional(), actor: z.string().optional(), approved: z.boolean().optional() });
+const executionBodySchema = z.object({ connectorId: z.string().optional(), executionType: z.enum(["LICENSE_REMOVE", "LICENSE_ASSIGN", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "OWNER_ASSIGN", "AI_ASSET_RETIRE", "AI_ASSET_APPROVE", "TICKET_CREATE", "WORKFLOW_DISABLE", "OTHER"]).default("TICKET_CREATE"), estimatedValue: z.number().optional(), actor: z.string().optional(), approved: z.boolean().optional(), userId: z.string().optional(), skuId: z.string().optional(), targetSkuId: z.string().optional(), dryRun: z.boolean().optional(), ownerId: z.string().optional(), policyId: z.string().optional(), artifactType: z.enum(["CHANGE", "TASK", "APPROVAL"]).optional(), expectedState: z.string().optional(), assignedTo: z.string().optional(), approvalGroup: z.string().optional() });
 
 router.get("/connectors", async (req, res) => res.json(governedExecutionService.listConnectors(tenant(req))));
 
@@ -44,10 +46,48 @@ router.post("/execute/:actionId", async (req, res) => {
   }
 });
 
+
+router.post("/m365/:executionId/verify", async (req, res) => {
+  try {
+    const result = await verifyM365Execution(tenant(req), req.params.executionId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "M365_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+router.post("/m365/:executionId/rollback", async (req, res) => {
+  try {
+    const result = await rollbackM365LicenseExecution(tenant(req), req.params.executionId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "M365_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+
+router.post("/servicenow/:executionId/verify", async (req, res) => {
+  try {
+    const result = await verifyServiceNowExecution(tenant(req), req.params.executionId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "SERVICENOW_VERIFICATION_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+router.post("/servicenow/:executionId/rollback", async (req, res) => {
+  try {
+    const result = await rollbackServiceNowExecution(tenant(req), req.params.executionId);
+    return res.json(result);
+  } catch (error) {
+    return res.status(409).json({ error: "SERVICENOW_ROLLBACK_FAILED", message: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 router.get("/:executionId/evidence", async (req, res) => res.json(governedExecutionService.listEvidence(tenant(req), req.params.executionId)));
 
 router.get("/:executionId", async (req, res, next) => {
-  if (["approve", "reject", "m365"].includes(req.params.executionId)) return next();
+  if (["approve", "reject", "m365", "servicenow"].includes(req.params.executionId)) return next();
   const execution = governedExecutionService.getExecution(tenant(req), req.params.executionId);
   if (!execution) return res.status(404).json({ error: "NOT_FOUND" });
   return res.json(execution);

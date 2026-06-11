@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { liveFetch, normalizeApiError } from '../lib/liveApi'
 
-export const aiIntelligenceApiPaths = ['/api/ai/connectors', '/api/ai/assets', '/api/ai/utilisation', '/api/ai/spend', '/api/ai/governance/findings', '/api/ai/recommendations', '/api/ai/dashboard', '/api/ai/command-dashboard', '/api/ai/executive-proof-pack'] as const
+export const aiIntelligenceApiPaths = ['/api/ai/connectors', '/api/ai/assets', '/api/ai/utilisation', '/api/ai/spend', '/api/ai/governance/findings', '/api/ai/recommendations', '/api/ai/dashboard', '/api/ai/command-dashboard', '/api/ai/executive-proof-pack', '/api/ai/certification'] as const
 
 export const demoAIIntelligenceData = {
   assets: [
@@ -34,6 +34,7 @@ export function normalizeAIIntelligencePayload(payload: any = {}) {
     connectors: payload.connectors?.connectors ?? payload.connectors ?? [],
     commandDashboard: payload.commandDashboard ?? {},
     executiveProofPack: payload.executiveProofPack ?? {},
+    certification: payload.certification ?? payload.commandDashboard?.certification ?? { certifiedAssets: 0, uncertifiedAssets: 0, certifications: [] },
   }
 }
 
@@ -44,8 +45,8 @@ export function useAIIntelligenceData() {
     let mounted = true
     Promise.allSettled(aiIntelligenceApiPaths.map((path) => liveFetch<any>(path))).then((results) => {
       if (!mounted) return
-      const [connectors, assets, utilisation, spend, findings, recommendations, dashboard, commandDashboard, executiveProofPack] = results.map((result) => result.status === 'fulfilled' ? result.value : undefined)
-      setData(normalizeAIIntelligencePayload({ connectors, assets, utilisation, spend, findings, recommendations, dashboard, commandDashboard, executiveProofPack }))
+      const [connectors, assets, utilisation, spend, findings, recommendations, dashboard, commandDashboard, executiveProofPack, certification] = results.map((result) => result.status === 'fulfilled' ? result.value : undefined)
+      setData(normalizeAIIntelligencePayload({ connectors, assets, utilisation, spend, findings, recommendations, dashboard, commandDashboard, executiveProofPack, certification }))
       setError(null)
     }).catch((err) => { if (mounted) setError(normalizeApiError(err)) })
     return () => { mounted = false }

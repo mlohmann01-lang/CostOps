@@ -7,7 +7,7 @@ export type GovernedActionPriority = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
 export type GovernedActionReadiness = "ELIGIBLE" | "APPROVAL_REQUIRED" | "BLOCKED";
 export type GovernedActionBlastRadius = "LOW" | "MEDIUM" | "HIGH";
 export type GovernedActionRollbackCapability = "FULL" | "PARTIAL" | "NONE";
-export type GovernedActionEventType = "CREATED" | "PRIORITISED" | "APPROVAL_REQUESTED" | "APPROVED" | "REJECTED" | "QUEUED" | "EXECUTION_STARTED" | "EXECUTION_COMPLETED" | "VERIFICATION_STARTED" | "VERIFIED" | "RETAINED" | "DRIFT_DETECTED" | "CLOSED" | "CANCELLED";
+export type GovernedActionEventType = "CREATED" | "PRIORITISED" | "APPROVAL_REQUESTED" | "APPROVED" | "REJECTED" | "QUEUED" | "EXECUTION_STARTED" | "EXECUTION_COMPLETED" | "EXECUTION_ROLLED_BACK" | "VERIFICATION_STARTED" | "VERIFIED" | "RETAINED" | "DRIFT_DETECTED" | "CLOSED" | "CANCELLED";
 
 export type GovernedAction = {
   id: string;
@@ -109,6 +109,7 @@ const ledgerTypeByEvent: Partial<Record<GovernedActionEventType, string>> = {
   REJECTED: "GOVERNED_ACTION_REJECTED",
   EXECUTION_STARTED: "GOVERNED_ACTION_EXECUTION_STARTED",
   EXECUTION_COMPLETED: "GOVERNED_ACTION_EXECUTION_COMPLETED",
+  EXECUTION_ROLLED_BACK: "GOVERNED_ACTION_EXECUTION_ROLLED_BACK",
   VERIFIED: "GOVERNED_ACTION_VERIFIED",
   RETAINED: "GOVERNED_ACTION_RETAINED",
   DRIFT_DETECTED: "GOVERNED_ACTION_DRIFTED",
@@ -122,7 +123,7 @@ function numberOrUndefined(value: unknown): number | undefined { return typeof v
 
 function platformCategory(eventType: GovernedActionEventType) {
   if (eventType === "APPROVED" || eventType === "REJECTED" || eventType === "APPROVAL_REQUESTED") return "APPROVAL" as const;
-  if (eventType === "EXECUTION_STARTED" || eventType === "EXECUTION_COMPLETED" || eventType === "QUEUED") return "EXECUTION" as const;
+  if (eventType === "EXECUTION_STARTED" || eventType === "EXECUTION_COMPLETED" || eventType === "EXECUTION_ROLLED_BACK" || eventType === "QUEUED") return "EXECUTION" as const;
   if (eventType === "VERIFIED" || eventType === "RETAINED" || eventType === "VERIFICATION_STARTED") return "OUTCOME" as const;
   if (eventType === "DRIFT_DETECTED") return "DRIFT" as const;
   return "SYSTEM" as const;
@@ -244,13 +245,14 @@ export class GovernedActionService {
   history(tenantId: string, actionId: string) { return this.repository.history(tenantId, actionId); }
   clear() { return this.repository.clear(); }
 
-  async updateExecutionMetadata(tenantId: string, actionId: string, metadata: Partial<Pick<GovernedAction, "executionReadiness" | "executionStatus" | "latestExecutionId" | "dryRunAvailable" | "readinessAuthorityVerdict" | "readinessAuthorityConfidence" | "readinessAuthorityGeneratedAt" | "readinessBlockerCount" | "missingEvidenceCount" | "requiredReadinessActionCount" | "evidenceIds">>) {
+  async updateExecutionMetadata(tenantId: string, actionId: string, metadata: Partial<Pick<GovernedAction, "status" | "executionReadiness" | "executionStatus" | "latestExecutionId" | "dryRunAvailable" | "readinessAuthorityVerdict" | "readinessAuthorityConfidence" | "readinessAuthorityGeneratedAt" | "readinessBlockerCount" | "missingEvidenceCount" | "requiredReadinessActionCount" | "evidenceIds" | "outcomeIds" | "actualMonthlyValue" | "actualAnnualValue">>) {
     const action = await this.repository.get(tenantId, actionId);
     if (!action) return null;
     const updated: GovernedAction = {
       ...action,
       ...metadata,
       evidenceIds: uniq([...(action.evidenceIds ?? []), ...(metadata.evidenceIds ?? [])]),
+      outcomeIds: uniq([...(action.outcomeIds ?? []), ...(metadata.outcomeIds ?? [])]),
       updatedAt: now(),
     };
     return this.repository.upsert(updated);

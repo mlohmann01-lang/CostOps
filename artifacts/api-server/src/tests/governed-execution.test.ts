@@ -36,7 +36,9 @@ test("connector registration and capability lookup support governed execution co
   governedExecutionService.registerConnector(connector);
   const connectors = governedExecutionService.listConnectors(tenantId);
   assert.equal(connectors.some((row) => row.id === connector.id), true);
-  assert.deepEqual(getConnectorCapabilities("M365"), ["REMOVE_LICENSE", "ASSIGN_LICENSE", "REASSIGN_LICENSE"]);
+  assert.equal(getConnectorCapabilities("M365").includes("REMOVE_LICENSE"), true);
+  assert.equal(getConnectorCapabilities("M365").includes("RESTORE_COPILOT_LICENSE"), true);
+  assert.equal(getConnectorCapabilities("M365").includes("VERIFY_LICENSE_STATE"), true);
   assert.equal(connectorSupportsCapability(connector, "RETIRE_AI_ASSET"), true);
 });
 

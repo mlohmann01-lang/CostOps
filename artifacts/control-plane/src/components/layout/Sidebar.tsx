@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
@@ -28,8 +28,10 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: 'Admin', defaultOpen: false, items: [
     { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
+    { label: 'Live Tenant Readiness', icon: ShieldCheck, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
-    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security', '/settings'] },
+    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
+    { label: 'Settings', icon: Settings, href: '/settings' },
   ]},
 ]
 

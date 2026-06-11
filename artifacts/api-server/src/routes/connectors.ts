@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { buildM365WedgeCertification } from "../lib/connectors/m365/m365-wedge-certification";
+import { getServiceNowWedgeCertification } from "../lib/connectors/servicenow/servicenow-wedge-certification";
 import { db } from "@workspace/db";
 import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, m365ConnectorConfigsTable, m365EvidenceRecordsTable, recommendationsTable, outcomeLedgerTable, type Connector } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
@@ -30,6 +32,11 @@ import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-rou
 import connectorSdkRouter from "./connector-sdk";
 
 const router = Router();
+
+const tenantFrom = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
+
+router.get("/m365/certification", async (req, res) => res.json(await buildM365WedgeCertification(tenantFrom(req))));
+router.get("/servicenow/certification", async (req, res) => res.json(await getServiceNowWedgeCertification(tenantFrom(req))));
 
 router.use("/sdk", connectorSdkRouter);
 

@@ -42,6 +42,7 @@ import auditPacksRouter from "./audit-packs";
 import runtimeObservabilityRouter from "./runtime-observability";
 import securityRouter from "./security";
 import runtimeRecoveryRouter from "./runtime-recovery";
+import runtimeRouter from "./runtime";
 import trustRouter from "./trust";
 import vendorChangesRouter from "./vendor-changes";
 import opportunitiesRouter from "./opportunities";
@@ -100,6 +101,7 @@ router.use("/", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"
 router.use("/", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executionDryRunRouter);
 router.use("/", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executionRuntimeRouter);
 router.use("/execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executionRouter);
+router.use("/runtime", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), runtimeRouter);
 router.use("/outcomes", outcomesRouter);
 router.use("/drift", driftRouter);
 router.use("/pricing/tenant", tenantPricingRouter);
