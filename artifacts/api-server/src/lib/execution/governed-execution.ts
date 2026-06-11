@@ -6,13 +6,17 @@ import { approvalAuthorityEngine } from "../approval-authority/approval-authorit
 import { executeM365GraphOperation } from "../connectors/m365/m365-graph-execution";
 import { executeAIProviderOperation } from "../ai-economic-control/ai-provider-execution";
 import { executeServiceNowOperation } from "../connectors/servicenow/servicenow-execution";
+import { executeSnowflakeOperation } from "../connectors/snowflake/snowflake-execution";
+import { executeDatabricksOperation } from "../connectors/databricks/databricks-execution";
+import { executeAwsOperation } from "../connectors/aws/aws-execution";
+import { executeAzureOperation } from "../connectors/azure/azure-execution";
 import { assertLiveTenantExecutionAllowed, evaluateLiveTenantExecutionGate, getTenantExecutionPolicy } from "../runtime/live-tenant-safety";
 import { getConnectorHealth } from "../connectors/connector-health";
 
-export type ExecutionConnectorType = "M365" | "SERVICENOW" | "JIRA" | "AI" | "AWS" | "AZURE" | "GCP" | "SNOWFLAKE" | "OTHER";
+export type ExecutionConnectorType = "M365" | "SERVICENOW" | "JIRA" | "AI" | "AWS" | "AZURE" | "GCP" | "SNOWFLAKE" | "DATABRICKS" | "OTHER";
 export type ExecutionConnectorStatus = "CONNECTED" | "DEGRADED" | "DISCONNECTED";
 export type ExecutionConnectorMode = "READ_ONLY" | "APPROVAL_REQUIRED" | "AUTO_EXECUTE_SAFE";
-export type GovernedExecutionType = "LICENSE_REMOVE" | "LICENSE_ASSIGN" | "REMOVE_M365_LICENSE" | "ASSIGN_M365_LICENSE" | "REASSIGN_M365_LICENSE" | "RESTORE_M365_LICENSE" | "REMOVE_COPILOT_LICENSE" | "RESTORE_COPILOT_LICENSE" | "DOWNGRADE_M365_LICENSE" | "CONVERT_SHARED_MAILBOX_REVIEW" | "APPROVE_AI_ASSET" | "RETIRE_AI_ASSET" | "ASSIGN_AI_OWNER" | "ENFORCE_AI_POLICY" | "DISABLE_AI_ASSET" | "ENABLE_AI_ASSET" | "CREATE_SERVICENOW_CHANGE" | "UPDATE_SERVICENOW_CHANGE" | "CLOSE_SERVICENOW_CHANGE" | "CREATE_SERVICENOW_TASK" | "UPDATE_SERVICENOW_TASK" | "CLOSE_SERVICENOW_TASK" | "CREATE_SERVICENOW_APPROVAL" | "UPDATE_SERVICENOW_APPROVAL" | "WITHDRAW_SERVICENOW_APPROVAL" | "VERIFY_SERVICENOW_ARTIFACT" | "OWNER_ASSIGN" | "AI_ASSET_RETIRE" | "AI_ASSET_APPROVE" | "TICKET_CREATE" | "WORKFLOW_DISABLE" | "OTHER";
+export type GovernedExecutionType = "LICENSE_REMOVE" | "LICENSE_ASSIGN" | "REMOVE_M365_LICENSE" | "ASSIGN_M365_LICENSE" | "REASSIGN_M365_LICENSE" | "RESTORE_M365_LICENSE" | "REMOVE_COPILOT_LICENSE" | "RESTORE_COPILOT_LICENSE" | "DOWNGRADE_M365_LICENSE" | "CONVERT_SHARED_MAILBOX_REVIEW" | "APPROVE_AI_ASSET" | "RETIRE_AI_ASSET" | "ASSIGN_AI_OWNER" | "ENFORCE_AI_POLICY" | "DISABLE_AI_ASSET" | "ENABLE_AI_ASSET" | "CREATE_SERVICENOW_CHANGE" | "UPDATE_SERVICENOW_CHANGE" | "CLOSE_SERVICENOW_CHANGE" | "CREATE_SERVICENOW_TASK" | "UPDATE_SERVICENOW_TASK" | "CLOSE_SERVICENOW_TASK" | "CREATE_SERVICENOW_APPROVAL" | "UPDATE_SERVICENOW_APPROVAL" | "WITHDRAW_SERVICENOW_APPROVAL" | "VERIFY_SERVICENOW_ARTIFACT" | "AZURE_RIGHTSIZE_VM" | "AZURE_STOP_VM" | "AZURE_START_VM" | "AZURE_MODIFY_SQL" | "AZURE_STOP_SQL" | "AZURE_START_SQL" | "AZURE_DELETE_MANAGED_DISK" | "AZURE_RELEASE_PUBLIC_IP" | "AZURE_TAG_OWNER" | "AZURE_CREATE_RI_REVIEW" | "AZURE_CREATE_SAVINGS_PLAN_REVIEW" | "AZURE_VERIFY_RESOURCE_STATE" | "AZURE_ROLLBACK_RESOURCE" | "AWS_RIGHTSIZE_EC2" | "AWS_STOP_EC2" | "AWS_START_EC2" | "AWS_MODIFY_RDS" | "AWS_STOP_RDS" | "AWS_START_RDS" | "AWS_DELETE_EBS" | "AWS_RELEASE_EIP" | "AWS_TAG_OWNER" | "AWS_CREATE_SAVINGS_PLAN_REVIEW" | "AWS_CREATE_RI_REVIEW" | "AWS_VERIFY_AWS_STATE" | "AWS_ROLLBACK_RESOURCE" | "SNOWFLAKE_SET_AUTO_SUSPEND" | "SNOWFLAKE_RESIZE_WAREHOUSE" | "SNOWFLAKE_SUSPEND_WAREHOUSE" | "SNOWFLAKE_TAG_COST_OWNER" | "SNOWFLAKE_CREATE_SPEND_REVIEW" | "SNOWFLAKE_ROLLBACK_WAREHOUSE_CONFIG" | "SNOWFLAKE_VERIFY_WAREHOUSE_STATE" | "DATABRICKS_SET_AUTO_TERMINATION" | "DATABRICKS_RESIZE_CLUSTER" | "DATABRICKS_TERMINATE_CLUSTER" | "DATABRICKS_TAG_COST_OWNER" | "DATABRICKS_CREATE_JOB_REVIEW" | "DATABRICKS_ROLLBACK_CLUSTER_CONFIG" | "DATABRICKS_VERIFY_CLUSTER_STATE" | "OWNER_ASSIGN" | "AI_ASSET_RETIRE" | "AI_ASSET_APPROVE" | "TICKET_CREATE" | "WORKFLOW_DISABLE" | "OTHER";
 export type GovernedExecutionStatus = "PLANNED" | "DRY_RUN" | "APPROVED" | "EXECUTING" | "COMPLETED" | "FAILED" | "ROLLED_BACK";
 export type GovernedExecutionMode = "SIMULATION" | "MANUAL" | "CONTROLLED";
 export type ExecutionBlastRadius = "LOW" | "MEDIUM" | "HIGH";
@@ -68,7 +72,7 @@ export type ExecutionReadiness = { verdict: ExecutionReadinessVerdict; reasons: 
 export type SimulateExecutionInput = { tenantId: string; actionId: string; connectorId?: string; executionType?: GovernedExecutionType; estimatedValue?: number; actor?: string; userId?: string; skuId?: string; targetSkuId?: string; dryRun?: boolean; ownerId?: string; policyId?: string; artifactType?: "CHANGE" | "TASK" | "APPROVAL"; expectedState?: string; assignedTo?: string; approvalGroup?: string };
 export type ExecuteGovernedActionInput = SimulateExecutionInput & { approved?: boolean; executionMode?: GovernedExecutionMode };
 
-const allowedExecutionTypes = new Set<GovernedExecutionType>(["OWNER_ASSIGN", "AI_ASSET_APPROVE", "AI_ASSET_RETIRE", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "TICKET_CREATE", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW"]);
+const allowedExecutionTypes = new Set<GovernedExecutionType>(["OWNER_ASSIGN", "AI_ASSET_APPROVE", "AI_ASSET_RETIRE", "APPROVE_AI_ASSET", "RETIRE_AI_ASSET", "ASSIGN_AI_OWNER", "ENFORCE_AI_POLICY", "DISABLE_AI_ASSET", "ENABLE_AI_ASSET", "CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT", "TICKET_CREATE", "REMOVE_M365_LICENSE", "ASSIGN_M365_LICENSE", "REASSIGN_M365_LICENSE", "RESTORE_M365_LICENSE", "REMOVE_COPILOT_LICENSE", "RESTORE_COPILOT_LICENSE", "DOWNGRADE_M365_LICENSE", "CONVERT_SHARED_MAILBOX_REVIEW", "SNOWFLAKE_SET_AUTO_SUSPEND", "SNOWFLAKE_RESIZE_WAREHOUSE", "SNOWFLAKE_SUSPEND_WAREHOUSE", "SNOWFLAKE_TAG_COST_OWNER", "SNOWFLAKE_CREATE_SPEND_REVIEW", "SNOWFLAKE_ROLLBACK_WAREHOUSE_CONFIG", "SNOWFLAKE_VERIFY_WAREHOUSE_STATE", "DATABRICKS_SET_AUTO_TERMINATION", "DATABRICKS_RESIZE_CLUSTER", "DATABRICKS_TERMINATE_CLUSTER", "DATABRICKS_TAG_COST_OWNER", "DATABRICKS_CREATE_JOB_REVIEW", "DATABRICKS_ROLLBACK_CLUSTER_CONFIG", "DATABRICKS_VERIFY_CLUSTER_STATE", "AWS_RIGHTSIZE_EC2", "AWS_STOP_EC2", "AWS_START_EC2", "AWS_MODIFY_RDS", "AWS_STOP_RDS", "AWS_START_RDS", "AWS_DELETE_EBS", "AWS_RELEASE_EIP", "AWS_TAG_OWNER", "AWS_CREATE_SAVINGS_PLAN_REVIEW", "AWS_CREATE_RI_REVIEW", "AWS_VERIFY_AWS_STATE", "AWS_ROLLBACK_RESOURCE", "AZURE_RIGHTSIZE_VM", "AZURE_STOP_VM", "AZURE_START_VM", "AZURE_MODIFY_SQL", "AZURE_STOP_SQL", "AZURE_START_SQL", "AZURE_DELETE_MANAGED_DISK", "AZURE_RELEASE_PUBLIC_IP", "AZURE_TAG_OWNER", "AZURE_CREATE_RI_REVIEW", "AZURE_CREATE_SAVINGS_PLAN_REVIEW", "AZURE_VERIFY_RESOURCE_STATE", "AZURE_ROLLBACK_RESOURCE"]);
 const capabilityByExecutionType: Partial<Record<GovernedExecutionType, string>> = {
   OWNER_ASSIGN: "ASSIGN_OWNER",
   AI_ASSET_APPROVE: "APPROVE_AI_ASSET",
@@ -101,6 +105,46 @@ const capabilityByExecutionType: Partial<Record<GovernedExecutionType, string>> 
   RESTORE_COPILOT_LICENSE: "RESTORE_COPILOT_LICENSE",
   DOWNGRADE_M365_LICENSE: "REASSIGN_LICENSE",
   CONVERT_SHARED_MAILBOX_REVIEW: "VERIFY_LICENSE_STATE",
+  AZURE_RIGHTSIZE_VM: "MODIFY_VM",
+  AZURE_STOP_VM: "STOP_VM",
+  AZURE_START_VM: "START_VM",
+  AZURE_MODIFY_SQL: "MODIFY_SQL",
+  AZURE_STOP_SQL: "STOP_SQL",
+  AZURE_START_SQL: "START_SQL",
+  AZURE_DELETE_MANAGED_DISK: "DELETE_MANAGED_DISK",
+  AZURE_RELEASE_PUBLIC_IP: "RELEASE_PUBLIC_IP",
+  AZURE_TAG_OWNER: "TAG_OWNER",
+  AZURE_CREATE_RI_REVIEW: "READ_CONSUMPTION",
+  AZURE_CREATE_SAVINGS_PLAN_REVIEW: "READ_COST_MANAGEMENT",
+  AZURE_VERIFY_RESOURCE_STATE: "VERIFY_RESOURCE_STATE",
+  AZURE_ROLLBACK_RESOURCE: "ROLLBACK_RESOURCE",
+  AWS_RIGHTSIZE_EC2: "MODIFY_EC2",
+  AWS_STOP_EC2: "STOP_EC2",
+  AWS_START_EC2: "START_EC2",
+  AWS_MODIFY_RDS: "MODIFIY_RDS",
+  AWS_STOP_RDS: "STOP_RDS",
+  AWS_START_RDS: "START_RDS",
+  AWS_DELETE_EBS: "DELETE_EBS",
+  AWS_RELEASE_EIP: "RELEASE_EIP",
+  AWS_TAG_OWNER: "TAG_OWNER",
+  AWS_CREATE_SAVINGS_PLAN_REVIEW: "READ_COST_EXPLORER",
+  AWS_CREATE_RI_REVIEW: "READ_CUR",
+  AWS_VERIFY_AWS_STATE: "VERIFY_RESOURCE_STATE",
+  AWS_ROLLBACK_RESOURCE: "ROLLBACK_RESOURCE",
+  SNOWFLAKE_SET_AUTO_SUSPEND: "SET_AUTO_SUSPEND",
+  SNOWFLAKE_RESIZE_WAREHOUSE: "RESIZE_WAREHOUSE",
+  SNOWFLAKE_SUSPEND_WAREHOUSE: "SUSPEND_WAREHOUSE",
+  SNOWFLAKE_TAG_COST_OWNER: "TAG_COST_OWNER",
+  SNOWFLAKE_CREATE_SPEND_REVIEW: "READ_QUERY_HISTORY",
+  SNOWFLAKE_ROLLBACK_WAREHOUSE_CONFIG: "ROLLBACK_WAREHOUSE_CONFIG",
+  SNOWFLAKE_VERIFY_WAREHOUSE_STATE: "VERIFY_WAREHOUSE_STATE",
+  DATABRICKS_SET_AUTO_TERMINATION: "SET_AUTO_TERMINATION",
+  DATABRICKS_RESIZE_CLUSTER: "RESIZE_CLUSTER",
+  DATABRICKS_TERMINATE_CLUSTER: "TERMINATE_CLUSTER",
+  DATABRICKS_TAG_COST_OWNER: "TAG_COST_OWNER",
+  DATABRICKS_CREATE_JOB_REVIEW: "READ_JOB_USAGE",
+  DATABRICKS_ROLLBACK_CLUSTER_CONFIG: "ROLLBACK_CLUSTER_CONFIG",
+  DATABRICKS_VERIFY_CLUSTER_STATE: "VERIFY_CLUSTER_STATE",
 };
 
 function now() { return new Date().toISOString(); }
@@ -141,7 +185,7 @@ export class GovernedExecutionRepository {
   private executionKey(tenantId: string, executionId: string) { return `${tenantId}:${executionId}`; }
 
   registerConnector(connector: ExecutionConnector) { this.connectors.set(this.connectorKey(connector.tenantId, connector.id), connector); return connector; }
-  seedDefaultConnectors(tenantId: string) { return ["M365", "AI", "SERVICENOW", "JIRA"].map((connectorType) => this.registerConnector(createDefaultExecutionConnector({ tenantId, connectorType: connectorType as ExecutionConnectorType }))); }
+  seedDefaultConnectors(tenantId: string) { return ["M365", "AI", "SERVICENOW", "JIRA", "AWS", "AZURE", "SNOWFLAKE", "DATABRICKS"].map((connectorType) => this.registerConnector(createDefaultExecutionConnector({ tenantId, connectorType: connectorType as ExecutionConnectorType }))); }
   listConnectors(tenantId: string) {
     const rows = Array.from(this.connectors.values()).filter((connector) => connector.tenantId === tenantId);
     return rows.length ? rows : this.seedDefaultConnectors(tenantId);
@@ -213,7 +257,7 @@ export class GovernedExecutionService {
     if ((authority.verdict === "APPROVAL_REQUIRED" || action.readiness === "APPROVAL_REQUIRED" || readiness.verdict === "APPROVAL_REQUIRED") && !approvalGranted) throw new Error("APPROVAL_AUTHORITY_REQUIRED");
     if (readiness.verdict === "BLOCKED" || readiness.verdict === "NEVER_ELIGIBLE") throw new Error(`EXECUTION_NOT_READY:${readiness.verdict}`);
     if (readiness.verdict === "APPROVAL_REQUIRED" && !approvalGranted) throw new Error("EXECUTION_APPROVAL_REQUIRED");
-    const liveDomain = connector.connectorType === "SERVICENOW" ? "SERVICENOW" : connector.connectorType === "M365" ? "M365" : connector.connectorType === "AI" ? "AI" : undefined;
+    const liveDomain = connector.connectorType === "SERVICENOW" ? "SERVICENOW" : connector.connectorType === "M365" ? "M365" : connector.connectorType === "AI" ? "AI" : connector.connectorType === "AWS" ? "AWS" : connector.connectorType === "AZURE" ? "AZURE" : connector.connectorType === "SNOWFLAKE" ? "SNOWFLAKE" : connector.connectorType === "DATABRICKS" ? "DATABRICKS" : undefined;
     if (liveDomain && !input.dryRun) assertLiveTenantExecutionAllowed({ policy: getTenantExecutionPolicy(input.tenantId), action, trustAuthorityReport: authority, approvalAuthorityReport: approvalReport, connector, connectorHealth: getConnectorHealth(input.tenantId, connector.id), request: { tenantId: input.tenantId, domain: liveDomain, executionMode: input.executionMode ?? "CONTROLLED", dryRun: Boolean(input.dryRun), destructive: action.rollbackCapability !== "NONE", blastRadius: action.blastRadius } });
     else if (liveDomain) evaluateLiveTenantExecutionGate({ policy: getTenantExecutionPolicy(input.tenantId), action, trustAuthorityReport: authority, approvalAuthorityReport: approvalReport, connector, connectorHealth: getConnectorHealth(input.tenantId, connector.id), request: { tenantId: input.tenantId, domain: liveDomain, executionMode: "SIMULATION", dryRun: true, destructive: false, blastRadius: action.blastRadius } });
     const timestamp = now();
@@ -235,6 +279,38 @@ export class GovernedExecutionService {
       await this.recordEvent(input.tenantId, provider.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: provider.evidence.map((e) => e.id) });
       await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: provider.evidence.map((e) => e.id) });
       return { execution: completed, evidence: provider.evidence, readiness, rollbackPayload: provider.rollbackPayload };
+    }
+    if (connector.connectorType === "AWS" && executionType.startsWith("AWS_")) {
+      const aws = await executeAwsOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, ownerId: input.ownerId });
+      const completed = this.repository.upsertExecution({ ...execution, status: aws.status, updatedAt: now() });
+      for (const evidence of aws.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, aws.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: aws.evidence.map((e) => e.id), artifactId: aws.artifact?.id });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: aws.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: aws.evidence, readiness, rollbackPayload: aws.rollbackPayload, artifact: aws.artifact };
+    }
+    if (connector.connectorType === "AZURE" && executionType.startsWith("AZURE_")) {
+      const azure = await executeAzureOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, ownerId: input.ownerId });
+      const completed = this.repository.upsertExecution({ ...execution, status: azure.status, updatedAt: now() });
+      for (const evidence of azure.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, azure.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: azure.evidence.map((e) => e.id), artifactId: azure.artifact?.id });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: azure.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: azure.evidence, readiness, rollbackPayload: azure.rollbackPayload, artifact: azure.artifact };
+    }
+    if (connector.connectorType === "SNOWFLAKE" && executionType.startsWith("SNOWFLAKE_")) {
+      const snowflake = await executeSnowflakeOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, ownerId: input.ownerId });
+      const completed = this.repository.upsertExecution({ ...execution, status: snowflake.status, updatedAt: now() });
+      for (const evidence of snowflake.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, snowflake.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: snowflake.evidence.map((e) => e.id), artifactId: snowflake.artifact?.id });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: snowflake.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: snowflake.evidence, readiness, rollbackPayload: snowflake.rollbackPayload, artifact: snowflake.artifact };
+    }
+    if (connector.connectorType === "DATABRICKS" && executionType.startsWith("DATABRICKS_")) {
+      const databricks = await executeDatabricksOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, ownerId: input.ownerId });
+      const completed = this.repository.upsertExecution({ ...execution, status: databricks.status, updatedAt: now() });
+      for (const evidence of databricks.evidence) this.repository.appendEvidence(completed, evidence);
+      await this.recordEvent(input.tenantId, databricks.status === "COMPLETED" ? "EXECUTION_COMPLETED" : "EXECUTION_FAILED", completed, { evidenceIds: databricks.evidence.map((e) => e.id), artifactId: databricks.artifact?.id });
+      await governedActionService.updateExecutionMetadata(input.tenantId, input.actionId, { executionReadiness: readiness.verdict, executionStatus: completed.status, latestExecutionId: completed.id, dryRunAvailable: true, evidenceIds: databricks.evidence.map((e) => e.id) });
+      return { execution: completed, evidence: databricks.evidence, readiness, rollbackPayload: databricks.rollbackPayload, artifact: databricks.artifact };
     }
     if (connector.connectorType === "SERVICENOW" && ["CREATE_SERVICENOW_CHANGE", "UPDATE_SERVICENOW_CHANGE", "CLOSE_SERVICENOW_CHANGE", "CREATE_SERVICENOW_TASK", "UPDATE_SERVICENOW_TASK", "CLOSE_SERVICENOW_TASK", "CREATE_SERVICENOW_APPROVAL", "UPDATE_SERVICENOW_APPROVAL", "WITHDRAW_SERVICENOW_APPROVAL", "VERIFY_SERVICENOW_ARTIFACT"].includes(executionType)) {
       const serviceNow = await executeServiceNowOperation({ tenantId: input.tenantId, action, execution, executionType, dryRun: Boolean(input.dryRun), approvalPresent: approvalGranted, readinessVerdict: authority.verdict, connector, artifactType: input.artifactType, expectedState: input.expectedState as any, assignedTo: input.assignedTo, approvalGroup: input.approvalGroup });
