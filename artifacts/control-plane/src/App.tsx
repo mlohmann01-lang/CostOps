@@ -46,6 +46,7 @@ import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
 import CertifiedWedgeRegistryView from './pages/CertifiedWedgeRegistryView'
 import TechnologyPortfolioAuthorityView from './pages/TechnologyPortfolioAuthorityView'
 import ExecutiveProofPackAuthorityView from './pages/ExecutiveProofPackAuthorityView'
+import LiveTenantOnboardingAuthorityView from './pages/LiveTenantOnboardingAuthorityView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -268,6 +269,10 @@ function ExecutiveProofPackAuthorityRoute() {
   return <RequireRuntime><ExecutiveProofPackAuthorityView /></RequireRuntime>
 }
 
+function LiveTenantOnboardingAuthorityRoute() {
+  return <RequireRuntime><LiveTenantOnboardingAuthorityView /></RequireRuntime>
+}
+
 function EvidenceRoute() {
   return <RequireRuntime><EvidencePacksView /></RequireRuntime>
 }
@@ -467,6 +472,7 @@ function Router() {
       <Route path="/certified-wedges" component={CertifiedWedgeRegistryRoute} />
       <Route path="/technology-portfolio-authority" component={TechnologyPortfolioAuthorityRoute} />
       <Route path="/executive-proof-pack-authority" component={ExecutiveProofPackAuthorityRoute} />
+      <Route path="/live-tenant-onboarding" component={LiveTenantOnboardingAuthorityRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>

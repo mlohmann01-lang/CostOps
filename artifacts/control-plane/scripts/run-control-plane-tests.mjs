@@ -46,6 +46,9 @@ const tests = [
   '../artifacts/control-plane/src/lib/shadow-it-exposure.test.tsx',
   '../artifacts/control-plane/src/lib/saas-rationalisation.test.tsx',
   '../artifacts/control-plane/src/lib/ai-governance.test.tsx',
+  '../artifacts/control-plane/src/lib/technology-portfolio-authority-ui.test.tsx',
+  '../artifacts/control-plane/src/lib/executive-proof-pack-authority-ui.test.tsx',
+  '../artifacts/control-plane/src/lib/live-tenant-onboarding-authority-ui.test.tsx',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')
