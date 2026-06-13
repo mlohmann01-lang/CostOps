@@ -1,4 +1,6 @@
 import { platformEventService } from "../events/platform-event-service";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 
 export type GovernedActionDomain = "M365" | "AI" | "SAAS" | "CLOUD" | "ITAM" | "DATA" | "OTHER";
 export type GovernedActionSourceType = "OPPORTUNITY" | "RECOMMENDATION" | "GOVERNANCE_FINDING" | "DRIFT_EVENT" | "MANUAL";
@@ -182,9 +184,8 @@ export class GovernedActionTransitionError extends Error {
 }
 
 export class GovernedActionRepository {
-  private readonly actions = new Map<string, GovernedAction>();
-  private readonly events = new Map<string, GovernedActionEvent[]>();
-  private key(tenantId: string, actionId: string) { return `${tenantId}:${actionId}`; }
+  private readonly actionStore = new PersistenceStore<GovernedAction>(getPersistenceProvider(), PersistenceCollections.GOVERNED_ACTIONS);
+  private readonly eventStore = new PersistenceStore<GovernedActionEvent & { tenantId: string; updatedAt?: string }>(getPersistenceProvider(), PersistenceCollections.GOVERNED_ACTION_EVENTS);
 
   async create(input: CreateGovernedActionInput): Promise<GovernedAction> {
     const createdAt = input.createdAt ?? now();
@@ -198,24 +199,22 @@ export class GovernedActionRepository {
       createdAt,
       updatedAt: input.updatedAt ?? createdAt,
     };
-    this.actions.set(this.key(action.tenantId, action.id), action);
+    await this.actionStore.upsert(action);
     await this.appendEvent(action.tenantId, { id: id("gaevt"), tenantId: action.tenantId, actionId: action.id, eventType: "CREATED", createdAt }, action);
     return action;
   }
 
   async upsert(action: GovernedAction): Promise<GovernedAction> {
-    this.actions.set(this.key(action.tenantId, action.id), action);
-    return action;
+    return this.actionStore.upsert(action);
   }
 
-  async get(tenantId: string, actionId: string) { return this.actions.get(this.key(tenantId, actionId)) ?? null; }
-  async list(tenantId: string) { return Array.from(this.actions.values()).filter((action) => action.tenantId === tenantId).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); }
-  async history(tenantId: string, actionId: string) { return [...(this.events.get(this.key(tenantId, actionId)) ?? [])].sort((a, b) => a.createdAt.localeCompare(b.createdAt)); }
-  async clear() { this.actions.clear(); this.events.clear(); }
+  async get(tenantId: string, actionId: string) { return this.actionStore.get(tenantId, actionId); }
+  async list(tenantId: string) { return (await this.actionStore.list(tenantId)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); }
+  async history(tenantId: string, actionId: string) { return (await this.eventStore.list(tenantId, { actionId })).sort((a, b) => a.createdAt.localeCompare(b.createdAt)); }
+  async clear() { this.actionStore.clearAll(); this.eventStore.clearAll(); }
 
   async appendEvent(tenantId: string, event: GovernedActionEvent, action?: GovernedAction, beforeStatus?: GovernedActionStatus) {
-    const key = this.key(tenantId, event.actionId);
-    this.events.set(key, [...(this.events.get(key) ?? []), event]);
+    await this.eventStore.upsert({ ...event, tenantId, updatedAt: event.createdAt });
     const ledgerType = ledgerTypeByEvent[event.eventType];
     if (ledgerType) {
       const entity = action ?? await this.get(tenantId, event.actionId);

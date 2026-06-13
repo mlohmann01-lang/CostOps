@@ -2,6 +2,11 @@ import { governedActionService } from "../actions/governed-actions";
 import { governedExecutionService } from "../execution/governed-execution";
 import { outcomeProtectionService } from "../outcome-protection/outcome-protection";
 import { assertTenantScopedCollection } from "../runtime/live-tenant-safety";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
+
+type EvidenceExportReadinessRecord = EvidenceExportReadiness & { id: string; tenantId: string; createdAt: string; updatedAt: string };
+const evidenceExportStore = new PersistenceStore<EvidenceExportReadinessRecord>(getPersistenceProvider(), PersistenceCollections.EVIDENCE_EXPORT_READINESS);
 
 export type EvidenceExportMissingItem = "RECOMMENDATION_EVIDENCE" | "TRUST_EVIDENCE" | "APPROVAL_EVIDENCE" | "PRE_STATE_EVIDENCE" | "POST_STATE_EVIDENCE" | "VERIFICATION_EVIDENCE" | "OUTCOME_EVIDENCE" | "PROTECTION_EVIDENCE" | "DRIFT_EVIDENCE";
 export type EvidenceExportReadiness = { tenantId: string; actionId?: string; wedge: "M365" | "AI" | "SERVICENOW"; ready: boolean; missing: EvidenceExportMissingItem | null; missingItems: EvidenceExportMissingItem[]; generatedAt: string };
@@ -24,5 +29,11 @@ export async function evaluateEvidenceExportReadiness(input: { tenantId: string;
   if (!protectedOutcomes.length) missing.add("PROTECTION_EVIDENCE");
   if (!protectedOutcomes.some((outcome) => outcome.policyIds.length > 0)) missing.add("DRIFT_EVIDENCE");
   const missingItems = [...missing];
-  return { tenantId: input.tenantId, actionId: input.actionId, wedge: input.wedge, ready: missingItems.length === 0, missing: missingItems[0] ?? null, missingItems, generatedAt: now() };
+  const result: EvidenceExportReadiness = { tenantId: input.tenantId, actionId: input.actionId, wedge: input.wedge, ready: missingItems.length === 0, missing: missingItems[0] ?? null, missingItems, generatedAt: now() };
+  const ts = result.generatedAt;
+  const id = `${input.tenantId}:${input.wedge}:${input.actionId ?? "all"}`;
+  const record: EvidenceExportReadinessRecord = { ...result, id, tenantId: input.tenantId, createdAt: ts, updatedAt: ts };
+  evidenceExportStore.upsert(record).catch(() => {});
+  evidenceExportStore.setCached(record);
+  return result;
 }

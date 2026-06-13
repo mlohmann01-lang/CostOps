@@ -63,6 +63,7 @@ import certificationRouter from "./certification";
 import technologyPortfolioRouter from "./technology-portfolio";
 import executiveProofPacksRouter from "./executive-proof-packs";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
+import persistenceRouter from "./persistence";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
 import { buildExecutiveRiskCommandCenter } from "../lib/executive-risk/executive-risk-command-center";
@@ -70,6 +71,7 @@ import { buildExecutiveRiskCommandCenter } from "../lib/executive-risk/executive
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use("/persistence", persistenceRouter);
 router.get("/governance-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), (_req, res) => res.json(buildGovernanceGraph(demoGovernanceGraphInput)));
 router.get("/executive-risk", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), (_req, res) => res.json(buildExecutiveRiskCommandCenter(buildGovernanceGraph(demoGovernanceGraphInput))));
 router.use("/dashboard", dashboardRouter);

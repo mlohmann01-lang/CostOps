@@ -1,6 +1,8 @@
 import { randomUUID } from "crypto";
 import { getCertifiedWedgeRegistry } from "../certification/certified-wedge-registry";
 import { listItamAssets } from "../connectors/itam/itam-assets";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 
 // ─── Core Types ──────────────────────────────────────────────────────────────
 
@@ -139,40 +141,37 @@ export type TechnologyPortfolioHealth = {
   blockers: string[];
 };
 
-// ─── In-Memory Stores ─────────────────────────────────────────────────────────
+// ─── Stores ───────────────────────────────────────────────────────────────────
 
-const assetStore = new Map<string, PortfolioAsset>();
-const ownerStore = new Map<string, PortfolioOwner>();
-const contractStore = new Map<string, PortfolioContract>();
-const renewalStore = new Map<string, PortfolioRenewal>();
-
-function assetKey(tenantId: string, id: string) { return `${tenantId}:${id}`; }
-function ownerKey(tenantId: string, id: string) { return `${tenantId}:${id}`; }
-function contractKey(tenantId: string, id: string) { return `${tenantId}:${id}`; }
-function renewalKey(tenantId: string, id: string) { return `${tenantId}:${id}`; }
+const assetStore = new PersistenceStore<PortfolioAsset>(getPersistenceProvider(), PersistenceCollections.PORTFOLIO_ASSETS);
+const ownerStore = new PersistenceStore<PortfolioOwner>(getPersistenceProvider(), PersistenceCollections.PORTFOLIO_OWNERS);
+const contractStore = new PersistenceStore<PortfolioContract>(getPersistenceProvider(), PersistenceCollections.PORTFOLIO_CONTRACTS);
+const renewalStore = new PersistenceStore<PortfolioRenewal>(getPersistenceProvider(), PersistenceCollections.PORTFOLIO_RENEWALS);
 
 // ─── Asset CRUD ───────────────────────────────────────────────────────────────
 
 export function createPortfolioAsset(data: Omit<PortfolioAsset, "id" | "createdAt" | "updatedAt">): PortfolioAsset {
   const now = new Date().toISOString();
   const asset: PortfolioAsset = { id: randomUUID(), createdAt: now, updatedAt: now, ...data };
-  assetStore.set(assetKey(asset.tenantId, asset.id), asset);
+  assetStore.upsert(asset).catch(() => {});
+  assetStore.setCached(asset);
   return asset;
 }
 
 export function getPortfolioAsset(tenantId: string, id: string): PortfolioAsset | undefined {
-  return assetStore.get(assetKey(tenantId, id));
+  return assetStore.getCached(tenantId, id) ?? undefined;
 }
 
 export function listPortfolioAssets(tenantId: string): PortfolioAsset[] {
-  return [...assetStore.values()].filter((a) => a.tenantId === tenantId);
+  return assetStore.listCached(tenantId);
 }
 
 export function updatePortfolioAsset(tenantId: string, id: string, patch: Partial<PortfolioAsset>): PortfolioAsset | undefined {
-  const existing = assetStore.get(assetKey(tenantId, id));
+  const existing = assetStore.getCached(tenantId, id);
   if (!existing) return undefined;
   const updated = { ...existing, ...patch, tenantId, id, updatedAt: new Date().toISOString() };
-  assetStore.set(assetKey(tenantId, id), updated);
+  assetStore.upsert(updated).catch(() => {});
+  assetStore.setCached(updated);
   return updated;
 }
 
@@ -181,12 +180,13 @@ export function updatePortfolioAsset(tenantId: string, id: string, patch: Partia
 export function createPortfolioOwner(data: Omit<PortfolioOwner, "id" | "createdAt" | "updatedAt">): PortfolioOwner {
   const now = new Date().toISOString();
   const owner: PortfolioOwner = { id: randomUUID(), createdAt: now, updatedAt: now, ...data };
-  ownerStore.set(ownerKey(owner.tenantId, owner.id), owner);
+  ownerStore.upsert(owner).catch(() => {});
+  ownerStore.setCached(owner);
   return owner;
 }
 
 export function listPortfolioOwners(tenantId: string): PortfolioOwner[] {
-  return [...ownerStore.values()].filter((o) => o.tenantId === tenantId);
+  return ownerStore.listCached(tenantId);
 }
 
 // ─── Contract CRUD ────────────────────────────────────────────────────────────
@@ -194,12 +194,13 @@ export function listPortfolioOwners(tenantId: string): PortfolioOwner[] {
 export function createPortfolioContract(data: Omit<PortfolioContract, "id" | "createdAt" | "updatedAt">): PortfolioContract {
   const now = new Date().toISOString();
   const contract: PortfolioContract = { id: randomUUID(), createdAt: now, updatedAt: now, ...data };
-  contractStore.set(contractKey(contract.tenantId, contract.id), contract);
+  contractStore.upsert(contract).catch(() => {});
+  contractStore.setCached(contract);
   return contract;
 }
 
 export function listPortfolioContracts(tenantId: string): PortfolioContract[] {
-  return [...contractStore.values()].filter((c) => c.tenantId === tenantId);
+  return contractStore.listCached(tenantId);
 }
 
 // ─── Renewal CRUD ─────────────────────────────────────────────────────────────
@@ -207,12 +208,13 @@ export function listPortfolioContracts(tenantId: string): PortfolioContract[] {
 export function createPortfolioRenewal(data: Omit<PortfolioRenewal, "id" | "createdAt" | "updatedAt">): PortfolioRenewal {
   const now = new Date().toISOString();
   const renewal: PortfolioRenewal = { id: randomUUID(), createdAt: now, updatedAt: now, ...data };
-  renewalStore.set(renewalKey(renewal.tenantId, renewal.id), renewal);
+  renewalStore.upsert(renewal).catch(() => {});
+  renewalStore.setCached(renewal);
   return renewal;
 }
 
 export function listPortfolioRenewals(tenantId: string): PortfolioRenewal[] {
-  return [...renewalStore.values()].filter((r) => r.tenantId === tenantId);
+  return renewalStore.listCached(tenantId);
 }
 
 // ─── Relationship Linking ─────────────────────────────────────────────────────
@@ -611,8 +613,8 @@ export async function getTechnologyPortfolioAuthorityStatus(tenantId: string): P
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 export function clearTechnologyPortfolioStores(): void {
-  assetStore.clear();
-  ownerStore.clear();
-  contractStore.clear();
-  renewalStore.clear();
+  assetStore.clearAll();
+  ownerStore.clearAll();
+  contractStore.clearAll();
+  renewalStore.clearAll();
 }

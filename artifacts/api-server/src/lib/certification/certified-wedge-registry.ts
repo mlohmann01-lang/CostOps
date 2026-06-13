@@ -1,3 +1,5 @@
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 import { buildM365WedgeCertification } from "../connectors/m365/m365-wedge-certification";
 import { getAIWedgeCertification } from "../ai-economic-control/ai-wedge-certification";
 import { getServiceNowWedgeCertification } from "../connectors/servicenow/servicenow-wedge-certification";
@@ -191,6 +193,20 @@ export async function getCertifiedWedgeRegistry(tenantId: string): Promise<Certi
     buildEntry({ wedgeId: "azure", name: "Azure Cost Governance", domain: "AZURE", certified: Boolean(azure.certified), playbooks: azure.playbooks ?? [], certificationSource: "azure-wedge-certification" }),
     buildEntry({ wedgeId: "itam", name: "ITAM / Flexera Cost Governance", domain: "ITAM", certified: Boolean(itam.certified), playbooks: itam.playbooks ?? [], certificationSource: "itam-wedge-certification" }),
   ];
+}
+
+type WedgeRegistrySnapshot = { id: string; tenantId: string; wedges: CertifiedWedgeRegistryEntry[]; snapshotAt: string; createdAt: string; updatedAt: string };
+const snapshotStore = new PersistenceStore<WedgeRegistrySnapshot>(getPersistenceProvider(), PersistenceCollections.CERTIFIED_WEDGE_REGISTRY_SNAPSHOTS);
+
+export async function snapshotCertifiedWedgeRegistry(tenantId: string): Promise<WedgeRegistrySnapshot> {
+  const wedges = await getCertifiedWedgeRegistry(tenantId);
+  const timestamp = new Date().toISOString();
+  const snapshot: WedgeRegistrySnapshot = { id: `${tenantId}:${Date.now()}`, tenantId, wedges, snapshotAt: timestamp, createdAt: timestamp, updatedAt: timestamp };
+  return snapshotStore.upsert(snapshot);
+}
+
+export async function listCertifiedWedgeRegistrySnapshots(tenantId: string): Promise<WedgeRegistrySnapshot[]> {
+  return snapshotStore.list(tenantId);
 }
 
 export async function getCertifiedWedgeRegistrySummary(tenantId: string): Promise<CertifiedWedgeRegistrySummary> {

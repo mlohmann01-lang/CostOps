@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 import { getConnectorHealthDashboard } from "../connectors/connector-health";
 import { governedExecutionService } from "../execution/governed-execution";
 import { outcomeProtectionService } from "../outcome-protection/outcome-protection";
@@ -77,6 +79,11 @@ export type FirstOutcomeReadiness = {
   trustIssues: string[];
   readinessIssues: string[];
 };
+
+// ─── Store ────────────────────────────────────────────────────────────────────
+
+type OnboardingAuthorityRecord = TenantOnboardingAuthority & { createdAt: string; updatedAt: string };
+const onboardingStore = new PersistenceStore<OnboardingAuthorityRecord>(getPersistenceProvider(), PersistenceCollections.ONBOARDING_AUTHORITIES);
 
 // ─── Score Weights ─────────────────────────────────────────────────────────────
 
@@ -267,7 +274,7 @@ export async function evaluateTenantOnboardingAuthority(tenantId: string): Promi
   const completedCount = stages.filter((s) => s.completed).length;
   const progressPercent = Math.round((completedCount / STAGES.length) * 100);
 
-  return {
+  const result: TenantOnboardingAuthority = {
     id: randomUUID(),
     tenantId,
     currentStage: current,
@@ -280,6 +287,9 @@ export async function evaluateTenantOnboardingAuthority(tenantId: string): Promi
     generatedAt: now(),
     updatedAt: now(),
   };
+  onboardingStore.upsert({ ...result, createdAt: result.generatedAt, updatedAt: result.generatedAt }).catch(() => {});
+  onboardingStore.setCached({ ...result, createdAt: result.generatedAt, updatedAt: result.generatedAt });
+  return result;
 }
 
 // ─── Next Actions Engine ──────────────────────────────────────────────────────

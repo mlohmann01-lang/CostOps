@@ -1,5 +1,7 @@
 import { platformEventService } from "../events/platform-event-service";
 import { governedActionService, type GovernedAction } from "../actions/governed-actions";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 
 export type ReadinessVerdict = "ELIGIBLE" | "APPROVAL_REQUIRED" | "BLOCKED" | "NEVER_ELIGIBLE";
 export type ReadinessConfidence = "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
@@ -34,12 +36,12 @@ function missing(evidenceType: MissingEvidenceType, reason: string, requiredSour
 function required(actionType: RequiredReadinessActionType, ownerRole: RequiredReadinessOwnerRole, priority: ReadinessPriority, description: string): RequiredReadinessAction { return { id: id("readiness-action"), actionType, ownerRole, priority, description }; }
 
 export class TrustReadinessAuthorityRepository {
-  private readonly reports = new Map<string, ReadinessAuthorityReport>();
-  private key(tenantId: string, actionId: string) { return `${tenantId}:${actionId}`; }
-  save(report: ReadinessAuthorityReport) { this.reports.set(this.key(report.tenantId, report.actionId), report); return report; }
-  get(tenantId: string, actionId: string) { return this.reports.get(this.key(tenantId, actionId)) ?? null; }
-  list(tenantId: string) { return Array.from(this.reports.values()).filter((report) => report.tenantId === tenantId); }
-  clear() { this.reports.clear(); }
+  private readonly store = new PersistenceStore<ReadinessAuthorityReport & { createdAt: string; updatedAt: string; reportId: string }>(getPersistenceProvider(), PersistenceCollections.TRUST_READINESS_REPORTS);
+  save(report: ReadinessAuthorityReport) { const record = { ...report, id: report.actionId, reportId: report.id, createdAt: report.generatedAt, updatedAt: report.generatedAt }; this.store.upsert(record).catch(() => {}); this.store.setCached(record); return report; }
+  get(tenantId: string, actionId: string): ReadinessAuthorityReport | null { const r = this.store.getCached(tenantId, actionId); if (!r) return null; return { ...r, id: r.reportId }; }
+  list(tenantId: string) { return this.store.listCached(tenantId).map((r) => ({ ...r, id: r.reportId })); }
+  async listAsync(tenantId: string) { return (await this.store.list(tenantId)).map((r) => ({ ...r, id: r.reportId })); }
+  clear() { this.store.clearAll(); }
 }
 
 export class TrustReadinessAuthorityService {

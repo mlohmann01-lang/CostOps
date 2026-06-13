@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 import { getCertifiedWedgeRegistrySummary } from "../certification/certified-wedge-registry";
 import { getTechnologyPortfolioHealth, listPortfolioAssets, listPortfolioContracts, listPortfolioRenewals } from "../technology-portfolio/technology-portfolio-authority";
 import { outcomeProtectionService } from "../outcome-protection/outcome-protection";
@@ -135,11 +137,9 @@ export type ExecutiveProofPackAuthoritySummary = {
   blockers: string[];
 };
 
-// ─── In-Memory Store ──────────────────────────────────────────────────────────
+// ─── Store ────────────────────────────────────────────────────────────────────
 
-const packStore = new Map<string, ExecutiveProofPack>();
-
-function packKey(tenantId: string, id: string) { return `${tenantId}:${id}`; }
+const packStore = new PersistenceStore<ExecutiveProofPack>(getPersistenceProvider(), PersistenceCollections.EXECUTIVE_PROOF_PACKS);
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -417,7 +417,7 @@ export function evaluateProofPackCompleteness(pack: ExecutiveProofPack): ProofPa
 // ─── Export Readiness ─────────────────────────────────────────────────────────
 
 export function evaluateExecutiveProofPackExportReadiness(tenantId: string, packId: string): ExecutiveProofPackExportReadiness {
-  const pack = packStore.get(packKey(tenantId, packId));
+  const pack = packStore.getCached(tenantId, packId);
   const missingItems: string[] = [];
   if (!pack) {
     return { tenantId, packId, ready: false, score: 0, missingItems: ["Pack not found"], exportFormats: ["JSON"], generatedAt: now() };
@@ -537,37 +537,39 @@ export async function generateExecutiveProofPack(input: GenerateExecutiveProofPa
   const fullPack: ExecutiveProofPack = { ...pack, completeness: evaluateProofPackCompleteness(pack as ExecutiveProofPack) };
   fullPack.status = fullPack.completeness.ready ? "READY" : "INCOMPLETE";
 
-  packStore.set(packKey(tenantId, fullPack.id), fullPack);
+  packStore.upsert(fullPack).catch(() => {});
+  packStore.setCached(fullPack);
   return fullPack;
 }
 
 // ─── CRUD ─────────────────────────────────────────────────────────────────────
 
 export function getExecutiveProofPack(tenantId: string, packId: string): ExecutiveProofPack | undefined {
-  return packStore.get(packKey(tenantId, packId));
+  return packStore.getCached(tenantId, packId) ?? undefined;
 }
 
 export function listExecutiveProofPacks(tenantId: string, filters?: Partial<Pick<ExecutiveProofPack, "packType" | "status">>): ExecutiveProofPack[] {
-  return [...packStore.values()].filter((p) =>
-    p.tenantId === tenantId &&
+  return packStore.listCached(tenantId).filter((p) =>
     (!filters?.packType || p.packType === filters.packType) &&
     (!filters?.status || p.status === filters.status)
   );
 }
 
 export function archiveExecutiveProofPack(tenantId: string, packId: string): ExecutiveProofPack | undefined {
-  const pack = packStore.get(packKey(tenantId, packId));
+  const pack = packStore.getCached(tenantId, packId);
   if (!pack) return undefined;
   const updated = { ...pack, status: "ARCHIVED" as const, updatedAt: now() };
-  packStore.set(packKey(tenantId, packId), updated);
+  packStore.upsert(updated).catch(() => {});
+  packStore.setCached(updated);
   return updated;
 }
 
 export function markExecutiveProofPackExported(tenantId: string, packId: string): ExecutiveProofPack | undefined {
-  const pack = packStore.get(packKey(tenantId, packId));
+  const pack = packStore.getCached(tenantId, packId);
   if (!pack) return undefined;
   const updated = { ...pack, status: "EXPORTED" as const, exportedAt: now(), updatedAt: now() };
-  packStore.set(packKey(tenantId, packId), updated);
+  packStore.upsert(updated).catch(() => {});
+  packStore.setCached(updated);
   return updated;
 }
 
@@ -674,5 +676,5 @@ export async function getExecutiveProofPackAuthorityStatus(tenantId: string): Pr
 // ─── Test Helpers ─────────────────────────────────────────────────────────────
 
 export function clearExecutiveProofPackStore(): void {
-  packStore.clear();
+  packStore.clearAll();
 }

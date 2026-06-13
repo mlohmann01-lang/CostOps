@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from "node:crypto";
 import { platformEventService } from "../events/platform-event-service";
 import { aiIntelligenceService } from "../ai-economic-control/ai-intelligence";
+import { getPersistenceProvider, PersistenceStore } from "../persistence/persistence-provider";
+import { PersistenceCollections } from "../persistence/persistence-collections";
 
 export type AssetType =
   | "AI_ASSET"
@@ -189,81 +191,85 @@ function confidenceRank(c: Confidence) {
 }
 
 class EconomicOutcomeRepository {
-  private static outcomes = new Map<string, EconomicOutcome>();
-  private static objectives = new Map<string, BusinessObjective>();
-  private static signals = new Map<string, ValueSignal>();
-  private static attributions = new Map<string, OutcomeAttribution>();
-  private static decisions = new Map<string, EconomicDecision>();
-  private static evidence = new Map<string, EconomicEvidence>();
+  private readonly outcomeStore = new PersistenceStore<EconomicOutcome>(getPersistenceProvider(), PersistenceCollections.ECONOMIC_OUTCOMES);
+  private readonly objectiveStore = new PersistenceStore<BusinessObjective>(getPersistenceProvider(), PersistenceCollections.BUSINESS_OBJECTIVES);
+  private readonly signalStore = new PersistenceStore<ValueSignal & { updatedAt: string }>(getPersistenceProvider(), PersistenceCollections.VALUE_SIGNALS);
+  private readonly attributionStore = new PersistenceStore<OutcomeAttribution>(getPersistenceProvider(), PersistenceCollections.OUTCOME_ATTRIBUTIONS);
+  private readonly decisionStore = new PersistenceStore<EconomicDecision & { updatedAt: string }>(getPersistenceProvider(), PersistenceCollections.ECONOMIC_DECISIONS);
+  private readonly evidenceStore = new PersistenceStore<EconomicEvidence & { updatedAt: string }>(getPersistenceProvider(), PersistenceCollections.OUTCOME_EVIDENCE);
   clearForTests() {
-    EconomicOutcomeRepository.outcomes.clear();
-    EconomicOutcomeRepository.objectives.clear();
-    EconomicOutcomeRepository.signals.clear();
-    EconomicOutcomeRepository.attributions.clear();
-    EconomicOutcomeRepository.decisions.clear();
-    EconomicOutcomeRepository.evidence.clear();
+    this.outcomeStore.clearAll();
+    this.objectiveStore.clearAll();
+    this.signalStore.clearAll();
+    this.attributionStore.clearAll();
+    this.decisionStore.clearAll();
+    this.evidenceStore.clearAll();
   }
   upsertOutcome(x: EconomicOutcome) {
-    EconomicOutcomeRepository.outcomes.set(`${x.tenantId}:${x.id}`, x);
+    this.outcomeStore.upsert(x).catch(() => {});
+    this.outcomeStore.setCached(x);
     return x;
   }
   listOutcomes(
     tenantId: string,
-    filters: Partial<
-      Pick<EconomicOutcome, "assetId" | "assetType" | "status">
-    > = {},
+    filters: Partial<Pick<EconomicOutcome, "assetId" | "assetType" | "status">> = {},
   ) {
-    return [...EconomicOutcomeRepository.outcomes.values()].filter(
+    return this.outcomeStore.listCached(tenantId).filter(
       (x) =>
-        x.tenantId === tenantId &&
         (!filters.assetId || x.assetId === filters.assetId) &&
         (!filters.assetType || x.assetType === filters.assetType) &&
         (!filters.status || x.status === filters.status),
     );
   }
   upsertObjective(x: BusinessObjective) {
-    EconomicOutcomeRepository.objectives.set(`${x.tenantId}:${x.id}`, x);
+    this.objectiveStore.upsert(x).catch(() => {});
+    this.objectiveStore.setCached(x);
     return x;
   }
   listObjectives(tenantId: string) {
-    return [...EconomicOutcomeRepository.objectives.values()].filter(
-      (x) => x.tenantId === tenantId,
-    );
+    return this.objectiveStore.listCached(tenantId);
   }
   upsertSignal(x: ValueSignal) {
-    EconomicOutcomeRepository.signals.set(`${x.tenantId}:${x.id}`, x);
+    const record = { ...x, updatedAt: x.createdAt };
+    this.signalStore.upsert(record).catch(() => {});
+    this.signalStore.setCached(record);
     return x;
   }
   listSignals(tenantId: string, assetId?: string) {
-    return [...EconomicOutcomeRepository.signals.values()].filter(
-      (x) => x.tenantId === tenantId && (!assetId || x.assetId === assetId),
+    return this.signalStore.listCached(tenantId).filter(
+      (x) => !assetId || x.assetId === assetId,
     );
   }
   upsertAttribution(x: OutcomeAttribution) {
-    EconomicOutcomeRepository.attributions.set(`${x.tenantId}:${x.id}`, x);
+    this.attributionStore.upsert(x).catch(() => {});
+    this.attributionStore.setCached(x);
     return x;
   }
   listAttributions(tenantId: string, assetId?: string) {
-    return [...EconomicOutcomeRepository.attributions.values()].filter(
-      (x) => x.tenantId === tenantId && (!assetId || x.assetId === assetId),
+    return this.attributionStore.listCached(tenantId).filter(
+      (x) => !assetId || x.assetId === assetId,
     );
   }
   upsertDecision(x: EconomicDecision) {
-    EconomicOutcomeRepository.decisions.set(`${x.tenantId}:${x.id}`, x);
+    const record = { ...x, updatedAt: x.createdAt };
+    this.decisionStore.upsert(record).catch(() => {});
+    this.decisionStore.setCached(record);
     return x;
   }
   listDecisions(tenantId: string, assetId?: string) {
-    return [...EconomicOutcomeRepository.decisions.values()].filter(
-      (x) => x.tenantId === tenantId && (!assetId || x.assetId === assetId),
+    return this.decisionStore.listCached(tenantId).filter(
+      (x) => !assetId || x.assetId === assetId,
     );
   }
   addEvidence(x: EconomicEvidence) {
-    EconomicOutcomeRepository.evidence.set(`${x.tenantId}:${x.id}`, x);
+    const record = { ...x, updatedAt: x.createdAt };
+    this.evidenceStore.upsert(record).catch(() => {});
+    this.evidenceStore.setCached(record);
     return x;
   }
   listEvidence(tenantId: string, entityId?: string) {
-    return [...EconomicOutcomeRepository.evidence.values()].filter(
-      (x) => x.tenantId === tenantId && (!entityId || x.entityId === entityId),
+    return this.evidenceStore.listCached(tenantId).filter(
+      (x) => !entityId || x.entityId === entityId,
     );
   }
 }
@@ -385,6 +391,7 @@ export class EconomicOutcomeAttributionService {
       { signal },
     );
     signal.evidenceRef = evidence.id;
+    this.repo.upsertSignal(signal);
     return signal;
   }
   listValueSignals(tenantId: string, assetId?: string) {

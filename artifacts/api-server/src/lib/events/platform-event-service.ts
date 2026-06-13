@@ -2,6 +2,10 @@ import { normalizeApprovalWorkflowEvent, normalizeRecommendationGovernanceEvent 
 import { PlatformEventRepository, unifiedToPlatformEvent } from './platform-event-repository'
 import type { UnifiedGovernanceEvent } from './types'
 import type { PlatformEvent, PlatformEventCategory, PlatformEventInput, PlatformEventSeverity } from './platform-event-types'
+import { getPersistenceProvider, PersistenceStore } from '../persistence/persistence-provider'
+import { PersistenceCollections } from '../persistence/persistence-collections'
+
+const platformEventStore = new PersistenceStore<PlatformEvent & { id: string; tenantId: string; createdAt: string; updatedAt: string }>(getPersistenceProvider(), PersistenceCollections.PLATFORM_EVENTS)
 
 const canonicalAliases: Record<string, string> = {
   APPROVAL_GRANTED: 'APPROVAL_APPROVED',
@@ -50,7 +54,10 @@ export class PlatformEventService {
     const type = canonicalType(input.type)
     const event: PlatformEvent = { eventId: input.eventId ?? '', tenantId: input.tenantId, category: input.category, type, severity: severity(type, input.severity), title: input.title ?? title(type), description: input.description, actorId: input.actorId, entityType: input.entityType, entityId: input.entityId, sourceSystem: input.sourceSystem ?? 'platform-event-authority', evidenceRef: input.evidenceRef, metadata: input.metadata, occurredAt: input.occurredAt ?? new Date().toISOString() }
     event.eventId = idFor(event)
-    return this.repository.appendEvent(event)
+    const result = await this.repository.appendEvent(event)
+    const ts = event.occurredAt
+    platformEventStore.upsert({ ...event, id: event.eventId, tenantId: event.tenantId, createdAt: ts, updatedAt: ts }).catch(() => {})
+    return result
   }
 
   recordTrustEvent(tenantId: string, type: string, input: PlatformEventInput = {}) { return this.recordEvent({ ...input, tenantId, category: 'TRUST', type }) }

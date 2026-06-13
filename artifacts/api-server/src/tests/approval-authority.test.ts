@@ -28,7 +28,7 @@ test("standard approval completes with one approver", async () => {
 });
 
 test("CAB approval requires two approvers", async () => {
-  await reset(); const { row } = await submitted({ priority: "HIGH", blastRadius: "HIGH", projectedAnnualValue: 75000 }, ["cab-1", "cab-2"]); const request = approvalAuthorityEngine.listRequests(tenantId).find((item) => item.actionId === row.id)!;
+  await reset(); const { row } = await submitted({ priority: "HIGH", blastRadius: "HIGH", projectedAnnualValue: 75000 }, ["cab-1", "cab-2"]); const request = (await approvalAuthorityEngine.listRequests(tenantId)).find((item) => item.actionId === row.id)!;
   assert.equal(request.approvalType, "CAB");
   const first = await approveRequest(tenantId, request.id, "cab-1");
   assert.equal(first.request.status, "PENDING");
@@ -37,7 +37,7 @@ test("CAB approval requires two approvers", async () => {
 });
 
 test("executive approval requires two approvers", async () => {
-  await reset(); const { row } = await submitted({ priority: "CRITICAL", blastRadius: "HIGH", rollbackCapability: "NONE", projectedAnnualValue: 300000 }, ["exec-1", "exec-2"]); const request = approvalAuthorityEngine.listRequests(tenantId).find((item) => item.actionId === row.id)!;
+  await reset(); const { row } = await submitted({ priority: "CRITICAL", blastRadius: "HIGH", rollbackCapability: "NONE", projectedAnnualValue: 300000 }, ["exec-1", "exec-2"]); const request = (await approvalAuthorityEngine.listRequests(tenantId)).find((item) => item.actionId === row.id)!;
   assert.equal(request.approvalType, "EXECUTIVE");
   await approveRequest(tenantId, request.id, "exec-1");
   const result = await approveRequest(tenantId, request.id, "exec-2");
@@ -79,7 +79,7 @@ test("execution cannot bypass approval authority", async () => {
 
 test("tenant isolation prevents cross tenant approval reads", async () => {
   await reset(); const { request } = await submitted({}, ["approver"]);
-  assert.equal(approvalAuthorityEngine.getRequest("other-tenant", request.id), null);
+  assert.equal(await approvalAuthorityEngine.getRequest("other-tenant", request.id), null);
   assert.equal((await approvalAuthorityEngine.dashboard("other-tenant")).pending, 0);
 });
 

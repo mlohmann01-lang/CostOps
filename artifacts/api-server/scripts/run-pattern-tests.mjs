@@ -36,6 +36,7 @@ for (const file of matching) {
       format: 'cjs',
       sourcemap: false,
       outfile,
+
     });
   } catch (e) {
     console.error(`Build failed for ${file}:`, e.message);
