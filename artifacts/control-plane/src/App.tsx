@@ -44,6 +44,7 @@ import OutcomeProtectionView from './pages/OutcomeProtectionView'
 import ApprovalCenter from './pages/ApprovalCenter'
 import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
 import CertifiedWedgeRegistryView from './pages/CertifiedWedgeRegistryView'
+import TechnologyPortfolioAuthorityView from './pages/TechnologyPortfolioAuthorityView'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -258,6 +259,10 @@ function CertifiedWedgeRegistryRoute() {
   return <RequireRuntime><CertifiedWedgeRegistryView /></RequireRuntime>
 }
 
+function TechnologyPortfolioAuthorityRoute() {
+  return <RequireRuntime><TechnologyPortfolioAuthorityView /></RequireRuntime>
+}
+
 function EvidenceRoute() {
   return <RequireRuntime><EvidencePacksView /></RequireRuntime>
 }
@@ -455,6 +460,7 @@ function Router() {
       <Route path="/economic-outcomes" component={EconomicOutcomeDashboardRoute} />
       <Route path="/live-tenant-readiness" component={LiveTenantReadinessRoute} />
       <Route path="/certified-wedges" component={CertifiedWedgeRegistryRoute} />
+      <Route path="/technology-portfolio-authority" component={TechnologyPortfolioAuthorityRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>

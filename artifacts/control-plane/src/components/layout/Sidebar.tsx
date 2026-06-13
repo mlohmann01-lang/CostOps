@@ -16,7 +16,7 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
   ]},
   { label: 'Intelligence', defaultOpen: true, items: [
-    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
+    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio-authority', aliases: ['/technology-portfolio', '/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
     { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
   ]},
   { label: 'Operations', defaultOpen: false, items: [
