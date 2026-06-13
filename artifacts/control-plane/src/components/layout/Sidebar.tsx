@@ -14,6 +14,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: 'Executive', defaultOpen: false, items: [
     { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
     { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
+    { label: 'Proof Pack Authority', icon: FileText, href: '/executive-proof-pack-authority' },
   ]},
   { label: 'Intelligence', defaultOpen: true, items: [
     { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio-authority', aliases: ['/technology-portfolio', '/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },

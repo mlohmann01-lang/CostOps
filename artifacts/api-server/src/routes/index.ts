@@ -61,6 +61,7 @@ import trustReadinessRouter from "./trust-readiness";
 import outcomeProtectionRouter from "./outcome-protection";
 import certificationRouter from "./certification";
 import technologyPortfolioRouter from "./technology-portfolio";
+import executiveProofPacksRouter from "./executive-proof-packs";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -92,6 +93,7 @@ router.use("/trust-readiness", requireTenantContext(), requireCapability("READ_R
 router.use("/outcome-protection", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), outcomeProtectionRouter);
 router.use("/certification", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), certificationRouter);
 router.use("/technology-portfolio", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), technologyPortfolioRouter);
+router.use("/executive-proof-packs", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveProofPacksRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
