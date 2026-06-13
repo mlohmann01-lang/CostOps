@@ -4,6 +4,8 @@ import { getServiceNowWedgeCertification } from "../lib/connectors/servicenow/se
 import { getDataPlatformWedgeCertification } from "../lib/connectors/data-platform/data-platform-wedge-certification";
 import { getAwsWedgeCertification } from "../lib/connectors/aws/aws-wedge-certification";
 import { getAzureWedgeCertification } from "../lib/connectors/azure/azure-wedge-certification";
+import { getItamWedgeCertification } from "../lib/connectors/itam/itam-wedge-certification";
+import { verifyItamExecution, rollbackItamExecution } from "../lib/connectors/itam/itam-execution";
 import { db } from "@workspace/db";
 import { connectorsTable, connectorSyncStatusTable, m365UsersTable, flexeraEntitlementsTable, servicenowAssetsTable, servicenowContractsTable, m365ConnectorConfigsTable, m365EvidenceRecordsTable, recommendationsTable, outcomeLedgerTable, type Connector } from "@workspace/db";
 import { and, desc, eq } from "drizzle-orm";
@@ -43,6 +45,25 @@ router.get("/servicenow/certification", async (req, res) => res.json(await getSe
 router.get("/data-platform/certification", async (req, res) => res.json(await getDataPlatformWedgeCertification(tenantFrom(req))));
 router.get("/aws/certification", async (req, res) => res.json(await getAwsWedgeCertification(tenantFrom(req))));
 router.get("/azure/certification", async (req, res) => res.json(await getAzureWedgeCertification(tenantFrom(req))));
+router.get("/itam/certification", async (req, res) => res.json(await getItamWedgeCertification(tenantFrom(req))));
+
+router.post("/itam/execution/:executionId/verify", async (req, res) => {
+  try {
+    const result = await verifyItamExecution(tenantFrom(req), req.params.executionId);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
+
+router.post("/itam/execution/:executionId/rollback", async (req, res) => {
+  try {
+    const result = await rollbackItamExecution(tenantFrom(req), req.params.executionId);
+    return res.json(result);
+  } catch (err: any) {
+    return res.status(400).json({ error: err.message });
+  }
+});
 
 router.use("/sdk", connectorSdkRouter);
 

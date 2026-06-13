@@ -7,6 +7,7 @@ export type AssetType =
   | "SAAS"
   | "M365"
   | "CLOUD"
+  | "ITAM"
   | "APPLICATION"
   | "OTHER";
 export type Confidence = "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN";
