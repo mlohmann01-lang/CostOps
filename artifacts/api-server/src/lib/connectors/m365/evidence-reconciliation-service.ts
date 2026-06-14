@@ -6,7 +6,14 @@ export class EvidenceReconciliationService {
     const findings: any[] = [];
     for (const e of evidenceRecords) {
       const mk = (findingType: string, severity: "WARNING"|"CRITICAL", description: string, recommendedResolution: string) => findings.push({ tenantId, connectorType: "M365", sourceSystem: e.sourceSystem ?? "M365_GRAPH", entityType: "USER", entityId: e.userId ?? e.userPrincipalName ?? "unknown", findingType, severity, status: "OPEN", description, evidenceSnapshot: e, recommendedResolution });
-      if (!e.userId || !e.userPrincipalName) mk("M365_LICENSE_ASSIGNMENT_CONFLICT", "CRITICAL", "Identity/licensing association is incomplete.", "Provide normalized userId+UPN with assigned SKU mappings.");
+      if (!e.userId || !e.userPrincipalName) {
+        mk("M365_LICENSE_ASSIGNMENT_CONFLICT", "CRITICAL", "Identity/licensing association is incomplete.", "Provide normalized userId+UPN with assigned SKU mappings.");
+        mk("MISSING_REQUIRED_FIELD", "CRITICAL", "Required identity evidence field is missing.", "Provide normalized userId+UPN.");
+      }
+      if (e.lastSignInAt) {
+        const ageMs = Date.now() - new Date(e.lastSignInAt).getTime();
+        if (Number.isFinite(ageMs) && ageMs > 90 * 86400000) mk("STALE_EVIDENCE", "WARNING", "Sign-in evidence is stale.", "Refresh sign-in activity evidence.");
+      }
       if (e.copilotUsage === "UNKNOWN") mk("M365_COPILOT_USAGE_UNAVAILABLE", "WARNING", "Copilot usage evidence unavailable.", "Enable Copilot telemetry and refresh sync.");
       if (e.desktopAppUsage === "UNKNOWN" || e.webUsage === "UNKNOWN") mk("M365_USAGE_EVIDENCE_MISSING", "WARNING", "Usage evidence missing for one or more required workload signals.", "Populate workload usage sources.");
       if (e.mailboxStorageBytes === "UNKNOWN" && e.oneDriveStorageBytes === "UNKNOWN" && e.sharePointStorageBytes === "UNKNOWN") mk("M365_STORAGE_EVIDENCE_UNAVAILABLE", "WARNING", "Storage evidence unavailable.", "Load mailbox/OneDrive/SharePoint storage metrics.");
@@ -20,7 +27,13 @@ export class EvidenceReconciliationService {
       if (e.evidenceFreshness === "EXPIRED") mk("M365_USAGE_DATA_STALE", "CRITICAL", "Usage evidence is expired.", "Collect fresh usage evidence before recommendation.");
       if ((e.pricingConfidence ?? 0) < 0.5) mk("M365_PRICING_EVIDENCE_UNAVAILABLE", "WARNING", "Pricing evidence unavailable or low confidence.", "Load tenant SKU pricing.");
     }
-    if (findings.length) await db.insert(evidenceReconciliationFindingsTable).values(findings);
+    if (findings.length) {
+      try { await db.insert(evidenceReconciliationFindingsTable).values(findings); }
+      catch (err) {
+        // Fail-closed in production; outside production the computed findings are still returned.
+        if (process.env.NODE_ENV === "production") throw err;
+      }
+    }
     return findings;
   }
 

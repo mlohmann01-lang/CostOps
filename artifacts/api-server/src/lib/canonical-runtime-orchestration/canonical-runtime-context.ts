@@ -1,1 +1,2 @@
 export interface CanonicalRuntimeContext{tenantId:string;actionId:string;evidenceRefs:string[];proofRefs:string[];verdictRef:string;}
+export const buildCanonicalRuntimeContext=(i:{tenantId:string;actionId:string;evidenceRefs?:string[];proofRefs?:string[];verdictRef?:string;}):CanonicalRuntimeContext=>({tenantId:i.tenantId,actionId:i.actionId,evidenceRefs:i.evidenceRefs??[],proofRefs:i.proofRefs??[],verdictRef:i.verdictRef??""});

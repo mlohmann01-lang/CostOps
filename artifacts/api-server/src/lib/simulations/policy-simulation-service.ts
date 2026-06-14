@@ -129,9 +129,10 @@ export class PolicySimulationService {
       trustReasoning: reasoning.trust,
       blastRadiusReasoning: reasoning.blast,
       simulationEngineVersion: this.simulationEngineVersion,
+      createdAt: new Date("2026-05-01T00:00:00.000Z"),
     };
     const deterministicHash = this.computeDeterministicHash(snapshot);
-    return { ...snapshot, deterministicHash, createdAt: new Date("2026-05-01T00:00:00.000Z") };
+    return { ...snapshot, deterministicHash };
   }
 
   computeDeterministicHash(payload: unknown): string {

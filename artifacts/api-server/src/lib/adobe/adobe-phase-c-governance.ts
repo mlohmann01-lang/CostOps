@@ -10,7 +10,7 @@ export type AdobePhaseCInput = {
   allAppsConcentrationRatio: number; highCostSkuExposureRatio: number; inactiveLicenseRatio: number; unknownOwnershipRatio: number;
 };
 
-const clamp=(n:number,min=0,max=100)=>Math.max(min,Math.min(max,n));
+const clamp=(n:number,min=0,max=100)=>Number.isFinite(n)?Math.max(min,Math.min(max,n)):min;
 const band=(n:number):MaturityBand=> n>=90?"HIGHLY_GOVERNED":n>=75?"ADVANCED":n>=55?"MATURE":n>=35?"DEVELOPING":"INITIAL";
 
 export function computeAdobeRenewalReadiness(i: AdobePhaseCInput){

@@ -64,3 +64,5 @@ test("platform flow includes atlassian playbooks in registry",()=>{ const reg=fs
 
 import fs from "node:fs";
 test("platform flow includes hardening intelligence artifact",()=>{ const c=fs.readFileSync(new URL("../lib/runtime-hardening/runtime-hardening-phase-a.ts", import.meta.url),"utf8"); assert.equal(c.includes("modelTrustDegradation"), true); });
+
+test("platform flow workflow authority resides in workflow-operations-service",()=>{ assert.equal(fs.existsSync(new URL("../lib/workflow/workflow-operations-service.ts", import.meta.url)), true); });

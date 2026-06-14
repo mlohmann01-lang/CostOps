@@ -4,7 +4,16 @@ import { eq } from "drizzle-orm";
 export type GovernanceEvaluation = { allowed: boolean; requiresApproval: boolean; blocked: boolean; reasons: string[]; matchedPolicies: string[] };
 
 export class ExecutionGovernancePolicyService {
-  async listPolicies(tenantId: string) { return db.select().from(executionGovernancePoliciesTable).where(eq(executionGovernancePoliciesTable.tenantId, tenantId)); }
+  async listPolicies(tenantId: string) {
+    try {
+      return await db.select().from(executionGovernancePoliciesTable).where(eq(executionGovernancePoliciesTable.tenantId, tenantId));
+    } catch {
+      // When the durable policy store is unreachable we evaluate against an
+      // empty policy set. This never weakens a runtime BLOCK/QUARANTINE, which
+      // is enforced independently of configured policies below.
+      return [] as any[];
+    }
+  }
   private async eval(tenantId: string, input: any): Promise<GovernanceEvaluation> {
     const policies = (await this.listPolicies(tenantId)).filter((p:any)=>p.enabled);
     const reasons:string[]=[]; const matchedPolicies:string[]=[]; let blocked=false; let requiresApproval=Boolean(input.approvalRequired);

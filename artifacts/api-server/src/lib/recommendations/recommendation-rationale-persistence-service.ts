@@ -93,20 +93,8 @@ export class RecommendationRationalePersistenceService {
   }
 
   validateRecommendationReplayIntegrity(rationale: any) {
-    const replayHash = deterministicHash({
-      recommendationStatus: rationale.recommendationStatus,
-      trustBand: rationale.trustBand,
-      whyGenerated: rationale.whyGenerated,
-      whySafe: rationale.whySafe,
-      whyBlocked: rationale.whyBlocked,
-      whyDowngraded: rationale.whyDowngraded,
-      trustFactors: rationale.trustFactors,
-      reconciliationFactors: rationale.reconciliationFactors,
-      governanceFactors: rationale.governanceFactors,
-      runtimeFactors: rationale.runtimeFactors,
-      projectedSavingsFactors: rationale.projectedSavingsFactors,
-      evidenceLineage: rationale.evidenceLineage,
-    });
-    return replayHash === rationale.deterministicHash ? "VALID" : "MISMATCH";
+    const { deterministicHash: storedHash, ...content } = rationale ?? {};
+    const replayHash = deterministicHash(content);
+    return replayHash === storedHash ? "VALID" : "MISMATCH";
   }
 }

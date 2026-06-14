@@ -9,7 +9,7 @@ test("factory runs all providers, persists canonical opportunities, and preserve
   repository.clearForTests();
   const a = await runOpportunityFactory("tenant-a", { repository, now: "2026-06-01T00:00:00.000Z" });
   const b = await runOpportunityFactory("tenant-b", { repository, now: "2026-06-01T00:00:00.000Z" });
-  assert.equal(a.providerResults.length, 7);
+  assert.equal(a.providerResults.length, 8);
   assert.equal(a.providerResults.every((provider) => provider.succeeded), true);
   assert.ok(a.persisted > 0);
   assert.ok(repository.list("tenant-a").length > 0);

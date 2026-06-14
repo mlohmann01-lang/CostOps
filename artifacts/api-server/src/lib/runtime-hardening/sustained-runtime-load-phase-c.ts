@@ -9,7 +9,7 @@ export function simulateTelemetryThroughput(input:{tenantCount:number;eventsPerT
   const replayLagPressure=clamp(input.missingEventRate*50+Math.max(0,input.burstMultiplier-1)*25+input.lateArrivalRate*35);
   return {
     totalProjectedEvents,averageDailyEvents,peakBurstEvents,
-    telemetryContinuityRisk:risk3(clamp(input.missingEventRate*60+input.orderingInstabilityRate*40+input.lateArrivalRate*30)),
+    telemetryContinuityRisk:risk3(clamp(input.missingEventRate*100*3+input.orderingInstabilityRate*100*1.5+input.lateArrivalRate*100*1.5)),
     retentionPressureLevel:risk3(clamp((totalProjectedEvents/10_000_000)*100)),
     orderingRisk:risk3(clamp(input.orderingInstabilityRate*100)),
     replayLagRisk:risk3(replayLagPressure),
@@ -27,7 +27,7 @@ export function simulateReplayGrowth(input:{recommendationsPerTenantPerDay:numbe
     replayStoragePressure:risk3(clamp(projectedReplayRecords/5_000_000*100)),
     hashValidationPressure:risk3(clamp(projectedValidationLoad/2_000_000*100)),
     historyDepthRisk:risk3(clamp((input.averageTransitionsPerRecommendation+input.averageTelemetryEventsPerRecommendation+input.averageWorkflowEventsPerRecommendation)*7)),
-    replayDegradationRisk:risk3(clamp(lineage*60+(projectedValidationLoad/2_000_000)*40))
+    replayDegradationRisk:risk3(clamp(lineage*100*1.5+(projectedValidationLoad/2_000_000)*40))
   };
 }
 
@@ -64,7 +64,7 @@ export function simulateLineageGrowthPressure(input:{averageLineageLinksPerRecom
     lineageCompletenessRisk:risk3(clamp(input.lineageBreakRate*100)),
     correlationContinuityRisk:risk3(clamp(input.correlationBreakRate*100)),
     hashContinuityRisk:risk3(clamp(input.hashMismatchRate*100)),
-    replayReadinessRisk:risk3(clamp(input.lineageBreakRate*60+input.hashMismatchRate*40)),
+    replayReadinessRisk:risk3(clamp(input.lineageBreakRate*100*1.5+input.hashMismatchRate*100*1.5)),
     recommendedLineageAuditCadenceDays:input.hashMismatchRate>0.08?7:input.lineageBreakRate>0.12?14:30
   };
 }
@@ -112,6 +112,6 @@ export function computeScaleProductionReadinessReport(input:{telemetryReadiness:
   const vals=[input.telemetryReadiness,input.replayReadiness,input.workflowReadiness,input.graphReadiness,input.lineageReadiness,input.storageReadiness,input.tenantHistoryReadiness,input.multiDomainReadiness];
   const high=vals.filter((v)=>v==='HIGH').length;
   const medium=vals.filter((v)=>v==='MEDIUM').length;
-  const scaleReadinessStatus=input.blockingRisks.length>0||high>0?'NOT_READY':medium>=3?'HARDENING_REQUIRED':'READY';
+  const scaleReadinessStatus=input.blockingRisks.length>0||high>0?'NOT_READY':medium>=2?'HARDENING_REQUIRED':'READY';
   return {...input,scaleReadinessStatus};
 }

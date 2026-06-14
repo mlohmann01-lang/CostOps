@@ -11,9 +11,10 @@ function trustAllowsOpportunity(band: string) { return ['TRUSTED', 'HIGH', 'INVE
 export class M365OpportunityProvider implements OpportunitySourceProvider {
   source = 'M365_PLAYBOOK'
   async generateOpportunities(tenantId: string): Promise<RawOpportunity[]> {
+    const snapshot = m365SnapshotRepository.getLatest(tenantId)
+    if (!snapshot) return []
     const trust = await m365TrustService.generateTrustReport(tenantId)
     const run = await runAllPlaybooks(tenantId)
-    const snapshot = m365SnapshotRepository.getLatest(tenantId)
     const raw = run.candidates.map((candidate) => {
       const trustedEnoughToShow = trustAllowsOpportunity(trust.globalTrustBand)
       const assessment = classifyM365ExecutionSafety({ playbookId: candidate.playbookId, entityId: candidate.entityId, entityType: candidate.entityType, projectedMonthlySavings: candidate.projectedMonthlySavings, savingsConfidence: candidate.savingsConfidence, evidenceQuality: candidate.evidenceQuality, evidenceReasons: candidate.economicAssessment.evidenceReasons, evidence: candidate.evidence, blockers: candidate.blockers, costEstimates: candidate.costEstimates, entitlementRelationships: candidate.entitlementRelationships }, { snapshot, trust })

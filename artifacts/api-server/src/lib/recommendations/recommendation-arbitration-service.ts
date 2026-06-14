@@ -142,6 +142,7 @@ export function applyM365ArbitrationPrecedence(recommendations: Array<any>) {
 function precedence(rec: any): number {
   const t = String(rec.type ?? "");
   if (t === "LEGAL_BLOCKER") return 1;
+  if (t === "FULL_RECLAIM") return 2;
   if (t === "DISABLED_RECLAIM") return 2;
   if (t === "INACTIVE_RECLAIM") return 3;
   if (t === "OVERLAP_ELIMINATION") return 4;

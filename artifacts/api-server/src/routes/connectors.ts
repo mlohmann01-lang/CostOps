@@ -466,7 +466,12 @@ router.post("/m365/sync/read-only", async (req, res) => {
 router.post("/m365/recommendations/generate", async (req, res) => {
   try {
     const tenantId = (req.query.tenantId as string) ?? "default";
-    const body = (req.body ?? {}) as { normalizedEvidence?: unknown; skuPricingCatalog?: M365SkuPricing[]; generationOptions?: { inactivityDaysThreshold?: number; evidenceConfidenceThreshold?: number; confidenceAdjustment?: number } };
+    const body = (req.body ?? {}) as { normalizedEvidence?: unknown; skuPricingCatalog?: M365SkuPricing[]; generationOptions?: { inactivityDaysThreshold?: number; evidenceConfidenceThreshold?: number; confidenceAdjustment?: number }; dryRun?: boolean };
+    if (body.dryRun) {
+      const previewEvidence = Array.isArray(body.normalizedEvidence) ? body.normalizedEvidence : [];
+      const preview = generateM365Recommendations({ tenantId, normalizedEvidence: previewEvidence as Parameters<typeof generateM365Recommendations>[0]["normalizedEvidence"], skuPricingCatalog: Array.isArray(body.skuPricingCatalog) ? body.skuPricingCatalog : [], generationOptions: body.generationOptions });
+      return res.json({ tenantId, recommendations: preview.recommendations, summary: preview.summary, persisted: false });
+    }
     const syncResult = Array.isArray(body.normalizedEvidence) ? null : await m365ReadOnlyEvidenceSyncService.runSync(tenantId);
     const normalizedEvidence = (Array.isArray(body.normalizedEvidence) ? body.normalizedEvidence : syncResult?.normalizedEvidence) ?? [];
     const generated = generateM365Recommendations({

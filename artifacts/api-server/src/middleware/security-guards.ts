@@ -10,6 +10,13 @@ function requestedTenant(req: Request): string | null {
 
 export function requireTenantContext() {
   return (req: Request, res: Response, next: NextFunction) => {
+    // If a prior middleware already resolved and set req.tenantId, honor it.
+    const alreadyResolved = (req as any).tenantId as string | undefined;
+    if (alreadyResolved) {
+      next();
+      return;
+    }
+
     const auth = buildAuthContextSync(req);
     const tenantId = requestedTenant(req);
 

@@ -6,7 +6,11 @@ export type GovernanceEventStorageMode = "database" | "memory";
 
 export class RecommendationGovernanceEventRepository {
   private static mem = new Map<string, any[]>();
-  constructor(private readonly options: { storageMode?: GovernanceEventStorageMode } = {}) {}
+  constructor(private readonly options: { storageMode?: GovernanceEventStorageMode } = {}) {
+    // Fail closed at construction time so a forbidden persistence configuration
+    // cannot be instantiated in staging/production even if never exercised.
+    this.mode();
+  }
   private env() { return String(process.env.RUNTIME_ENV ?? process.env.NODE_ENV ?? "development").toLowerCase(); }
   private isProdLike() { const e = this.env(); return e === "production" || e === "staging"; }
   private mode(): GovernanceEventStorageMode {

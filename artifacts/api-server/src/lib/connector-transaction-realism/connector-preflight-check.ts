@@ -1,2 +1,2 @@
 import { TransactionInput } from './connector-transaction-types';
-export const evaluatePreflight=(i:TransactionInput)=>{ const blocked:string[]=[]; if(!i.hasPermission) blocked.push('permission_drift'); if(i.duplicateRequest) blocked.push('duplicate_request'); if(i.requestedAt-i.stateTimestamp>300000) blocked.push('stale_provider_state'); return {ready:blocked.length===0,blocked};};
+export const evaluatePreflight=(i:TransactionInput)=>{ const blocked:string[]=[]; if(!i.hasPermission) blocked.push('permission_drift'); if(i.duplicateRequest) blocked.push('duplicate_request'); if(!i.stateTimestamp || i.stateTimestamp<=0 || i.requestedAt-i.stateTimestamp>300000) blocked.push('stale_provider_state'); return {ready:blocked.length===0,blocked};};

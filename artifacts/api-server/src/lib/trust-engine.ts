@@ -4,6 +4,9 @@ export type ReconciliationTrustSignals = {
   ownershipSignals?: unknown[];
   conflictSignals?: unknown[];
   recommendedTrustImpact?: "NONE" | "WARNING" | "DOWNGRADE" | "BLOCK";
+  recommendationImpact?: "NONE" | "WARNING" | "DOWNGRADE" | "BLOCK";
+  criticalBlockers?: string[];
+  warnings?: string[];
 };
 
 export type TrustAssessmentResult = {
@@ -36,7 +39,8 @@ export function assessTrust(context: any): TrustAssessmentResult {
   const baseRecommendation = recommendation;
 
   const reconciliationSignals: ReconciliationTrustSignals | undefined = context.reconciliationTrustSignals;
-  const impact = reconciliationSignals?.recommendedTrustImpact ?? "NONE";
+  const impact = reconciliationSignals?.recommendedTrustImpact ?? reconciliationSignals?.recommendationImpact ?? "NONE";
+  const reconciliationCriticalBlockers = reconciliationSignals?.criticalBlockers ?? [];
   const downgradeFactor = context.reconciliationDowngradeFactor ?? 0.15;
 
   const downgradedRecommendation = impact === "DOWNGRADE" ? b(baseRecommendation * (1 - downgradeFactor)) : baseRecommendation;
@@ -55,6 +59,7 @@ export function assessTrust(context: any): TrustAssessmentResult {
   if (c.usage_data_missing_for_removal_action) blockers.push("USAGE_DATA_MISSING_FOR_REMOVAL_ACTION");
   if (c.admin_or_service_account_match) blockers.push("ADMIN_OR_SERVICE_ACCOUNT_MATCH");
   if (impact === "BLOCK") blockers.push("RECONCILIATION_CONFLICT_BLOCK");
+  for (const reconciliationBlocker of reconciliationCriticalBlockers) blockers.push(reconciliationBlocker);
 
   const trustWarnings = [
     ...(r.savings_confidence < 1 ? ["Cost uses non-contract pricing confidence"] : []),

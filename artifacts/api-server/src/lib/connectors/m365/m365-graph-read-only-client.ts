@@ -58,6 +58,7 @@ export class M365GraphReadOnlyClient {
   listSubscribedSkus() { return this.fetchPaged(`${GRAPH_BASE}/subscribedSkus?$select=skuId,skuPartNumber,prepaidUnits,consumedUnits,servicePlans&$top=100`); }
   listGroups() { return this.fetchPaged(`${GRAPH_BASE}/groups?$select=id,displayName&$top=100`); }
   listDirectoryRoles() { return this.fetchPaged(`${GRAPH_BASE}/directoryRoles?$select=id,displayName&$top=100`); }
+  getUser(userId: string) { return this.fetchPage(`${GRAPH_BASE}/users/${encodeURIComponent(userId)}?$select=id,displayName,mail,userPrincipalName,accountEnabled,assignedLicenses,department,jobTitle,usageLocation,signInActivity`); }
   getUserSignInActivity() { return this.fetchPaged(`${GRAPH_BASE}/users?$select=id,userPrincipalName,signInActivity&$top=100`); }
   listAssignedLicenses() { return this.fetchPaged(`${GRAPH_BASE}/users?$select=id,userPrincipalName,assignedLicenses&$top=100`); }
   listUserSignInActivity() { return this.getUserSignInActivity(); }

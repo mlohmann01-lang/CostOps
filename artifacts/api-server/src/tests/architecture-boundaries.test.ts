@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
 
 function text(path: string) {
-  return readFileSync(join(process.cwd(), "artifacts/api-server/src/tests", path), "utf8");
+  // Resolve relative to this test file (src/tests) rather than process.cwd(),
+  // so the test is robust to the directory the runner is invoked from.
+  return readFileSync(new URL(path, import.meta.url), "utf8");
 }
 
 function assertNoForbiddenImports(filePath: string, forbidden: string[]) {

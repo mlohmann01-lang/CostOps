@@ -14,11 +14,19 @@ function degradeConfidence(confidence: string): PricingConfidence {
   return priority[idx + 1] as PricingConfidence;
 }
 
+const UNKNOWN_PRICE = { monthly: 0, annual: 0, currency: "USD", pricingConfidence: "UNKNOWN" as PricingConfidence, pricingSource: "", pricingConflictState: "MISSING", pricingFreshness: null as Date | null, fxRateUsed: 1, originalCurrency: "USD" };
+
 export async function resolveSkuPrice(tenantId: string, skuId: string) {
   const now = new Date();
-  const tenantRows = await db.select().from(tenantSkuPricingTable)
-    .where(and(eq(tenantSkuPricingTable.tenantId, tenantId), eq(tenantSkuPricingTable.skuId, skuId)))
-    .orderBy(desc(tenantSkuPricingTable.lastValidated));
+  let tenantRows: any[];
+  try {
+    tenantRows = await db.select().from(tenantSkuPricingTable)
+      .where(and(eq(tenantSkuPricingTable.tenantId, tenantId), eq(tenantSkuPricingTable.skuId, skuId)))
+      .orderBy(desc(tenantSkuPricingTable.lastValidated));
+  } catch {
+    // Fail-closed: pricing store unavailable -> treat as no verified pricing.
+    return { ...UNKNOWN_PRICE };
+  }
 
   const activeRows = tenantRows.filter((r: any) => (!r.contractStart || r.contractStart <= now) && (!r.contractEnd || r.contractEnd >= now));
   const conflicting = activeRows.length > 1 && new Set(activeRows.map((r: any) => r.effectiveMonthlyCost)).size > 1;
@@ -45,9 +53,14 @@ export async function resolveSkuPrice(tenantId: string, skuId: string) {
     };
   }
 
-  const [publicRow] = await db.select().from(m365SkuCatalogTable)
-    .where(and(eq(m365SkuCatalogTable.skuId, skuId), lte(m365SkuCatalogTable.effectiveFrom, now), or(isNull(m365SkuCatalogTable.effectiveTo), gte(m365SkuCatalogTable.effectiveTo, now))))
-    .orderBy(desc(m365SkuCatalogTable.effectiveFrom)).limit(1);
+  let publicRow: any;
+  try {
+    [publicRow] = await db.select().from(m365SkuCatalogTable)
+      .where(and(eq(m365SkuCatalogTable.skuId, skuId), lte(m365SkuCatalogTable.effectiveFrom, now), or(isNull(m365SkuCatalogTable.effectiveTo), gte(m365SkuCatalogTable.effectiveTo, now))))
+      .orderBy(desc(m365SkuCatalogTable.effectiveFrom)).limit(1);
+  } catch {
+    return { ...UNKNOWN_PRICE };
+  }
 
   if (publicRow) {
     return {
@@ -63,7 +76,7 @@ export async function resolveSkuPrice(tenantId: string, skuId: string) {
     };
   }
 
-  return { monthly: 0, annual: 0, currency: "USD", pricingConfidence: "UNKNOWN", pricingSource: "", pricingConflictState: "MISSING", pricingFreshness: null, fxRateUsed: 1, originalCurrency: "USD" };
+  return { ...UNKNOWN_PRICE };
 }
 
 export async function resolveProjectedSavings(tenantId: string, skuId: string, quantity: number) {

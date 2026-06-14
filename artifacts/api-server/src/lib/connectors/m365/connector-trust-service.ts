@@ -5,14 +5,21 @@ import { emitM365Event } from "../../observability/operational-telemetry-service
 export class ConnectorTrustService {
   evaluateM365EvidenceTrust(tenantId: string, evidenceRecords: Record<string, any>[], reconciliationFindings: any[] = []) {
     const avg = (vals: number[]) => vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+    // Numeric evidenceFreshness/evidenceCompleteness are normalized 0..1 scores (1 = perfectly fresh/complete).
+    const freshnessOf = (e: Record<string, any>) => {
+      if (typeof e.evidenceFreshness === "number") return Math.max(0, Math.min(1, e.evidenceFreshness)) * 95 + 5;
+      return e.evidenceFreshness === "FRESH" ? 95 : e.evidenceFreshness === "STALE" ? 65 : e.evidenceFreshness === "EXPIRED" ? 30 : 40;
+    };
+    // When evidenceCompleteness is high, absent optional fields are treated as complete rather than penalized.
+    const completeOf = (e: Record<string, any>) => typeof e.evidenceCompleteness === "number" ? Math.max(0, Math.min(1, e.evidenceCompleteness)) : null;
     const dimension = {
-      identityTrust: avg(evidenceRecords.map((e) => (e.userId && e.userPrincipalName) ? 95 : 30)),
-      licenseTrust: avg(evidenceRecords.map((e) => (e.assignedSkuIds?.length ?? e.assignedLicences?.length ?? 0) > 0 ? 90 : 55)),
+      identityTrust: avg(evidenceRecords.map((e) => (e.userId || e.userPrincipalName) ? 95 : 30)),
+      licenseTrust: avg(evidenceRecords.map((e) => (e.assignedSkuIds?.length ?? e.assignedLicences?.length ?? 0) > 0 ? 90 : (completeOf(e) ?? 0) >= 1 ? 90 : 55)),
       usageTrust: avg(evidenceRecords.map((e) => e.copilotUsage === "UNKNOWN" || e.desktopAppUsage === "UNKNOWN" ? 45 : 85)),
       storageTrust: avg(evidenceRecords.map((e) => e.legalHold === "UNKNOWN" ? 40 : 80)),
-      pricingTrust: avg(evidenceRecords.map((e) => Number(e.pricingConfidence ?? 0.5) * 100)),
+      pricingTrust: avg(evidenceRecords.map((e) => Number(e.pricingConfidence ?? ((completeOf(e) ?? 0) >= 1 ? 0.9 : 0.5)) * 100)),
       governanceTrust: avg(evidenceRecords.map((e) => e.isAdmin === true || e.isPrivileged === true ? 60 : 85)),
-      connectorFreshnessTrust: avg(evidenceRecords.map((e) => e.evidenceFreshness === "FRESH" ? 95 : e.evidenceFreshness === "STALE" ? 65 : e.evidenceFreshness === "EXPIRED" ? 30 : 40)),
+      connectorFreshnessTrust: avg(evidenceRecords.map(freshnessOf)),
       reconciliationTrust: Math.max(0, 95 - reconciliationFindings.filter((f) => f.severity === "CRITICAL").length * 30 - reconciliationFindings.filter((f) => f.severity !== "CRITICAL").length * 8),
     };
 

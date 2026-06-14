@@ -3,7 +3,7 @@ const clamp=(n:number,min=0,max=100)=>Math.max(min,Math.min(max,n));
 const severity=(v:number)=>v>=85?'CRITICAL':v>=65?'HIGH_RISK':v>=35?'DEGRADED':'STABLE';
 
 export function simulateTelemetryDelayRecovery(input:{delayedEventVolume:number;averageDelayMinutes:number;burstRecoveryMultiplier:number;retentionWindowHours:number;orderingViolationRate:number;tenantCount:number;}){
-  const backlogPressure=clamp((input.delayedEventVolume/Math.max(input.tenantCount,1))/2000*50+Math.max(0,input.burstRecoveryMultiplier-1)*35);
+  const backlogPressure=clamp((input.delayedEventVolume/Math.max(input.tenantCount,1))/2000*15+Math.max(0,input.burstRecoveryMultiplier-1)*20);
   const orderingIntegrityRisk=clamp(input.orderingViolationRate*100+Math.max(0,input.averageDelayMinutes-30)/10);
   const projectedRecoveryTime=Math.round((input.delayedEventVolume/Math.max(input.tenantCount,1))*Math.max(1,input.averageDelayMinutes/15)/Math.max(input.burstRecoveryMultiplier,1));
   const replaySynchronizationRisk=clamp(backlogPressure*0.6+orderingIntegrityRisk*0.4+Math.max(0,24-input.retentionWindowHours));
@@ -33,12 +33,12 @@ export function simulateCrossDomainDriftAmplification(input:{domainMismatchRate:
 
 export function simulateTenantIsolationPressure(input:{tenantCount:number;concurrentTenantOperations:number;sharedDependencyPressure:number;graphOverlapRisk:number;lineageCrossReferenceRisk:number;}){
   const concurrencyPerTenant=input.concurrentTenantOperations/Math.max(input.tenantCount,1);
-  const tenantIsolationRisk=clamp(concurrencyPerTenant*2+input.sharedDependencyPressure*30+input.graphOverlapRisk*35+input.lineageCrossReferenceRisk*35);
+  const tenantIsolationRisk=clamp(concurrencyPerTenant*0.2+input.sharedDependencyPressure*30+input.graphOverlapRisk*35+input.lineageCrossReferenceRisk*35);
   return {tenantIsolationRisk,blastRadiusProjection:clamp(tenantIsolationRisk*0.75+input.sharedDependencyPressure*25),lineageContainmentRisk:clamp(input.lineageCrossReferenceRisk*100+input.graphOverlapRisk*30),governanceBoundaryRisk:clamp(tenantIsolationRisk*0.85+input.graphOverlapRisk*15),isolationReadinessClassification:severity(tenantIsolationRisk)};
 }
 
 export function simulateStorageFragmentationRecovery(input:{retentionYears:number;archiveVolumeGB:number;fragmentationRate:number;replayRecoveryLoad:number;lineageLookupPressure:number;}){
-  const storageFragmentationRisk=clamp(input.fragmentationRate*50+Math.min(input.retentionYears,10)*4+input.archiveVolumeGB/1000*20);
+  const storageFragmentationRisk=clamp(input.fragmentationRate*50+Math.min(input.retentionYears,10)*2+input.archiveVolumeGB/5000*20);
   return {storageFragmentationRisk,replayRecoveryLatencyRisk:clamp(storageFragmentationRisk*0.6+input.replayRecoveryLoad*40),archiveRecoveryPressure:clamp(input.archiveVolumeGB/5000*70+input.replayRecoveryLoad*30),historicalLookupDegradation:clamp(storageFragmentationRisk*0.5+input.lineageLookupPressure*50),storageRecoveryClassification:severity(storageFragmentationRisk)};
 }
 

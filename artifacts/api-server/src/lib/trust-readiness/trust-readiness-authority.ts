@@ -38,7 +38,7 @@ function required(actionType: RequiredReadinessActionType, ownerRole: RequiredRe
 export class TrustReadinessAuthorityRepository {
   private readonly store = new PersistenceStore<ReadinessAuthorityReport & { createdAt: string; updatedAt: string; reportId: string }>(getPersistenceProvider(), PersistenceCollections.TRUST_READINESS_REPORTS);
   save(report: ReadinessAuthorityReport) { const record = { ...report, id: report.actionId, reportId: report.id, createdAt: report.generatedAt, updatedAt: report.generatedAt }; this.store.upsert(record).catch(() => {}); this.store.setCached(record); return report; }
-  get(tenantId: string, actionId: string): ReadinessAuthorityReport | null { const r = this.store.getCached(tenantId, actionId); if (!r) return null; return { ...r, id: r.reportId }; }
+  get(tenantId: string, idOrActionId: string): ReadinessAuthorityReport | null { const r = this.store.getCached(tenantId, idOrActionId) ?? this.store.listCached(tenantId).find((c) => c.reportId === idOrActionId) ?? null; if (!r) return null; return { ...r, id: r.reportId }; }
   list(tenantId: string) { return this.store.listCached(tenantId).map((r) => ({ ...r, id: r.reportId })); }
   async listAsync(tenantId: string) { return (await this.store.list(tenantId)).map((r) => ({ ...r, id: r.reportId })); }
   clear() { this.store.clearAll(); }

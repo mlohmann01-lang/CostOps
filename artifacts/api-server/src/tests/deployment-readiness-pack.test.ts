@@ -4,14 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 test("runtime env validation script checks required env vars", () => {
-  const scriptPath = path.resolve(process.cwd(), "../scripts/validate-runtime-env.ts");
+  const scriptPath = new URL("../../../../scripts/validate-runtime-env.ts", import.meta.url);
   const src = fs.readFileSync(scriptPath, "utf8");
   assert.equal(src.includes("DATABASE_URL is required"), true);
   assert.equal(src.includes("DEMO_MODE must be explicitly set"), true);
 });
 
 test("customer demo seed refuses when DEMO_MODE is not true", () => {
-  const seedPath = path.resolve(process.cwd(), "../scripts/seed-customer-demo-m365.ts");
+  const seedPath = new URL("../../../../scripts/seed-customer-demo-m365.ts", import.meta.url);
   const src = fs.readFileSync(seedPath, "utf8");
   assert.equal(src.includes('process.env.DEMO_MODE !== "true"'), true);
   assert.equal(src.includes("demo mode only — no external execution"), true);
@@ -26,7 +26,7 @@ test("readiness endpoint returns required keys", () => {
 });
 
 test("smoke script is read-only and does not call execution endpoints", () => {
-  const smokePath = path.resolve(process.cwd(), "../scripts/smoke-m365-demo.ts");
+  const smokePath = new URL("../../../../scripts/smoke-m365-demo.ts", import.meta.url);
   const src = fs.readFileSync(smokePath, "utf8");
   assert.equal(src.includes('method: "GET"'), true);
   assert.equal(src.includes("/api/execution/"), false);

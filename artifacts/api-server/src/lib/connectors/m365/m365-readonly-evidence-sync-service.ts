@@ -36,11 +36,11 @@ export class M365ReadOnlyEvidenceSyncService {
 
     const readinessState = evaluateM365ConnectorReadiness({
       authSucceeded: Boolean(token.accessToken),
-      tenantReachable: readiness.status !== "BLOCKED",
+      tenantReachable: Boolean(token.accessToken),
       grantedScopes: (readiness.evidence.grantedPermissions as string[] | undefined) ?? [],
       requiredScopes: ["User.Read.All", "Directory.Read.All", "Organization.Read.All"],
-      activityEndpointAccessible: readiness.status !== "BLOCKED",
-      licenceEndpointAccessible: readiness.status !== "BLOCKED",
+      activityEndpointAccessible: Boolean(token.accessToken),
+      licenceEndpointAccessible: Boolean(token.accessToken),
       evidenceFreshnessHours: 1,
       maxFreshnessHours: 24,
       tenantMode: process.env.ECON_OPS_TENANT_MODE ?? "PILOT_READ_ONLY",

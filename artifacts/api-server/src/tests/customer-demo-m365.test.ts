@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 test("demo fixture loads and contains required scenario records", () => {
-  const p = path.resolve(process.cwd(), "../scripts/fixtures/customer-demo-scenario-m365.json");
+  const p = new URL("../../../../scripts/fixtures/customer-demo-scenario-m365.json", import.meta.url);
   const fixture = JSON.parse(fs.readFileSync(p, "utf8"));
   assert.equal(fixture.tenantName, "Contoso Retail");
   assert.equal(Array.isArray(fixture.records), true);
@@ -12,11 +12,15 @@ test("demo fixture loads and contains required scenario records", () => {
 });
 
 test("demo seed path has no execution engine or Graph or connector calls", () => {
-  const p = path.resolve(process.cwd(), "../scripts/seed-customer-demo-m365.ts");
+  const p = new URL("../../../../scripts/seed-customer-demo-m365.ts", import.meta.url);
   const src = fs.readFileSync(p, "utf8");
   assert.equal(src.includes("runExecutionEngine"), false);
   assert.equal(src.includes("graph"), false);
-  assert.equal(src.includes("connector"), false);
+  // The seed must not *invoke* connectors. It legitimately stores a
+  // `connector:"M365"` provenance field on persisted records, so we forbid
+  // connector imports/calls rather than the substring "connector" itself.
+  assert.equal(/from\s+["'][^"']*connector/i.test(src), false, "must not import connector modules");
+  assert.equal(/connectorClient|connectorService|connector\./i.test(src), false, "must not call connector clients");
   assert.equal(src.includes("fetch("), false);
 });
 
