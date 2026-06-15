@@ -88,3 +88,5 @@ export * from "./governancePolicyEvaluationsV1";
 export * from "./technologyCommercialAuthority";
 
 export * from "./financialTruthAuthority";
+
+export * from "./ownershipIntelligence";
