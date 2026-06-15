@@ -84,3 +84,7 @@ export * from "./executionResults";
 export * from "./executionOutcomes";
 
 export * from "./governancePolicyEvaluationsV1";
+
+export * from "./technologyCommercialAuthority";
+
+export * from "./financialTruthAuthority";
