@@ -62,6 +62,7 @@ import outcomeProtectionRouter from "./outcome-protection";
 import technologyCommercialAuthorityRouter from "./technology-commercial-authority";
 import financialTruthAuthorityRouter from "./financial-truth-authority";
 import ownershipIntelligenceRouter from "./ownership-intelligence";
+import outcomeFinanceReconciliationRouter from "./outcome-finance-reconciliation";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -94,6 +95,7 @@ router.use("/outcome-protection", requireTenantContext(), requireCapability("REA
 router.use("/technology-commercial-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), technologyCommercialAuthorityRouter);
 router.use("/financial-truth-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), financialTruthAuthorityRouter);
 router.use("/ownership-intelligence", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), ownershipIntelligenceRouter);
+router.use("/outcome-finance-reconciliation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), outcomeFinanceReconciliationRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
