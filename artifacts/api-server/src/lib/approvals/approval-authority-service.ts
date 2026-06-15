@@ -5,6 +5,7 @@ import { findActiveApprovalWorkflow, getApprovalWorkflow, listApprovalWorkflows,
 import type { ApprovalWorkflow } from "./types";
 import type { ApprovalAuthorityStatus, ApprovalAuthorityTargetType, CanonicalApproval, CanonicalApprovalState } from "./approval-authority-types";
 import { platformEventService } from "../events/platform-event-service";
+import { economicGraphService } from "../economic-knowledge-graph/economic-graph-service";
 import { normalizeApprovalWorkflowEvent, normalizeRecommendationGovernanceEvent } from "../events/event-normalizer";
 import { appendUnifiedEvent } from "../events/evidence-timeline";
 import { ExecutionRequestService } from "../execution/execution-request-service";
@@ -121,6 +122,12 @@ export class ApprovalAuthorityService {
     }
     await platformEventService.recordApprovalEvent(tenantId, "APPROVAL_SUBMITTED", { eventId: `${workflow.workflowId}:APPROVAL_SUBMITTED:${workflow.createdAt}`, entityType: "APPROVAL_WORKFLOW", entityId: workflow.workflowId, actorId, title: "Approval submitted", description: `Approval submitted for ${targetType}:${targetId}`, sourceSystem: "approval-authority-service", metadata: { actorRole, beforeState: "NOT_SUBMITTED", afterState: workflow.approvalState, evidence }, occurredAt: workflow.createdAt });
     for (const event of workflow.auditEvents) await platformEventService.recordNormalizedEvent(normalizeApprovalWorkflowEvent({ tenantId, workflowId: workflow.workflowId, ...event })).catch(() => undefined);
+    // Graph hook — non-breaking: failure recorded via platform event, authority write already succeeded
+    if (targetType === "RECOMMENDATION") {
+      economicGraphService.linkRecommendationToApproval(tenantId, targetId, workflow.workflowId).catch((err) => {
+        platformEventService.recordSystemEvent(tenantId, "GRAPH_WRITE_FAILED", { entityType: "APPROVAL", entityId: workflow.workflowId, metadata: { operation: "linkRecommendationToApproval", error: err instanceof Error ? err.message : String(err) } }).catch(() => undefined);
+      });
+    }
     return { approval: workflowToCanonicalApproval(workflow), workflow, existing: false };
   }
 
@@ -135,6 +142,13 @@ export class ApprovalAuthorityService {
     if (workflow.targetType === "RECOMMENDATION") await this.recommendationRepo.linkApprovalWorkflow(tenantId, workflow.targetId, { approvalWorkflowId: workflow.workflowId, approvalSubmittedAt: workflow.createdAt, approvalState: workflow.approvalState, currentApprovalStage: currentStageName(workflow) });
     let executionRequest = null;
     if (before?.approvalState !== "APPROVED" && workflow.approvalState === "APPROVED") executionRequest = await this.executionRequests.createFromApprovedWorkflow(workflow, actorId, "APPROVAL_WORKFLOW");
+    // Graph hook — non-breaking
+    if (workflow.approvalState === "APPROVED") {
+      const actionId = (executionRequest as any)?.executionRequestId ?? `action:${workflowId}`;
+      economicGraphService.linkApprovalToAction(tenantId, workflowId, actionId).catch((err) => {
+        platformEventService.recordSystemEvent(tenantId, "GRAPH_WRITE_FAILED", { entityType: "APPROVAL", entityId: workflowId, metadata: { operation: "linkApprovalToAction", error: err instanceof Error ? err.message : String(err) } }).catch(() => undefined);
+      });
+    }
     return { approval: workflowToCanonicalApproval(workflow), workflow, executionRequest };
   }
 

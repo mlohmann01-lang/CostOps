@@ -62,6 +62,7 @@ import outcomeProtectionRouter from "./outcome-protection";
 import certificationRouter from "./certification";
 import technologyPortfolioRouter from "./technology-portfolio";
 import executiveProofPacksRouter from "./executive-proof-packs";
+import economicGraphRouter from "./economic-graph";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import persistenceRouter from "./persistence";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
@@ -133,6 +134,7 @@ router.use("/graph", requireTenantContext(), requireCapability("READ_GRAPH"), gr
 router.use("/discovery", requireTenantContext(), requireCapability("READ_GRAPH"), discoveryRouter);
 router.use("/workflow", workflowRouter);
 router.use("/economic-operations", economicOperationsRouter);
+router.use("/economic-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), economicGraphRouter);
 router.use("/packs", packsRouter);
 router.use('/', executionResultsOutcomeRouter);
 router.use("/", pilotRouter);

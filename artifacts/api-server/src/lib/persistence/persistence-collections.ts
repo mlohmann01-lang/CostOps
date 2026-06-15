@@ -43,6 +43,9 @@ export const PersistenceCollections = {
   AUDIT_COMPLETENESS: "audit_completeness",
 
   PLATFORM_EVENTS: "platform_events",
+
+  ECONOMIC_GRAPH_NODES: "economic_graph_nodes",
+  ECONOMIC_GRAPH_EDGES: "economic_graph_edges",
 } as const;
 
 export type PersistenceCollection = (typeof PersistenceCollections)[keyof typeof PersistenceCollections];
