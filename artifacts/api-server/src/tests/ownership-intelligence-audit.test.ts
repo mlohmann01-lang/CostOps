@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { runOwnershipIntelligenceAudit, OWNERSHIP_INTELLIGENCE_FOUNDATION_READY } from '../lib/ownership-intelligence';
+test('ownership intelligence audit returns PASS',async()=>{const audit=await runOwnershipIntelligenceAudit(); assert.equal(audit.auditId,OWNERSHIP_INTELLIGENCE_FOUNDATION_READY); assert.equal(audit.status,'PASS'); assert.equal(audit.checks.every((c:any)=>c.status==='PASS'),true);});
