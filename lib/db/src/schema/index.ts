@@ -90,3 +90,5 @@ export * from "./technologyCommercialAuthority";
 export * from "./financialTruthAuthority";
 
 export * from "./ownershipIntelligence";
+
+export * from "./outcomeFinanceReconciliation";
