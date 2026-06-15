@@ -1,126 +1,301 @@
-import { useMemo } from 'react'
-import { useWorkspace } from '../lib/workspaceContext'
-import { useRuntimeContext } from '../lib/runtimeContext'
-import { useM365OnboardingData } from './useM365OnboardingData'
-import { useConnectorHubData } from './useConnectorHubData'
-import { useDataTrustData } from './useDataTrustData'
-import { useRecommendationsData } from './useRecommendationsData'
-import { useOutcomesData } from './useOutcomesData'
-import { useExecutionData } from './useExecutionData'
-import { useEvidencePacks } from './useEvidencePacks'
-import { useExecutiveValueData } from './useExecutiveValueData'
-
-type ReadinessState = 'Ready' | 'Needs attention' | 'Blocked' | 'Review required' | 'Evidence ready' | 'Value identified' | 'Value verified'
-
-type ActionPriority = 'High' | 'Medium' | 'Low'
-
-export type PilotWorkspaceAction = {
-  id: string
-  label: string
-  reason: string
-  status: ReadinessState
-  priority: ActionPriority
-  href: string
-}
-
-const money = (value: unknown) => Number(value ?? 0)
-const annualize = (monthly: unknown) => money(monthly) * 12
-const statusText = (value: unknown) => String(value ?? '').toUpperCase()
-const isReadyText = (value: unknown) => /READY|PASSED|COMPLETE|COMPLETED|HIGH|TRUSTED|HEALTHY/.test(statusText(value))
-const isBlockedText = (value: unknown) => /BLOCK|FAILED|UNAVAILABLE|LOW_CONFIDENCE/.test(statusText(value))
-const latestDate = (...values: unknown[]) => values.map((value) => String(value ?? '')).filter(Boolean).sort().at(-1) ?? new Date().toISOString()
-
-function readinessFromCount(blocked: number, needsAttention: number): ReadinessState {
-  if (blocked > 0) return 'Blocked'
-  if (needsAttention > 0) return 'Needs attention'
-  return 'Ready'
-}
-
-function action(id: string, label: string, reason: string, status: ReadinessState, priority: ActionPriority, href: string): PilotWorkspaceAction {
-  return { id, label, reason, status, priority, href }
-}
-
-export function buildPilotWorkspaceData(sources: any) {
-  const workspace = sources.workspace ?? {}
-  const runtime = sources.runtime ?? {}
-  const onboarding = sources.onboarding?.onboarding ?? {}
-  const checklist = sources.onboarding?.checklist ?? {}
-  const connectors = Array.isArray(sources.connectors?.data) ? sources.connectors.data : []
-  const trustData = sources.trust?.data ?? {}
-  const trustSummary = trustData.summary ?? {}
-  const recommendations = Array.isArray(sources.recommendations?.data) ? sources.recommendations.data : []
-  const outcomes = sources.outcomes?.data ?? {}
-  const execution = sources.execution?.data ?? {}
-  const evidence = sources.evidence?.data ?? {}
-  const executive = sources.executive ?? {}
-  const executiveSummary = executive.summary ?? {}
-  const executiveMetrics = executiveSummary.valueMetrics ?? {}
-  const executiveConfidence = executiveSummary.confidence ?? {}
-  const executiveNarrative = executiveSummary.narrative ?? {}
-
-  const connectorBlocked = connectors.filter((connector: any) => isBlockedText(connector.health ?? connector.status)).length
-  const connectorNeedsAttention = connectors.filter((connector: any) => !isReadyText(connector.health ?? connector.status)).length
-  const connectorStatus = connectors.length === 0 ? 'Needs attention' : readinessFromCount(connectorBlocked, connectorNeedsAttention)
-  const trustStatus: ReadinessState = isBlockedText(trustSummary.globalTrustBand) ? 'Blocked' : isReadyText(trustSummary.globalTrustBand) ? 'Ready' : 'Review required'
-  const onboardingStatus: ReadinessState = isBlockedText(onboarding.status) ? 'Blocked' : isReadyText(onboarding.status) ? 'Ready' : 'Needs attention'
-  const evidencePacks = Array.isArray(evidence.packs) ? evidence.packs : []
-  const completeEvidence = evidencePacks.filter((pack: any) => isReadyText(pack.status)).length
-  const evidenceStatus: ReadinessState = completeEvidence > 0 ? 'Evidence ready' : 'Needs attention'
-  const executiveStatus: ReadinessState = money(executiveMetrics.verifiedAnnualSavings) > 0 || money(executiveMetrics.projectedAnnualSavings) > 0 ? 'Ready' : 'Review required'
-
-  const projectedAnnualValue = money(executiveMetrics.projectedAnnualSavings) || annualize(outcomes.proofSummary?.projectedMonthlySavings) || annualize(onboarding.opportunityAssessment?.projectedMonthlySavings) || annualize(recommendations.reduce((sum: number, item: any) => sum + money(item.saving ?? item.projectedMonthlySavings), 0))
-  const verifiedAnnualValue = money(executiveMetrics.verifiedAnnualSavings) || annualize(outcomes.proofSummary?.verifiedMonthlySavings) || annualize(Array.isArray(outcomes.stats) ? outcomes.stats[1] : 0) || annualize(evidence.summary?.verifiedSavings)
-  const pendingApprovals = (Array.isArray(execution.awaiting) ? execution.awaiting : []).filter((item: any) => /APPROVAL|PENDING/.test(statusText(item.status ?? item.readiness))).length
-  const blockedActions = (Array.isArray(execution.awaiting) ? execution.awaiting : []).filter((item: any) => isBlockedText(item.status ?? item.readiness)).length + recommendations.filter((item: any) => isBlockedText(item.verdict)).length
-  const dryRunReady = statusText(onboarding.pilotMode).includes('DRY_RUN') || (Array.isArray(execution.awaiting) ? execution.awaiting : []).some((item: any) => /DRY/.test(statusText(item.status ?? item.readiness)))
-  const controlledExecutionReady = statusText(onboarding.pilotMode).includes('CONTROLLED') || (Array.isArray(execution.awaiting) ? execution.awaiting : []).some((item: any) => /EXECUTION/.test(statusText(item.status ?? item.readiness)))
-  const verificationPending = money(outcomes.proofSummary?.verificationBacklogCount ?? (Array.isArray(outcomes.stats) ? outcomes.stats[3] : 0))
-  const reviewRequired = recommendations.filter((item: any) => /APPROVAL|PENDING|REVIEW/.test(statusText(item.verdict ?? item.status))).length + pendingApprovals + verificationPending
-
-  const openActions: PilotWorkspaceAction[] = []
-  if (!isReadyText(onboarding.status)) openActions.push(action('connect-tenant', 'Connect tenant', 'Tenant setup is not ready for the pilot workspace.', onboardingStatus, 'High', '/onboarding/m365'))
-  if (connectors.length === 0 || connectorStatus !== 'Ready') openActions.push(action('validate-permissions', 'Validate permissions', connectors.length === 0 ? 'No connector status is available yet.' : `${connectorNeedsAttention} connector item needs attention.`, connectorStatus, connectorStatus === 'Blocked' ? 'High' : 'Medium', '/connectors'))
-  if (!isReadyText(onboarding.discovery?.status)) openActions.push(action('run-discovery', 'Run discovery', 'Discovery evidence is not complete.', 'Needs attention', 'High', '/onboarding/m365'))
-  if (trustStatus !== 'Ready') openActions.push(action('review-trust-blockers', 'Review trust blockers', trustSummary.globalTrustLabel ?? 'Trust review is required before the next pilot step.', trustStatus, 'High', '/data-trust'))
-  if (pendingApprovals > 0 || recommendations.some((item: any) => /APPROVAL/.test(statusText(item.verdict)))) openActions.push(action('approve-dry-runs', 'Approve dry runs', `${pendingApprovals || recommendations.filter((item: any) => /APPROVAL/.test(statusText(item.verdict))).length} item(s) need approval.`, 'Review required', 'High', '/approval-workflows'))
-  if (controlledExecutionReady && blockedActions === 0) openActions.push(action('execute-controlled-actions', 'Execute controlled actions', 'Controlled actions are ready for the next execution window.', 'Ready', 'Medium', '/all/execution'))
-  if (evidencePacks.length === 0 || evidenceStatus !== 'Evidence ready') openActions.push(action('generate-evidence-pack', 'Generate evidence pack', 'Pilot proof is not packaged for customer review.', evidenceStatus, 'Medium', '/evidence-packs'))
-  if (executiveStatus !== 'Ready' || verificationPending > 0) openActions.push(action('prepare-executive-review', 'Prepare executive review', verificationPending > 0 ? `${verificationPending} outcome(s) still need verification.` : 'Executive value summary needs review.', 'Review required', 'Medium', '/executive-value'))
-  if (openActions.length === 0) openActions.push(action('prepare-executive-review', 'Prepare executive review', 'Pilot workspace is ready for the daily customer-success review.', 'Ready', 'Low', '/executive-value'))
-
-  const overallReadiness = readinessFromCount([onboardingStatus, connectorStatus, trustStatus].filter((status) => status === 'Blocked').length, [onboardingStatus, connectorStatus, trustStatus, evidenceStatus, executiveStatus].filter((status) => status !== 'Ready' && status !== 'Evidence ready').length)
-
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { liveFetch, normalizeApiError } from "../lib/liveApi";
+import { useWorkspace } from "../lib/workspaceContext";
+import type { PilotWorkspaceSummary } from "../types/pilotWorkspace";
+export const pilotWorkspaceApiPaths = [
+  "/api/workspace/pilot-summary",
+  "/api/workspace/pilot-summary/audit",
+];
+export const unavailable = "Not available";
+const now = () => new Date().toISOString();
+export function demoPilotWorkspaceSummary(
+  tenantId = "demo-sandbox-tenant",
+): PilotWorkspaceSummary {
   return {
-    tenant: { name: workspace.tenantName ?? 'Demo workspace', environment: runtime.environment ?? workspace.mode ?? 'DEMO', lastUpdated: latestDate(onboarding.updatedAt, checklist.generatedAt, executiveSummary.generatedAt, evidencePacks[0]?.generatedAt, runtime.selectedAt) },
-    overallReadiness,
-    kpis: { tenantStatus: onboardingStatus, trustStatus, projectedAnnualValue, verifiedAnnualValue, openActions: openActions.length, evidencePacks: evidencePacks.length },
-    pilotReadiness: [
-      { label: 'Onboarding', status: onboardingStatus, detail: onboarding.status ?? 'Not started', href: '/onboarding/m365' },
-      { label: 'Connector', status: connectorStatus, detail: connectors.length ? `${connectors.filter((connector: any) => isReadyText(connector.health ?? connector.status)).length}/${connectors.length} ready` : 'No connector data yet', href: '/connectors' },
-      { label: 'Trust', status: trustStatus, detail: trustSummary.globalTrustLabel ?? trustSummary.globalTrustBand ?? 'Trust unavailable', href: '/data-trust' },
-      { label: 'Evidence', status: evidenceStatus, detail: evidencePacks.length ? `${completeEvidence}/${evidencePacks.length} evidence pack(s) ready` : 'Evidence pack not generated', href: '/evidence-packs' },
-      { label: 'Executive review', status: executiveStatus, detail: executiveNarrative.headline ?? 'Executive value review pending', href: '/executive-value' },
+    tenantId,
+    mode: "DEMO",
+    generatedAt: now(),
+    demoBanner: {
+      visible: true,
+      label: "Demo data",
+      description:
+        "Sample tenant showing the complete Certen story. No production systems are connected.",
+    },
+    tenantReadiness: {
+      overallStatus: "DEMO",
+      items: [
+        ["connector", "Connector readiness"],
+        ["authority", "Authority readiness"],
+        ["graph", "Economic graph readiness"],
+        ["commercial", "Commercial coverage"],
+        ["financial", "Financial truth coverage"],
+        ["ownership", "Ownership completeness"],
+        ["evidence", "Evidence coverage"],
+        ["outcomeFinance", "Outcome finance readiness"],
+      ].map(([key, label]) => ({
+        key,
+        label,
+        status: "DEMO" as const,
+        score: 92,
+        reason: "Demo data for design-partner walkthrough",
+        nextStep: "Connect live sources to replace sample data",
+      })),
+    },
+    executiveValue: {
+      projectedValue: 420000,
+      approvedValue: 210000,
+      executedValue: 128000,
+      financeVerifiedValue: 96000,
+      varianceAmount: -32000,
+      variancePercent: -25,
+      currency: "USD",
+      confidence: "HIGH",
+      status: "AVAILABLE",
+    },
+    commercialPosition: {
+      vendorCount: 8,
+      contractCount: 12,
+      entitlementCount: 21,
+      commitmentCount: 4,
+      renewalCount: 5,
+      commercialExposureValue: 180000,
+      blockedSavingsValue: 42000,
+      renewalLeverage: "HIGH",
+      status: "AVAILABLE",
+    },
+    financialTruth: {
+      costCentreCount: 5,
+      invoiceCount: 44,
+      purchaseOrderCount: 18,
+      vendorSpendCount: 8,
+      reconciliationCount: 6,
+      verifiedSavings: 96000,
+      unverifiedSavings: 32000,
+      status: "AVAILABLE",
+    },
+    ownershipCoverage: {
+      completenessScore: 88,
+      missingOwners: 2,
+      missingCostCentres: 1,
+      missingExecutiveOwners: 1,
+      approvalRoutesReady: 7,
+      approvalRoutesBlocked: 1,
+      status: "AVAILABLE",
+    },
+    actionSnapshot: {
+      ready: 4,
+      awaitingApproval: 3,
+      scheduled: 2,
+      completed: 8,
+      blocked: 1,
+      status: "AVAILABLE",
+    },
+    evidenceTrust: {
+      evidencePackCount: 9,
+      evidenceCoverageScore: 86,
+      trustReadinessScore: 82,
+      financeEvidenceCount: 6,
+      outcomeEvidenceCount: 5,
+      status: "AVAILABLE",
+    },
+    graphHealth: {
+      nodeCount: 42,
+      edgeCount: 68,
+      economicControlChainAudit: "PASS",
+      disconnectedCriticalObjects: 0,
+      status: "AVAILABLE",
+    },
+    nextSteps: [
+      {
+        priority: "HIGH",
+        title: "Review finance verified savings",
+        description:
+          "Use demo evidence to walk through verified value with the design partner.",
+        targetArea: "FINANCIAL_TRUTH",
+      },
+      {
+        priority: "MEDIUM",
+        title: "Assign remaining owners",
+        description:
+          "Complete owner and executive-owner coverage before live rollout.",
+        targetArea: "OWNERSHIP",
+      },
     ],
-    valueSummary: { projectedAnnualValue, verifiedAnnualValue, confidence: executiveConfidence.outcomeConfidenceBand ?? outcomes.proofSummary?.averageConfidenceBand ?? 'Review required', narrative: executiveNarrative.executiveSummary ?? executiveNarrative.valueRealizationSummary ?? 'Value identified from current recommendations, execution outcomes, and evidence packs.' },
-    executionControl: { pendingApprovals, dryRunStatus: dryRunReady ? 'Ready' : 'Needs attention', controlledExecutionStatus: controlledExecutionReady ? 'Ready' : 'Review required', blockedActions, verificationStatus: verificationPending > 0 ? 'Review required' : verifiedAnnualValue > 0 ? 'Value verified' : 'Needs attention' },
-    evidenceProof: { packs: evidencePacks.slice(0, 3), proofStatus: evidenceStatus, exportAvailability: evidencePacks.length ? 'Export available' : 'Generate evidence pack', executiveReviewReadiness: executiveStatus },
-    openActions,
-    loading: Boolean(sources.onboarding?.loading || sources.connectors?.loading || sources.trust?.loading || sources.recommendations?.loading || sources.outcomes?.loading || sources.execution?.loading || sources.evidence?.loading || sources.executive?.loading),
-    sourceWarnings: [sources.onboarding?.error, sources.connectors?.error, sources.trust?.error, sources.recommendations?.error, sources.outcomes?.error, sources.execution?.error, sources.evidence?.error, sources.executive?.error].filter(Boolean).map((error: any) => error.message ?? String(error)),
-  }
+  };
 }
-
+export function liveEmptyPilotWorkspaceSummary(
+  tenantId = "live-tenant",
+): PilotWorkspaceSummary {
+  return {
+    tenantId,
+    mode: "LIVE",
+    generatedAt: now(),
+    tenantReadiness: {
+      overallStatus: "MISSING",
+      items: [
+        {
+          key: "commercial",
+          label: "Commercial coverage",
+          status: "MISSING",
+          reason: "Commercial position unavailable.",
+          nextStep: "Import contracts or connect commercial source.",
+        },
+        {
+          key: "financial",
+          label: "Financial truth coverage",
+          status: "MISSING",
+          reason: "Financial truth unavailable.",
+          nextStep: "Connect ERP/AP source or upload invoice data.",
+        },
+        {
+          key: "ownership",
+          label: "Ownership completeness",
+          status: "MISSING",
+          reason: "Ownership coverage unavailable.",
+          nextStep: "Import ownership map or connect identity/HR source.",
+        },
+        {
+          key: "outcomeFinance",
+          label: "Outcome finance readiness",
+          status: "MISSING",
+          reason: "Verified value unavailable.",
+          nextStep: "Link executed outcomes to finance reconciliation.",
+        },
+        {
+          key: "graph",
+          label: "Economic graph readiness",
+          status: "MISSING",
+          reason: "Economic graph unavailable.",
+          nextStep: "Run discovery or import portfolio data.",
+        },
+      ],
+    },
+    executiveValue: { confidence: "UNAVAILABLE", status: "UNAVAILABLE" },
+    commercialPosition: {
+      vendorCount: 0,
+      contractCount: 0,
+      entitlementCount: 0,
+      commitmentCount: 0,
+      renewalCount: 0,
+      renewalLeverage: "UNAVAILABLE",
+      status: "UNAVAILABLE",
+    },
+    financialTruth: {
+      costCentreCount: 0,
+      invoiceCount: 0,
+      purchaseOrderCount: 0,
+      vendorSpendCount: 0,
+      reconciliationCount: 0,
+      status: "UNAVAILABLE",
+    },
+    ownershipCoverage: {
+      missingOwners: 0,
+      missingCostCentres: 0,
+      missingExecutiveOwners: 0,
+      approvalRoutesReady: 0,
+      approvalRoutesBlocked: 0,
+      status: "UNAVAILABLE",
+    },
+    actionSnapshot: {
+      ready: 0,
+      awaitingApproval: 0,
+      scheduled: 0,
+      completed: 0,
+      blocked: 0,
+      status: "UNAVAILABLE",
+    },
+    evidenceTrust: { evidencePackCount: 0, status: "UNAVAILABLE" },
+    graphHealth: {
+      nodeCount: 0,
+      edgeCount: 0,
+      economicControlChainAudit: "UNAVAILABLE",
+      status: "UNAVAILABLE",
+    },
+    nextSteps: [
+      {
+        priority: "HIGH",
+        title: "Import commercial records",
+        description:
+          "Commercial position unavailable. Import contracts or connect commercial source.",
+        targetArea: "COMMERCIAL",
+      },
+      {
+        priority: "HIGH",
+        title: "Connect financial truth",
+        description:
+          "Financial truth unavailable. Connect ERP/AP source or upload invoice data.",
+        targetArea: "FINANCIAL_TRUTH",
+      },
+      {
+        priority: "MEDIUM",
+        title: "Import ownership map",
+        description:
+          "Ownership coverage unavailable. Import ownership map or connect identity/HR source.",
+        targetArea: "OWNERSHIP",
+      },
+      {
+        priority: "HIGH",
+        title: "Link outcomes to finance",
+        description:
+          "Verified value unavailable. Link executed outcomes to finance reconciliation.",
+        targetArea: "FINANCIAL_TRUTH",
+      },
+      {
+        priority: "MEDIUM",
+        title: "Populate economic graph",
+        description:
+          "Economic graph unavailable. Run discovery or import portfolio data.",
+        targetArea: "GRAPH",
+      },
+    ],
+  };
+}
+export function buildPilotWorkspaceData(sources: any) {
+  return sources?.workspace?.mode === "live" ||
+    sources?.runtime?.environment === "LIVE"
+    ? liveEmptyPilotWorkspaceSummary(
+        sources?.workspace?.tenantId ?? "live-tenant",
+      )
+    : demoPilotWorkspaceSummary(
+        sources?.workspace?.tenantId ?? "demo-sandbox-tenant",
+      );
+}
 export function usePilotWorkspaceData() {
-  const workspace = useWorkspace()
-  const runtime = useRuntimeContext()
-  const onboarding = useM365OnboardingData()
-  const connectors = useConnectorHubData()
-  const trust = useDataTrustData()
-  const recommendations = useRecommendationsData()
-  const outcomes = useOutcomesData()
-  const execution = useExecutionData()
-  const evidence = useEvidencePacks()
-  const executive = useExecutiveValueData()
-
-  return useMemo(() => buildPilotWorkspaceData({ workspace, runtime, onboarding, connectors, trust, recommendations, outcomes, execution, evidence, executive }), [workspace, runtime, onboarding, connectors, trust, recommendations, outcomes, execution, evidence, executive])
+  const workspace = useWorkspace();
+  const initial =
+    workspace.mode === "demo"
+      ? demoPilotWorkspaceSummary(workspace.tenantId)
+      : liveEmptyPilotWorkspaceSummary(workspace.tenantId);
+  const [summary, setSummary] = useState<PilotWorkspaceSummary>(initial);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      const next =
+        workspace.mode === "demo"
+          ? demoPilotWorkspaceSummary(workspace.tenantId)
+          : await liveFetch<PilotWorkspaceSummary>(
+              "/api/workspace/pilot-summary",
+            );
+      setSummary(next);
+      setError(null);
+      return next;
+    } catch (err) {
+      const next = normalizeApiError(err);
+      setError(next);
+      if (workspace.mode === "live")
+        setSummary(liveEmptyPilotWorkspaceSummary(workspace.tenantId));
+      throw next;
+    } finally {
+      setLoading(false);
+    }
+  }, [workspace.mode, workspace.tenantId]);
+  useEffect(() => {
+    void refresh().catch(() => undefined);
+  }, [refresh]);
+  return useMemo(
+    () => ({ summary, loading, error, refresh }),
+    [summary, loading, error, refresh],
+  );
 }
