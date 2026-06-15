@@ -1,0 +1,2 @@
+import test from 'node:test'; import assert from 'node:assert/strict'; import { runTechnologyCommercialAuthorityAudit, TECHNOLOGY_COMMERCIAL_AUTHORITY_FOUNDATION_READY } from '../lib/technology-commercial-authority';
+test('technology commercial authority audit returns PASS',async()=>{const r=await runTechnologyCommercialAuthorityAudit(); assert.equal(r.auditId,TECHNOLOGY_COMMERCIAL_AUTHORITY_FOUNDATION_READY); assert.equal(r.status,'PASS');});
