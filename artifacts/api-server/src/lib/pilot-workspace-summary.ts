@@ -23,6 +23,7 @@ import {
   InMemoryEconomicGraphRepository,
 } from "./economic-graph";
 import { runEconomicControlChainAudit } from "./economic-control-chain-audit";
+import { liveTenantReadinessService } from "./live-tenant-readiness";
 import type {
   PilotWorkspaceMode,
   PilotWorkspaceSummary,
@@ -41,6 +42,7 @@ export type PilotWorkspaceDeps = {
   outcomeRepo?: any;
   graph?: any;
   audit?: () => Promise<any>;
+  liveReadinessService?: any;
   now?: () => string;
 };
 export function demoPilotWorkspaceSummary(
@@ -68,6 +70,7 @@ export function demoPilotWorkspaceSummary(
         ["ownership", "Ownership completeness"],
         ["evidence", "Evidence coverage"],
         ["outcomeFinance", "Outcome finance readiness"],
+        ["liveTenantReadiness", "Live Tenant Readiness"],
       ].map(([key, label]) => ({
         key,
         label,
@@ -281,6 +284,9 @@ export async function buildPilotWorkspaceSummary(
           100,
       )
     : undefined;
+  const liveSvc = deps.liveReadinessService ?? liveTenantReadinessService;
+  let liveReadiness:any;
+  try { liveReadiness = await liveSvc.summariseLiveTenantReadiness(tenantId); } catch { liveReadiness = undefined; }
   const readiness = [
     item(
       "connector",
@@ -356,6 +362,16 @@ export async function buildPilotWorkspaceSummary(
         : "Verified value unavailable.",
       "Link executed outcomes to finance reconciliation.",
     ),
+    item(
+      "liveTenantReadiness",
+      "Live Tenant Readiness",
+      liveReadiness?.overallStatus ?? "MISSING",
+      liveReadiness
+        ? `Live tenant readiness is ${liveReadiness.overallStatus} with ${liveReadiness.blockerCount} blocker(s).`
+        : "Live tenant readiness has not been evaluated.",
+      liveReadiness?.nextSteps?.[0]?.title ?? "Create a live tenant readiness profile and run readiness gates.",
+      liveReadiness?.readinessScore,
+    ),
   ];
   const nextSteps = [] as PilotWorkspaceSummary["nextSteps"];
   if (!vendors.length)
@@ -390,6 +406,8 @@ export async function buildPilotWorkspaceSummary(
         "Verified value unavailable. Link executed outcomes to finance reconciliation.",
       targetArea: "FINANCIAL_TRUTH",
     });
+  if (liveReadiness?.nextSteps?.length)
+    nextSteps.push(...liveReadiness.nextSteps.map((n: any) => ({ priority: n.priority, title: n.title, description: n.description, targetArea: n.targetArea === "DATA_COVERAGE" ? "FINANCIAL_TRUTH" : n.targetArea })));
   if (!nodes.length)
     nextSteps.push({
       priority: "MEDIUM",
