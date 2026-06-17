@@ -32,6 +32,7 @@ import GovernanceGraph from './pages/GovernanceGraph'
 import ExecutiveRiskCommandCenter from './pages/ExecutiveRiskCommandCenter'
 import M365OnboardingView from './pages/M365OnboardingView'
 import EvidencePacksView from './pages/EvidencePacksView'
+import EvidenceRegistry from './pages/EvidenceRegistry'
 import ExecutiveValueDashboard from './pages/ExecutiveValueDashboard'
 import PilotWorkspace from './pages/PilotWorkspace'
 import ShadowITExposure from './pages/ShadowITExposure'
@@ -255,7 +256,7 @@ function LiveTenantReadinessRoute() {
 }
 
 function EvidenceRoute() {
-  return <RequireRuntime><EvidencePacksView /></RequireRuntime>
+  return <RequireRuntime><EvidenceRegistry /></RequireRuntime>
 }
 
 function ExecutionConsolidatedRoute() {
