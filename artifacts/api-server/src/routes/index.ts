@@ -67,6 +67,7 @@ import workspaceRouter from "./workspace";
 import economicControlChainRouter from "./economic-control-chain";
 import liveTenantReadinessRouter from "./live-tenant-readiness";
 import connectorReadinessRouter from "./connector-readiness";
+import technologyPortfolioRouter from "./technology-portfolio";
 import connectorContractTestingRouter from "./connector-contract-testing";
 import connectorAdaptersRouter from "./connector-adapters";
 import productionConnectorsRouter from "./production-connectors";
@@ -99,6 +100,7 @@ router.use("/economic-outcomes", requireTenantContext(), requireCapability("READ
 router.use("/actions", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), actionsRouter);
 router.use("/trust-readiness", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), trustReadinessRouter);
 router.use("/outcome-protection", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), outcomeProtectionRouter);
+router.use("/technology-portfolio", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), technologyPortfolioRouter);
 router.use("/technology-commercial-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), technologyCommercialAuthorityRouter);
 router.use("/financial-truth-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), financialTruthAuthorityRouter);
 router.use("/ownership-intelligence", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), ownershipIntelligenceRouter);

@@ -79,6 +79,7 @@ export interface PilotWorkspaceSummary {
     outcomeEvidenceCount?: number;
     status: SummaryStatus;
   };
+  technologyPortfolio?: { assetCount: number; vendorCount: number; productCount: number; applicationCount: number; totalAnnualSpend?: number; financeVerifiedSavings?: number; riskCount: number; criticalRiskCount: number; missingOwnerCount: number; missingCostCentreCount: number; renewalRiskCount: number; portfolioReadiness: string; nextStep: string; status: SummaryStatus; };
   graphHealth: {
     nodeCount: number;
     edgeCount: number;

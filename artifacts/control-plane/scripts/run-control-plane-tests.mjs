@@ -43,6 +43,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/executive-value.test.tsx',
   '../artifacts/control-plane/src/lib/sidebar-overview-regression.test.tsx',
   '../artifacts/control-plane/src/lib/pilot-workspace.test.tsx',
+  '../artifacts/control-plane/src/lib/technology-portfolio.test.tsx',
   '../artifacts/control-plane/src/lib/shadow-it-exposure.test.tsx',
   '../artifacts/control-plane/src/lib/saas-rationalisation.test.tsx',
   '../artifacts/control-plane/src/lib/ai-governance.test.tsx',
