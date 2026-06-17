@@ -24,6 +24,7 @@ import {
 } from "./economic-graph";
 import { runEconomicControlChainAudit } from "./economic-control-chain-audit";
 import { liveTenantReadinessService } from "./live-tenant-readiness";
+import { connectorReadinessService } from "./connector-readiness";
 import type {
   PilotWorkspaceMode,
   PilotWorkspaceSummary,
@@ -43,6 +44,7 @@ export type PilotWorkspaceDeps = {
   graph?: any;
   audit?: () => Promise<any>;
   liveReadinessService?: any;
+  connectorReadinessService?: any;
   now?: () => string;
 };
 export function demoPilotWorkspaceSummary(
@@ -176,7 +178,11 @@ export async function buildPilotWorkspaceSummary(
   deps: PilotWorkspaceDeps = {},
 ): Promise<PilotWorkspaceSummary> {
   const generatedAt = (deps.now ?? now)();
-  if (mode === "DEMO") return demoPilotWorkspaceSummary(tenantId, generatedAt);
+  if (mode === "DEMO") {
+    const demo = demoPilotWorkspaceSummary(tenantId, generatedAt);
+    demo.tenantReadiness.items.unshift(item("connectorReadinessFramework", "Connector Readiness Framework", "DEMO", "Labelled demo connector readiness only; no live data is ingested.", "Configure live connector readiness before customer rollout.", 92));
+    return demo;
+  }
   const cr = deps.commercialRepo ?? commercialRepo,
     fr = deps.financialRepo ?? financialRepo,
     or = deps.ownershipRepo ?? ownershipRepo,
@@ -287,7 +293,18 @@ export async function buildPilotWorkspaceSummary(
   const liveSvc = deps.liveReadinessService ?? liveTenantReadinessService;
   let liveReadiness:any;
   try { liveReadiness = await liveSvc.summariseLiveTenantReadiness(tenantId); } catch { liveReadiness = undefined; }
+  const connectorSvc = deps.connectorReadinessService ?? connectorReadinessService;
+  let connectorReadiness:any;
+  try { connectorReadiness = await connectorSvc.summariseConnectorReadiness(tenantId); } catch { connectorReadiness = undefined; }
   const readiness = [
+    item(
+      "connectorReadinessFramework",
+      "Connector Readiness Framework",
+      connectorReadiness?.status ?? "MISSING",
+      connectorReadiness ? `Connector framework is ${connectorReadiness.status}: ${connectorReadiness.ready}/${connectorReadiness.total} connector(s) dry-run ready.` : "Connector readiness framework has not been evaluated.",
+      connectorReadiness?.status === "READY" ? "Continue monitoring connector evidence and dry-run freshness." : "Register manifests and configure required connector families; do not fake live readiness.",
+      connectorReadiness?.total ? Math.round((connectorReadiness.ready / connectorReadiness.total) * 100) : undefined,
+    ),
     item(
       "connector",
       "Connector readiness",
@@ -406,6 +423,8 @@ export async function buildPilotWorkspaceSummary(
         "Verified value unavailable. Link executed outcomes to finance reconciliation.",
       targetArea: "FINANCIAL_TRUTH",
     });
+  if (connectorReadiness && connectorReadiness.status !== "READY")
+    nextSteps.push({ priority: "HIGH", title: "Complete connector readiness", description: "Required connector families need configuration, authorization, validation, evidence, and graph mapping previews before live readiness.", targetArea: "CONNECTORS" });
   if (liveReadiness?.nextSteps?.length)
     nextSteps.push(...liveReadiness.nextSteps.map((n: any) => ({ priority: n.priority, title: n.title, description: n.description, targetArea: n.targetArea === "DATA_COVERAGE" ? "FINANCIAL_TRUTH" : n.targetArea })));
   if (!nodes.length)
