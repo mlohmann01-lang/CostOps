@@ -1,0 +1,6 @@
+import type { RawProductionRecord } from "../production-connector-types";
+import { normalisedFail, normalisedPass, normalisedWarn } from "../production-connector-normalisers";
+export function normaliseEntraRecord(connectorKey: string, record: RawProductionRecord) { if (record.kind === "user") return normalisedPass(connectorKey, record, "OWNERSHIP_USER", { id: record.payload.id, email: record.payload.userPrincipalName, displayName: record.payload.displayName, department: record.payload.department, costCentreId: record.payload.costCentreId, missingFields: record.payload.costCentreId ? [] : ["costCentreId"] });
+  if (record.kind === "managerRelation") return normalisedPass(connectorKey, record, "OWNERSHIP_ASSIGNMENT", { id: record.id, userId: record.payload.userId, managerId: record.payload.managerId, graphEdges: [{ type: "MANAGES", from: String(record.payload.managerId), to: String(record.payload.userId) }] });
+  if (record.kind === "department") return normalisedPass(connectorKey, record, "OWNERSHIP_DEPARTMENT", { id: record.payload.id, name: record.payload.name });
+  return normalisedFail(connectorKey, record, "UNSUPPORTED_RECORD_KIND", `Unsupported entra record kind: ${record.kind}`); }

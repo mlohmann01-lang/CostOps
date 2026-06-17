@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+function findRepo(start: string): string { let current = resolve(start); while (true) { if (existsSync(join(current, "pnpm-workspace.yaml"))) return current; const parent = dirname(current); if (parent === current) throw new Error("REPO_ROOT_NOT_FOUND"); current = parent; } }
+function readSourcePath(...parts: string[]) { return readFileSync(join(findRepo(process.cwd()), "artifacts/api-server/src", ...parts), "utf8"); }
 
 function text(path: string) {
-  return readFileSync(join(process.cwd(), "artifacts/api-server/src/tests", path), "utf8");
+  return readSourcePath('tests', path);
 }
 
 function assertNoForbiddenImports(filePath: string, forbidden: string[]) {
@@ -52,8 +54,6 @@ test("architecture boundary guards", () => {
     "execution/m365-graph-actions",
   ]);
 
-
-
   assertNoForbiddenImports("../lib/governance/exceptions.ts", [
     "connectors/",
     "m365-graph-client",
@@ -92,5 +92,4 @@ test("architecture boundary guards", () => {
   assertNoForbiddenImports("../lib/analytics/governance-posture.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/analytics/onboarding-velocity.ts", ["connectors/","execution-engine"]);
   assertNoForbiddenImports("../lib/analytics/connector-performance.ts", ["connectors/","execution-engine"]);
-
 });

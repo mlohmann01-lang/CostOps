@@ -14,7 +14,11 @@
     "test:operationalization": "pnpm --filter @workspace/db build && pnpm --filter @workspace/api-zod build && tsc -p tsconfig.json && node ./scripts/run-operationalization-test.mjs",
     "test": "node ./scripts/run-pattern-tests.mjs",
     "diagnose:typecheck": "pnpm --filter @workspace/scripts exec tsx ./scripts/diagnose-typecheck-blockers.ts",
-    "verify:dist-exports": "node ./scripts/verify-dist-exports.mjs"
+    "verify:dist-exports": "node ./scripts/verify-dist-exports.mjs",
+    "test:unit": "node ./scripts/run-pattern-tests.mjs",
+    "test:integration": "pnpm run test:db",
+    "test:db": "RUN_DB_INTEGRATION_TESTS=true node ./scripts/run-pattern-tests.mjs -- approval-workflow.test.ts",
+    "test:baseline": "node ./scripts/run-pattern-tests.mjs -- test-harness"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
