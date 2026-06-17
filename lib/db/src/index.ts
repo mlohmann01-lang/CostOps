@@ -18,3 +18,5 @@ export * from "./schema";
 export * from "./schema/technologyCommercialAuthority";
 
 export * from "./schema/financialTruthAuthority";
+
+export * from "./schema/evidenceRegistry";
