@@ -96,3 +96,5 @@ export * from "./outcomeFinanceReconciliation";
 export * from "./liveTenantReadiness";
 
 export * from "./connectorReadiness";
+
+export * from "./technologyPortfolioAuthority";

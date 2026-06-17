@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import { runTechnologyPortfolioAuthorityAudit, TECHNOLOGY_PORTFOLIO_AUTHORITY_READY } from '../lib/technology-portfolio-authority';
+test('technology portfolio audit returns PASS',async()=>{const r=await runTechnologyPortfolioAuthorityAudit();assert.equal(r.auditId,TECHNOLOGY_PORTFOLIO_AUTHORITY_READY);assert.equal(r.status,'PASS');});

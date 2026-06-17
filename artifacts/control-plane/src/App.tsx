@@ -43,6 +43,7 @@ import ActionCenter from './pages/ActionCenter'
 import OutcomeProtectionView from './pages/OutcomeProtectionView'
 import ApprovalCenter from './pages/ApprovalCenter'
 import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
+import TechnologyPortfolio from './pages/TechnologyPortfolio'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -242,7 +243,7 @@ function ActionsRoute() {
 }
 
 function TechnologyPortfolioRoute() {
-  return <RequireRuntime><IntelligenceView /></RequireRuntime>
+  return <RequireRuntime><TechnologyPortfolio /></RequireRuntime>
 }
 
 function PlatformRoute() {

@@ -10,6 +10,7 @@ import {
   Workflow,
   BookOpen,
   Zap,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 export type NavGroup = "OPERATIONS" | "DATA LAYER" | "GOVERNANCE" | "PLATFORM";
@@ -29,6 +30,7 @@ export const navRegistry: NavItem[] = [
   { label: "Recommendations", path: "/recommendations", icon: Inbox, enabled: true, pageExists: true, stability: "stable", group: "OPERATIONS" },
   { label: "Savings Ledger", path: "/outcomes", icon: CheckSquare, enabled: true, pageExists: true, stability: "stable", group: "OPERATIONS" },
   { label: "Execution Log", path: "/execution", icon: Activity, enabled: true, pageExists: true, stability: "stable", group: "OPERATIONS" },
+  { label: "Technology Portfolio", path: "/technology-portfolio", icon: BriefcaseBusiness, enabled: true, pageExists: true, stability: "stable", group: "OPERATIONS" },
   { label: "Data Connectors", path: "/connectors", icon: Database, enabled: true, pageExists: true, stability: "stable", group: "DATA LAYER" },
   { label: "Tenant Pricing", path: "/pricing", icon: ReceiptText, enabled: true, pageExists: true, stability: "stable", group: "DATA LAYER" },
   { label: "Reconciliation", path: "/reconciliation", icon: GitMerge, enabled: true, pageExists: true, stability: "stable", group: "DATA LAYER" },

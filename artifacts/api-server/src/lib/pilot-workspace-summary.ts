@@ -23,6 +23,7 @@ import {
   InMemoryEconomicGraphRepository,
 } from "./economic-graph";
 import { runEconomicControlChainAudit } from "./economic-control-chain-audit";
+import { technologyPortfolioAuthorityRepository as portfolioRepo } from "./technology-portfolio-authority";
 import { liveTenantReadinessService } from "./live-tenant-readiness";
 import { connectorReadinessService } from "./connector-readiness";
 import type {
@@ -42,6 +43,7 @@ export type PilotWorkspaceDeps = {
   ownershipRepo?: any;
   outcomeRepo?: any;
   graph?: any;
+  portfolioRepo?: any;
   audit?: () => Promise<any>;
   liveReadinessService?: any;
   connectorReadinessService?: any;
@@ -139,6 +141,7 @@ export function demoPilotWorkspaceSummary(
       outcomeEvidenceCount: 5,
       status: "AVAILABLE",
     },
+    technologyPortfolio: { assetCount: 14, vendorCount: 8, productCount: 12, applicationCount: 6, totalAnnualSpend: 1250000, financeVerifiedSavings: 96000, riskCount: 4, criticalRiskCount: 1, missingOwnerCount: 2, missingCostCentreCount: 1, renewalRiskCount: 2, portfolioReadiness: "DEMO", nextStep: "Demo data", status: "AVAILABLE" },
     graphHealth: {
       nodeCount: 42,
       edgeCount: 68,
@@ -184,6 +187,7 @@ export async function buildPilotWorkspaceSummary(
     return demo;
   }
   const cr = deps.commercialRepo ?? commercialRepo,
+    pr = deps.portfolioRepo ?? portfolioRepo,
     fr = deps.financialRepo ?? financialRepo,
     or = deps.ownershipRepo ?? ownershipRepo,
     of = deps.outcomeRepo ?? outcomeRepo,
@@ -296,7 +300,11 @@ export async function buildPilotWorkspaceSummary(
   const connectorSvc = deps.connectorReadinessService ?? connectorReadinessService;
   let connectorReadiness:any;
   try { connectorReadiness = await connectorSvc.summariseConnectorReadiness(tenantId); } catch { connectorReadiness = undefined; }
+  const portfolioSnapshots = await pr.listSnapshots(tenantId).catch(()=>[]);
+  const portfolioSnapshot = portfolioSnapshots.sort((a:any,b:any)=>String(b.generatedAt).localeCompare(String(a.generatedAt)))[0];
+  const portfolioRisks = await pr.listRiskRecords(tenantId).catch(()=>[]);
   const readiness = [
+    item("technologyPortfolio", "Technology Portfolio", portfolioSnapshot ? portfolioSnapshot.readiness : "MISSING", portfolioSnapshot ? `Technology portfolio has ${portfolioSnapshot.assetCount} asset(s), ${portfolioSnapshot.vendorCount} vendor(s), and ${portfolioRisks.length} risk(s).` : "Technology portfolio unavailable.", portfolioSnapshot ? "Continue monitoring portfolio coverage." : "Build technology portfolio from connected authorities.", portfolioSnapshot?.averageConfidenceScore),
     item(
       "connectorReadinessFramework",
       "Connector Readiness Framework",
@@ -560,6 +568,7 @@ export async function buildPilotWorkspaceSummary(
           ? "AVAILABLE"
           : "UNAVAILABLE",
     },
+    technologyPortfolio: { assetCount: portfolioSnapshot?.assetCount ?? 0, vendorCount: portfolioSnapshot?.vendorCount ?? 0, productCount: portfolioSnapshot?.productCount ?? 0, applicationCount: portfolioSnapshot?.applicationCount ?? 0, totalAnnualSpend: portfolioSnapshot?.totalAnnualSpend, financeVerifiedSavings: portfolioSnapshot?.totalFinanceVerifiedSavings, riskCount: portfolioRisks.length, criticalRiskCount: portfolioRisks.filter((r:any)=>r.severity==="CRITICAL").length, missingOwnerCount: portfolioSnapshot?.missingOwnerCount ?? 0, missingCostCentreCount: portfolioSnapshot?.missingCostCentreCount ?? 0, renewalRiskCount: portfolioSnapshot?.renewalRiskCount ?? 0, portfolioReadiness: portfolioSnapshot?.readiness ?? "MISSING_DATA", nextStep: portfolioSnapshot ? "Continue monitoring portfolio coverage." : "Build technology portfolio from connected authorities.", status: portfolioSnapshot ? "AVAILABLE" : "UNAVAILABLE" },
     graphHealth: {
       nodeCount: nodes.length,
       edgeCount: edges.length,
