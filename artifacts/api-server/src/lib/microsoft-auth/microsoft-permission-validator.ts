@@ -1,0 +1,1 @@
+export class MicrosoftPermissionValidator { validate(grantedScopes: string[], requiredScopes: string[]) { const missingScopes = requiredScopes.filter((s) => !grantedScopes.includes(s)); return { ok: missingScopes.length === 0, missingScopes, status: missingScopes.length ? "DEGRADED" : "PASS" }; } }
