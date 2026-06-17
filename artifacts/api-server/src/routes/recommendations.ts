@@ -7,6 +7,7 @@ import { RecommendationGovernanceEventRepository } from "../lib/recommendations/
 import { prioritizeRecommendations } from "../lib/recommendations/opportunity-prioritizer";
 import { RecommendationApprovalError, RecommendationApprovalService } from "../lib/recommendations/recommendation-approval-service";
 import { RecommendationExplainabilityService } from "../lib/recommendations/recommendation-explainability-service";
+import { requireTenantContext } from "../middleware/security-guards";
 
 const router = Router();
 const repo = new GovernedRecommendationRepository();
@@ -18,7 +19,8 @@ const eventRepo = (eventEnv === "production" || eventEnv === "staging")
 const eventService = new RecommendationGovernanceEventService(eventRepo);
 const approvalService = new RecommendationApprovalService(repo, eventService);
 const explainabilityService = new RecommendationExplainabilityService(repo);
-const tenant = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
+router.use(requireTenantContext());
+const tenant = (req: any) => String(req.tenantId);
 
 const recommendationIdParam = z.object({ recommendationId: z.string().min(1) });
 const listFilterSchema = z.object({ readiness: z.string().optional(), state: z.string().optional(), playbookId: z.string().optional() });

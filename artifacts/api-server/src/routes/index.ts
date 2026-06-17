@@ -68,6 +68,8 @@ import economicControlChainRouter from "./economic-control-chain";
 import liveTenantReadinessRouter from "./live-tenant-readiness";
 import connectorReadinessRouter from "./connector-readiness";
 import connectorContractTestingRouter from "./connector-contract-testing";
+import connectorAdaptersRouter from "./connector-adapters";
+import productionConnectorsRouter from "./production-connectors";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -106,6 +108,8 @@ router.use("/economic-control-chain", requireTenantContext(), requireCapability(
 router.use("/live-tenant-readiness", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), liveTenantReadinessRouter);
 router.use("/connector-readiness", requireTenantContext(), requireCapability("READ_CONNECTORS"), connectorReadinessRouter);
 router.use("/connector-contract-testing", requireTenantContext(), requireCapability("READ_CONNECTORS"), connectorContractTestingRouter);
+router.use("/connector-adapters", requireTenantContext(), requireCapability("READ_CONNECTORS"), connectorAdaptersRouter);
+router.use("/production-connectors", requireTenantContext(), requireCapability("READ_CONNECTORS"), productionConnectorsRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);

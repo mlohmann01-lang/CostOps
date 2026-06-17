@@ -1,0 +1,3 @@
+import { outputContractRules } from '../connector-contract-testing/connector-contract-validators';
+import type { ConnectorAdapterGraphResult } from './connector-adapter-types';
+export function mapAdapterGraph(connectorKey: string, outputContract: string): ConnectorAdapterGraphResult { const rule = outputContractRules[outputContract]; if (!rule) return { connectorKey, outputContract, status: 'BLOCKED', nodeTypes: [], edgeTypes: [], reason: 'No graph mapping rule exists for output contract.' }; return { connectorKey, outputContract, status: 'READY', nodeTypes: rule.nodeTypes, edgeTypes: rule.edgeTypes }; }

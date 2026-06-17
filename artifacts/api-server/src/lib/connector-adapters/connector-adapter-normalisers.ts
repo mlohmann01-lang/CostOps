@@ -1,0 +1,3 @@
+import { validateOutputContract } from '../connector-contract-testing/connector-contract-validators';
+import type { ConnectorNormalisationResult } from './connector-adapter-types';
+export function normaliseWithContractValidator(connectorKey: string, outputContract: string, payload: Record<string, unknown>): ConnectorNormalisationResult { const result = validateOutputContract(outputContract, { ...payload, connectorKey }); return { connectorKey, outputContract, status: result.status, normalised: result.normalisedPreview as Record<string, unknown> | undefined, errors: result.errors.map(({ code, message, path }) => ({ code, message, path })), warnings: result.warnings.map(({ code, message, path }) => ({ code, message, path })) }; }

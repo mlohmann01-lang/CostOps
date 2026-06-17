@@ -1,0 +1,3 @@
+import type { ProductionConnectorContext, RawFetchResult } from "../production-connector-types";
+import { serviceNowFixtures } from "./servicenow-tests-fixtures";
+export class ServiceNowClient { constructor(private readonly options: { credentialRef?: string; tokenProvider?: ProductionConnectorContext["tokenProvider"] } = {}) {} async fetchRecords(context: ProductionConnectorContext): Promise<RawFetchResult> { if (!context.tokenProvider && context.mode === "SYNC") return { status: "BLOCKED", reason: "TOKEN_PROVIDER_NOT_CONFIGURED", records: [] }; return { status: "READY", records: serviceNowFixtures }; } }

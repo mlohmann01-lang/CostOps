@@ -1,0 +1,16 @@
+import { Router } from "express";
+import { requireCapability } from "../middleware/security-guards";
+import { ProductionConnectorRunner, runProductionConnectorsAudit } from "../lib/production-connectors";
+const router = Router();
+const runner = new ProductionConnectorRunner();
+const tenant = (req: { tenantId?: string; header(name: string): string | undefined }) => req.tenantId ?? req.header("x-tenant-id") ?? "default-tenant";
+router.get("/connectors", (_req, res) => res.json(runner.listConnectors()));
+router.get("/connectors/:connectorKey/capabilities", async (req, res) => res.json(await runner.discoverCapabilities(tenant(req), String(req.params.connectorKey), req.body ?? {})));
+router.post("/connectors/:connectorKey/validate", async (req, res) => res.json(await runner.validateConnection(tenant(req), String(req.params.connectorKey), req.body ?? {})));
+router.post("/connectors/:connectorKey/dry-run", async (req, res) => res.json(await runner.dryRun(tenant(req), String(req.params.connectorKey), req.body ?? {})));
+router.post("/connectors/:connectorKey/write-plan", async (req, res) => res.json(await runner.buildWritePlan(tenant(req), String(req.params.connectorKey), req.body ?? {})));
+router.post("/connectors/:connectorKey/sync", requireCapability("RUN_READ_ONLY_SYNC"), async (req, res) => res.json(await runner.sync(tenant(req), String(req.params.connectorKey), req.body ?? {})));
+router.get("/runs", (req, res) => res.json(runner.listRuns(tenant(req), req.query as any)));
+router.get("/runs/:runId", (req, res) => res.json(runner.getRun(tenant(req), String(req.params.runId)) ?? null));
+router.get("/audit", async (_req, res) => res.json(await runProductionConnectorsAudit()));
+export default router;
