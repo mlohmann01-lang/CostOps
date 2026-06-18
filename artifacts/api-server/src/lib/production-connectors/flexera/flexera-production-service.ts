@@ -6,6 +6,15 @@ import { TechnologyCommercialAuthorityRepository, createInMemoryTechnologyCommer
 import { TechnologyPortfolioAuthorityRepository, createInMemoryTechnologyPortfolioAuthorityStores } from '../../technology-portfolio-authority/technology-portfolio-repository';
 import { OwnershipIntelligenceRepository, createInMemoryOwnershipIntelligenceStores } from '../../ownership-intelligence/ownership-intelligence-repository';
 import { EvidenceRegistryRepository, createInMemoryEvidenceRegistryStores } from '../../evidence-registry/evidence-registry-repository';
+// TECH DEBT (Sprint 4, accepted deliberately): Flexera has no dedicated Asset Registry or
+// Principal Resolution service. It reuses TechnologyPortfolioAuthorityRepository and
+// OwnershipIntelligenceRepository directly as the de facto asset/owner store (see
+// populateAuthorities below). This is acceptable for the Sprint 4 read-path scope, but it means
+// Sprint 3's "canonical asset/ownership foundation" is less clean than it sounds: there is no
+// Flexera-specific canonical mapping layer, identity-resolution step, or schema boundary between
+// "what Flexera reported" and "what the platform considers canonical." A future sprint should
+// either build a real Asset Registry/Principal Resolution layer Flexera maps into, or formally
+// adopt these authority repos as the canonical asset/owner store for all connectors.
 export interface FlexeraProductionDeps { commercial?: TechnologyCommercialAuthorityRepository; portfolio?: TechnologyPortfolioAuthorityRepository; ownership?: OwnershipIntelligenceRepository; evidence?: EvidenceRegistryRepository; graph?: { createNode(input:any):Promise<any>; createEdge(input:any):Promise<any> }; auth?: FlexeraAuthService; fetchImpl?: typeof fetch }
 const now=()=>new Date().toISOString();
 const category=(v?:string)=>['SAAS','CLOUD','AI','DATA','INFRASTRUCTURE','SECURITY'].includes(String(v).toUpperCase())?String(v).toUpperCase() as any:'SAAS';
