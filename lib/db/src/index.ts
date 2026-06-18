@@ -20,3 +20,6 @@ export * from "./schema/technologyCommercialAuthority";
 export * from "./schema/financialTruthAuthority";
 
 export * from "./schema/evidenceRegistry";
+export * from "./schema/executiveProofPacks";
+
+export * from "./schema/governedExecution";

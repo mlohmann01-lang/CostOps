@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import{runRemainingProductionConnectorsAudit,REMAINING_PRODUCTION_CONNECTORS_READY}from'../lib/production-connectors';
+test('combined remaining production connectors audit PASS',async()=>{const r=await runRemainingProductionConnectorsAudit();assert.equal(r.checkKey,REMAINING_PRODUCTION_CONNECTORS_READY);assert.equal(r.status,'PASS');});

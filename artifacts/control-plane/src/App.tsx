@@ -45,6 +45,8 @@ import OutcomeProtectionView from './pages/OutcomeProtectionView'
 import ApprovalCenter from './pages/ApprovalCenter'
 import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
 import TechnologyPortfolio from './pages/TechnologyPortfolio'
+import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
+import GovernedExecution from './pages/GovernedExecution'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -245,6 +247,12 @@ function ActionsRoute() {
 
 function TechnologyPortfolioRoute() {
   return <RequireRuntime><TechnologyPortfolio /></RequireRuntime>
+}
+function ExecutiveProofPacksRoute() {
+  return <RequireRuntime><ExecutiveProofPacks /></RequireRuntime>
+}
+function GovernedExecutionRoute() {
+  return <RequireRuntime><GovernedExecution /></RequireRuntime>
 }
 
 function PlatformRoute() {
@@ -458,6 +466,9 @@ function Router() {
       <Route path="/actions" component={ActionsRoute} />
       <Route path="/approvals" component={ApprovalCenterRoute} />
       <Route path="/technology-portfolio" component={TechnologyPortfolioRoute} />
+      <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
+      <Route path="/governed-actions" component={GovernedExecutionRoute} />
+      <Route path="/governed-execution" component={GovernedExecutionRoute} />
       <Route path="/governance" component={GovernanceRoute} />
       <Route path="/execution" component={ExecutionConsolidatedRoute} />
       <Route path="/platform" component={PlatformRoute} />

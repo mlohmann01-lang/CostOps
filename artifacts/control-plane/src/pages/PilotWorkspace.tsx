@@ -94,6 +94,8 @@ export function renderPilotWorkspaceSummary(summary: PilotWorkspaceSummary) {
     financialUnavailable: summary.financialTruth.status === "UNAVAILABLE",
     ownershipUnavailable: summary.ownershipCoverage.status === "UNAVAILABLE",
     nextStepCount: summary.nextSteps.length,
+    proofPackReadiness: summary.tenantReadiness.items.find((i) => i.label === "Executive Proof Packs")?.status ?? "UNAVAILABLE",
+    governedExecutionReadiness: summary.tenantReadiness.items.find((i) => i.label === "Governed execution readiness")?.status ?? "UNAVAILABLE",
   };
 }
 export default function PilotWorkspace() {

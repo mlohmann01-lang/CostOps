@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { FlexeraProductionService, runFlexeraProductionConnectorAudit } from '../lib/production-connectors/flexera';
+const router=Router();const service=new FlexeraProductionService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
+router.post('/connect',async(req:any,res,next)=>{try{res.json(await service.connect({tenantId:tenant(req),apiBaseUrl:req.body?.apiBaseUrl,tenantName:req.body?.tenantName,credentials:req.body?.credentials,mode:req.body?.mode??'LIVE'}))}catch(e){next(e)}});
+router.post('/validate',async(req:any,res,next)=>{try{res.json(await service.validate(tenant(req)))}catch(e){next(e)}});
+router.post('/discover',async(req:any,res,next)=>{try{res.json(await service.discover(tenant(req)))}catch(e){next(e)}});
+router.get('/contracts',async(req:any,res,next)=>{try{const d=await service.discover(tenant(req));res.json(d.contracts)}catch(e){next(e)}});
+router.get('/entitlements',async(req:any,res,next)=>{try{const d=await service.discover(tenant(req));res.json(d.entitlements)}catch(e){next(e)}});
+router.get('/renewals',async(req:any,res,next)=>{try{const d=await service.discover(tenant(req));res.json(d.renewals)}catch(e){next(e)}});
+router.get('/consumption',async(req:any,res,next)=>{try{const d=await service.discover(tenant(req));res.json(d.consumption)}catch(e){next(e)}});
+router.get('/findings',async(req:any,res)=>res.json(service.getFindings(tenant(req))));
+router.get('/summary',async(req:any,res)=>res.json(service.getSummary(tenant(req))));
+router.get('/audit',async(_req,res,next)=>{try{res.json(await runFlexeraProductionConnectorAudit())}catch(e){next(e)}});
+export default router;

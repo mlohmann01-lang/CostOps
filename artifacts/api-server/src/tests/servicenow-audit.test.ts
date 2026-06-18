@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import{runServiceNowProductionConnectorAudit,SERVICENOW_PRODUCTION_CONNECTOR_READY}from'../lib/production-connectors/servicenow';
+test('SERVICENOW_PRODUCTION_CONNECTOR_READY PASS',async()=>{const r=await runServiceNowProductionConnectorAudit();assert.equal(r.checkKey,SERVICENOW_PRODUCTION_CONNECTOR_READY);assert.equal(r.status,'PASS');});
