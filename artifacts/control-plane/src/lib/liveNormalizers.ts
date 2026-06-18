@@ -55,6 +55,8 @@ export function normalizeRecommendation(row: any) {
     productionReadiness: s(row?.productionReadiness ?? row?.economicAssessment?.productionReadiness, 'NEEDS_HARDENING'),
     allowedNextStep: s(row?.allowedNextStep ?? row?.economicAssessment?.allowedNextStep, 'REVIEW_ONLY'),
     requiredHumanReview: Boolean(row?.requiredHumanReview ?? row?.economicAssessment?.requiredHumanReview ?? true),
+    targetEntityType: row?.targetEntityType ?? null,
+    targetEntityId: row?.targetEntityId ?? null,
   }
 }
 
