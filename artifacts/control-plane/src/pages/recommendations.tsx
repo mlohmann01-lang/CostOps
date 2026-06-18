@@ -74,7 +74,7 @@ export default function Recommendations() {
     {rows.map((row: any) => <div key={`${row.section}-${row.id}`} className='rounded border p-2 text-sm space-y-2'>
       <div className='grid grid-cols-6 gap-2'><span>{row.action}</span><span>{row.source}</span><span>{money(row.expectedSavings)}</span><span>{trust(row.trustScore)}</span><span>{row.approvalState}</span><span>{workspace.mode === 'live' && row.raw && canApproveRecommendation(row.raw) ? <button onClick={() => void submit(row.raw.id)} disabled={pendingSubmit === row.raw.id}>{pendingSubmit === row.raw.id ? 'Submitting…' : 'Submit for approval'}</button> : row.raw ? <button onClick={() => setExplainId(row.raw.id)}>Explain</button> : 'Review'}</span></div>
       {row.raw?.targetEntityId && <div className='space-y-2'>
-        <AssetContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} />
+        <AssetContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} sourceSystem={String(row.raw.playbookId ?? '').startsWith('flexera-') ? 'Flexera' : undefined} />
         <EvidenceContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} />
       </div>}
     </div>)}

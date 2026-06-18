@@ -19,7 +19,7 @@ const STATE_LABEL: Record<DataState, string> = {
   NO_DATA: 'No owner data',
 }
 
-export function AssetContext({ targetType, targetId }: { targetType?: string; targetId?: string }) {
+export function AssetContext({ targetType, targetId, sourceSystem }: { targetType?: string; targetId?: string; sourceSystem?: string }) {
   const [open, setOpen] = useState(false)
   const { chain, dataState, loading } = useAssetContext(targetType, targetId)
 
@@ -44,6 +44,11 @@ export function AssetContext({ targetType, targetId }: { targetType?: string; ta
       </button>
       {open && (
         <div style={{ padding: '0 10px 10px', display: 'flex', flexDirection: 'column', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
+          {sourceSystem && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              Source: <span style={{ color: 'var(--text-primary)' }}>{sourceSystem}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <User size={12} /> Owner: <span style={{ color: 'var(--text-primary)' }}>{owner ?? 'Unassigned'}</span>
           </div>
