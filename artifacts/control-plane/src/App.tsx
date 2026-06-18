@@ -46,6 +46,8 @@ import ApprovalCenter from './pages/ApprovalCenter'
 import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
 import TenantReadiness from './pages/TenantReadiness'
 import FirstOutcomeJourney from './pages/FirstOutcomeJourney'
+import ConnectorCapabilityRegistry from './pages/ConnectorCapabilityRegistry'
+import ExecutiveOutcomeDashboard from './pages/ExecutiveOutcomeDashboard'
 import TechnologyPortfolio from './pages/TechnologyPortfolio'
 import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
 import GovernedExecution from './pages/GovernedExecution'
@@ -273,6 +275,14 @@ function FirstOutcomeJourneyRoute() {
   return <RequireRuntime><FirstOutcomeJourney /></RequireRuntime>
 }
 
+function ConnectorCapabilityRegistryRoute() {
+  return <RequireRuntime><ConnectorCapabilityRegistry /></RequireRuntime>
+}
+
+function ExecutiveOutcomeDashboardRoute() {
+  return <RequireRuntime><ExecutiveOutcomeDashboard /></RequireRuntime>
+}
+
 function EvidenceRoute() {
   return <RequireRuntime><EvidenceRegistry /></RequireRuntime>
 }
@@ -471,6 +481,8 @@ function Router() {
       <Route path="/live-tenant-readiness" component={LiveTenantReadinessRoute} />
       <Route path="/tenant-readiness" component={TenantReadinessRoute} />
       <Route path="/first-outcome" component={FirstOutcomeJourneyRoute} />
+      <Route path="/connector-capability-registry" component={ConnectorCapabilityRegistryRoute} />
+      <Route path="/executive-outcome-dashboard" component={ExecutiveOutcomeDashboardRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>
