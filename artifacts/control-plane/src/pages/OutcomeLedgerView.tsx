@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Shell } from '../components/layout/Shell'
 import { EmptyState, LiveDataError, SectionLabel, StatusPill } from '../components/shared/Foundation'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
 import { useOutcomesData } from '../hooks/useOutcomesData'
 
 function money(value: number | null | undefined) { return value == null ? '—' : `$${Math.round(value).toLocaleString()}` }
@@ -16,13 +17,14 @@ const evidenceLabels = [
 ]
 
 export default function OutcomeLedgerView() {
-  const { data, isEmptyLive, error, refresh } = useOutcomesData()
+  const { data, isEmptyLive, dataState, error, refresh } = useOutcomesData()
   const [evidenceId, setEvidenceId] = useState<string | null>(null)
   if (error) return <Shell><LiveDataError error={error} onRetry={refresh} /></Shell>
-  if (isEmptyLive) return <Shell><EmptyState title='No outcome proofs yet' description='Outcome proofs will appear here as projected, approved, executed, verified, retained, and protected savings accrue evidence.' /></Shell>
+  if (dataState === 'NOT_CONNECTED') return <Shell><div style={{ padding: 20 }}><DataStateBanner state='NOT_CONNECTED' ctaLabel='Connect Tenant' ctaHref='/connectors' /></div></Shell>
+  if (isEmptyLive) return <Shell><div style={{ padding: 20 }}><DataStateBanner state={dataState ?? 'NO_DATA'} /><EmptyState title='No Outcomes Recorded' description='No outcomes have been recorded yet for this tenant. Outcomes will appear here as projected, approved, executed, verified, retained, and protected savings accrue evidence.' /></div></Shell>
   const summary = data.proofSummary ?? {}
   const selected = data.ledger.find((item: any) => item.id === evidenceId)
-  return <Shell><div style={{ padding: 20 }}><h1>Outcome Proof Console</h1><a href='/evidence-packs'>Generate Evidence Pack</a> · <a href='/executive-value'>Executive Value Dashboard</a><p>Single authority for projected, approved, executed, verified, retained, and protected savings proof.</p>
+  return <Shell><div style={{ padding: 20 }}><h1>Outcome Proof Console</h1>{dataState && dataState !== 'LIVE' && <DataStateBanner state={dataState} />}<a href='/evidence-packs'>Generate Evidence Pack</a> · <a href='/executive-value'>Executive Value Dashboard</a><p>Single authority for projected, approved, executed, verified, retained, and protected savings proof.</p>
     <section style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }}>
       <div>Projected<br /><strong>{money(summary.projectedMonthlySavings ?? data.stats[0])}</strong></div>
       <div>Approved<br /><strong>{money(summary.approvedMonthlySavings)}</strong></div>
