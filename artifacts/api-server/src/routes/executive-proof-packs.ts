@@ -1,5 +1,5 @@
-import {Router} from 'express';import {ExecutiveProofPackService,runExecutiveProofPacksAudit} from '../lib/executive-proof-packs';
-const router=Router();const svc=new ExecutiveProofPackService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
+import {Router} from 'express';import {ExecutiveProofPackService,runExecutiveProofPacksAudit} from '../lib/executive-proof-packs';import {decisionAuthorityService} from '../lib/decision-authority/decision-authority-service';
+const router=Router();const svc=new ExecutiveProofPackService(undefined,undefined,{decisionAuthorityService});const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
 router.post('/build/:packType',async(req:any,res,next)=>{try{res.json(await svc.buildProofPack(tenant(req),req.params.packType,req.body??{}))}catch(e){next(e)}});
 router.post('/build-all',async(req:any,res,next)=>{try{res.json(await svc.buildAllProofPacks(tenant(req),req.body??{}))}catch(e){next(e)}});
 router.get('/packs',async(req:any,res,next)=>{try{res.json(await svc.repo.listPacks(tenant(req),req.query as any))}catch(e){next(e)}});
