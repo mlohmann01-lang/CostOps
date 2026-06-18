@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {runFlexeraProductionConnectorAudit,FLEXERA_PRODUCTION_CONNECTOR_READY} from '../lib/production-connectors/flexera';
+test('FLEXERA_PRODUCTION_CONNECTOR_READY audit passes',async()=>{const r=await runFlexeraProductionConnectorAudit();assert.equal(r.checkKey,FLEXERA_PRODUCTION_CONNECTOR_READY);assert.equal(r.status,'PASS');});

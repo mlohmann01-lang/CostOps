@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import{runProcurementApProductionConnectorAudit,PROCUREMENT_AP_PRODUCTION_CONNECTOR_READY}from'../lib/production-connectors/procurement-ap';
+test('PROCUREMENT_AP_PRODUCTION_CONNECTOR_READY PASS',async()=>{const r=await runProcurementApProductionConnectorAudit();assert.equal(r.checkKey,PROCUREMENT_AP_PRODUCTION_CONNECTOR_READY);assert.equal(r.status,'PASS');});

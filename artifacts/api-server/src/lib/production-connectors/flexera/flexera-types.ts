@@ -1,0 +1,15 @@
+export interface FlexeraTenant { id: string; name: string; region?: string; apiBaseUrl: string }
+export interface FlexeraCredentials { authType: 'API_TOKEN' | 'CLIENT_CREDENTIALS'; apiToken?: string; clientId?: string; clientSecret?: string; tokenUrl?: string; scopes?: string[] }
+export interface FlexeraConnection { id: string; tenantId: string; flexeraTenant: FlexeraTenant; credentialRef: string; authType: FlexeraCredentials['authType']; status: 'CONNECTED' | 'INVALID' | 'DISCONNECTED'; permissions: string[]; createdAt: string; updatedAt: string }
+export interface FlexeraAuthResult { status: 'PASS' | 'FAIL'; connection?: FlexeraConnection; accessToken?: string; expiresAt?: string; tenant?: FlexeraTenant; permissions: string[]; errorCode?: FlexeraErrorCode; message?: string }
+export type FlexeraErrorCode = 'AUTH_FAILED' | 'PERMISSION_DENIED' | 'RATE_LIMITED' | 'API_ERROR' | 'NETWORK_ERROR' | 'INVALID_RESPONSE';
+export interface SoftwareApplication { id: string; name: string; vendor: string; version?: string; category?: string; status?: string; owner?: string; department?: string; costCentre?: string }
+export interface SoftwareAsset { id: string; applicationId: string; hostname: string; owner?: string; status?: string }
+export interface Vendor { id: string; name: string; category?: string }
+export interface TechnologyContract { contractId: string; vendorId: string; name: string; effectiveDate?: string; expiryDate?: string; renewalDate?: string; contractValue?: number; currency?: string }
+export interface Entitlement { id: string; contractId?: string; productId: string; purchased: number; assigned: number; consumed: number; available: number }
+export interface Renewal { id: string; contractId: string; renewalDate: string; spend?: number; autoRenew?: boolean; noticePeriod?: number }
+export interface ConsumptionRecord { id: string; applicationId: string; activeUsers: number; assignedUsers: number; utilisationPercent: number }
+export interface FlexeraDiscoveryResult { runId: string; tenantId: string; requestIds: string[]; applications: SoftwareApplication[]; softwareAssets: SoftwareAsset[]; vendors: Vendor[]; contracts: TechnologyContract[]; entitlements: Entitlement[]; renewals: Renewal[]; consumption: ConsumptionRecord[]; ownership: Array<{ applicationId: string; owner?: string; department?: string; costCentre?: string }>; evidenceRefs: string[] }
+export interface CommercialFinding { id: string; tenantId: string; findingType: 'UNDER_UTILISED_LICENSES'|'EXCESS_ENTITLEMENTS'|'DUPLICATE_PRODUCTS'|'SHELFWARE'|'RENEWAL_RISK'|'CONTRACT_EXPOSURE'|'AUDIT_EXPOSURE'|'VENDOR_CONSOLIDATION'; severity: 'LOW'|'MEDIUM'|'HIGH'|'CRITICAL'; description: string; projectedSavings?: number; evidenceRefs: string[] }
+export interface CommercialSummary { tenantId: string; vendorCount: number; contractCount: number; renewalCount: number; entitlementCount: number; spend: number; exposure: number; savings: number; renewalLeverage: 'LOW'|'MEDIUM'|'HIGH'; findingCount: number; evidenceRefs: string[] }

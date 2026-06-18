@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';import{ErpProductionService,createErpFetchFixture,erpProfiles}from'../lib/production-connectors/erp';
+test('ERP discovery and profiles work',async()=>{assert.equal(erpProfiles.length,7);const svc=new ErpProductionService({fetchImpl:createErpFetchFixture() as any});await svc.connect({tenantId:'erp',profileKey:'SAP',baseUrl:'https://erp.example.com',credentials:{authType:'API_TOKEN',apiToken:'token'},mode:'LIVE'});const d=await svc.discover('erp');assert.ok(d.vendors.length>0);assert.ok(d.invoices.length>0);});
