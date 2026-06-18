@@ -76,6 +76,7 @@ import serviceNowRouter from "./servicenow";
 import erpRouter from "./erp";
 import procurementApRouter from "./procurement-ap";
 import evidenceRegistryRouter from "./evidence-registry";
+import decisionsRouter from "./decisions";
 import executiveProofPacksRouter from "./executive-proof-packs";
 import governedExecutionRouter from "./governed-execution";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
@@ -124,6 +125,7 @@ router.use("/servicenow", requireTenantContext(), requireCapability("READ_CONNEC
 router.use("/erp", requireTenantContext(), requireCapability("READ_CONNECTORS"), erpRouter);
 router.use("/procurement-ap", requireTenantContext(), requireCapability("READ_CONNECTORS"), procurementApRouter);
 router.use("/evidence-registry", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), evidenceRegistryRouter);
+router.use("/decisions", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), decisionsRouter);
 router.use("/executive-proof-packs", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveProofPacksRouter);
 router.use("/governed-execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), governedExecutionRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);

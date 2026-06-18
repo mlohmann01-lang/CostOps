@@ -10,6 +10,7 @@ import { useWorkspace } from '@/lib/workspaceContext'
 import { RecommendationExplainabilityDrawer } from '@/components/RecommendationExplainabilityDrawer'
 import { AssetContext } from '@/components/shared/AssetContext'
 import { EvidenceContext } from '@/components/shared/EvidenceContext'
+import { DecisionContext } from '@/components/shared/DecisionContext'
 
 type Rec = any
 export const canApproveRecommendation = (r: Rec): boolean => r?.executionReadiness === "APPROVAL_REQUIRED" && !r?.approvalWorkflowId
@@ -76,6 +77,7 @@ export default function Recommendations() {
       {row.raw?.targetEntityId && <div className='space-y-2'>
         <AssetContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} sourceSystem={String(row.raw.playbookId ?? '').startsWith('flexera-') ? 'Flexera' : undefined} />
         <EvidenceContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} />
+        <DecisionContext sourceSystem='RECOMMENDATION_APPROVAL' sourceReference={row.raw.id} />
       </div>}
     </div>)}
     {rows.length === 0 && <div className='rounded border p-4 text-sm text-muted-foreground'>No actions in this section.</div>}

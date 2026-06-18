@@ -6,6 +6,7 @@ export * from "./connectorMetrics";
 export * from "./connectorReadiness";
 export * from "./connectorTrust";
 export * from "./connectors";
+export * from "./decisionAuthority";
 export * from "./distributedLocks";
 export * from "./driftEvents";
 export * from "./economicOperationsJobs";
