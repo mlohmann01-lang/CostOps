@@ -24,7 +24,8 @@ test('live hook calls priority APIs with safe error state and no demo fallback',
   assert.equal(hook.includes("liveFetch<any>('/api/priorities/top')"), true)
   assert.equal(hook.includes("liveFetch<any>('/api/priorities/summary')"), true)
   assert.equal(hook.includes('catch (err)'), true)
-  assert.equal(hook.includes('setData(empty)'), true)
+  assert.equal(hook.includes('...empty'), true)
+  assert.equal(hook.includes("dataState: 'NO_DATA'"), true)
 })
 
 test('nav, Command, and Runtime Health show executive prioritization surfaces', () => {

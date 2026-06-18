@@ -5,6 +5,8 @@ import { EmptyState, MetricCard, SectionLabel, StatusPill } from '../components/
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
 import { useExecutivePrioritiesData } from '../hooks/useExecutivePrioritiesData'
 import { useRuntimeEvents } from '../hooks/useRuntimeEvents'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
+import type { DataState } from '../lib/dataState'
 
 function money(value: number) { return value >= 1000 ? `$${Math.round(value / 1000)}k` : `$${value.toLocaleString()}` }
 export function proofSteps() { return ['Telemetry validated','Cost model applied','Blast radius assessed','Policy gate cleared'] }
@@ -47,10 +49,17 @@ function eventTone(type: string) {
   return '+'
 }
 
+const dataStatePriority: Record<DataState, number> = { NOT_CONNECTED: 0, NO_DATA: 1, SIMULATION: 2, DEMO: 3, LIVE: 4 }
+function worstDataState(states: DataState[]): DataState {
+  return states.reduce((worst, current) => (dataStatePriority[current] < dataStatePriority[worst] ? current : worst), states[0])
+}
+
 export default function CommandView(_props: { params?: { domain?: string } } = {}) {
   const executiveValue = useExecutiveValueData()
   const executivePriorities = useExecutivePrioritiesData()
   const runtimeEvents = useRuntimeEvents()
+
+  const dataState = worstDataState([executiveValue.dataState, executivePriorities.dataState, runtimeEvents.dataState] as DataState[])
 
   const valueMetrics = executiveValue.summary.valueMetrics ?? {}
   const confidence = executiveValue.summary.confidence ?? {}
@@ -82,6 +91,7 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
 
   return <Shell><div style={{ padding: 24, display: 'grid', gap: 18 }}>
     <header><SectionLabel>Overview</SectionLabel><h1 style={{ margin: '4px 0 0' }}>Executive Brief</h1><p style={{ margin: '6px 0 0', color: 'var(--text-secondary)' }}>What changed, what matters most, what requires attention, and what value was proven.</p></header>
+    {dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
 
     <section data-testid='overview-executive-brief' style={{ display: 'grid', gap: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 12 }}>

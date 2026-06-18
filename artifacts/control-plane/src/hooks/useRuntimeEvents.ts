@@ -46,6 +46,8 @@ export function demoActivityToRuntimeEvent(event: DemoActivityEvent, tenantId: s
   }
 }
 
+export type RuntimeEventsDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+
 export function useRuntimeEvents() {
   const workspace = useWorkspace()
   const demo = useDemoRuntimeStore()
@@ -53,6 +55,7 @@ export function useRuntimeEvents() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [dataState, setDataState] = useState<RuntimeEventsDataState>('NOT_CONNECTED')
 
   const demoEvents = useMemo(() => demo.activity.map((event) => demoActivityToRuntimeEvent(event, workspace.tenantId)), [demo.activity, workspace.tenantId])
 
@@ -60,12 +63,14 @@ export function useRuntimeEvents() {
     if (workspace.mode === 'demo') {
       setError(null)
       setLastUpdated(new Date())
+      setDataState('DEMO')
       return demoEvents
     }
     if (!workspace.dataReady) {
       setEvents([])
       setError(null)
       setLastUpdated(null)
+      setDataState('NOT_CONNECTED')
       return []
     }
     setLoading(true)
@@ -74,11 +79,13 @@ export function useRuntimeEvents() {
       setEvents(next)
       setError(null)
       setLastUpdated(new Date())
+      setDataState(next.length === 0 ? 'NO_DATA' : 'LIVE')
       return next
     } catch (err) {
       const nextError = err instanceof Error ? err : new Error(String(err))
       setError(nextError)
       setEvents([])
+      setDataState('NO_DATA')
       return []
     } finally {
       setLoading(false)
@@ -90,6 +97,7 @@ export function useRuntimeEvents() {
       setEvents([])
       setError(null)
       setLoading(false)
+      setDataState('DEMO')
       return undefined
     }
     if (!workspace.dataReady) {
@@ -97,6 +105,7 @@ export function useRuntimeEvents() {
       setError(null)
       setLoading(false)
       setLastUpdated(null)
+      setDataState('NOT_CONNECTED')
       return undefined
     }
     setLoading(true)
@@ -107,11 +116,13 @@ export function useRuntimeEvents() {
         setError(null)
         setLoading(false)
         setLastUpdated(new Date())
+        setDataState(next.length === 0 ? 'NO_DATA' : 'LIVE')
       },
       onError: (nextError) => {
         setEvents([])
         setError(nextError)
         setLoading(false)
+        setDataState('NO_DATA')
       },
     })
   }, [workspace])
@@ -123,6 +134,7 @@ export function useRuntimeEvents() {
     loading,
     error,
     lastUpdated,
+    dataState,
     refresh,
   }
 }

@@ -3,6 +3,7 @@ import { Shell } from '../components/layout/Shell'
 import { EmptyState, ExecutivePageHeader, ExecutiveSection, MetricCard, StatusChip, ValueLifecycle, type StatusChipTone } from '../components/executive'
 import { LiveDataError } from '../components/shared/Foundation'
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
 
 const money = (value: number) => `$${Math.round(Number(value ?? 0)).toLocaleString()}`
 const annual = (annualValue: unknown, monthlyValue?: unknown, fallback = 0) => Number(annualValue ?? 0) || Number(monthlyValue ?? 0) * 12 || fallback
@@ -34,7 +35,7 @@ const fallbackOutcomes = [
 ]
 
 export default function ExecutiveValueDashboard() {
-  const { summary, domains, topDrivers, blockers, loading, error, refresh, generateEvidencePack } = useExecutiveValueData()
+  const { summary, domains, topDrivers, blockers, dataState, loading, error, refresh, generateEvidencePack } = useExecutiveValueData()
   if (error) return <Shell><LiveDataError error={error} onRetry={refresh} /></Shell>
   const metrics = summary.valueMetrics ?? {}
   const confidence = summary.confidence ?? {}
@@ -61,6 +62,7 @@ export default function ExecutiveValueDashboard() {
 
   return <Shell><main style={{ padding:'24px clamp(18px, 3vw, 34px)', display:'grid', gap:16, maxWidth:1480, margin:'0 auto', width:'100%', boxSizing:'border-box' }}>
     <ExecutivePageHeader title='Executive Value' subtitle='Projected, approved, executed and verified value across technology cost and governance initiatives.' chips={[{ label:'Demo Mode', tone:'info' }, { label:`Evidence ${evidenceLevel}`, tone:confidenceTone(evidenceLevel) }, { label:`Data Trust ${dataTrustLevel}`, tone:confidenceTone(dataTrustLevel) }]} rightAction={<button disabled={loading} onClick={() => void generateEvidencePack()} style={{ border:'var(--border-teal)', background:'rgba(45,212,191,.08)', color:'var(--teal)', borderRadius:10, padding:'9px 12px', fontWeight:850 }}>Generate Executive Evidence Pack</button>} />
+    {dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
 
     <section data-testid='executive-value-kpis' style={{ display:'grid', gridTemplateColumns:'repeat(5, minmax(150px, 1fr))', gap:12 }}>
       <MetricCard label='Projected Annual Value' value={money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />

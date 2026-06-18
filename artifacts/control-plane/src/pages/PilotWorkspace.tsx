@@ -15,6 +15,7 @@ import type {
   PilotWorkspaceSummary,
   SummaryStatus,
 } from "../types/pilotWorkspace";
+import { DataStateBanner } from "../components/shared/DataStateBanner";
 const money = (value?: number, currency = "USD") =>
   value === undefined
     ? unavailable
@@ -99,7 +100,7 @@ export function renderPilotWorkspaceSummary(summary: PilotWorkspaceSummary) {
   };
 }
 export default function PilotWorkspace() {
-  const { summary } = usePilotWorkspaceData();
+  const { summary, dataState } = usePilotWorkspaceData();
   const currency = summary.executiveValue.currency ?? "USD";
   const valueUnavailable = summary.executiveValue.status === "UNAVAILABLE";
   return (
@@ -130,6 +131,13 @@ export default function PilotWorkspace() {
             },
           ]}
         />
+        {dataState !== "LIVE" && (
+          <DataStateBanner
+            state={dataState}
+            ctaLabel={dataState === "NOT_CONNECTED" ? "Connect Tenant" : undefined}
+            ctaHref={dataState === "NOT_CONNECTED" ? "/connectors" : undefined}
+          />
+        )}
         {summary.demoBanner?.visible && (
           <div
             data-testid="demo-banner"

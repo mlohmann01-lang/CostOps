@@ -41,11 +41,16 @@ export function normalizeAIGovernanceExposurePayload(payload: any): AIGovernance
   return { summary: { ...demoAIGovernanceExposureData.summary, ...summary }, inventory, findings, opportunity, governanceExposureScore: Number(payload?.governanceExposureScore ?? summary.governanceExposureScore ?? 0), policyCoverageScore: Number(payload?.policyCoverageScore ?? opportunity.policyCoverageScore ?? 0), evidenceRefs: Array.isArray(payload?.evidenceRefs) ? payload.evidenceRefs : [] }
 }
 
+export type AIGovernanceExposureDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+const notConnectedAIGovernanceExposureData: AIGovernanceExposureData = { summary: { aiApplicationsDetected: 0, unapprovedAIApps: 0, policyGaps: 0, governanceExposureScore: 0, potentialAnnualSavings: 0, highRiskFindings: 0 }, inventory: [], findings: [], opportunity: { potentialAnnualSavings: 0, governanceExposureScore: 0, policyCoverageScore: 0, findingsWithSavings: [], governanceOnlyFindings: [] , recommendedActions: [] }, governanceExposureScore: 0, policyCoverageScore: 0, evidenceRefs: [] }
+
 export function useAIGovernanceExposureData() {
   const workspace = useWorkspace()
   const live = useLiveResource<AIGovernanceExposureData>({ path: '/api/playbooks/ai-governance/exposure', enabled: workspace.mode === 'live', requireDataReady: false, initialData: demoAIGovernanceExposureData, normalizer: normalizeAIGovernanceExposurePayload, isEmpty: (data) => data.findings.length === 0 })
   return useMemo(() => {
-    if (workspace.mode === 'demo') return { data: demoAIGovernanceExposureData, loading: false, error: null, isEmptyLive: false, refresh: () => Promise.resolve(demoAIGovernanceExposureData) }
-    return { data: live.data.findings.length ? live.data : demoAIGovernanceExposureData, loading: live.loading, error: live.error, isEmptyLive: live.isEmpty, refresh: live.refresh }
-  }, [workspace.mode, live.data, live.loading, live.error, live.isEmpty, live.refresh])
+    if (workspace.mode === 'demo') return { data: demoAIGovernanceExposureData, loading: false, error: null, isEmptyLive: false, dataState: 'DEMO' as AIGovernanceExposureDataState, refresh: () => Promise.resolve(demoAIGovernanceExposureData) }
+    if (!workspace.dataReady) return { data: notConnectedAIGovernanceExposureData, loading: false, error: null, isEmptyLive: true, dataState: 'NOT_CONNECTED' as AIGovernanceExposureDataState, refresh: live.refresh }
+    const dataState: AIGovernanceExposureDataState = live.error ? 'NO_DATA' : live.isEmpty ? 'NO_DATA' : 'LIVE'
+    return { data: live.data, loading: live.loading, error: live.error, isEmptyLive: live.isEmpty, dataState, refresh: live.refresh }
+  }, [workspace.mode, workspace.dataReady, live.data, live.loading, live.error, live.isEmpty, live.refresh])
 }

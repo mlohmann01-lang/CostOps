@@ -3,6 +3,7 @@ import { Link } from 'wouter'
 import { Shell } from '../components/layout/Shell'
 import { MetricCard, SectionLabel } from '../components/shared/Foundation'
 import { useLiveTenantReadinessData, type ConnectorHealthReport, type TenantExecutionPolicy } from '../hooks/useLiveTenantReadinessData'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
 
 function Badge({ label, tone = 'green' }: { label: string; tone?: 'green' | 'amber' | 'red' | 'teal' }) { const color = tone === 'red' ? 'var(--red)' : tone === 'amber' ? 'var(--amber)' : tone === 'teal' ? 'var(--teal)' : 'var(--green)'; const bg = tone === 'red' ? 'var(--red-bg)' : tone === 'amber' ? 'var(--amber-bg)' : tone === 'teal' ? 'rgba(45,212,191,.08)' : 'var(--green-bg)'; return <span style={{ display: 'inline-flex', borderRadius: 999, padding: '4px 8px', fontSize: 11, color, background: bg, fontWeight: 700 }}>{label}</span> }
 function bool(value: boolean) { return value ? <Badge label='Enabled' /> : <Badge label='Disabled' tone='red' /> }
@@ -13,14 +14,16 @@ function PolicyRow({ label, children }: { label: string; children: React.ReactNo
 function buildNarrative(readiness: ReturnType<typeof useLiveTenantReadinessData>['readiness'], evidenceBlocked: number) { const wedgeCount = Object.values(readiness.certifiedWedges).filter(Boolean).length; const pilot = readiness.readyForPilot ? 'ready for pilot controlled execution' : 'blocked for pilot controlled execution'; const prod = readiness.readyForProduction ? 'ready for production execution' : 'blocked for production execution'; const degraded = readiness.connectorHealth.filter((row) => row.status !== 'HEALTHY').length; return `This tenant is ${pilot} but ${prod}. ${wedgeCount >= 4 ? 'Certified wedges include M365, AI Economic Control, ServiceNow Execution and AWS Cost Governance and Azure Cost Governance.' : wedgeCount === 3 ? 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.' : `${wedgeCount} certified wedge${wedgeCount === 1 ? ' is' : 's are'} available.`} ${degraded} connector${degraded === 1 ? ' is' : 's are'} degraded or blocking and ${evidenceBlocked} evidence export${evidenceBlocked === 1 ? '' : 's'} require remediation before production execution can be enabled.` }
 
 export default function LiveTenantReadinessView() {
-  const { readiness, tenantExecutionPolicy, connectorHealth, evidenceExportReadiness, isDemo, loading, error, refreshConnectorHealth, updateTenantExecutionPolicy } = useLiveTenantReadinessData()
+  const { readiness, tenantExecutionPolicy, connectorHealth, evidenceExportReadiness, isDemo, dataState, loading, error, refreshConnectorHealth, updateTenantExecutionPolicy } = useLiveTenantReadinessData()
   const [draft, setDraft] = useState<Partial<TenantExecutionPolicy>>({})
   const policy = { ...tenantExecutionPolicy, ...draft }
   const narrative = useMemo(() => buildNarrative(readiness, evidenceExportReadiness.filter((row) => !row.ready).length), [readiness, evidenceExportReadiness])
   const canEditPolicy = !isDemo
   const update = (patch: Partial<TenantExecutionPolicy>) => setDraft((current) => ({ ...current, ...patch }))
   return <Shell><div style={{ padding: 24, display: 'grid', gap: 18 }}>
-    <header style={{ display: 'grid', gap: 10 }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}><h1 style={{ margin: 0 }}>Live Tenant Readiness</h1><Badge label={readiness.mode} tone='teal' /><Badge label={readiness.readyForPilot ? 'Ready for Pilot' : 'Blocked for Pilot'} tone={readiness.readyForPilot ? 'green' : 'red'} /><Badge label={readiness.readyForProduction ? 'Ready for Production' : 'Blocked for Production'} tone={readiness.readyForProduction ? 'green' : 'red'} /></div><p style={{ color: 'var(--text-secondary)', margin: 0 }}>Validate certified wedge availability, connector health, execution policy, evidence export readiness, and audit completeness before live tenant execution.</p>{isDemo && <Badge label='Demo fallback data' tone='amber' />}{loading && <p>Loading Live Tenant Readiness…</p>}{error && <p role='alert' style={{ color: 'var(--amber)' }}>Runtime APIs unavailable. Showing demo fallback data.</p>}</header>
+    <header style={{ display: 'grid', gap: 10 }}><div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}><h1 style={{ margin: 0 }}>Live Tenant Readiness</h1><Badge label={readiness.mode} tone='teal' /><Badge label={readiness.readyForPilot ? 'Ready for Pilot' : 'Blocked for Pilot'} tone={readiness.readyForPilot ? 'green' : 'red'} /><Badge label={readiness.readyForProduction ? 'Ready for Production' : 'Blocked for Production'} tone={readiness.readyForProduction ? 'green' : 'red'} /></div><p style={{ color: 'var(--text-secondary)', margin: 0 }}>Validate certified wedge availability, connector health, execution policy, evidence export readiness, and audit completeness before live tenant execution.</p>{loading && <p>Loading Live Tenant Readiness…</p>}</header>
+
+    {dataState !== 'LIVE' && <DataStateBanner state={dataState} detail={error} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
 
     <Card><SectionLabel>Deterministic Narrative</SectionLabel><p>{narrative}</p></Card>
 
