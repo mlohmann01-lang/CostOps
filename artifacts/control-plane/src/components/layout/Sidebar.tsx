@@ -10,6 +10,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: 'Command', defaultOpen: true, items: [
     { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
     { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
+    { label: 'First Outcome', icon: Target, href: '/first-outcome' },
   ]},
   { label: 'Executive', defaultOpen: false, items: [
     { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },

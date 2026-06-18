@@ -45,6 +45,7 @@ import OutcomeProtectionView from './pages/OutcomeProtectionView'
 import ApprovalCenter from './pages/ApprovalCenter'
 import LiveTenantReadinessView from './pages/LiveTenantReadinessView'
 import TenantReadiness from './pages/TenantReadiness'
+import FirstOutcomeJourney from './pages/FirstOutcomeJourney'
 import TechnologyPortfolio from './pages/TechnologyPortfolio'
 import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
 import GovernedExecution from './pages/GovernedExecution'
@@ -268,6 +269,10 @@ function TenantReadinessRoute() {
   return <RequireRuntime><TenantReadiness /></RequireRuntime>
 }
 
+function FirstOutcomeJourneyRoute() {
+  return <RequireRuntime><FirstOutcomeJourney /></RequireRuntime>
+}
+
 function EvidenceRoute() {
   return <RequireRuntime><EvidenceRegistry /></RequireRuntime>
 }
@@ -465,6 +470,7 @@ function Router() {
       <Route path="/economic-outcomes" component={EconomicOutcomeDashboardRoute} />
       <Route path="/live-tenant-readiness" component={LiveTenantReadinessRoute} />
       <Route path="/tenant-readiness" component={TenantReadinessRoute} />
+      <Route path="/first-outcome" component={FirstOutcomeJourneyRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
       <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>
