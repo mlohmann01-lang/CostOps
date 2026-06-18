@@ -28,6 +28,7 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: 'Admin', defaultOpen: false, items: [
     { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
+    { label: 'Tenant Readiness', icon: ShieldCheck, href: '/tenant-readiness' },
     { label: 'Live Tenant Readiness', icon: ShieldCheck, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
     { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
