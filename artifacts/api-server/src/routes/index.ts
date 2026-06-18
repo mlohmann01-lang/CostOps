@@ -80,6 +80,8 @@ import executiveProofPacksRouter from "./executive-proof-packs";
 import governedExecutionRouter from "./governed-execution";
 import principalsRouter from "./principals";
 import evidenceRouter from "./evidence";
+import assetsRouter from "./assets";
+import assetOwnersRouter from "./asset-owners";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -130,6 +132,8 @@ router.use("/executive-proof-packs", requireTenantContext(), requireCapability("
 router.use("/governed-execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), governedExecutionRouter);
 router.use("/principals", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), principalsRouter);
 router.use("/evidence", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), evidenceRouter);
+router.use("/assets", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), assetsRouter);
+router.use("/asset-owners", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), assetOwnersRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);

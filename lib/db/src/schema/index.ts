@@ -1,3 +1,4 @@
+export * from "./assets";
 export * from "./approvals";
 export * from "./auditEvents";
 export * from "./auth";
