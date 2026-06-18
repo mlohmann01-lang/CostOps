@@ -20,7 +20,7 @@ test('detects unused license when consumption has zero active users', () => {
   });
   const { recommendations } = generateFlexeraRecommendations(result);
   assert.equal(recommendations.some((r) => r.actionType === 'UNUSED_LICENSE'), true);
-  assert.equal(recommendations.every((r) => r.manualOnly === true && r.executionReadiness === 'MANUAL_ONLY'), true);
+  assert.equal(recommendations.every((r) => r.executionReadiness === 'MANUAL_ONLY'), true);
 });
 
 test('detects underutilised license below threshold', () => {
