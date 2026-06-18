@@ -19,7 +19,8 @@ export type GovernedAction = {
 }
 
 export type ActionCenterSummary = { ready: number; awaitingApproval: number; approved: number; executing: number; verifying: number; verified: number; retained: number; drifted: number; blocked: number; projectedValue: number; verifiedValue: number }
-export type ActionCenterData = { summary: ActionCenterSummary; readinessSummary: ReadinessDashboardSummary; actions: GovernedAction[]; isDemo: boolean; error?: string }
+export type ActionCenterDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+export type ActionCenterData = { summary: ActionCenterSummary; readinessSummary: ReadinessDashboardSummary; actions: GovernedAction[]; isDemo: boolean; dataState: ActionCenterDataState; error?: string }
 export type GovernedActionHistoryEvent = { id: string; eventType: string; actor?: string; notes?: string; createdAt: string }
 export type GovernedActionEvidenceSummary = { actionId: string; totalEvidence: number; evidenceIds: string[]; bySource?: Record<string, string[]>; recommendationIds?: string[]; outcomeIds?: string[] }
 export type GovernedActionDetail = { history: GovernedActionHistoryEvent[]; evidence: GovernedActionEvidenceSummary | null; readinessReport?: ActionReadinessReport | null; error?: string }
@@ -59,7 +60,8 @@ export function summarizeReadinessReports(reports: Record<string, ActionReadines
   const list = Object.values(reports)
   return { eligible: list.filter((r) => r.verdict === 'ELIGIBLE').length, approvalRequired: list.filter((r) => r.verdict === 'APPROVAL_REQUIRED').length, blocked: list.filter((r) => r.verdict === 'BLOCKED').length, neverEligible: list.filter((r) => r.verdict === 'NEVER_ELIGIBLE').length, highConfidence: list.filter((r) => r.confidence === 'HIGH').length, missingEvidence: list.reduce((sum, r) => sum + r.missingEvidence.length, 0), topBlockers: list.flatMap((r) => r.blockers).slice(0, 5), requiredActions: list.flatMap((r) => r.requiredActions).slice(0, 5) }
 }
-export const demoActionCenterData: ActionCenterData = { summary: summarizeActions(demoGovernedActions), readinessSummary: summarizeReadinessReports(demoReadinessReports), actions: demoGovernedActions, isDemo: true }
+export const demoActionCenterData: ActionCenterData = { summary: summarizeActions(demoGovernedActions), readinessSummary: summarizeReadinessReports(demoReadinessReports), actions: demoGovernedActions, isDemo: true, dataState: 'DEMO' }
+const notConnectedActionCenterData: ActionCenterData = { summary: emptySummary, readinessSummary: emptyReadinessSummary, actions: [], isDemo: true, dataState: 'NOT_CONNECTED' }
 function normalizeSummary(value: Partial<ActionCenterSummary> | null | undefined): ActionCenterSummary { return { ...emptySummary, ...(value ?? {}) } }
 function normalizeReadinessSummary(value: Partial<ReadinessDashboardSummary> | null | undefined): ReadinessDashboardSummary { return { ...emptyReadinessSummary, ...(value ?? {}) } }
 function normalizeActions(value: unknown): GovernedAction[] { return Array.isArray(value) ? value as GovernedAction[] : [] }
@@ -70,16 +72,18 @@ export function useActionCenterData() {
   const [loading, setLoading] = useState(false)
 
   const refresh = useCallback(async () => {
-    if (workspace.mode === 'demo' || !workspace.dataReady) { setData(demoActionCenterData); return demoActionCenterData }
+    if (workspace.mode === 'demo') { setData(demoActionCenterData); return demoActionCenterData }
+    if (!workspace.dataReady) { setData(notConnectedActionCenterData); return notConnectedActionCenterData }
     setLoading(true)
     try {
       const [summary, actions, readinessSummary] = await Promise.all([liveFetch<ActionCenterSummary>('/api/actions/dashboard'), liveFetch<GovernedAction[]>('/api/actions'), liveFetch<ReadinessDashboardSummary>('/api/trust-readiness/dashboard')])
-      const next = { summary: normalizeSummary(summary), actions: normalizeActions(actions), readinessSummary: normalizeReadinessSummary(readinessSummary), isDemo: false }
+      const normalizedActions = normalizeActions(actions)
+      const next: ActionCenterData = { summary: normalizeSummary(summary), actions: normalizedActions, readinessSummary: normalizeReadinessSummary(readinessSummary), isDemo: false, dataState: normalizedActions.length === 0 ? 'NO_DATA' : 'LIVE' }
       setData(next)
       return next
     } catch (error) {
       const err = normalizeApiError(error)
-      const fallback = { ...demoActionCenterData, error: err.message }
+      const fallback: ActionCenterData = { summary: emptySummary, readinessSummary: emptyReadinessSummary, actions: [], isDemo: false, dataState: 'NO_DATA', error: err.message }
       setData(fallback)
       return fallback
     } finally { setLoading(false) }

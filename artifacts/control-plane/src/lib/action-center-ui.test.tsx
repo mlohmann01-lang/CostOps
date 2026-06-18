@@ -52,20 +52,27 @@ test('next-step labels are deterministic for key statuses', () => {
   assert.equal(getNextActionLabel(action('CLOSED')), 'Closed')
 })
 
-test('demo fallback renders when API is unavailable', () => {
+test('live data error renders explicit NO_DATA state rather than silently substituting demo data', () => {
   const hook = read('../hooks/useActionCenterData.ts')
   assert.deepEqual(actionCenterApiPaths, ['/api/actions/dashboard', '/api/actions', '/api/trust-readiness/dashboard'])
   assert.equal(hook.includes("liveFetch<ActionCenterSummary>('/api/actions/dashboard')"), true)
   assert.equal(hook.includes("liveFetch<GovernedAction[]>('/api/actions')"), true)
   assert.equal(hook.includes("liveFetch<ReadinessDashboardSummary>('/api/trust-readiness/dashboard')"), true)
-  assert.equal(hook.includes('const fallback = { ...demoActionCenterData, error: err.message }'), true)
+  assert.equal(hook.includes("dataState: 'NO_DATA', error: err.message"), true)
   assert.equal(demoActionCenterData.isDemo, true)
+  assert.equal(demoActionCenterData.dataState, 'DEMO')
   assert.equal(demoActionCenterData.actions.length > 0, true)
+})
+
+test('disconnected tenants see Connect Tenant, not fabricated actions', () => {
+  const hook = read('../hooks/useActionCenterData.ts')
+  assert.equal(hook.includes("notConnectedActionCenterData"), true)
+  assert.equal(hook.includes("dataState: 'NOT_CONNECTED'"), true)
 })
 
 test('demo mode does not enable real execution actions', () => {
   const page = read('../pages/ActionCenter.tsx')
-  assert.equal(page.includes('Demo Mode · Execution disabled · Sample governed action lifecycle data'), true)
+  assert.equal(page.includes('DataStateBanner'), true)
   assert.equal(page.includes("disabled={isDemo || pending || blocked}"), true)
   for (const label of ['Simulated only', 'Controlled ServiceNow Execution', 'ServiceNow Artifact', 'ServiceNow Artifact State', 'ServiceNow Rollback', 'ServiceNow Verification', 'ServiceNow Protection', 'ServiceNow Drift', 'ServiceNow Executive Proof']) assert.equal(page.includes(label), true)
 })

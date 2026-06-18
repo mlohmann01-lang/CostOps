@@ -10,10 +10,12 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: 'Command', defaultOpen: true, items: [
     { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
     { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
+    { label: 'First Outcome', icon: Target, href: '/first-outcome' },
   ]},
   { label: 'Executive', defaultOpen: false, items: [
     { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
     { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
+    { label: 'Executive Outcome Dashboard', icon: TrendingUp, href: '/executive-outcome-dashboard' },
   ]},
   { label: 'Intelligence', defaultOpen: true, items: [
     { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
@@ -28,8 +30,10 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: 'Admin', defaultOpen: false, items: [
     { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
+    { label: 'Tenant Readiness', icon: ShieldCheck, href: '/tenant-readiness' },
     { label: 'Live Tenant Readiness', icon: ShieldCheck, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
+    { label: 'Connector Capability Registry', icon: Plug, href: '/connector-capability-registry' },
     { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
     { label: 'Settings', icon: Settings, href: '/settings' },
   ]},
