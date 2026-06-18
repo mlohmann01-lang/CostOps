@@ -28,6 +28,7 @@ import { EvidenceReconciliationService } from "../lib/connectors/m365/evidence-r
 import { M365_PRODUCTION_FAILURE_MATRIX, M365_PRODUCTION_REQUIRED_SCOPES, buildTenantReadinessReport } from "../lib/connectors/m365/m365-production-validation";
 import { checkM365Readiness } from "../lib/connectors/m365/m365-readiness";
 import { m365DiscoveryService } from "../lib/connectors/m365/m365-discovery-service";
+import { ExecutionLifecycleAuthorityService } from "../lib/execution/execution-lifecycle-authority";
 import { m365SnapshotRepository } from "../lib/connectors/m365/m365-snapshot-repository";
 import { m365HealthService } from "../lib/connectors/m365/m365-health";
 import { m365TrustService } from "../lib/connectors/m365/m365-trust";
@@ -37,6 +38,7 @@ import openaiConnectorRouter from "../lib/connectors/openai/openai-connector-rou
 import connectorSdkRouter from "./connector-sdk";
 
 const router = Router();
+const lifecycleAuthority = new ExecutionLifecycleAuthorityService();
 
 const tenantFrom = (req: any) => String(req.tenantId ?? req.query.tenantId ?? req.header("x-tenant-id") ?? "default");
 
@@ -516,7 +518,7 @@ router.post("/m365/recommendations/generate", async (req, res) => {
         recommendationId = saved.id;
         inserted += 1;
       }
-      await db.insert(outcomeLedgerTable).values({
+      const [outcome] = await db.insert(outcomeLedgerTable).values({
         tenantId,
         recommendationId,
         userEmail: rec.affectedUser.userPrincipalName,
@@ -533,7 +535,8 @@ router.post("/m365/recommendations/generate", async (req, res) => {
         savingConfidence: 'ESTIMATED',
         evidence: { source: 'M365_GENERATOR', recommendationType: rec.recommendationType, verifiedMonthlySavings: 0, verificationState: 'PROJECTED_ONLY' },
         executionStatus: 'PROJECTED',
-      });
+      }).returning();
+      await lifecycleAuthority.recordStage({ tenantId, entityType: 'OUTCOME_LEDGER', entityId: String(outcome.id), stage: 'OUTCOME_LEDGER_CREATED', role: 'SYSTEM', actorId: 'm365-recommendation-generator', sourceSystem: 'M365', sourceEntityType: 'outcome_ledger', sourceEntityId: String(outcome.id), relationshipType: 'PROVES', payload: { outcome, recommendation: rec, rawEvidence: outcome.evidence } });
     }
 
     return res.json({

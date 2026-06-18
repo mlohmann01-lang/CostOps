@@ -6,6 +6,7 @@ import { appendUnifiedEvent } from "../events/evidence-timeline";
 import { evaluateExecutionPolicy } from "./execution-policy-engine";
 import { executeM365RemoveLicense } from "./executors/m365-remove-license-executor";
 import { ExecutionResultRecorder } from "./execution-result-recorder";
+import { ExecutionLifecycleAuthorityService } from "./execution-lifecycle-authority";
 
 function nowIso(){ return new Date().toISOString(); }
 function arr(input: unknown): string[] { return Array.isArray(input) ? input.map(String) : []; }
@@ -18,6 +19,7 @@ export class ExecutionRuntime {
     private readonly recommendations = new GovernedRecommendationRepository(),
     private readonly governance = new RecommendationGovernanceEventService(),
     private readonly results = new ExecutionResultRecorder(),
+    private readonly authority = new ExecutionLifecycleAuthorityService(),
   ) {}
 
   private async recordResult(tenantId: string, req: any, state: "BLOCKED"|"FAILED"|"EXECUTED", payload: { executedActions?: unknown[]; executionEvidence?: unknown[]; rollbackReference?: string; executionWarnings?: unknown[]; executionErrors?: unknown[]; startedAt: string; completedAt?: string; executedBy: string }) {
@@ -38,6 +40,8 @@ export class ExecutionRuntime {
     const readinessState = state === "EXECUTED" ? "READY_FOR_EXECUTION" : "EXECUTION_BLOCKED";
     await this.requests.updateState(tenantId, String(req.executionRequestId ?? req.requestId), state === "EXECUTED" ? "EXECUTED" : state);
     await this.requests.updateExecutionRequest(tenantId, String(req.executionRequestId ?? req.requestId), { readinessState: readinessState as any, metadata: { ...metadata(req), latestExecutionResultId: result.executionResultId, latestExecutionResultState: state, executionWarnings: payload.executionWarnings ?? [], executionErrors: payload.executionErrors ?? [], executedAt: result.completedAt instanceof Date ? result.completedAt.toISOString() : String(result.completedAt) } });
+    await this.authority.recordStage({ tenantId, entityType: "EXECUTION_RESULT", entityId: result.executionResultId, stage: `EXECUTION_${state}`, role: payload.executedBy === "system" ? "SYSTEM" : "EXECUTOR", actorId: payload.executedBy, sourceSystem: "execution-runtime", sourceEntityType: "execution_results", sourceEntityId: result.executionResultId, relationshipType: state === "EXECUTED" ? "PROVES" : "AUDIT_TRAIL", payload: { result, rawExecutionEvidence: payload.executionEvidence ?? [], rawExecutedActions: payload.executedActions ?? [], rawWarnings: payload.executionWarnings ?? [], rawErrors: payload.executionErrors ?? [] } });
+    await this.authority.recordStage({ tenantId, entityType: "EXECUTION_REQUEST", entityId: String(req.executionRequestId ?? req.requestId), stage: `EXECUTION_RESULT_${state}`, role: payload.executedBy === "system" ? "SYSTEM" : "EXECUTOR", actorId: payload.executedBy, sourceSystem: "execution-runtime", sourceEntityType: "execution_results", sourceEntityId: result.executionResultId, relationshipType: state === "EXECUTED" ? "PROVES" : "AUDIT_TRAIL", payload: { executionResultId: result.executionResultId, state, rawExecutionEvidence: payload.executionEvidence ?? [] } });
     return result;
   }
 
@@ -79,6 +83,7 @@ export class ExecutionRuntime {
     });
 
     const startedAt = nowIso();
+    await this.authority.recordStage({ tenantId, entityType: "EXECUTION_REQUEST", entityId: executionRequestId, stage: "EXECUTION_STARTED", role: "EXECUTOR", actorId: executedBy, sourceSystem: "execution-runtime", sourceEntityType: "execution_requests", sourceEntityId: executionRequestId, payload: { request: req, dryRun, recommendationEvidencePointers: arr(rec?.evidencePointers) } });
     appendUnifiedEvent({ eventId: `${executionRequestId}:EXECUTION_STARTED:${startedAt}`, tenantId, entityType: "EXECUTION_REQUEST", entityId: executionRequestId, eventType: "EXECUTION_STARTED", eventCategory: "EXECUTION", actorId: executedBy, actorRole: "OPERATOR", eventReason: "Operator started governed execution", beforeState: String(v1?.readinessState ?? req.executionState), afterState: "EXECUTING", evidenceSnapshot: arr(rec?.evidencePointers), sourceSystem: "execution-runtime", createdAt: startedAt });
 
     if (preconditionBlocks.length || !policy.allowed) {

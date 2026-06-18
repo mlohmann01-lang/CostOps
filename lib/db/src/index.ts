@@ -25,3 +25,5 @@ export * from "./schema/executiveProofPacks";
 export * from "./schema/governedExecution";
 
 export * from "./schema/principalAuthority";
+
+export * from "./schema/assets";
