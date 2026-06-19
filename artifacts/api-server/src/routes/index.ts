@@ -78,6 +78,7 @@ import procurementApRouter from "./procurement-ap";
 import evidenceRegistryRouter from "./evidence-registry";
 import decisionsRouter from "./decisions";
 import executiveProofPacksRouter from "./executive-proof-packs";
+import valueRealisationRouter from "./value-realisation";
 import governedExecutionRouter from "./governed-execution";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
@@ -127,6 +128,7 @@ router.use("/procurement-ap", requireTenantContext(), requireCapability("READ_CO
 router.use("/evidence-registry", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), evidenceRegistryRouter);
 router.use("/decisions", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), decisionsRouter);
 router.use("/executive-proof-packs", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveProofPacksRouter);
+router.use("/value-realisation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), valueRealisationRouter);
 router.use("/governed-execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), governedExecutionRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);

@@ -69,4 +69,5 @@ export * from "./syncCheckpoints";
 export * from "./technologyCommercialAuthority";
 export * from "./technologyPortfolioAuthority";
 export * from "./tenantOnboarding";
+export * from "./valueRealisation";
 export * from "./workflow";
