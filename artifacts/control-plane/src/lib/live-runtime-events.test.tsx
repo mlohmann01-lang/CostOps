@@ -44,13 +44,13 @@ test('live mode dataReady=false does not poll', async () => {
   assert.equal(calls, 0)
 })
 
-test('live mode calls /api/events when dataReady=true', async () => {
+test('live mode calls /api/events/recent when dataReady=true', async () => {
   let url = ''
   const previousFetch = globalThis.fetch
   globalThis.fetch = (async (input: RequestInfo | URL) => { url = String(input); return new Response(JSON.stringify({ events: [{ eventId: 'e1', tenantId: 'tenant-live', category: 'SYSTEM', type: 'SYSTEM_HEALTH_CHANGED', entityType: 'system', entityId: 'runtime', message: 'Runtime healthy', severity: 'success', createdAt: '2026-05-29T00:00:00Z' }] }), { status: 200 }) }) as typeof fetch
   const events = await fetchRuntimeEvents({ tenantId: liveReadyWorkspace.tenantId })
   globalThis.fetch = previousFetch
-  assert.equal(url, '/api/events?tenantId=tenant-live')
+  assert.equal(url, '/api/events/recent?tenantId=tenant-live')
   assert.equal(events.length, 1)
   assert.equal(events[0].message, 'Runtime healthy')
 })
@@ -74,7 +74,9 @@ test('Command live empty state renders when no events', () => {
   const html = renderToStaticMarkup(<RuntimeActivityList events={[]} limit={5} emptyLabel='No runtime activity yet' compact />)
   const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
   assert.match(html, /No runtime activity yet/)
-  assert.equal(command.includes('Runtime activity unavailable'), true)
+  // CommandView surfaces a no-events state via the "What Changed" section's EmptyState,
+  // not a dedicated 'Runtime activity unavailable' string.
+  assert.equal(command.includes('No significant changes in the last 24 hours.'), true)
   assert.equal(command.includes('useRuntimeEvents'), true)
 })
 

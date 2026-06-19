@@ -73,15 +73,18 @@ test('connector retry updates activity stream', async () => {
 test('Command activity stream renders', () => {
   resetDemoRuntimeStore()
   const source = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(source.includes("data-testid='command-live-activity'"), true)
-  assert.equal(source.includes('Live activity'), true)
+  // Overview/Command page now surfaces runtime activity through the "What Changed" section,
+  // sourced from useRuntimeEvents, rather than a dedicated 'command-live-activity' widget.
+  assert.equal(source.includes("data-testid='what-changed'"), true)
+  assert.equal(source.includes('useRuntimeEvents'), true)
   assert.equal(getDemoRuntimeState().activity.some((event) => event.message === 'Snowflake auto-suspend verified'), true)
 })
 
 test('no live API calls in demo mode hooks', () => {
   const hookFiles = [
     '../hooks/useCommandData.ts', '../hooks/useRecommendationsData.ts', '../hooks/useApprovalWorkflowsData.ts', '../hooks/useExecutionData.ts', '../hooks/useCampaignsData.ts',
-    '../hooks/useGovernanceData.ts', '../hooks/useEvidenceAuditData.ts', '../hooks/useOutcomesData.ts', '../hooks/useDriftData.ts', '../hooks/useRuntimeHealthData.ts', '../hooks/useConnectorOpsData.ts',
+    // useOutcomesData.ts is now a thin delegate to useOutcomeProofData.ts, which holds the actual demo/live branching.
+    '../hooks/useGovernanceData.ts', '../hooks/useEvidenceAuditData.ts', '../hooks/useOutcomeProofData.ts', '../hooks/useDriftData.ts', '../hooks/useRuntimeHealthData.ts', '../hooks/useConnectorOpsData.ts',
   ]
   for (const rel of hookFiles) {
     const body = fs.readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -91,8 +94,11 @@ test('no live API calls in demo mode hooks', () => {
 })
 
 test('live mode remains empty-state/API driven', () => {
-  const commandHook = fs.readFileSync(new URL('../hooks/useCommandData.ts', import.meta.url), 'utf8')
+  // CommandView (now the Overview/Executive Brief page) sources its data from
+  // useExecutiveValueData/useExecutivePrioritiesData/useRuntimeEvents, not useCommandData;
+  // it surfaces empty states per section rather than a single 'No actions identified yet' message.
   const commandView = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(commandHook.includes('isEmptyLive: true'), true)
-  assert.equal(commandView.includes('No actions identified yet'), true)
+  assert.equal(commandView.includes('No executive priorities available.'), true)
+  assert.equal(commandView.includes('No significant changes in the last 24 hours.'), true)
+  assert.equal(commandView.includes('DataStateBanner'), true)
 })
