@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { NAV_GROUPS } from '../components/layout/Sidebar'
-import { demoOutcomeProtectionData, demoProtectedOutcomes, outcomeProtectionApiPaths, summarizeOutcomeProtection } from '../hooks/useOutcomeProtectionData'
+import { demoOutcomeProtectionData, demoProtectedOutcomes, outcomeProtectionApiPaths, summarizeOutcomeProtection, buildDemoOutcomeDetail, type ProtectedOutcomeDetail } from '../hooks/useOutcomeProtectionData'
 
 const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
 
@@ -92,4 +92,26 @@ test('No Agent Security Analytics labels', () => {
   const hook = read('../hooks/useOutcomeProtectionData.ts')
   assert.equal(page.includes('Agent Security Analytics'), false)
   assert.equal(hook.includes('Agent Security Analytics'), false)
+})
+
+test('demo mode returns DEMO dataState for outcome detail', () => {
+  const detail: ProtectedOutcomeDetail = buildDemoOutcomeDetail('po-protected')
+  assert.equal(detail.dataState, 'DEMO')
+})
+
+test('fetchOutcomeDetail does not fall back to demo data on NOT_CONNECTED or error', () => {
+  const hook = read('../hooks/useOutcomeProtectionData.ts')
+  assert.equal(hook.includes("if (!workspace.dataReady) return unavailableOutcomeDetail(id, data.outcomes.find((o) => o.id === id), 'NOT_CONNECTED')"), true)
+  assert.equal(hook.includes("return unavailableOutcomeDetail(id, data.outcomes.find((o) => o.id === id), 'NO_DATA', normalizeApiError(error).message)"), true)
+  assert.equal(hook.includes("dataState: detail?.outcome ? 'LIVE' : 'NO_DATA'"), true)
+  const fnMatch = hook.match(/const fetchOutcomeDetail = useCallback\([\s\S]*?\}, \[data\.isDemo, data\.outcomes, workspace\.mode, workspace\.dataReady\]\)/)
+  assert.ok(fnMatch, 'fetchOutcomeDetail must have the expected dependency array')
+  const catchOnly = fnMatch![0].slice(fnMatch![0].indexOf('} catch (error) {'))
+  assert.equal(catchOnly.includes('buildDemoOutcomeDetail'), false, 'catch block must never return demo data')
+})
+
+test('outcome detail drawer surfaces dataState for non-LIVE non-DEMO states', () => {
+  const page = read('../pages/OutcomeProtectionView.tsx')
+  assert.equal(page.includes("data-testid='outcome-detail-data-state'"), true)
+  assert.equal(page.includes("detail.dataState !== 'LIVE' && detail.dataState !== 'DEMO'"), true)
 })

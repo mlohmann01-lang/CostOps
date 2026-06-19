@@ -61,7 +61,7 @@ test('demo reality audit classifies all major customer-facing surfaces and flags
     assert.ok(validClassifications.includes(entry.classification));
   }
   const risks = silentFallbackRisks();
-  assert.ok(risks.length >= 2, 'known silent-fallback hooks must be flagged');
+  assert.equal(risks.length, 0, 'Sprint 8B resolved the known silent-fallback hooks; none should remain flagged');
 });
 
 test('every required authority is assessed across all maturity dimensions', () => {

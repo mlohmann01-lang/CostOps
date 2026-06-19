@@ -49,6 +49,8 @@ const tests = [
   '../artifacts/control-plane/src/lib/shadow-it-exposure.test.tsx',
   '../artifacts/control-plane/src/lib/saas-rationalisation.test.tsx',
   '../artifacts/control-plane/src/lib/ai-governance.test.tsx',
+  '../artifacts/control-plane/src/lib/approval-center-ui.test.tsx',
+  '../artifacts/control-plane/src/lib/outcome-protection-ui.test.tsx',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')

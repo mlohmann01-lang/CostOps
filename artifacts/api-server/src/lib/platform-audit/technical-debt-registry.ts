@@ -8,20 +8,6 @@ import type { TechnicalDebtEntry } from './platform-audit-types';
  */
 export const technicalDebtRegistry: TechnicalDebtEntry[] = [
   {
-    id: 'debt:silent-demo-fallback-approval-center',
-    area: 'useApprovalCenterData.fetchApprovalDetail',
-    severity: 'MUST_FIX',
-    description: 'On fetch failure, the hook silently returns buildDemoApprovalDetail(id) instead of surfacing an error or NOT_CONNECTED dataState, making a live failure indistinguishable from real data.',
-    recommendation: 'Change the catch block to set an error/dataState rather than returning demo data, consistent with the EmptyState pattern used elsewhere.',
-  },
-  {
-    id: 'debt:silent-demo-fallback-outcome-protection',
-    area: 'useOutcomeProtectionData.fetchOutcomeDetail',
-    severity: 'MUST_FIX',
-    description: 'Same silent-fallback pattern as the approval center hook: catch block returns buildDemoOutcomeDetail(id) without changing dataState.',
-    recommendation: 'Same fix as the approval center hook.',
-  },
-  {
     id: 'debt:asset-registry-compromise',
     area: 'Asset Registry authority (Sprint 3)',
     severity: 'SHOULD_FIX',
