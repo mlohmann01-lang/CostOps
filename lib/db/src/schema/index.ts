@@ -71,3 +71,5 @@ export * from "./technologyPortfolioAuthority";
 export * from "./tenantOnboarding";
 export * from "./workflow";
 export * from "./principalAuthority";
+
+export * from "./authorityQueries";

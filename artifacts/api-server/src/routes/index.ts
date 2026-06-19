@@ -82,6 +82,7 @@ import principalsRouter from "./principals";
 import evidenceRouter from "./evidence";
 import assetsRouter from "./assets";
 import assetOwnersRouter from "./asset-owners";
+import authorityQueryRouter from "./authority-query";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -134,6 +135,7 @@ router.use("/principals", requireTenantContext(), requireCapability("READ_RECOMM
 router.use("/evidence", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), evidenceRouter);
 router.use("/assets", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), assetsRouter);
 router.use("/asset-owners", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), assetOwnersRouter);
+router.use("/authority-query", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), authorityQueryRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
