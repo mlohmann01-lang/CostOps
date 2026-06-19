@@ -6,35 +6,39 @@ import { getSession, clearSession } from '../../lib/auth/session'
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
 type NavGroup = { label:string; defaultOpen?: boolean; items: NavItem[] }
 
+// Navigation is organised around Certen's three pillars (see
+// lib/platform-taxonomy/pillar-taxonomy-audit.ts for the full surface inventory):
+// AUTO_EXECUTION -> VALUE_REALISATION -> PROTECTED_GOVERNANCE, with shared
+// platform/admin surfaces grouped last. Hrefs/aliases are unchanged from the
+// pre-pillar grouping; only grouping and labelling were reorganised.
 export const NAV_GROUPS: NavGroup[] = [
-  { label: 'Command', defaultOpen: true, items: [
-    { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
+  { label: 'Auto Execution', defaultOpen: true, items: [
     { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
-    { label: 'First Outcome', icon: Target, href: '/first-outcome' },
+    { label: 'Approval Center', icon: Target, href: '/approvals', aliases: ['/approval-workflows'] },
+    { label: 'Execution', icon: Play, href: '/execution', aliases: ['/all/execution', '/drift', '/drift-monitor'] },
   ]},
-  { label: 'Executive', defaultOpen: false, items: [
-    { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
+  { label: 'Value Realisation', defaultOpen: false, items: [
+    { label: 'First Outcome', icon: Target, href: '/first-outcome' },
+    { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
     { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
     { label: 'Executive Outcome Dashboard', icon: TrendingUp, href: '/executive-outcome-dashboard' },
+    { label: 'Proof Packs', icon: FileText, href: '/executive-proof-packs' },
   ]},
-  { label: 'Intelligence', defaultOpen: true, items: [
-    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
-    { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
-  ]},
-  { label: 'Operations', defaultOpen: false, items: [
-    { label: 'Approval Center', icon: Target, href: '/approvals', aliases: ['/approval-workflows'] },
-    { label: 'Evidence', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
-    { label: 'Execution', icon: Play, href: '/execution', aliases: ['/all/execution', '/drift', '/drift-monitor'] },
-    { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
+  { label: 'Protected Governance', defaultOpen: false, items: [
     { label: 'Outcome Protection', icon: ShieldCheck, href: '/outcome-protection' },
+    { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
+    { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
   ]},
-  { label: 'Admin', defaultOpen: false, items: [
+  { label: 'Platform', defaultOpen: false, items: [
+    { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
+    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
+    { label: 'Evidence', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
     { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
     { label: 'Tenant Readiness', icon: ShieldCheck, href: '/tenant-readiness' },
     { label: 'Live Tenant Readiness', icon: ShieldCheck, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },
     { label: 'Connector Capability Registry', icon: Plug, href: '/connector-capability-registry' },
-    { label: 'Platform', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
+    { label: 'Platform Operations', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
     { label: 'Settings', icon: Settings, href: '/settings' },
   ]},
 ]
