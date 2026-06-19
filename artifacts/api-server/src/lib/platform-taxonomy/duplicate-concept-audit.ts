@@ -14,10 +14,10 @@ export interface DuplicateConceptEntry {
  */
 export const duplicateConceptAudit: DuplicateConceptEntry[] = [
   {
-    concept: 'value-realization page (/value-realization, /api/enterprise/value-realization)',
-    overlaps: ['Value Realisation Authority (/value-realisation, investments/capabilities/attributions)'],
+    concept: 'value-realization page (unrouted, /api/enterprise/value-realization)',
+    overlaps: ['Value Realisation Authority (investments/capabilities/attributions, surfaced via ValueRealisationContext)'],
     disposition: 'MERGE',
-    rationale: 'Both surfaces claim the "Value Realisation" name but the page renders a separate, older enterprise funnel endpoint while the Authority is the canonical investment-to-outcome ledger. The page should be re-pointed at the Authority data in a future sprint rather than carrying two sources of truth.',
+    rationale: 'The page is not wired into any App.tsx route and renders a separate, older enterprise funnel endpoint while the Authority is the canonical investment-to-outcome ledger. Sprint 7 relabeled the unrouted page (title and export name to "Legacy Value Opportunity Funnel") so it no longer collides with the "Value Realisation" name; re-pointing it at the Authority data or deleting it remains a future-sprint decision.',
   },
   {
     concept: 'Technology Portfolio',
