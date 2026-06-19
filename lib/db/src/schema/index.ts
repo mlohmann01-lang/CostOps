@@ -1,4 +1,5 @@
 export * from "./aiEconomics";
+export * from "./aiInitiativePortfolio";
 export * from "./aiValueAttribution";
 export * from "./approvals";
 export * from "./auditEvents";
