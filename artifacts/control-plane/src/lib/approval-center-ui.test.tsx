@@ -15,8 +15,8 @@ test('Approval Center route exists', () => {
 })
 
 test('Approval Center navigation entry exists', () => {
-  const operations = NAV_GROUPS.find((group) => group.label === 'Operations')
-  assert.equal(operations?.items.some((item) => item.label === 'Approval Center' && item.href === '/approvals'), true)
+  const autoExecution = NAV_GROUPS.find((group) => group.label === 'Auto Execution')
+  assert.equal(autoExecution?.items.some((item) => item.label === 'Approval Center' && item.href === '/approvals'), true)
 })
 
 test('dashboard cards render', () => {

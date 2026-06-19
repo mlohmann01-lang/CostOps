@@ -21,7 +21,7 @@ test("all 8 m365 playbooks expose required metadata", ()=>{
 
 test("valid candidate produces recommendation per playbook", ()=>{
   assert.equal(disabledLicensedUserReclaimPlaybook.evaluate({...base, accountEnabled:false}).matched, true);
-  assert.equal(inactiveUserReclaimPlaybook.evaluate({...base, days:180, sku:"E3", assignedLicenses:["E3"]}).matched, true);
+  assert.equal(inactiveUserReclaimPlaybook.evaluate({...base, days:180, sku:"E3", assignedLicenses:["E3"], activityPresent:false}).matched, true);
   assert.equal(e3WithoutDesktopAppsRightsizePlaybook.evaluate({...base, sku:"E3", assignedLicenses:["E3"], hasDesktopActivity:false}).matched, true);
   assert.equal(e5UnderusedRightsizePlaybook.evaluate({...base, advancedFeatureUsage:0.1, activityPresent:true}).matched, true);
   assert.equal(addonLicenseReclaimPlaybook.evaluate({...base, sku:"ADDON_AUDIO", assignedLicenses:["ADDON_AUDIO"], addonUsageDaysAgo:300}).matched, true);

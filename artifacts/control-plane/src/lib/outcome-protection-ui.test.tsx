@@ -12,9 +12,9 @@ test('Outcome Protection route exists', () => {
   assert.equal(app.includes('<Route path="/outcome-protection" component={OutcomeProtectionRoute} />'), true)
 })
 
-test('Navigation entry exists under Operations', () => {
-  const operations = NAV_GROUPS.find((group) => group.label === 'Operations')
-  assert.equal(operations?.items.some((item) => item.label === 'Outcome Protection' && item.href === '/outcome-protection'), true)
+test('Navigation entry exists under Protected Governance', () => {
+  const protectedGovernance = NAV_GROUPS.find((group) => group.label === 'Protected Governance')
+  assert.equal(protectedGovernance?.items.some((item) => item.label === 'Outcome Protection' && item.href === '/outcome-protection'), true)
 })
 
 test('Summary cards render', () => {

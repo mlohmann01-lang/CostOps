@@ -57,7 +57,7 @@ for (const file of matching) {
   runnableOutfiles.push(outfile);
 }
 
-const childEnv = { ...process.env };
+const childEnv = { ...process.env, NODE_ENV: process.env.NODE_ENV ?? 'test' };
 if (runDbIntegration && !childEnv.DATABASE_URL) childEnv.DATABASE_URL = 'postgres://localhost:5432/test';
 for (const outfile of runnableOutfiles) {
   const result = spawnSync(process.execPath, ['--test', outfile], { stdio: 'inherit', env: childEnv });

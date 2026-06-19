@@ -22,7 +22,8 @@ test("intent route includes live execution gating and verify endpoint", () => {
   assert.equal(src.includes("M365_LIVE_LICENSE_MUTATION_ENABLED"), true);
   assert.equal(src.includes("removeUserLicenses"), true);
   assert.equal(src.includes("/verify/:executionId"), true);
-  assert.equal(src.includes("addLicenses: []"), true);
+  const writeClientSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/connectors/m365/m365-graph-license-write-client.ts"), "utf8");
+  assert.equal(writeClientSrc.includes("addLicenses: []"), true);
 });
 
 

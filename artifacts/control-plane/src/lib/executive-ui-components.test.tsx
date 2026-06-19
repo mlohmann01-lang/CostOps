@@ -24,5 +24,5 @@ test('demo storytelling narratives are available for polished pages', () => {
 
 test('sidebar keeps enterprise navigation groups and key routes', () => {
   const sidebar = read('../components/layout/Sidebar.tsx')
-  for (const snippet of ['Command', 'Executive', 'Intelligence', 'Operations', 'Admin', 'Risk', 'Overview', 'Technology Portfolio', 'Governance', 'Evidence']) assert.equal(sidebar.includes(snippet), true)
+  for (const snippet of ['Auto Execution', 'Value Realisation', 'Protected Governance', 'Platform', 'Executive Risk', 'Overview', 'Technology Portfolio', 'Governance', 'Evidence']) assert.equal(sidebar.includes(snippet), true)
 })

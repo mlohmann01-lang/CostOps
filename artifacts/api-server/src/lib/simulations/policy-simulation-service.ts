@@ -139,7 +139,7 @@ export class PolicySimulationService {
   }
 
   validateIntegrity(payload: { deterministicHash: string } & Record<string, unknown>): boolean {
-    const { deterministicHash, ...rest } = payload;
+    const { deterministicHash, createdAt, ...rest } = payload;
     return deterministicHash === this.computeDeterministicHash(rest);
   }
 }
