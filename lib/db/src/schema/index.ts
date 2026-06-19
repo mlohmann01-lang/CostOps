@@ -71,3 +71,4 @@ export * from "./technologyPortfolioAuthority";
 export * from "./tenantOnboarding";
 export * from "./valueRealisation";
 export * from "./workflow";
+export * from "./workflowValueGraph";
