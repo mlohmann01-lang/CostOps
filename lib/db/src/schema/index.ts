@@ -1,3 +1,4 @@
+export * from "./aiCapitalAllocation";
 export * from "./aiEconomics";
 export * from "./aiInitiativePortfolio";
 export * from "./aiValueAttribution";

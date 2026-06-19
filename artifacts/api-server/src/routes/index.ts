@@ -84,6 +84,7 @@ import workflowValueGraphRouter from "./workflow-value-graph";
 import aiValueAttributionRouter from "./ai-value-attribution";
 import aiEconomicsRouter from "./ai-economics";
 import aiInitiativePortfolioRouter from "./ai-initiative-portfolio";
+import aiCapitalAllocationRouter from "./ai-capital-allocation";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -138,6 +139,7 @@ router.use("/workflow-value-graph", requireTenantContext(), requireCapability("R
 router.use("/ai-value-attribution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiValueAttributionRouter);
 router.use("/ai-economics", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiEconomicsRouter);
 router.use("/ai-initiative-portfolio", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiInitiativePortfolioRouter);
+router.use("/ai-capital-allocation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiCapitalAllocationRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
