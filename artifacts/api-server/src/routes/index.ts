@@ -81,6 +81,7 @@ import executiveProofPacksRouter from "./executive-proof-packs";
 import valueRealisationRouter from "./value-realisation";
 import governedExecutionRouter from "./governed-execution";
 import workflowValueGraphRouter from "./workflow-value-graph";
+import aiValueAttributionRouter from "./ai-value-attribution";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -132,6 +133,7 @@ router.use("/executive-proof-packs", requireTenantContext(), requireCapability("
 router.use("/value-realisation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), valueRealisationRouter);
 router.use("/governed-execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), governedExecutionRouter);
 router.use("/workflow-value-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), workflowValueGraphRouter);
+router.use("/ai-value-attribution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiValueAttributionRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
