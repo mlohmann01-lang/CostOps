@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { authorityQueryService } from "../lib/authority-query/authority-query-service";
+const router=Router();
+const tenant=(req:any)=>String(req.tenantId??req.__authContext?.tenantId??req.header?.('x-tenant-id')??req.query.tenantId??req.body?.tenantId??'');
+const send=(fn:any)=>async(req:any,res:any)=>{try{const out=await fn(req,res);if(!res.headersSent)res.json(out)}catch(e:any){res.status(400).json({error:String(e?.message??e)})}};
+router.post('/ask',send((req:any)=>authorityQueryService.answerQuery({tenantId:tenant(req),queryText:req.body?.queryText,querySource:req.body?.querySource??'API',requestedByPrincipalId:req.body?.requestedByPrincipalId,metadata:req.body?.metadata,context:req.body?.context})));
+router.get('/queries',send((req:any)=>({queries:authorityQueryService.listQueries(tenant(req))})));
+router.get('/queries/:id',send((req:any,res:any)=>{const q=authorityQueryService.getQueryById(tenant(req),req.params.id);if(!q)return res.status(404).json({error:'QUERY_NOT_FOUND'});return q}));
+router.get('/queries/:id/answer',send((req:any,res:any)=>{const a=authorityQueryService.getAnswerByQuery(tenant(req),req.params.id);if(!a)return res.status(404).json({error:'ANSWER_NOT_FOUND'});return a}));
+router.get('/queries/:id/sources',send((req:any)=>({sources:authorityQueryService.getQuerySources(tenant(req),req.params.id)})));
+export default router;
