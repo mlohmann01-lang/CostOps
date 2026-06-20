@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings, BookMarked } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
@@ -28,6 +28,9 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: 'Outcome Protection', icon: ShieldCheck, href: '/outcome-protection' },
     { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
     { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
+  ]},
+  { label: 'Intelligence', defaultOpen: false, items: [
+    { label: 'Authority Catalog', icon: BookMarked, href: '/intelligence/authority-catalog' },
   ]},
   { label: 'Platform', defaultOpen: false, items: [
     { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },

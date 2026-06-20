@@ -51,6 +51,7 @@ import ExecutiveOutcomeDashboard from './pages/ExecutiveOutcomeDashboard'
 import TechnologyPortfolio from './pages/TechnologyPortfolio'
 import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
 import GovernedExecution from './pages/GovernedExecution'
+import AuthorityCatalog from './pages/intelligence/AuthorityCatalog'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -445,6 +446,10 @@ function EconomicOutcomeDashboardRoute() {
   return <RequireRuntime><EconomicOutcomeDashboard /></RequireRuntime>
 }
 
+function AuthorityCatalogRoute() {
+  return <RequireRuntime><AuthorityCatalog /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <RedirectRoute to="/platform" />
 }
@@ -490,6 +495,7 @@ function Router() {
       <Route path="/actions" component={ActionsRoute} />
       <Route path="/approvals" component={ApprovalCenterRoute} />
       <Route path="/technology-portfolio" component={TechnologyPortfolioRoute} />
+      <Route path="/intelligence/authority-catalog" component={AuthorityCatalogRoute} />
       <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
       <Route path="/governed-actions" component={GovernedExecutionRoute} />
       <Route path="/governed-execution" component={GovernedExecutionRoute} />
