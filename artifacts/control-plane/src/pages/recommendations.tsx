@@ -11,6 +11,7 @@ import { RecommendationExplainabilityDrawer } from '@/components/RecommendationE
 import { AssetContext } from '@/components/shared/AssetContext'
 import { EvidenceContext } from '@/components/shared/EvidenceContext'
 import { DecisionContext } from '@/components/shared/DecisionContext'
+import { customerFacingError } from '@/lib/display/errors'
 
 type Rec = any
 export const canApproveRecommendation = (r: Rec): boolean => r?.executionReadiness === "APPROVAL_REQUIRED" && !r?.approvalWorkflowId
@@ -64,12 +65,12 @@ export default function Recommendations() {
       broadcastLiveReadRefresh()
       await recommendations.refresh()
     } catch (err) {
-      setSubmitError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`)
+      setSubmitError(customerFacingError(err))
     } finally { setPendingSubmit(null) }
   }
   return <Layout><div className='space-y-4'><header><h1 className='text-2xl font-semibold'>Actions</h1><p className='text-sm text-muted-foreground'>What should happen next, regardless of which subsystem created it?</p></header><div className='hidden'>Recommendations Campaigns Approval Workflows Scheduling Ready Awaiting Approval Scheduled Completed ['all','saas','cloud','ai','data','itam'] Discovery lifecycle Confidence Reliability Readiness reasons Blocked reasons Evidence pointers Source refs Graph refs "recalculate" !canBlockRecommendation(blockReason) setExplainId(r.id)</div>
     {notice && <div role='status' className='border rounded p-2 text-sm'>{notice}</div>}
-    {submitError && <div role='alert' className='border rounded p-2 text-sm'>{submitError}</div>}
+    {submitError && <div role='alert' className='border rounded p-2 text-sm'>Live data unavailable: {submitError}</div>}
     <div className='flex flex-wrap gap-2'>{sections.map((name) => <button key={name} onClick={() => setSection(name)} className={`rounded-full border px-3 py-1 text-xs capitalize ${section === name ? 'text-primary' : 'text-muted-foreground'}`}>{name}</button>)}</div>
     <div className='grid grid-cols-6 gap-2 text-xs font-medium text-muted-foreground'><span>Action</span><span>Source</span><span>Expected Savings</span><span>Trust Score</span><span>Approval State</span><span>Next Step</span></div>
     {rows.map((row: any) => <div key={`${row.section}-${row.id}`} className='rounded border p-2 text-sm space-y-2'>

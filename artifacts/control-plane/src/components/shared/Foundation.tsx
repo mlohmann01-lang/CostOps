@@ -1,6 +1,7 @@
 import React from 'react'
 import type { ReactNode } from 'react'
 import { useWorkspace } from '../../lib/workspaceContext'
+import { customerFacingError } from '../../lib/display/errors'
 
 export function StatusPill({ status }: { status: 'ready'|'degraded'|'testing'|'unavailable'|'eligible'|'approval-required'|'approved'|'awaiting-execution'|'executing'|'never-eligible'|'blocked'|'active'|'drift-detected'|'resolved'|'verified'|'pending'|'simulated' }) {
   const bad = ['unavailable','never-eligible','blocked']
@@ -22,5 +23,5 @@ export function SectionLabel({ children }: { children: ReactNode }) { return <di
 export function TableRow({ columns, children, onClick }: { columns:string; children: ReactNode; hover?: boolean; onClick?: ()=>void }) { return <div onClick={onClick} style={{display:'grid',gridTemplateColumns:columns,padding:'8px 10px',cursor:onClick?'pointer':'default'}}>{children}</div> }
 export function ActionButton({ variant, onClick }: { variant: 'approve'|'review'|'execute'|'simulate'|'rollback'; onClick?: () => void }) { const { mode }=useWorkspace(); const label = mode==='demo' && variant==='approve' ? 'Simulate approval' : mode==='demo' && variant==='execute' ? 'Simulate execution' : ({approve:'Approve',review:'Review',execute:'Execute now',simulate:'Simulate',rollback:'Rollback'} as const)[variant]; return <button onClick={(event)=>{event.stopPropagation(); onClick?.()}}>{label}</button> }
 
-export function LiveDataError({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) { return <div role='alert' style={{border:'var(--border-amber)',background:'var(--amber-bg)',borderRadius:10,padding:12,margin:'12px 0'}}><strong>Live data unavailable</strong><p style={{fontSize:12,color:'var(--text-secondary)'}}>{error?.message ?? 'The live read API did not return data. Demo records are not used as a fallback.'}</p>{onRetry && <button onClick={onRetry}>Retry</button>}</div> }
+export function LiveDataError({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) { return <div role='alert' style={{border:'var(--border-amber)',background:'var(--amber-bg)',borderRadius:10,padding:12,margin:'12px 0'}}><strong>Live data unavailable</strong><p style={{fontSize:12,color:'var(--text-secondary)'}}>{error ? customerFacingError(error) : 'The live read API did not return data. Demo records are not used as a fallback.'}</p>{onRetry && <button onClick={onRetry}>Retry</button>}</div> }
 export function EmptyState({ title, description, ctaLabel }: { icon?: ReactNode; title: string; description: string; ctaLabel?: string; ctaAction?: ()=>void }) { return <div style={{display:'flex',flexDirection:'column',alignItems:'center',marginTop:80,gap:8}}><h3>{title}</h3><p>{description}</p>{ctaLabel && <button>{ctaLabel}</button>}</div> }

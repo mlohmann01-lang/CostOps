@@ -6,6 +6,8 @@ import { useGovernanceGraphData } from '../hooks/useGovernanceGraphData'
 import { useAIGovernanceExposureData } from '../hooks/useAIGovernanceExposureData'
 import { useEvidenceAuditData } from '../hooks/useEvidenceAuditData'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
+import { formatDateTime } from '../lib/display/formatters'
+import { displayLabel } from '../lib/display/labels'
 
 function worstDataState(...states: Array<'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'>): 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA' {
   const priority = { NOT_CONNECTED: 3, NO_DATA: 2, DEMO: 1, LIVE: 0 } as const
@@ -47,7 +49,7 @@ export default function GovernanceView() {
     {tab === 'graph' && <section style={{ display: 'grid', gap: 10 }}><Header cells={['Metric', 'Value', 'Outcome']} />{[['Applications', graph.summary?.applications, 'Estate mapped'], ['Risks', graph.summary?.risks, 'Requires governance'], ['Opportunities', graph.summary?.opportunities, 'Value path'], ['Evidence Items', graph.summary?.evidenceItems, 'Proof available']].map((cells) => <Row key={String(cells[0])} cells={cells} />)}<Header cells={['Insight', 'Severity', 'Action']} />{(graph.insights ?? []).slice(0, 6).map((insight: any) => <Row key={insight.id} cells={[insight.title, insight.severity, insight.recommendedAction]} />)}</section>}
     {tab === 'ai governance' && <section style={{ display: 'grid', gap: 10 }}><Header cells={['Application', 'Owner', 'Users', 'Risk', 'Action']} />{(ai.findings ?? []).slice(0, 10).map((finding: any) => <Row key={finding.id} cells={[finding.applicationName, finding.owner ?? 'Unassigned', finding.usersDetected, finding.riskLevel, finding.recommendedAction]} />)}</section>}
     {tab === 'policies' && <section style={{ display: 'grid', gap: 10 }}><Header cells={['Policy', 'Coverage', 'Violations', 'Evidence', 'Status']} />{policies.map((policy) => <Row key={policy.policy} cells={[policy.policy, policy.coverage, policy.violations, policy.evidence, policy.status]} />)}</section>}
-    {tab === 'evidence' && <section style={{ display: 'grid', gap: 10 }}><Header cells={['Evidence', 'Source', 'Status', 'Time']} />{(audit.timeline ?? governance.data).slice(0, 12).map((item: any, index: number) => <Row key={item.id ?? index} cells={[item.action ?? item.title ?? item.event ?? item.id ?? 'Governance evidence', item.actor ?? item.source ?? 'system', item.status ?? item.verdict ?? 'Recorded', item.at ?? item.timestamp ?? '—']} />)}</section>}
+    {tab === 'evidence' && <section style={{ display: 'grid', gap: 10 }}><Header cells={['Evidence', 'Source', 'Status', 'Time']} />{(audit.timeline ?? governance.data).slice(0, 12).map((item: any, index: number) => <Row key={item.id ?? index} cells={[item.action ?? item.title ?? item.event ?? item.id ?? 'Governance evidence', item.actor ?? item.source ?? 'system', displayLabel(item.status ?? item.verdict ?? 'Recorded'), (item.at ?? item.timestamp) ? formatDateTime(item.at ?? item.timestamp) : '—']} />)}</section>}
     <div style={{ display: 'none' }}>Governance Graph AI Governance Policies Evidence Trust Model Data Trust</div>
   </div></Shell>
 }

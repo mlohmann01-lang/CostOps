@@ -39,12 +39,12 @@ export default function AIEconomicCommandDashboard({ params }: { params?: { id?:
       <div style={{ border: 'var(--border-default)', borderRadius: 14, padding: 16 }}><h2>AI Optimisation Playbooks v1</h2>{['Assign owner', 'Review unapproved AI asset', 'Retire inactive AI asset', 'Review high-cost / low-usage asset', 'Consolidate duplicate AI capability'].map((item) => <Row key={item} label={item} value="Ready" />)}</div>
     </section>
     <section style={{ border: 'var(--border-default)', borderRadius: 14, padding: 16 }}><h2>AI Recommendation Detail Page</h2><div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
-      <Row label="Finding" value={finding?.findingType ?? selected?.recommendationType ?? 'REVIEW_AI_ASSET'} />
+      <Row label="Finding" value={finding?.findingType ?? selected?.recommendationType ?? 'Review AI Asset'} />
       <Row label="Evidence" value={selected?.evidenceId ?? finding?.evidenceId ?? 'Evidence pending'} />
       <Row label="Affected Asset" value={asset?.name ?? selected?.assetId ?? 'Unknown asset'} />
       <Row label="Owner" value={asset?.ownerId ?? 'Unassigned'} />
       <Row label="Expected Saving" value={money(selected?.projectedSavings ?? 0)} />
-      <Row label="Action Path" value={(selected?.recommendationType ?? 'REVIEW_AI_ASSET').replaceAll('_', ' ')} />
+      <Row label="Action Path" value={(selected?.recommendationType ?? 'Review AI Asset').replaceAll('_', ' ')} />
       <Row label="Governance Status" value={selected?.readiness ?? 'APPROVAL_REQUIRED'} />
       <Row label="Ledger History" value={(proof.outcomeLedgerEvidence ?? []).length} />
     </div></section>
