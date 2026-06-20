@@ -1,4 +1,5 @@
 import React from 'react'
+import { Shell } from '../../components/layout/Shell'
 import { StatusChip, statusToneFor } from '../../components/executive/StatusChip'
 import { getDefaultEconomicControlChain, type ChainStage } from '../../lib/economicControlChain/defaultEconomicControlChain'
 
@@ -37,7 +38,7 @@ export default function EconomicControlChain() {
   const summary = getDefaultEconomicControlChain()
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+    <Shell><div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
       <div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Economic Control Chain</h1>
         <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -66,6 +67,6 @@ export default function EconomicControlChain() {
           </React.Fragment>
         ))}
       </div>
-    </div>
+    </div></Shell>
   )
 }

@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { Shell } from '../../components/layout/Shell'
 import { StatusChip, type StatusChipTone } from '../../components/executive/StatusChip'
 import { formatCurrency } from '../../lib/display/formatters'
 import { defaultAuthorities, type AuthorityCatalogEntry } from '../../lib/authorityCatalog/defaultAuthorities'
@@ -106,7 +107,7 @@ export default function AuthorityCatalog() {
   }, [search, category])
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+    <Shell><div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
       <div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Authority Catalog</h1>
         <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -168,7 +169,7 @@ export default function AuthorityCatalog() {
           ))}
         </div>
       )}
-    </div>
+    </div></Shell>
   )
 }
 

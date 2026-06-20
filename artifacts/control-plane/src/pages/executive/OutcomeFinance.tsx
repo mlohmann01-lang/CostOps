@@ -1,4 +1,5 @@
 import React from 'react'
+import { Shell } from '../../components/layout/Shell'
 import { StatusChip, statusToneFor } from '../../components/executive/StatusChip'
 import { formatCurrency, formatDate, formatPercent } from '../../lib/display/formatters'
 import { getDefaultOutcomeFinance, type OutcomeFinanceState } from '../../lib/outcomeFinance/defaultOutcomeFinance'
@@ -46,7 +47,7 @@ export default function OutcomeFinance() {
   const hasVarianceData = metrics.identifiedValue !== undefined && metrics.financeVerifiedValue !== undefined
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
+    <Shell><div style={{ display: 'flex', flexDirection: 'column', gap: 24, padding: 24 }}>
       <div>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>Outcome Finance</h1>
         <p style={{ margin: '6px 0 0', fontSize: 14, color: 'var(--text-secondary)' }}>
@@ -165,6 +166,6 @@ export default function OutcomeFinance() {
         <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>Executive Narrative</h2>
         <p style={{ margin: 0, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>{executiveNarrative}</p>
       </div>
-    </div>
+    </div></Shell>
   )
 }
