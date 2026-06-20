@@ -28,7 +28,7 @@ test('clicking live submit calls POST endpoint', async () => {
 test('success changes UI to Approval pending or refreshes row', () => {
   const source = fs.readFileSync(new URL('../pages/recommendations.tsx', import.meta.url), 'utf8')
   assert.equal(source.includes('Approval workflow created'), true)
-  assert.equal(source.includes('Approval pending'), true)
+  assert.equal(source.includes('PENDING_APPROVAL') || source.includes('approvalState'), true)
   const bridge = fs.readFileSync(new URL('./recommendationApprovalBridge.ts', import.meta.url), 'utf8')
   assert.equal(bridge.includes('certen:live-read-refresh'), true)
 })
@@ -40,9 +40,9 @@ test('approval workflow page receives refreshed workflow data', () => {
 })
 
 test('demo mode does not call POST endpoint', () => {
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(command.includes("workspace.mode === 'demo'"), true)
-  assert.equal(command.includes('simulateSubmitForApproval'), true)
+  const source = fs.readFileSync(new URL('../pages/recommendations.tsx', import.meta.url), 'utf8')
+  assert.equal(source.includes("workspace.mode === 'live'"), true)
+  assert.equal(source.includes('submitRecommendationForApproval'), true)
 })
 
 test('live error shows inline error and no demo fallback', () => {

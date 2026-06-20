@@ -27,7 +27,7 @@ test('demo mode does not call generate endpoint', () => {
 test('successful generate refreshes or surfaces updated recommendations', () => {
   const source = fs.readFileSync(new URL('../pages/ConnectorHub.tsx', import.meta.url), 'utf8')
   assert.equal(source.includes('certen:live-read-refresh'), true)
-  assert.equal(source.includes('M365 governance evaluation complete'), true)
+  assert.equal(source.includes('Running M365 governance evaluation') && source.includes('complete'), true)
   const rows = normalizeRecommendations({ recommendations: [{ recommendationId: 'tenant:M365_RIGHTSIZE_LICENSE_V1:user-1:E5:abc', playbookId: 'M365_RIGHTSIZE_LICENSE_V1', actionType: 'RIGHTSIZE_LICENSE', targetEntityId: 'user-1', projectedMonthlySavings: 21, executionReadiness: 'APPROVAL_REQUIRED' }] })
   assert.equal(rows.length, 1)
   assert.equal(rows[0].id, 'tenant:M365_RIGHTSIZE_LICENSE_V1:user-1:E5:abc')

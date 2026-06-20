@@ -74,3 +74,26 @@ Only `DB_ONLY` exceptions remain. These tests require `RUN_DB_INTEGRATION_TESTS=
 ### Final baseline verdict
 
 `CLEAN_WITH_DOCUMENTED_EXCEPTIONS`
+
+## Sprint 18 Demo / Live Boundary Verification (2026-06-20)
+
+Expected verification commands:
+
+- `pnpm --filter @workspace/db build`
+- `pnpm --filter @workspace/api-zod build`
+- `pnpm --filter @workspace/api-server run typecheck`
+- `pnpm --filter @workspace/control-plane run typecheck`
+- `pnpm --filter @workspace/api-server run test`
+- `pnpm --filter @workspace/control-plane run test`
+
+DB integration tests remain gated behind `RUN_DB_INTEGRATION_TESTS=true`; non-DB boundary tests are part of the default suites.
+
+## Sprint 18B Verification Closure (2026-06-20)
+
+Sprint 18 status is now `VERIFIED`.
+
+- Previous control-plane typecheck failure was classified as `BUILD_ORDER / STALE_BUILD_ARTIFACT`; the control-plane scripts now build `@workspace/api-client-react` before build/typecheck.
+- Previous incomplete full-suite verification is closed: final API server and control-plane suites ran to completion.
+- API server: 1,582 test files selected; 165 DB integration tests skipped because `RUN_DB_INTEGRATION_TESTS` is not set; 0 non-DB failures.
+- Control-plane: 354 tests, 20 suites, 354 pass, 0 fail, 0 skipped.
+- No unexplained Sprint 18B failures remain.
