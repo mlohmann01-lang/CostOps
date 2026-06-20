@@ -21,6 +21,10 @@ const wedgeExplanations: Array<{ key: 'm365' | 'ai' | 'servicenow' | 'aws' | 'az
   { key: 'aws', label: 'AWS', why: 'No verified AWS cost governance action yet.', fix: 'Connect AWS and complete a governed cost action to certify this wedge.' },
   { key: 'azure', label: 'Azure', why: 'No verified Azure cost governance action yet.', fix: 'Connect Azure and complete a governed cost action to certify this wedge.' },
 ]
+export function formatEvidenceExportRemediation(count: number): string {
+  if (count === 1) return '1 evidence export requires remediation'
+  return `${count} evidence export${count === 1 ? '' : 's'} require remediation`
+}
 function buildNarrative(readiness: ReturnType<typeof useLiveTenantReadinessData>['readiness'], evidenceBlocked: number) {
   const wedgeCount = Object.values(readiness.certifiedWedges).filter(Boolean).length
   const pilotEnabled = readiness.readyForPilot && wedgeCount > 0
@@ -29,9 +33,9 @@ function buildNarrative(readiness: ReturnType<typeof useLiveTenantReadinessData>
   const prod = productionEnabled ? 'production execution enabled' : 'production execution blocked'
   const degraded = readiness.connectorHealth.filter((row) => row.status !== 'HEALTHY').length
   if (wedgeCount === 0) {
-    return `This tenant has no certified wedges yet, so pilot and production execution remain blocked. ${degraded} connector${degraded === 1 ? ' is' : 's are'} degraded or blocking and ${evidenceBlocked} evidence export${evidenceBlocked === 1 ? '' : 's'} require remediation. Certify at least one wedge (M365, AI Economic Control, ServiceNow, AWS, or Azure) to enable pilot execution.`
+    return `This tenant has no certified wedges yet, so pilot and production execution remain blocked. ${degraded} connector${degraded === 1 ? ' is' : 's are'} degraded or blocking and ${formatEvidenceExportRemediation(evidenceBlocked)}. Certify at least one wedge (M365, AI Economic Control, ServiceNow, AWS, or Azure) to enable pilot execution.`
   }
-  return `This tenant is ${pilot} but ${prod}. ${wedgeCount >= 4 ? 'Certified wedges include M365, AI Economic Control, ServiceNow Execution and AWS Cost Governance and Azure Cost Governance.' : wedgeCount === 3 ? 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.' : `${wedgeCount} certified wedge${wedgeCount === 1 ? ' is' : 's are'} available.`} ${degraded} connector${degraded === 1 ? ' is' : 's are'} degraded or blocking and ${evidenceBlocked} evidence export${evidenceBlocked === 1 ? '' : 's'} require remediation before production execution can be enabled.`
+  return `This tenant is ${pilot} but ${prod}. ${wedgeCount >= 4 ? 'Certified wedges include M365, AI Economic Control, ServiceNow Execution and AWS Cost Governance and Azure Cost Governance.' : wedgeCount === 3 ? 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.' : `${wedgeCount} certified wedge${wedgeCount === 1 ? ' is' : 's are'} available.`} ${degraded} connector${degraded === 1 ? ' is' : 's are'} degraded or blocking and ${formatEvidenceExportRemediation(evidenceBlocked)} before production execution can be enabled.`
 }
 
 export default function LiveTenantReadinessView() {
