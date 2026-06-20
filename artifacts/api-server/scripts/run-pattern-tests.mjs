@@ -41,7 +41,7 @@ for (const file of matching) {
   const entryPoint = join(testsDir, file);
   const outfile = join(distDir, file.replace('.ts', '.bundle.test.cjs'));
   try {
-    await build({ entryPoints: [entryPoint], bundle: true, platform: 'node', format: 'cjs', sourcemap: false, outfile, define: { 'import.meta.url': JSON.stringify(pathToFileURL(entryPoint).href) } });
+    await build({ entryPoints: [entryPoint], bundle: true, platform: 'node', format: 'cjs', sourcemap: false, outfile, external: ['pino', 'thread-stream'], define: { 'import.meta.url': JSON.stringify(pathToFileURL(entryPoint).href) } });
   } catch (e) {
     console.error(`Build failed for ${file}:`, e.message);
     failed++;

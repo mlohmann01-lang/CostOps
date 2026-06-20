@@ -18,7 +18,7 @@ test("sync service classifies disabled/inactive/excluded and freshness", async (
   process.env.M365_TENANT_ID = "tenant";
   process.env.M365_CLIENT_ID = "client";
   process.env.M365_CLIENT_SECRET = "secret";
-  process.env.M365_GRAPH_GRANTED_PERMISSIONS = "User.Read.All Directory.Read.All Organization.Read.All AuditLog.Read.All";
+  process.env.M365_GRAPH_GRANTED_PERMISSIONS = "User.Read.All Directory.Read.All Organization.Read.All AuditLog.Read.All Reports.Read.All";
   process.env.ECON_OPS_TENANT_MODE = "PILOT_READ_ONLY";
 
   const calls: string[] = [];

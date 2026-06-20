@@ -3,13 +3,20 @@ import assert from 'node:assert/strict';
 import type { Request, Response, NextFunction } from 'express';
 import { extractOperatorActor, requireOperatorPermission, intentPermissionGuard } from '../middleware/economic-operations-rbac-middleware';
 
-function mockReq(opts: { headers?: Record<string, string>; query?: Record<string, string>; body?: Record<string, unknown> } = {}): Request {
+function mockReq(opts: { role?: 'PLATFORM_ADMIN' | 'TENANT_ADMIN' | 'APPROVER' | 'OPERATOR' | 'VIEWER'; userId?: string; tenantId?: string; headers?: Record<string, string>; query?: Record<string, string>; body?: Record<string, unknown> } = {}): Request {
   const headers = opts.headers ?? {};
   return {
     headers,
     query: opts.query ?? {},
     body: opts.body ?? {},
     header: (name: string) => headers[name.toLowerCase()] ?? headers[name],
+    __authContext: {
+      userId: opts.userId ?? 'user-1',
+      tenantId: opts.tenantId ?? 'T1',
+      role: opts.role ?? 'VIEWER',
+      platformAdminOverride: opts.role === 'PLATFORM_ADMIN',
+      authenticated: true,
+    },
   } as unknown as Request;
 }
 
@@ -21,33 +28,33 @@ function mockRes(): MockRes {
 
 // --- extractOperatorActor ---
 
-test('extractOperatorActor: x-actor-role APPROVER overrides mapped role', () => {
-  const req = mockReq({ headers: { 'x-user-id': 'u1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1', 'x-actor-role': 'APPROVER' } });
+test('extractOperatorActor: ignores x-actor-role header and uses authenticated role', () => {
+  const req = mockReq({ role: 'OPERATOR', userId: 'u1', tenantId: 'T1', headers: { 'x-actor-role': 'APPROVER' } });
   const actor = extractOperatorActor(req);
-  assert.equal(actor.actorRole, 'APPROVER');
+  assert.equal(actor.actorRole, 'ECONOMIC_OPERATOR');
   assert.equal(actor.tenantId, 'T1');
 });
 
 test('extractOperatorActor: maps PLATFORM_ADMIN AuthRole to OWNER OperatorRole', () => {
-  const req = mockReq({ headers: { 'x-user-id': 'admin-1', 'x-role': 'PLATFORM_ADMIN', 'x-tenant-id': 'T1' } });
+  const req = mockReq({ role: 'PLATFORM_ADMIN', userId: 'admin-1', tenantId: 'T1' });
   const actor = extractOperatorActor(req);
   assert.equal(actor.actorRole, 'OWNER');
 });
 
 test('extractOperatorActor: maps OPERATOR AuthRole to ECONOMIC_OPERATOR', () => {
-  const req = mockReq({ headers: { 'x-user-id': 'op-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'op-1', tenantId: 'T1' });
   const actor = extractOperatorActor(req);
   assert.equal(actor.actorRole, 'ECONOMIC_OPERATOR');
 });
 
-test('extractOperatorActor: invalid x-actor-role falls back to AuthRole mapping', () => {
-  const req = mockReq({ headers: { 'x-user-id': 'u1', 'x-role': 'TENANT_ADMIN', 'x-tenant-id': 'T1', 'x-actor-role': 'SUPERUSER' } });
+test('extractOperatorActor: invalid x-actor-role is ignored in favor of authenticated role', () => {
+  const req = mockReq({ role: 'TENANT_ADMIN', userId: 'u1', tenantId: 'T1', headers: { 'x-actor-role': 'SUPERUSER' } });
   const actor = extractOperatorActor(req);
   assert.equal(actor.actorRole, 'ADMIN');
 });
 
-test('extractOperatorActor: tenantId from query if header absent', () => {
-  const req = mockReq({ headers: { 'x-role': 'VIEWER' }, query: { tenantId: 'T2' } });
+test('extractOperatorActor: tenantId comes from authenticated context, not query', () => {
+  const req = mockReq({ role: 'VIEWER', tenantId: 'T2', query: { tenantId: 'QUERY-TENANT' } });
   const actor = extractOperatorActor(req);
   assert.equal(actor.tenantId, 'T2');
 });
@@ -57,7 +64,7 @@ test('extractOperatorActor: tenantId from query if header absent', () => {
 test('requireOperatorPermission: OWNER passes EXECUTION_RUN', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'owner-1', 'x-role': 'PLATFORM_ADMIN', 'x-tenant-id': 'T1' } });
+  const req = mockReq({ role: 'PLATFORM_ADMIN', userId: 'owner-1', tenantId: 'T1' });
   const res = mockRes();
   requireOperatorPermission('EXECUTION_RUN')(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -67,7 +74,7 @@ test('requireOperatorPermission: OWNER passes EXECUTION_RUN', () => {
 test('requireOperatorPermission: VIEWER denied EXECUTION_RUN returns 403', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'viewer-1', 'x-role': 'VIEWER', 'x-tenant-id': 'T1' } });
+  const req = mockReq({ role: 'VIEWER', userId: 'viewer-1', tenantId: 'T1' });
   const res = mockRes();
   requireOperatorPermission('EXECUTION_RUN')(req, res as unknown as Response, next);
   assert.equal(called, false);
@@ -76,20 +83,20 @@ test('requireOperatorPermission: VIEWER denied EXECUTION_RUN returns 403', () =>
   assert.equal((res.body as any).permission, 'EXECUTION_RUN');
 });
 
-test('requireOperatorPermission: AUDITOR (via x-actor-role) denied SIMULATION_RUN returns 403', () => {
+test('requireOperatorPermission: OPERATOR passes SIMULATION_RUN despite ignored AUDITOR header', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'aud-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1', 'x-actor-role': 'AUDITOR' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'aud-1', tenantId: 'T1', headers: { 'x-actor-role': 'AUDITOR' } });
   const res = mockRes();
   requireOperatorPermission('SIMULATION_RUN')(req, res as unknown as Response, next);
-  assert.equal(called, false);
-  assert.equal(res.statusCode, 403);
+  assert.equal(called, true);
+  assert.equal(res.statusCode, 200);
 });
 
-test('requireOperatorPermission: CONNECTOR_ADMIN passes CONNECTOR_CONFIGURE', () => {
+test('requireOperatorPermission: ADMIN passes CONNECTOR_CONFIGURE', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'conn-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1', 'x-actor-role': 'CONNECTOR_ADMIN' } });
+  const req = mockReq({ role: 'TENANT_ADMIN', userId: 'conn-1', tenantId: 'T1' });
   const res = mockRes();
   requireOperatorPermission('CONNECTOR_CONFIGURE')(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -100,7 +107,7 @@ test('requireOperatorPermission: CONNECTOR_ADMIN passes CONNECTOR_CONFIGURE', ()
 test('intentPermissionGuard: SIMULATE maps to SIMULATION_RUN, ECONOMIC_OPERATOR passes', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'op-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1' }, body: { intentType: 'SIMULATE', executionId: 'exec-1', tenantId: 'T1' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'op-1', tenantId: 'T1', body: { intentType: 'SIMULATE', executionId: 'exec-1', tenantId: 'T1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -109,7 +116,7 @@ test('intentPermissionGuard: SIMULATE maps to SIMULATION_RUN, ECONOMIC_OPERATOR 
 test('intentPermissionGuard: EXECUTE maps to EXECUTION_RUN, ECONOMIC_OPERATOR denied', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'op-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1' }, body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'op-1', tenantId: 'T1', body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, false);
@@ -121,7 +128,7 @@ test('intentPermissionGuard: EXECUTE maps to EXECUTION_RUN, ECONOMIC_OPERATOR de
 test('intentPermissionGuard: APPROVE maps to APPROVAL_GRANT, APPROVER passes', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'app-1', 'x-role': 'APPROVER', 'x-tenant-id': 'T1' }, body: { intentType: 'APPROVE', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'APPROVER', userId: 'app-1', tenantId: 'T1', body: { intentType: 'APPROVE', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -130,7 +137,7 @@ test('intentPermissionGuard: APPROVE maps to APPROVAL_GRANT, APPROVER passes', (
 test('intentPermissionGuard: EXECUTE passes for OWNER', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'owner-1', 'x-role': 'PLATFORM_ADMIN', 'x-tenant-id': 'T1' }, body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'PLATFORM_ADMIN', userId: 'owner-1', tenantId: 'T1', body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -139,7 +146,7 @@ test('intentPermissionGuard: EXECUTE passes for OWNER', () => {
 test('intentPermissionGuard: ROLLBACK maps to ROLLBACK_REQUEST, ECONOMIC_OPERATOR passes', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'op-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1' }, body: { intentType: 'ROLLBACK', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'op-1', tenantId: 'T1', body: { intentType: 'ROLLBACK', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, true);
@@ -148,7 +155,7 @@ test('intentPermissionGuard: ROLLBACK maps to ROLLBACK_REQUEST, ECONOMIC_OPERATO
 test('intentPermissionGuard: missing intentType returns 400', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-role': 'PLATFORM_ADMIN' }, body: { executionId: 'exec-1' } });
+  const req = mockReq({ role: 'PLATFORM_ADMIN', body: { executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, false);
@@ -156,20 +163,20 @@ test('intentPermissionGuard: missing intentType returns 400', () => {
   assert.equal((res.body as any).error, 'MISSING_INTENT_TYPE');
 });
 
-test('intentPermissionGuard: CONNECTOR_ADMIN denied EXECUTION_RUN', () => {
+test('intentPermissionGuard: ADMIN passes EXECUTION_RUN despite ignored CONNECTOR_ADMIN header', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'conn-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1', 'x-actor-role': 'CONNECTOR_ADMIN' }, body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'TENANT_ADMIN', userId: 'conn-1', tenantId: 'T1', headers: { 'x-actor-role': 'CONNECTOR_ADMIN' }, body: { intentType: 'EXECUTE', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
-  assert.equal(called, false);
-  assert.equal(res.statusCode, 403);
+  assert.equal(called, true);
+  assert.equal(res.statusCode, 200);
 });
 
 test('intentPermissionGuard: VIEWER denied SIMULATE', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'view-1', 'x-role': 'VIEWER', 'x-tenant-id': 'T1' }, body: { intentType: 'SIMULATE', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'VIEWER', userId: 'view-1', tenantId: 'T1', body: { intentType: 'SIMULATE', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, false);
@@ -179,7 +186,7 @@ test('intentPermissionGuard: VIEWER denied SIMULATE', () => {
 test('intentPermissionGuard: ACKNOWLEDGE_DRIFT maps to DRIFT_ACKNOWLEDGE, ECONOMIC_OPERATOR passes', () => {
   let called = false;
   const next: NextFunction = () => { called = true; };
-  const req = mockReq({ headers: { 'x-user-id': 'op-1', 'x-role': 'OPERATOR', 'x-tenant-id': 'T1' }, body: { intentType: 'ACKNOWLEDGE_DRIFT', executionId: 'exec-1' } });
+  const req = mockReq({ role: 'OPERATOR', userId: 'op-1', tenantId: 'T1', body: { intentType: 'ACKNOWLEDGE_DRIFT', executionId: 'exec-1' } });
   const res = mockRes();
   intentPermissionGuard(req, res as unknown as Response, next);
   assert.equal(called, true);
