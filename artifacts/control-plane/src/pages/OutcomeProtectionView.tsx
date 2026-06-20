@@ -18,7 +18,12 @@ import { customerFacingError } from '../lib/display/errors'
 function money(value?: number) { return formatCurrency(value) }
 function pill(value: string) { const raw = value.toLowerCase().replace(/_/g, '-'); if (raw === 'protected' || raw === 'resolved') return 'verified'; if (raw === 'at-risk') return 'approval-required'; if (raw === 'drifted' || raw === 'remediation-open') return 'blocked'; return 'pending' }
 function Field({ label, value }: { label: string; value?: string | number }) { return <div><div style={{ fontSize: 10, textTransform: 'uppercase', color: 'var(--text-label)', letterSpacing: '.05em' }}>{label}</div><div style={{ fontSize: 12, marginTop: 3 }}>{value ?? '—'}</div></div> }
-function narrative(d: ReturnType<typeof useOutcomeProtectionData>['dashboard']) { return `Certen is currently protecting ${money(d.protectedAnnualValue)} of annualized verified value. ${d.retentionRate}% of protected value remains retained. ${money(d.driftedAnnualValue)} has drifted and requires remediation. ${d.remediationOpen} remediation actions are currently open. ${d.upcomingChecks.length} retention checks are scheduled this week.` }
+function narrative(d: ReturnType<typeof useOutcomeProtectionData>['dashboard']) {
+  if (d.protectedOutcomes === 0) {
+    return 'No protected outcomes exist yet. Protected value will appear after verified outcomes are created and retention monitoring begins.'
+  }
+  return `Certen is currently protecting ${money(d.protectedAnnualValue)} of annualized verified value. ${formatPercent(d.retentionRate)} of protected value remains retained. ${money(d.driftedAnnualValue)} has drifted and requires remediation. ${d.remediationOpen} remediation actions are currently open. ${d.upcomingChecks.length} retention checks are scheduled this week.`
+}
 function recoveredValue(outcomes: ProtectedOutcome[]) { return outcomes.filter((o) => o.status === 'RESOLVED').reduce((sum, outcome) => sum + (outcome.protectedAnnualValue ?? 0), 0) }
 function openFindings(detailMap: Record<string, ProtectedOutcomeDetail>, dashboard: ReturnType<typeof useOutcomeProtectionData>['dashboard']) { const detailed = Object.values(detailMap).flatMap((detail) => detail.findings); return (detailed.length ? detailed : dashboard.openDriftFindings).filter((f) => ['OPEN', 'ACKNOWLEDGED', 'REMEDIATION_CREATED'].includes(f.status)).slice(0, 10) }
 function remediations(detailMap: Record<string, ProtectedOutcomeDetail>) { const detailed = Object.values(detailMap).flatMap((detail) => detail.remediations); return detailed.length ? detailed : demoRemediations }

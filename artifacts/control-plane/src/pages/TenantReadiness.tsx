@@ -41,12 +41,16 @@ export default function TenantReadiness() {
     </section>
 
     <section style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: 10 }}>
-      <MetricCard label='First Outcome Readiness' value={formatPercent(data.firstOutcomeReadinessPercent)} delta={data.requiredActions.length ? `${data.requiredActions.length} required action${data.requiredActions.length === 1 ? '' : 's'} remaining` : 'No blocking actions remaining'} hero />
+      <MetricCard label='First Outcome Readiness' value={formatPercent(data.firstOutcomeReadinessPercent)} delta={data.requiredActions.length ? `${data.requiredActions.length} required action${data.requiredActions.length === 1 ? '' : 's'} remaining` : data.firstOutcomeReadinessPercent === 100 ? 'No blocking actions remaining' : data.nextActions.length ? `Awaiting first connector — ${data.nextActions.length} step${data.nextActions.length === 1 ? '' : 's'} remain` : 'Awaiting first connector'} hero />
     </section>
 
     <Card>
       <SectionLabel>Required Actions</SectionLabel>
-      {data.requiredActions.length === 0 ? <p>No required actions. All onboarding blockers are clear.</p> : <ul>{data.requiredActions.map((action, index) => <li key={index}>{action}</li>)}</ul>}
+      {data.requiredActions.length === 0 ? (
+        data.firstOutcomeReadinessPercent === 100
+          ? <p>No required actions. All onboarding blockers are clear.</p>
+          : <p>{data.nextActions.length} onboarding requirement{data.nextActions.length === 1 ? '' : 's'} remain. See Next Actions below.</p>
+      ) : <ul>{data.requiredActions.map((action, index) => <li key={index}>{action}</li>)}</ul>}
     </Card>
 
     <Card>

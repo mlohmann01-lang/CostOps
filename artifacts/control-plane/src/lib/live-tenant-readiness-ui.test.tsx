@@ -36,7 +36,7 @@ test('data hook consumes runtime APIs and exposes demo fallback', () => {
 
 test('header mode and readiness badges render', () => {
   const page = read('../pages/LiveTenantReadinessView.tsx')
-  for (const text of ['Live Tenant Readiness', 'Validate certified wedge availability, connector health, execution policy, evidence export readiness, and audit completeness before live tenant execution.', 'DEMO', 'PILOT_READ_ONLY', 'PILOT_CONTROLLED_EXECUTION', 'PRODUCTION_CONTROLLED_EXECUTION', 'Ready for Pilot', 'Blocked for Pilot', 'Ready for Production', 'Blocked for Production']) assert.equal(page.includes(text), true)
+  for (const text of ['Live Tenant Readiness', 'Validate certified wedge availability, connector health, execution policy, evidence export readiness, and audit completeness before live tenant execution.', 'DEMO', 'PILOT_READ_ONLY', 'PILOT_CONTROLLED_EXECUTION', 'PRODUCTION_CONTROLLED_EXECUTION', 'Pilot Execution Enabled', 'Pilot Execution Blocked', 'Production Execution Enabled', 'Production Execution Blocked']) assert.equal(page.includes(text), true)
 })
 
 test('executive readiness summary and certified wedge cards render', () => {

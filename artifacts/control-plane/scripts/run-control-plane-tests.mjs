@@ -55,6 +55,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/display/labels.test.ts',
   '../artifacts/control-plane/src/lib/display/errors.test.ts',
   '../artifacts/control-plane/src/lib/readiness/readinessState.test.ts',
+  '../artifacts/control-plane/src/lib/trust/consistencyValidator.test.ts',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')
