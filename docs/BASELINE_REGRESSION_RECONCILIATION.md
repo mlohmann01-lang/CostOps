@@ -86,3 +86,50 @@ The required final full-suite run found 29 failing test files outside the origin
 - `simulation-integrity.test.ts` — unresolved; replay integrity assertion returned false.
 
 Because the full run completed and these failures remain, the baseline verdict is `NOT_CLEAN`, not `CLEAN_WITH_DOCUMENTED_EXCEPTIONS`.
+
+## Sprint 17C Closure
+
+Sprint 17C closed one concrete missing-artifact path failure and produced a complete inventory of the 29 initially failing api-server files. The run also confirmed the existing DB segregation behavior: 165 files were skipped only because `RUN_DB_INTEGRATION_TESTS` was unset.
+
+### Classifications
+
+- `MISSING_ARTIFACT`: `golden-demo-seed.test.ts` (fixed).
+- `HARNESS`: `economic-operations-telemetry.test.ts`, `route-guard-security.test.ts`.
+- `REAL_DEFECT`: `executive-priority-routes.test.ts`, `simulation-integrity.test.ts`.
+- `STALE_TEST`: all other non-DB failing files listed in `docs/SPRINT17C_FAILURE_INVENTORY.md`.
+- `DB_ONLY`: 165 skipped DB integration tests.
+
+### Final pass/fail counts
+
+- Build/typecheck: passed.
+- Initial full api-server run: 29 failing files, 165 DB-only skips.
+- Targeted post-fix verification for `golden-demo-seed`: passed.
+- Final full api-server run: 28 failing files, 165 DB-only skips.
+
+### Verdict
+
+`NOT_CLEAN`
+
+Non-DB failures remain outside the allowed documented-exception set.
+
+## Sprint 17D Closure
+
+Sprint 17D resolved the Sprint 17C `NOT_CLEAN` state by fixing or reconciling every remaining non-DB api-server failure.
+
+### Classifications resolved
+
+- `HARNESS`: fixed by externalizing pino/thread-stream during test bundling.
+- `MISSING_ARTIFACT`: already resolved by Sprint 17C golden-demo path correction; retained as passing.
+- `STALE_TEST`: reconciled with current intended behavior and deterministic fixtures.
+- `REAL_DEFECT`: fixed simulation integrity validation and explicit executive priority seeding.
+- `DB_ONLY`: remains gated by existing integration-test harness convention.
+
+### Final pass/fail counts
+
+- Build/typecheck: passed.
+- Full api-server non-DB run: 1,581 test files passed, 0 failed.
+- DB-only skipped: 165 files.
+
+### Verdict
+
+`CLEAN_WITH_DOCUMENTED_EXCEPTIONS`

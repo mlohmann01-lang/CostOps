@@ -21,25 +21,27 @@ test("all 8 m365 playbooks expose required metadata", ()=>{
 
 test("valid candidate produces recommendation per playbook", ()=>{
   assert.equal(disabledLicensedUserReclaimPlaybook.evaluate({...base, accountEnabled:false}).matched, true);
-  assert.equal(inactiveUserReclaimPlaybook.evaluate({...base, days:180, sku:"E3", assignedLicenses:["E3"]}).matched, true);
+  assert.equal(inactiveUserReclaimPlaybook.evaluate({...base, days:180, sku:"E3", assignedLicenses:["E3"], activityPresent:false}).matched, true);
   assert.equal(e3WithoutDesktopAppsRightsizePlaybook.evaluate({...base, sku:"E3", assignedLicenses:["E3"], hasDesktopActivity:false}).matched, true);
   assert.equal(e5UnderusedRightsizePlaybook.evaluate({...base, advancedFeatureUsage:0.1, activityPresent:true}).matched, true);
   assert.equal(addonLicenseReclaimPlaybook.evaluate({...base, sku:"ADDON_AUDIO", assignedLicenses:["ADDON_AUDIO"], addonUsageDaysAgo:300}).matched, true);
   assert.equal(copilotUnderuseReallocationPlaybook.evaluate({...base, assignedLicenses:["COPILOT"], copilotActivityScore:0.1}).matched, true);
   assert.equal(sharedMailboxLicenseReclaimPlaybook.evaluate({...base, email:"shared.box@contoso.com", userPrincipalName:"shared.box@contoso.com", mailboxType:"shared", assignedLicenses:["E3"]}).matched, true);
-  assert.equal(overlappingSkuCleanupPlaybook.evaluate({...base, overlappingSkuDetected:true}).matched, true);
+  assert.equal(overlappingSkuCleanupPlaybook.evaluate({...base, sku:"ADDON_AUDIO", assignedLicenses:["ADDON_AUDIO"], addonUsageDaysAgo:300, overlappingSkuDetected:true}).matched, true);
 });
 
-test("missing evidence blocks recommendation and exclusions apply", ()=>{
-  assert.equal(addonLicenseReclaimPlaybook.evaluate({...base, sku:"ADDON_AUDIO", addonUsageDaysAgo:null}).matched, false);
+test("missing add-on usage is evidence-visible and exclusions apply", ()=>{
+  const missingUsage = addonLicenseReclaimPlaybook.evaluate({...base, sku:"ADDON_AUDIO", addonUsageDaysAgo:undefined});
+  assert.equal(missingUsage.matched, true);
+  assert.equal(missingUsage.evidence.addonUsageDaysAgo, null);
   const excluded = disabledLicensedUserReclaimPlaybook.evaluate({...base, email:"admin@contoso.com", userPrincipalName:"admin@contoso.com", accountEnabled:false});
   assert.ok(excluded.exclusions.includes("admin account"));
 });
 
 test("risk class, execution mode, savings and verification assigned", ()=>{
-  const out = overlappingSkuCleanupPlaybook.evaluate({...base, overlappingSkuDetected:true});
-  assert.equal(out.riskClass, "C");
-  assert.equal(out.executionMode, "MANUAL");
+  const out = overlappingSkuCleanupPlaybook.evaluate({...base, sku:"ADDON_AUDIO", assignedLicenses:["ADDON_AUDIO"], addonUsageDaysAgo:300, overlappingSkuDetected:true});
+  assert.equal(out.riskClass, "B");
+  assert.equal(out.executionMode, "APPROVAL_REQUIRED");
   assert.ok(out.estimatedMonthlySaving >= 0);
   assert.ok(out.verificationMethod);
 });

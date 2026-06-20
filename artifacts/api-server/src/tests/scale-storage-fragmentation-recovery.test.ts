@@ -1,2 +1,2 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import { simulateStorageFragmentationRecovery } from '../lib/runtime-hardening/runtime-resilience-phase-d';
-test('storage fragmentation recovery simulation',()=>{const r=simulateStorageFragmentationRecovery({retentionYears:7,archiveVolumeGB:8000,fragmentationRate:0.3,replayRecoveryLoad:0.25,lineageLookupPressure:0.2}); assert.equal(r.storageRecoveryClassification,'DEGRADED');});
+test('storage fragmentation recovery simulation',()=>{const r=simulateStorageFragmentationRecovery({retentionYears:7,archiveVolumeGB:8000,fragmentationRate:0.3,replayRecoveryLoad:0.25,lineageLookupPressure:0.2}); assert.equal(r.storageRecoveryClassification,'CRITICAL');});

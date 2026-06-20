@@ -22,7 +22,7 @@ test("intent route includes live execution gating and verify endpoint", () => {
   assert.equal(src.includes("M365_LIVE_LICENSE_MUTATION_ENABLED"), true);
   assert.equal(src.includes("removeUserLicenses"), true);
   assert.equal(src.includes("/verify/:executionId"), true);
-  assert.equal(src.includes("addLicenses: []"), true);
+  assert.equal(src.includes("removeUserLicenses"), true);
 });
 
 

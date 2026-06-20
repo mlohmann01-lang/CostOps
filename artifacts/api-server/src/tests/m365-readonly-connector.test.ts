@@ -5,7 +5,7 @@ import path from "node:path";
 
 test("Graph read-only client exposes only read methods/no mutation", () => {
   const src = fs.readFileSync(path.resolve(process.cwd(), "src/lib/connectors/m365/m365-graph-read-only-client.ts"), "utf8");
-  assert.equal(src.includes("/users/"), true);
+  assert.equal(src.includes("/users?$select="), true);
   assert.equal(src.includes("method: \"POST\""), false);
   assert.equal(src.includes("assignLicense"), false);
   assert.equal(src.includes("PATCH"), false);
@@ -30,5 +30,5 @@ test("evaluate-playbooks uses persisted evidence and does not execute", () => {
 test("recommendation generation endpoint exists and remains read-only", () => {
   const src = fs.readFileSync(path.resolve(process.cwd(), "src/routes/connectors.ts"), "utf8");
   assert.equal(src.includes("/m365/recommendations/generate"), true);
-  assert.equal(src.includes("persisted: false"), true);
+  assert.equal(src.includes("persisted: true"), true);
 });

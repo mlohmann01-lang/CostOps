@@ -36,3 +36,41 @@
 - Standard non-DB api-server run: 1,581 test files discovered by the runner.
 - Failing files after reconciliation: 29 in the full run; 0 among the originally reported four test files after fixes.
 - Final verdict: `NOT_CLEAN`.
+
+## Sprint 17C Closure
+
+### Final failure inventory
+
+Sprint 17C ran the required build, typecheck, and full api-server test sequence. Build and typecheck completed successfully. The api-server test runner discovered 1,581 non-DB runnable test files, skipped 165 DB integration files because `RUN_DB_INTEGRATION_TESTS` was unset, and reported 29 failing files in the initial full run and 28 failing files in the final full run after the golden demo path fix.
+
+The complete per-file classification is recorded in `docs/SPRINT17C_FAILURE_INVENTORY.md`.
+
+### Fixes
+
+- Fixed `golden-demo-seed.test.ts` path resolution by replacing ad-hoc `process.cwd()/../...` paths with the shared repo-root test harness resolver.
+
+### Remaining exceptions
+
+- `DB_ONLY`: 165 DB integration tests remain gated behind `RUN_DB_INTEGRATION_TESTS=true` and database configuration.
+
+### Remaining non-DB failures
+
+Non-DB failures remain in `REAL_DEFECT`, `HARNESS`, and `STALE_TEST` classifications. Because those are not allowed exceptions for a clean baseline, the Sprint 17C verdict is `NOT_CLEAN`.
+
+## Sprint 17D Closure
+
+Sprint 17D eliminated the 28 remaining non-DB api-server failing files from Sprint 17C. The failure-by-failure root cause, classification, action, and final status are recorded in `docs/SPRINT17D_FAILURE_MATRIX.md`.
+
+### Final counts
+
+- Standard api-server non-DB test files run: 1,581.
+- Failing non-DB api-server test files: 0.
+- DB-only integration test files skipped by harness gate: 165.
+
+### Remaining exceptions
+
+Only `DB_ONLY` exceptions remain. These tests require `RUN_DB_INTEGRATION_TESTS=true` and database configuration, including `DATABASE_URL`.
+
+### Final baseline verdict
+
+`CLEAN_WITH_DOCUMENTED_EXCEPTIONS`

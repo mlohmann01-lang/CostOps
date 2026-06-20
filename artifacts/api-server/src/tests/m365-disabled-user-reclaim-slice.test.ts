@@ -11,7 +11,7 @@ test("disabled-user vertical slice route is wired", () => {
 
 test("economic operations route reads persisted M365 reclaim data", () => {
   const src = fs.readFileSync(path.resolve(process.cwd(), "src/routes/economic-operations.ts"), "utf8");
-  assert.equal(src.includes("m365-disabled-licensed-user-reclaim"), true);
+  assert.equal(src.includes("M365_ECONOMIC_PLAYBOOK_IDS"), true);
   assert.equal(src.includes("M365 Disabled Licensed User Reclaim"), true);
   assert.equal(src.includes("m365-exec-"), true);
 });

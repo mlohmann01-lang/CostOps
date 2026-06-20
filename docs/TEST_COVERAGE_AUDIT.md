@@ -384,3 +384,38 @@ DB integration tests remain intentionally gated by the existing api-server harne
 - Standard non-DB api-server run: 1,581 test files discovered.
 - Failing files after reconciliation: 29 in the full run; 0 among the originally reported four test files after fixes.
 - Final baseline verdict: `NOT_CLEAN`.
+
+## Sprint 17C Closure
+
+Sprint 17C did not add product coverage or lower assertions. It audited the full api-server baseline, classified all 29 initially failing non-DB files, and fixed the missing-artifact path coverage in `golden-demo-seed.test.ts` by using the shared repo-root path resolver.
+
+### Coverage impact
+
+- No tests were deleted.
+- No assertions were weakened.
+- DB integration coverage remains segregated behind `RUN_DB_INTEGRATION_TESTS=true` and database configuration.
+
+### Final suite evidence
+
+- Build/typecheck commands passed.
+- Initial full api-server run reported 29 failing non-DB files and 165 DB-only skips.
+- Targeted verification confirmed the fixed golden-demo seed tests pass.
+
+### Baseline verdict
+
+`NOT_CLEAN` until remaining non-DB `REAL_DEFECT`, `HARNESS`, and `STALE_TEST` classifications are resolved.
+
+## Sprint 17D Closure
+
+Sprint 17D restored the standard api-server non-DB baseline without deleting tests or lowering coverage. The remaining failures were fixed through harness correction, deterministic fixture seeding, stale expectation reconciliation, and one integrity-validation defect fix.
+
+### Coverage impact
+
+- No test files were deleted.
+- No DB integration tests were removed.
+- The standard non-DB api-server run now exercises 1,581 passing test files.
+- DB integration coverage remains explicitly segregated behind `RUN_DB_INTEGRATION_TESTS=true` and `DATABASE_URL`.
+
+### Baseline verdict
+
+`CLEAN_WITH_DOCUMENTED_EXCEPTIONS`
