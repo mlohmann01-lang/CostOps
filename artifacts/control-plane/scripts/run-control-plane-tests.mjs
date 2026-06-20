@@ -58,6 +58,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/trust/consistencyValidator.test.ts',
   '../artifacts/control-plane/src/lib/authorityCatalog/defaultAuthorities.test.ts',
   '../artifacts/control-plane/src/lib/economicControlChain/economicControlChain.test.ts',
+  '../artifacts/control-plane/src/lib/outcomeFinance/outcomeFinance.test.ts',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')

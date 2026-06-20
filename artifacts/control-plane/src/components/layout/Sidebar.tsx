@@ -32,6 +32,7 @@ export const NAV_GROUPS: NavGroup[] = [
   { label: 'Intelligence', defaultOpen: false, items: [
     { label: 'Authority Catalog', icon: BookMarked, href: '/intelligence/authority-catalog' },
     { label: 'Economic Control Chain', icon: BookMarked, href: '/intelligence/economic-control-chain' },
+    { label: 'Outcome Finance', icon: BookMarked, href: '/executive/outcome-finance' },
   ]},
   { label: 'Platform', defaultOpen: false, items: [
     { label: 'Overview', icon: LayoutDashboard, href: '/overview', aliases: ['/command', '/all/command', '/executive-priorities'] },
