@@ -1,2 +1,2 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateCloudWorkloadVolatility } from '../lib/cloud-economic-intelligence';
-test('models workload volatility',()=>{ const v=evaluateCloudWorkloadVolatility({tenantId:'t',resourceId:'r',monthlyCost:1,usageVariability:0.9,scheduledIndicator:true}); assert.equal(v.volatilityBand,'MEDIUM'); assert.ok(v.shutdownRisk>=0.7); });
+test('models workload volatility',()=>{ const v=evaluateCloudWorkloadVolatility({tenantId:'t',resourceId:'r',monthlyCost:1,usageVariability:0.9,seasonality:0.8,burstiness:0.5,scheduledIndicator:true}); assert.equal(v.volatilityBand,'MEDIUM'); assert.ok(v.shutdownRisk>=0.7); });
