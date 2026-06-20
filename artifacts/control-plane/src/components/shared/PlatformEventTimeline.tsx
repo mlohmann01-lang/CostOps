@@ -1,3 +1,4 @@
+import React from 'react'
 import type { RuntimeEvent } from '../../types/runtimeEvents'
 
 export function PlatformEventTimeline({ events, limit = 10, emptyLabel = 'No platform events yet', compact = false }: { events: RuntimeEvent[]; limit?: number; emptyLabel?: string; compact?: boolean }) {

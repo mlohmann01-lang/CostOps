@@ -8,30 +8,19 @@ export type EvidenceExportReadiness = { tenantId: string; actionId?: string; wed
 export type LiveTenantReadinessData = { readiness: { tenantId: string; mode: TenantRuntimeMode; certifiedWedges: { m365: boolean; ai: boolean; servicenow: boolean; aws?: boolean; azure?: boolean }; connectorHealth: ConnectorHealthReport[]; executionGateSummary: { allowed: number; blocked: number; dryRunOnly: number }; auditCompleteness: { complete: number; incomplete: number }; evidenceExportReadiness: { ready: number; blocked: number }; blockers: string[]; readyForPilot: boolean; readyForProduction: boolean }; tenantExecutionPolicy: TenantExecutionPolicy; connectorHealth: ConnectorHealthReport[]; evidenceExportReadiness: EvidenceExportReadiness[]; isDemo: boolean; loading: boolean; error?: string; refreshConnectorHealth(): Promise<void>; updateTenantExecutionPolicy(input: Partial<TenantExecutionPolicy>): Promise<void> }
 
 export const liveTenantReadinessApiPaths = ['/api/runtime/live-tenant-readiness', '/api/runtime/connector-health', '/api/runtime/evidence-export-readiness', '/api/runtime/tenant-execution-policy'] as const
-const now = '2026-06-11T00:00:00Z'
-export const demoLiveTenantReadiness = {
-  readiness: { tenantId: 'demo-tenant', mode: 'PILOT_CONTROLLED_EXECUTION' as TenantRuntimeMode, certifiedWedges: { m365: true, ai: true, servicenow: true, aws: true, azure: true }, connectorHealth: [] as ConnectorHealthReport[], executionGateSummary: { allowed: 7, blocked: 2, dryRunOnly: 1 }, auditCompleteness: { complete: 5, incomplete: 1 }, evidenceExportReadiness: { ready: 2, blocked: 1 }, blockers: ['Production mode blocked until ServiceNow connector health is healthy', 'Audit incomplete for Copilot reclaim action', 'Evidence export blocked: missing verification evidence'], readyForPilot: true, readyForProduction: false },
-  tenantExecutionPolicy: { tenantId: 'demo-tenant', mode: 'PILOT_CONTROLLED_EXECUTION' as TenantRuntimeMode, allowRealWrites: true, allowDryRun: true, requireApprovalAuthority: true, requireTrustAuthority: true, requireEvidence: true, requireRollbackForDestructive: true, maxBlastRadiusAllowed: 'MEDIUM' as const, allowedDomains: ['M365', 'AI', 'SERVICENOW', 'AWS', 'AZURE'] as Array<'M365' | 'AI' | 'SERVICENOW' | 'AWS' | 'AZURE'>, createdAt: now, updatedAt: now },
-  connectorHealth: [
-    { tenantId: 'demo-tenant', connectorId: 'm365-prod', connectorType: 'M365' as const, status: 'HEALTHY' as const, credentialExpiresAt: '2026-07-01T00:00:00Z', scopes: ['User.Read.All', 'Directory.Read.All'], missingScopes: [], lastCheckedAt: now, errors: [] },
-    { tenantId: 'demo-tenant', connectorId: 'azure-prod', connectorType: 'AZURE' as const, status: 'HEALTHY' as const, credentialExpiresAt: '2026-07-12T00:00:00Z', scopes: ['Microsoft.Compute/virtualMachines/read', 'CostManagement.Read'], missingScopes: [], lastCheckedAt: now, errors: [] },
-    { tenantId: 'demo-tenant', connectorId: 'aws-prod', connectorType: 'AWS' as const, status: 'HEALTHY' as const, credentialExpiresAt: '2026-07-10T00:00:00Z', scopes: ['ec2:DescribeInstances', 'ce:GetCostAndUsage'], missingScopes: [], lastCheckedAt: now, errors: [] },
-    { tenantId: 'demo-tenant', connectorId: 'servicenow-prod', connectorType: 'SERVICENOW' as const, status: 'DEGRADED' as const, credentialExpiresAt: '2026-06-20T00:00:00Z', scopes: ['change.write'], missingScopes: ['approval.write'], rateLimitResetAt: '2026-06-11T01:00:00Z', lastCheckedAt: now, errors: ['ServiceNow approval scope missing'] },
-  ],
-  evidenceExportReadiness: [
-    { tenantId: 'demo-tenant', actionId: 'copilot-reclaim-001', wedge: 'M365' as const, ready: false, missing: 'VERIFICATION_EVIDENCE', missingItems: ['VERIFICATION_EVIDENCE'], generatedAt: now },
-    { tenantId: 'demo-tenant', actionId: 'ai-owner-002', wedge: 'AI' as const, ready: true, missing: null, missingItems: [], generatedAt: now },
-    { tenantId: 'demo-tenant', actionId: 'azure-rightsize-005', wedge: 'AZURE' as const, ready: true, missing: null, missingItems: [], generatedAt: now },
-    { tenantId: 'demo-tenant', actionId: 'aws-rightsize-004', wedge: 'AWS' as const, ready: true, missing: null, missingItems: [], generatedAt: now },
-    { tenantId: 'demo-tenant', actionId: 'snow-change-003', wedge: 'SERVICENOW' as const, ready: true, missing: null, missingItems: [], generatedAt: now },
-  ],
+
+const emptyLiveTenantReadiness: Omit<LiveTenantReadinessData, 'loading' | 'error' | 'refreshConnectorHealth' | 'updateTenantExecutionPolicy'> = {
+  readiness: { tenantId: 'live', mode: 'PILOT_READ_ONLY', certifiedWedges: { m365: false, ai: false, servicenow: false }, connectorHealth: [], executionGateSummary: { allowed: 0, blocked: 0, dryRunOnly: 0 }, auditCompleteness: { complete: 0, incomplete: 0 }, evidenceExportReadiness: { ready: 0, blocked: 0 }, blockers: [], readyForPilot: false, readyForProduction: false },
+  tenantExecutionPolicy: { tenantId: 'live', mode: 'PILOT_READ_ONLY', allowRealWrites: false, allowDryRun: true, requireApprovalAuthority: true, requireTrustAuthority: true, requireEvidence: true, requireRollbackForDestructive: true, maxBlastRadiusAllowed: 'LOW', allowedDomains: [], createdAt: '', updatedAt: '' },
+  connectorHealth: [],
+  evidenceExportReadiness: [],
+  isDemo: false,
 }
-demoLiveTenantReadiness.readiness.connectorHealth = demoLiveTenantReadiness.connectorHealth
 
 function normalizeReadinessPayload(payload: any = {}) {
-  const readiness = payload.readiness ?? payload.liveTenantReadiness ?? demoLiveTenantReadiness.readiness
-  const connectorHealth = Array.isArray(payload.connectorHealth) ? payload.connectorHealth : Array.isArray(readiness.connectorHealth) ? readiness.connectorHealth : demoLiveTenantReadiness.connectorHealth
-  return { readiness: { ...demoLiveTenantReadiness.readiness, ...readiness, connectorHealth }, tenantExecutionPolicy: payload.tenantExecutionPolicy ?? payload.policy ?? demoLiveTenantReadiness.tenantExecutionPolicy, connectorHealth, evidenceExportReadiness: Array.isArray(payload.evidenceExportReadiness) ? payload.evidenceExportReadiness : [payload.evidenceExportReadiness].filter(Boolean).length ? [payload.evidenceExportReadiness] : demoLiveTenantReadiness.evidenceExportReadiness }
+  const readiness = payload.readiness ?? payload.liveTenantReadiness ?? emptyLiveTenantReadiness.readiness
+  const connectorHealth = Array.isArray(payload.connectorHealth) ? payload.connectorHealth : Array.isArray(readiness.connectorHealth) ? readiness.connectorHealth : emptyLiveTenantReadiness.connectorHealth
+  return { readiness: { ...emptyLiveTenantReadiness.readiness, ...readiness, connectorHealth }, tenantExecutionPolicy: payload.tenantExecutionPolicy ?? payload.policy ?? emptyLiveTenantReadiness.tenantExecutionPolicy, connectorHealth, evidenceExportReadiness: Array.isArray(payload.evidenceExportReadiness) ? payload.evidenceExportReadiness : [payload.evidenceExportReadiness].filter(Boolean).length ? [payload.evidenceExportReadiness] : emptyLiveTenantReadiness.evidenceExportReadiness }
 }
 
 export function useLiveTenantReadinessData(): LiveTenantReadinessData {
@@ -47,12 +36,12 @@ export function useLiveTenantReadinessData(): LiveTenantReadinessData {
       setIsDemo(false); setError(undefined)
     } catch (err) {
       const normalized = normalizeApiError(err)
-      setData(normalizeReadinessPayload(demoLiveTenantReadiness)); setIsDemo(true); setError(normalized.message)
+      setData(normalizeReadinessPayload()); setIsDemo(false); setError(normalized.message)
     } finally { setLoading(false) }
   }, [])
   useEffect(() => { void load() }, [load])
   const refreshConnectorHealth = useCallback(async () => {
-    const targets = data.connectorHealth.length ? data.connectorHealth : demoLiveTenantReadiness.connectorHealth
+    const targets = data.connectorHealth
     await Promise.all(targets.map((connector: ConnectorHealthReport) => liveFetch('/api/runtime/connector-health/check', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ connectorId: connector.connectorId }) }).catch(() => undefined)))
     await load()
   }, [data.connectorHealth, load])

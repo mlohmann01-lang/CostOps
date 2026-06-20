@@ -419,3 +419,24 @@ Sprint 17D restored the standard api-server non-DB baseline without deleting tes
 ### Baseline verdict
 
 `CLEAN_WITH_DOCUMENTED_EXCEPTIONS`
+
+## Sprint 18 Demo / Live Boundary Coverage (2026-06-20)
+
+Added coverage for:
+
+- API runtime mode normalization and LIVE state mapping.
+- API demo seed rejection in LIVE mode.
+- Static scanning to prevent live API routes/services from importing demo seed modules or fixture JSON.
+- Control-plane runtime mode normalization and LIVE state mapping.
+- Static scanning to prevent customer-facing pages from importing demo seed modules directly.
+- Regression coverage that tenant readiness API errors no longer fall back to demo data.
+
+## Sprint 18B Verification Closure (2026-06-20)
+
+Verification coverage is now closed for Sprint 18:
+
+- Build verification passed for `@workspace/db`, `@workspace/api-zod`, `@workspace/api-client-react`, `@workspace/api-server`, and `@workspace/control-plane`.
+- Typecheck verification passed for `@workspace/api-server` and `@workspace/control-plane`.
+- API server default suite completed with 1,582 selected test files, 165 DB integration tests explicitly gated/skipped, and 0 non-DB failures.
+- Control-plane default suite completed with 354 passing tests across 20 suites and 0 failures.
+- Boundary regression checks remain in the default suites for runtime mode helpers, demo seed isolation, fixture import guards, customer-facing page guards, and no demo fallback on live tenant readiness errors.

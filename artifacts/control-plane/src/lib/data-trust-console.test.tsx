@@ -43,7 +43,7 @@ test('findings table renders affected value and remediation hint', () => {
 })
 
 test('live mode calls /api/trust/*', () => {
-  assert.deepEqual(trustApiPaths, ['/api/trust/summary', '/api/trust/connectors', '/api/trust/findings', '/api/trust/readiness'])
+  assert.deepEqual(trustApiPaths, ['/api/trust/summary', '/api/trust/connectors', '/api/trust/findings', '/api/trust/readiness', '/api/connectors/m365/trust'])
 })
 
 test('live error renders without demo fallback', () => {

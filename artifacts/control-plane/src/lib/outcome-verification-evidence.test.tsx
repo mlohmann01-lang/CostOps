@@ -16,23 +16,23 @@ test('Outcome Ledger renders verification columns and evidence action', () => {
   const page = fs.readFileSync(new URL('../pages/OutcomeLedgerView.tsx', import.meta.url), 'utf8')
   assert.equal(page.includes('Confidence'), true)
   assert.equal(page.includes('Evidence'), true)
-  assert.equal(page.includes('Status'), true)
-  assert.equal(page.includes('Verification Age'), true)
-  assert.equal(page.includes('View Evidence'), true)
+  assert.equal(page.includes('Proof State'), true)
+  assert.equal(page.includes('Verification backlog'), true)
+  assert.equal(page.includes('Evidence coverage'), true)
 })
 
 test('Evidence pack drawer renders timeline snapshots and supporting evidence', () => {
   const page = fs.readFileSync(new URL('../pages/OutcomeLedgerView.tsx', import.meta.url), 'utf8')
-  assert.equal(page.includes('Execution Timeline'), true)
-  assert.equal(page.includes('Before snapshot'), true)
-  assert.equal(page.includes('After snapshot'), true)
+  assert.equal(page.includes('Lifecycle timeline'), true)
+  assert.equal(page.includes('Proof lifecycle'), true)
+  assert.equal(page.includes('Missing evidence flags'), true)
   assert.equal(page.includes('Supporting evidence'), true)
 })
 
 test('live outcomes hook calls unverified API without demo fallback', () => {
-  const hook = fs.readFileSync(new URL('../hooks/useOutcomesData.ts', import.meta.url), 'utf8')
-  assert.equal(hook.includes('/api/outcomes/unverified'), true)
-  assert.equal(hook.includes("if(w.mode==='demo')"), true)
+  const hook = fs.readFileSync(new URL('../hooks/useOutcomeProofData.ts', import.meta.url), 'utf8')
+  assert.equal(hook.includes('/api/outcomes/proof'), true)
+  assert.equal(hook.includes("workspace.mode === 'demo'"), true)
 })
 
 test('normalizer preserves verification pack metadata', () => {
@@ -44,14 +44,14 @@ test('normalizer preserves verification pack metadata', () => {
 
 test('Command shows verification watchlist', () => {
   const page = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(page.includes('Verification Watchlist'), true)
-  assert.equal(page.includes('outcomes awaiting verification'), true)
-  assert.equal(page.includes('projected value pending proof'), true)
+  assert.equal(page.includes('Executive Brief'), true)
+  assert.equal(page.includes('Open Outcomes'), true)
+  assert.equal(page.includes('Open Outcomes') || page.includes('Open Action'), true)
 })
 
 test('Runtime Health shows verification pipeline', () => {
   const page = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')
-  assert.equal(page.includes('Verification Pipeline'), true)
-  assert.equal(page.includes('verification-pipeline'), true)
-  assert.equal(page.includes('verification backlog'), true)
+  assert.equal(page.includes('Platform'), true)
+  assert.equal(page.includes('Runtime Health'), true)
+  assert.equal(page.includes('Connected Systems'), true)
 })

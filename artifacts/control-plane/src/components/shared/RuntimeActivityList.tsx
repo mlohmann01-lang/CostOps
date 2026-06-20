@@ -1,3 +1,4 @@
+import React from 'react'
 import type { RuntimeEvent } from '../../types/runtimeEvents'
 import { PlatformEventTimeline } from './PlatformEventTimeline'
 

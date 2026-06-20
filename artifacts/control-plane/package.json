@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "build": "vite build --config vite.config.ts",
+    "build": "pnpm --filter @workspace/api-client-react build && PORT=${PORT:-5173} BASE_PATH=${BASE_PATH:-/} vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "pnpm --filter @workspace/api-client-react build && tsc -p tsconfig.json --noEmit",
     "test": "node ./scripts/run-control-plane-tests.mjs"
   },
   "devDependencies": {

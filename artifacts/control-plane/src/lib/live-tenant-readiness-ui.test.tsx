@@ -1,7 +1,8 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
-import { liveTenantReadinessApiPaths, demoLiveTenantReadiness, useLiveTenantReadinessData } from '../hooks/useLiveTenantReadinessData'
+import { liveTenantReadinessApiPaths, useLiveTenantReadinessData } from '../hooks/useLiveTenantReadinessData'
+import { liveTenantReadinessDemoSeed } from './demo-seed/liveTenantReadinessDemoSeed'
 import { NAV_GROUPS } from '../components/layout/Sidebar'
 
 function read(path: string) { return fs.readFileSync(new URL(path, import.meta.url), 'utf8') }
@@ -14,7 +15,7 @@ test('route exists and navigation entry exists under Admin', () => {
   assert.deepEqual(admin.items.map((item) => item.label), ['Workspace', 'Live Tenant Readiness', 'Connectors', 'Platform', 'Settings'])
 })
 
-test('data hook consumes runtime APIs and exposes demo fallback', () => {
+test('data hook consumes runtime APIs and demo seed boundary', () => {
   assert.equal(typeof useLiveTenantReadinessData, 'function')
   assert.deepEqual([...liveTenantReadinessApiPaths], ['/api/runtime/live-tenant-readiness', '/api/runtime/connector-health', '/api/runtime/evidence-export-readiness', '/api/runtime/tenant-execution-policy'])
   const hook = read('../hooks/useLiveTenantReadinessData.ts')
@@ -22,6 +23,7 @@ test('data hook consumes runtime APIs and exposes demo fallback', () => {
   assert.equal(hook.includes("method: 'POST'"), true)
   assert.equal(hook.includes("/api/runtime/tenant-execution-policy"), true)
   assert.equal(hook.includes("method: 'PATCH'"), true)
+  const demoLiveTenantReadiness = liveTenantReadinessDemoSeed()
   assert.equal(demoLiveTenantReadiness.readiness.readyForPilot, true)
   assert.equal(demoLiveTenantReadiness.readiness.readyForProduction, false)
   assert.equal(demoLiveTenantReadiness.readiness.certifiedWedges.m365, true)
@@ -65,10 +67,11 @@ test('evidence missing item badges deterministic narrative and cross-links rende
   for (const text of ['RECOMMENDATION_EVIDENCE', 'TRUST_EVIDENCE', 'APPROVAL_EVIDENCE', 'PRE_STATE_EVIDENCE', 'POST_STATE_EVIDENCE', 'VERIFICATION_EVIDENCE', 'OUTCOME_EVIDENCE', 'PROTECTION_EVIDENCE', 'DRIFT_EVIDENCE', 'Deterministic Narrative', 'This tenant is', 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.', 'Open Workspace', 'Open Connectors', 'Open Action Center', 'Open Approval Center', 'Open Evidence Packs', 'Open Outcome Protection']) assert.equal(page.includes(text), true)
 })
 
-test('demo fallback works and prohibited labels are absent', () => {
+test('live error state does not use demo fallback and prohibited labels are absent', () => {
   const page = read('../pages/LiveTenantReadinessView.tsx') + read('../hooks/useLiveTenantReadinessData.ts')
-  assert.equal(page.includes('Demo fallback data'), true)
-  assert.equal(page.includes('Runtime APIs unavailable. Showing demo fallback data.'), true)
+  assert.equal(page.includes('Demo fallback data'), false)
+  assert.equal(page.includes('Runtime APIs unavailable. Showing demo fallback data.'), false)
+  assert.equal(page.includes('setIsDemo(true)'), false)
   assert.equal(page.includes('LeftShield'), false)
   assert.equal(page.includes('Agent Security Analytics'), false)
 })
