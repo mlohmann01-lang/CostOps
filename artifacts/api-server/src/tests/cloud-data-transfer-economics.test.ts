@@ -1,2 +1,2 @@
 import test from 'node:test'; import assert from 'node:assert/strict'; import { evaluateCloudDataTransferEconomics } from '../lib/cloud-economic-intelligence';
-test('evaluates transfer economics',()=>{ const t=evaluateCloudDataTransferEconomics({tenantId:'t',resourceId:'r',monthlyCost:100,tags:{crossRegionTransferHigh:'true'}}); assert.equal(t.optimizationReviewRecommended,true); });
+test('evaluates transfer economics',()=>{ const t=evaluateCloudDataTransferEconomics({tenantId:'t',resourceId:'r',monthlyCost:100,tags:{crossRegionTransferHigh:'true',egressConcentrationHigh:'true'}}); assert.equal(t.optimizationReviewRecommended,true); });

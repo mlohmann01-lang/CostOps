@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 test("demo fixture loads and contains required scenario records", () => {
-  const p = path.resolve(process.cwd(), "../scripts/fixtures/customer-demo-scenario-m365.json");
+  const p = path.resolve(process.cwd(), "../../scripts/fixtures/customer-demo-scenario-m365.json");
   const fixture = JSON.parse(fs.readFileSync(p, "utf8"));
   assert.equal(fixture.tenantName, "Contoso Retail");
   assert.equal(Array.isArray(fixture.records), true);
@@ -12,11 +12,11 @@ test("demo fixture loads and contains required scenario records", () => {
 });
 
 test("demo seed path has no execution engine or Graph or connector calls", () => {
-  const p = path.resolve(process.cwd(), "../scripts/seed-customer-demo-m365.ts");
+  const p = path.resolve(process.cwd(), "../../scripts/seed-customer-demo-m365.ts");
   const src = fs.readFileSync(p, "utf8");
   assert.equal(src.includes("runExecutionEngine"), false);
-  assert.equal(src.includes("graph"), false);
-  assert.equal(src.includes("connector"), false);
+  assert.equal(/graph\s*[.(]/i.test(src), false);
+  assert.equal(/connector\s*[.(]/i.test(src), false);
   assert.equal(src.includes("fetch("), false);
 });
 

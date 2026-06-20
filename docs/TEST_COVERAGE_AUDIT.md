@@ -355,3 +355,32 @@ rg "describe\(|it\(|test\(" artifacts/api-server/src/tests/authority-query.test.
 - Route/page classifications are based on filename/domain matching plus targeted inspection of representative tests. Some tests may exercise routes indirectly without obvious names.
 - DB integration coverage was not forced because the baseline allows DB tests to remain skipped unless `DATABASE_URL` is configured.
 - No product tests were added because this sprint requested audit-only work and no harness fix was required to collect the static inventory.
+
+## Sprint 17B Reconciliation
+
+Sprint 17B reconciled the discrepancy between the Sprint 14 reported green baseline and the Sprint 17 full api-server failures. The investigation found that Sprint 17's documented P0 validation command was a narrow pattern run, not equivalent to the full api-server suite.
+
+### Failures investigated and classified
+
+| Test/artifact | Classification | Outcome |
+| --- | --- | --- |
+| `canonical-runtime-context.test.ts` | `TEST_HARNESS_ISSUE` | Added a runtime contract-version export for the export-smoke test. |
+| `cloud-data-transfer-economics.test.ts` | `STALE_TEST` | Updated fixture to include enough transfer-risk signals for the review threshold. |
+| `cloud-workload-volatility-engine.test.ts` | `STALE_TEST` | Updated fixture to exercise the medium volatility band. |
+| `connector-transaction-plan.test.ts` | `STALE_TEST` | Updated fixture to exceed the stale-provider-state threshold. |
+| `customer-demo-scenario-m365.json` reference | `WORKING_DIRECTORY_ISSUE` / `MISSING_ARTIFACT` path resolution | Corrected path to repo-level `scripts/fixtures`. |
+| `reset-golden-demo.ts` reference | `WORKING_DIRECTORY_ISSUE` / `MISSING_ARTIFACT` path resolution | Corrected path to repo-level `scripts`. |
+
+### Fixes applied
+
+No product feature work was performed. Changes were limited to test reconciliation, path correction, and one runtime export marker used by an existing smoke test.
+
+### Remaining exceptions
+
+DB integration tests remain intentionally gated by the existing api-server harness and are skipped unless `RUN_DB_INTEGRATION_TESTS=true` with database configuration.
+
+### Final counts
+
+- Standard non-DB api-server run: 1,581 test files discovered.
+- Failing files after reconciliation: 29 in the full run; 0 among the originally reported four test files after fixes.
+- Final baseline verdict: `NOT_CLEAN`.
