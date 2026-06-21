@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { getDefaultLandingPage, LANDING_PAGE_SECTIONS, TRUST_BANNER_ASSURANCES } from './defaultLandingPage'
+import { getDefaultLandingPage, LANDING_PAGE_SECTIONS, TRUST_BANNER_ASSURANCES, PUBLIC_HEADER, PUBLIC_FOOTER } from './defaultLandingPage'
 
 const POSITIONING_DENYLIST = ['Best', 'World-class', 'Revolutionary', 'Game-changing']
 
@@ -52,20 +52,46 @@ test('Hero subheadline and CTAs are verbatim', () => {
   assert.equal(page.hero.secondaryCta, 'See Economic Control Chain')
 })
 
-test('Trust Banner contains all 6 assurances verbatim', () => {
+test('Trust Banner contains all 5 assurances verbatim (Program 9A restyle)', () => {
   const page = getDefaultLandingPage()
   const required = [
     'Read-only review',
     'No changes made',
     'Discovery only',
     'No licence modifications',
-    'No automated execution',
-    'Access can be revoked at any time',
+    'Revoke access anytime',
   ]
-  assert.equal(TRUST_BANNER_ASSURANCES.length, 6)
+  assert.equal(TRUST_BANNER_ASSURANCES.length, 5)
+  assert.equal(page.hero.trustBanner.length, 5)
   for (const assurance of required) {
     assert.ok(page.hero.trustBanner.includes(assurance), `missing assurance: ${assurance}`)
   }
+})
+
+test('Hero eyebrow badge text is "Economic Control System"', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.hero.eyebrow, 'Economic Control System')
+})
+
+test('Public header has Certen wordmark, nav links, sign-in and get-started', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.header.wordmark, 'Certen')
+  assert.equal(PUBLIC_HEADER.wordmark, 'Certen')
+  const navLabels = page.header.navLinks.map((l) => l.label)
+  assert.deepEqual(navLabels, ['Product', 'Economic Control', 'Exposure Report'])
+  assert.equal(page.header.signInLabel, 'Sign in')
+  assert.ok(page.header.signInHref.length > 0)
+  assert.equal(page.header.getStartedLabel, 'Get started')
+  assert.equal(page.header.getStartedHref, '#exposure-report')
+})
+
+test('Public footer has Certen wordmark, caption, sign-in and Book Executive Review', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.footer.wordmark, 'Certen')
+  assert.equal(page.footer.caption, 'Economic control for technology investments')
+  assert.equal(page.footer.signInLabel, 'Sign in')
+  assert.equal(page.footer.executiveReviewLabel, 'Book Executive Review')
+  assert.equal(PUBLIC_FOOTER.executiveReviewLabel, 'Book Executive Review')
 })
 
 test('Economic Control Chain section contains all 7 stages in order', () => {
@@ -178,9 +204,18 @@ test('denylist: "AI spend management" is never used as positioning text', () => 
   assert.ok(!allText.includes('ai spend management'))
 })
 
-test('Market Problem section has no hardcoded statistics in card copy', () => {
+test('Market Problem section has no hardcoded numeric statistics in card copy or values', () => {
   const page = getDefaultLandingPage()
   for (const card of page.marketProblem.cards) {
     assert.ok(!/\d/.test(card.body), `card body should not contain digits/stats: "${card.body}"`)
+    assert.ok(!/\d/.test(card.value), `card value should not contain digits/stats: "${card.value}"`)
   }
+})
+
+test('Market Problem section is presented as a 3-cell connected stat row (Program 9A)', () => {
+  const page = getDefaultLandingPage()
+  const titles = page.marketProblem.cards.map((c) => c.title)
+  assert.deepEqual(titles, ['Investment', 'Visibility', 'Proof of value'])
+  const values = page.marketProblem.cards.map((c) => c.value)
+  assert.deepEqual(values, ['↑', 'Partial', 'Few'])
 })

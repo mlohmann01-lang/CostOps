@@ -14,6 +14,7 @@ import type { HeadlessAudience } from '../headlessCerten/headlessAnswerModel'
 // ─── Section 1 — Hero ───────────────────────────────────────────────────────
 
 export interface HeroContent {
+  eyebrow: string
   headlineLines: [string, string]
   subheadline: string
   primaryCta: string
@@ -21,18 +22,76 @@ export interface HeroContent {
   trustBanner: string[]
 }
 
+// Program 9A note: this is the 5-item trust strip shown in the restyled
+// landing-page trust banner. It intentionally supersedes the original
+// Program 9 6-item list for THIS surface only ("No automated execution" is
+// dropped and "Access can be revoked at any time" is shortened). The
+// original 6-item list is not referenced elsewhere in this codebase, so the
+// content model is updated in place rather than maintaining two arrays.
 export const TRUST_BANNER_ASSURANCES: string[] = [
   'Read-only review',
   'No changes made',
   'Discovery only',
   'No licence modifications',
-  'No automated execution',
-  'Access can be revoked at any time',
+  'Revoke access anytime',
 ]
 
 export const RUN_EXPOSURE_REVIEW_CTA = 'Run Free M365 Exposure Review'
 
+// ─── Program 9A — Public header / footer / hero badge content ──────────────
+
+export interface PublicNavLink {
+  label: string
+  href: string
+}
+
+export interface PublicHeaderContent {
+  wordmark: string
+  navLinks: PublicNavLink[]
+  signInLabel: string
+  signInHref: string
+  getStartedLabel: string
+  getStartedHref: string
+}
+
+// "Product" has no dedicated product page yet (out of scope for this pass),
+// so it links to the site root as a placeholder. "Economic Control" and
+// "Exposure Report" are in-page anchors to existing sections.
+export const PUBLIC_HEADER: PublicHeaderContent = {
+  wordmark: 'Certen',
+  navLinks: [
+    { label: 'Product', href: '/' },
+    { label: 'Economic Control', href: '#economic-control-chain' },
+    { label: 'Exposure Report', href: '#exposure-report' },
+  ],
+  signInLabel: 'Sign in',
+  // TODO: confirm canonical public sign-in route once a dedicated marketing
+  // auth entry point exists; reusing the app's existing /login route for now.
+  signInHref: '/login',
+  getStartedLabel: 'Get started',
+  getStartedHref: '#exposure-report',
+}
+
+export interface PublicFooterContent {
+  wordmark: string
+  caption: string
+  signInLabel: string
+  signInHref: string
+  executiveReviewLabel: string
+  executiveReviewHref: string
+}
+
+export const PUBLIC_FOOTER: PublicFooterContent = {
+  wordmark: 'Certen',
+  caption: 'Economic control for technology investments',
+  signInLabel: 'Sign in',
+  signInHref: '/login',
+  executiveReviewLabel: 'Book Executive Review',
+  executiveReviewHref: '#economic-control-chain',
+}
+
 const hero: HeroContent = {
+  eyebrow: 'Economic Control System',
   headlineLines: ['You approved the technology budget.', 'Can you prove what it delivered?'],
   subheadline:
     'Certen helps organisations uncover value, execute improvements, validate outcomes, reconcile savings to finance and protect gains from drift.',
@@ -46,6 +105,8 @@ const hero: HeroContent = {
 export interface MarketProblemCard {
   title: string
   body: string
+  value: string
+  valueColor?: string
 }
 
 export interface MarketProblemContent {
@@ -53,12 +114,15 @@ export interface MarketProblemContent {
   cards: MarketProblemCard[]
 }
 
+// Program 9A redesigns this section's presentation as a connected stat row
+// (qualitative values, not fabricated numeric stats) while keeping the
+// original descriptive copy available as cell subtext.
 const marketProblem: MarketProblemContent = {
   titleLines: ['Technology investment is growing.', 'Proof of value is lagging.'],
   cards: [
-    { title: 'Investment', body: 'Technology and AI spending continues to increase.' },
-    { title: 'Visibility', body: 'Most organisations know what they spend.' },
-    { title: 'Proof', body: 'Few can prove what value was delivered.' },
+    { title: 'Investment', body: 'AI & tech spend growing', value: '↑' },
+    { title: 'Visibility', body: 'Most organisations know what they spend.', value: 'Partial' },
+    { title: 'Proof of value', body: 'Few can prove what value was delivered.', value: 'Few', valueColor: '#E24B4A' },
   ],
 }
 
@@ -246,6 +310,8 @@ export const LANDING_PAGE_SECTIONS: LandingPageSection[] = [
 
 export interface LandingPageContent {
   sections: LandingPageSection[]
+  header: PublicHeaderContent
+  footer: PublicFooterContent
   hero: HeroContent
   marketProblem: MarketProblemContent
   commercialModel: CommercialModelContent
@@ -259,6 +325,8 @@ export interface LandingPageContent {
 export function getDefaultLandingPage(): LandingPageContent {
   return {
     sections: LANDING_PAGE_SECTIONS,
+    header: PUBLIC_HEADER,
+    footer: PUBLIC_FOOTER,
     hero,
     marketProblem,
     commercialModel,
