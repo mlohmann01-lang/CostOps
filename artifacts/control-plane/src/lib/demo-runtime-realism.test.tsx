@@ -72,11 +72,11 @@ test('connector retry updates activity stream', async () => {
 
 test('Command activity stream renders', () => {
   resetDemoRuntimeStore()
-  const source = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  // Overview/Command page now surfaces runtime activity through the "What Changed" section,
-  // sourced from useRuntimeEvents, rather than a dedicated 'command-live-activity' widget.
-  assert.equal(source.includes("data-testid='what-changed'"), true)
-  assert.equal(source.includes('useRuntimeEvents'), true)
+  // Overview/Command page (Program 6: Executive Command Center) no longer surfaces a
+  // dedicated "What Changed" runtime activity section - it was demoted/removed in favor of
+  // the six orchestrator sections (Executive Summary, What Requires Attention, Economic
+  // Control Chain Status, Executive Value Snapshot, Outcome Finance Snapshot, Recommended
+  // Next Actions). Runtime activity/event demo data still exists and is exercised elsewhere.
   assert.equal(getDemoRuntimeState().activity.some((event) => event.message === 'Snowflake auto-suspend verified'), true)
 })
 
@@ -94,11 +94,11 @@ test('no live API calls in demo mode hooks', () => {
 })
 
 test('live mode remains empty-state/API driven', () => {
-  // CommandView (now the Overview/Executive Brief page) sources its data from
-  // useExecutiveValueData/useExecutivePrioritiesData/useRuntimeEvents, not useCommandData;
-  // it surfaces empty states per section rather than a single 'No actions identified yet' message.
+  // CommandView (now the Overview/Executive Command Center page, Program 6) sources its
+  // data from useExecutiveValueData/useExecutivePrioritiesData/useExecutiveRiskData/
+  // useTenantReadinessData/useLiveTenantReadinessData, not useCommandData; it surfaces
+  // empty states per section rather than a single 'No actions identified yet' message.
   const commandView = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(commandView.includes('No executive priorities available.'), true)
-  assert.equal(commandView.includes('No significant changes in the last 24 hours.'), true)
+  assert.equal(commandView.includes('Nothing requires attention right now.'), true)
   assert.equal(commandView.includes('DataStateBanner'), true)
 })

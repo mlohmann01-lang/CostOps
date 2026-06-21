@@ -1,6 +1,5 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { RuntimeActivityList } from '../components/shared/RuntimeActivityList'
@@ -72,12 +71,10 @@ test('Command activity renders demo events through RuntimeActivityList foundatio
 
 test('Command live empty state renders when no events', () => {
   const html = renderToStaticMarkup(<RuntimeActivityList events={[]} limit={5} emptyLabel='No runtime activity yet' compact />)
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
+  // Program 6 (Executive Command Center) removed CommandView's "What Changed" runtime
+  // activity section in favor of the six orchestrator sections. The RuntimeActivityList
+  // foundation component itself (asserted above) is unaffected and used elsewhere.
   assert.match(html, /No runtime activity yet/)
-  // CommandView surfaces a no-events state via the "What Changed" section's EmptyState,
-  // not a dedicated 'Runtime activity unavailable' string.
-  assert.equal(command.includes('No significant changes in the last 24 hours.'), true)
-  assert.equal(command.includes('useRuntimeEvents'), true)
 })
 
 test('no polling in demo mode', async () => {

@@ -27,9 +27,11 @@ test('clicking live submit calls POST endpoint', async () => {
 
 test('success changes UI to Approval pending or refreshes row', () => {
   // This flow lived in the old CommandView action-queue UI (which showed a literal 'Approval
-  // pending' disabled button) before CommandView was rewritten into the Executive Brief. The
-  // submission flow now lives in recommendations.tsx, which surfaces the equivalent state via
-  // approvalState 'Awaiting approval' instead of the literal 'Approval pending' string.
+  // pending' disabled button) before CommandView was rewritten into the Executive Brief, and
+  // later (Program 6) into the Executive Command Center orchestrator, neither of which retains
+  // an action-queue UI. The submission flow now lives in recommendations.tsx, which surfaces the
+  // equivalent state via approvalState 'Awaiting approval' instead of the literal 'Approval
+  // pending' string.
   const source = fs.readFileSync(new URL('../pages/recommendations.tsx', import.meta.url), 'utf8')
   assert.equal(source.includes('Approval workflow created'), true)
   assert.equal(source.includes('Awaiting approval'), true)

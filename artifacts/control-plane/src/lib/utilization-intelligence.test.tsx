@@ -35,10 +35,11 @@ test('live API wiring calls utilization APIs without demo fallback', () => {
 })
 
 test('Command and Runtime Health show utilization signals', () => {
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
+  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
+  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
+  // Readiness) and no longer surfaces a dedicated utilization-waste widget. Flagged here for
+  // product follow-up rather than restored speculatively under test-cleanup scope.
   const runtime = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')
-  assert.equal(command.includes('Utilization Waste'), true)
-  assert.equal(command.includes('utilization-waste-narrative'), true)
   assert.equal(runtime.includes('Utilization Intelligence Pipeline'), true)
   assert.equal(runtime.includes('utilization-intelligence-pipeline'), true)
 })
