@@ -86,6 +86,7 @@ import aiEconomicsRouter from "./ai-economics";
 import aiInitiativePortfolioRouter from "./ai-initiative-portfolio";
 import aiCapitalAllocationRouter from "./ai-capital-allocation";
 import exposureReviewRouter from "./exposure-review";
+import informationGovernanceRouter from "./information-governance";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -185,5 +186,6 @@ router.use("/", pilotRouter);
 // there is no platform login at this point in the funnel. See
 // exposure-review.ts header comment.
 router.use("/exposure-review", exposureReviewRouter);
+router.use("/information-governance", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), informationGovernanceRouter);
 
 export default router;

@@ -7,7 +7,8 @@ test('sidebar primary navigation keeps Overview customer-facing label', () => {
   const primaryItems = NAV_GROUPS.flatMap((group) => group.items)
   // Cap raised from the original 11 as the platform grew legitimate pillar-aligned
   // surfaces (Sprint 7+); intent of this guard (no nav-label regressions) is unchanged.
-  assert.equal(primaryItems.length <= 25, true)
+  // Raised again to 26 for Program 12's Information Governance Authority nav item.
+  assert.equal(primaryItems.length <= 26, true)
   assert.equal(primaryItems.some((item) => item.label === 'Overview'), true)
   // 'Workspace' is now a distinct Pilot Workspace summary surface (added after this guard was
   // written), not a rename of 'Overview' - the regression this test guards against is Overview

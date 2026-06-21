@@ -53,6 +53,7 @@ import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
 import GovernedExecution from './pages/GovernedExecution'
 import AuthorityCatalog from './pages/intelligence/AuthorityCatalog'
 import EconomicControlChain from './pages/intelligence/EconomicControlChain'
+import InformationGovernanceAuthority from './pages/intelligence/InformationGovernanceAuthority'
 import OutcomeFinance from './pages/executive/OutcomeFinance'
 import ExposureReport from './pages/ExposureReport'
 import LandingPage from './pages/LandingPage'
@@ -468,6 +469,10 @@ function OutcomeFinanceRoute() {
   return <RequireRuntime><OutcomeFinance /></RequireRuntime>
 }
 
+function InformationGovernanceAuthorityRoute() {
+  return <RequireRuntime><InformationGovernanceAuthority /></RequireRuntime>
+}
+
 function ExposureReportRoute() {
   return <RequireRuntime><ExposureReport /></RequireRuntime>
 }
@@ -530,6 +535,7 @@ function Router() {
       <Route path="/intelligence/authority-catalog" component={AuthorityCatalogRoute} />
       <Route path="/intelligence/economic-control-chain" component={EconomicControlChainRoute} />
       <Route path="/executive/outcome-finance" component={OutcomeFinanceRoute} />
+      <Route path="/intelligence/information-governance-authority" component={InformationGovernanceAuthorityRoute} />
       <Route path="/executive/exposure-report" component={ExposureReportRoute} />
       <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
       <Route path="/governed-actions" component={GovernedExecutionRoute} />
