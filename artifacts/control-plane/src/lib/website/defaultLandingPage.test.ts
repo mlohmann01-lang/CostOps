@@ -1,6 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { getDefaultLandingPage, LANDING_PAGE_SECTIONS, TRUST_BANNER_ASSURANCES, PUBLIC_HEADER, PUBLIC_FOOTER } from './defaultLandingPage'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+import {
+  getDefaultLandingPage,
+  LANDING_PAGE_SECTIONS,
+  TRUST_BANNER_ASSURANCES,
+  PUBLIC_HEADER,
+  PUBLIC_FOOTER,
+  RUN_EXPOSURE_REVIEW_CTA,
+  BOOK_EXECUTIVE_REVIEW_CTA,
+} from './defaultLandingPage'
 
 const POSITIONING_DENYLIST = ['Best', 'World-class', 'Revolutionary', 'Game-changing']
 
@@ -25,13 +36,21 @@ test('landing page content model has exactly 8 sections', () => {
       'Hero',
       'Market Problem',
       'Uncover, Execute, Protect',
-      'Economic Control Chain',
+      'AI & Technology Exposure Report',
       'Questions Certen Answers',
       'Governed Answers',
-      'AI & Technology Exposure Report',
+      'Economic Control Chain',
       'Executive Economic Review',
     ]
   )
+})
+
+test('Program 9B: Exposure Report is positioned before Economic Control Chain', () => {
+  const titles = LANDING_PAGE_SECTIONS.map((s) => s.title)
+  const exposureIdx = titles.indexOf('AI & Technology Exposure Report')
+  const chainIdx = titles.indexOf('Economic Control Chain')
+  assert.ok(exposureIdx >= 0 && chainIdx >= 0)
+  assert.ok(exposureIdx < chainIdx, 'Exposure Report must appear before Economic Control Chain')
 })
 
 test('Hero contains the verbatim two-line headline', () => {
@@ -48,8 +67,34 @@ test('Hero subheadline and CTAs are verbatim', () => {
     page.hero.subheadline,
     'Certen helps organisations uncover value, execute improvements, validate outcomes, reconcile savings to finance and protect gains from drift.'
   )
-  assert.equal(page.hero.primaryCta, 'Run Free M365 Exposure Review')
-  assert.equal(page.hero.secondaryCta, 'See Economic Control Chain')
+  assert.equal(page.hero.primaryCta, 'Run Free Exposure Review')
+  assert.equal(page.hero.secondaryCta, 'Book Executive Review')
+})
+
+test('Program 9B: hero has exactly the two consolidated primary CTAs', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.hero.primaryCta, RUN_EXPOSURE_REVIEW_CTA)
+  assert.equal(page.hero.secondaryCta, BOOK_EXECUTIVE_REVIEW_CTA)
+  assert.equal(RUN_EXPOSURE_REVIEW_CTA, 'Run Free Exposure Review')
+  assert.equal(BOOK_EXECUTIVE_REVIEW_CTA, 'Book Executive Review')
+})
+
+test('Program 9B: "See Economic Control Chain" no longer appears as a CTA button label', () => {
+  const page = getDefaultLandingPage()
+  const allStrings = flattenStrings(page)
+  assert.ok(!allStrings.includes('See Economic Control Chain'))
+  // The replacement is a plain anchor link, not a button-style CTA.
+  assert.ok(allStrings.includes('↓ See how it works'))
+  assert.equal(page.hero.seeHowItWorksLabel, '↓ See how it works')
+})
+
+test('Program 9B: hero credibility bridge line is present', () => {
+  const page = getDefaultLandingPage()
+  assert.ok(page.hero.credibilityBridge.includes('CIOs, CFOs, ITAM'))
+  assert.equal(
+    page.hero.credibilityBridge,
+    'Built for CIOs, CFOs, ITAM, FinOps and technology governance leaders.'
+  )
 })
 
 test('Trust Banner contains all 5 assurances verbatim (Program 9A restyle)', () => {
@@ -147,9 +192,9 @@ test('Governed Answers section never mentions Slack, Teams, MCP, or AI agents', 
   assert.ok(!text.includes('ai agent'))
 })
 
-test('Exposure Report section contains the CTA "Run Free M365 Exposure Review"', () => {
+test('Exposure Report section contains the CTA "Run Free Exposure Review"', () => {
   const page = getDefaultLandingPage()
-  assert.equal(page.exposureReportSection.cta, 'Run Free M365 Exposure Review')
+  assert.equal(page.exposureReportSection.cta, 'Run Free Exposure Review')
 })
 
 test('Exposure Report section reuses the Section 1 metric labels and is marked illustrative', () => {
@@ -163,6 +208,36 @@ test('Exposure Report section reuses the Section 1 metric labels and is marked i
     'Governance Findings',
   ])
   assert.ok(page.exposureReportSection.illustrativeNote.toLowerCase().includes('sample') || page.exposureReportSection.illustrativeNote.toLowerCase().includes('illustrat'))
+})
+
+test('Program 9B: Exposure Report card contains the enlarged headline metric and secondary metrics', () => {
+  const page = getDefaultLandingPage()
+  const section = page.exposureReportSection
+  assert.equal(section.headlineMetricLabel, 'Potential Annual Value')
+  assert.equal(section.headlineMetricValue, '$320,000')
+  const secondaryValues = section.secondaryMetrics.map((m) => m.sampleValue)
+  assert.ok(secondaryValues.some((v) => v.includes('184')))
+  assert.ok(secondaryValues.some((v) => v.includes('47')))
+  assert.ok(secondaryValues.some((v) => v.includes('12')))
+})
+
+test('Program 9B: Copilot Exposure value is "Requires review", not "Not available"', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.exposureReportSection.copilotExposure.sampleValue, 'Requires review')
+  const allStrings = flattenStrings(page)
+  assert.ok(!allStrings.includes('Not available'))
+  const copilotMetric = page.exposureReportSection.metrics.find((m) => m.label === 'Copilot Exposure')
+  assert.equal(copilotMetric?.sampleValue, 'Requires review')
+})
+
+test('Program 9B: Exposure Report trust lines are present', () => {
+  const page = getDefaultLandingPage()
+  assert.deepEqual(page.exposureReportSection.trustLines, [
+    'Delivered in minutes',
+    'Read-only connection',
+    'No changes made',
+    'Generated from your own tenant data',
+  ])
 })
 
 test('Exposure Report section flow steps are verbatim, in order', () => {
@@ -186,6 +261,21 @@ test('Final CTA section contains "Book Executive Review" and verbatim headline/c
     page.executiveReview.supportingCopy,
     'Review technology exposure, ownership, governance, opportunities, verified outcomes and protection readiness.'
   )
+})
+
+test('Program 9B: #economic-control-chain anchor id is still present in LandingPage.tsx', () => {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const landingPagePath = path.join(here, '../../pages/LandingPage.tsx')
+  const source = readFileSync(landingPagePath, 'utf8')
+  assert.ok(source.includes('id="economic-control-chain"'))
+  assert.ok(source.includes('id="exposure-report"'))
+})
+
+test('Program 9B: "See Economic Control Chain" button no longer appears in LandingPage.tsx markup', () => {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const landingPagePath = path.join(here, '../../pages/LandingPage.tsx')
+  const source = readFileSync(landingPagePath, 'utf8')
+  assert.ok(!source.includes('See Economic Control Chain'))
 })
 
 test('denylist: no banned superlative language anywhere in the content model', () => {

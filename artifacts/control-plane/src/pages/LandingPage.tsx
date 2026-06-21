@@ -280,6 +280,18 @@ export default function LandingPage() {
           <PrimaryButton href="#exposure-report">{hero.primaryCta}</PrimaryButton>
           <SecondaryButton href="#economic-control-chain">{hero.secondaryCta}</SecondaryButton>
         </div>
+        <div style={{ marginTop: 14 }}>
+          <a
+            href="#economic-control-chain"
+            style={{
+              fontSize: 13,
+              color: 'var(--text-secondary, #b7bcc4)',
+              textDecoration: 'none',
+            }}
+          >
+            {hero.seeHowItWorksLabel}
+          </a>
+        </div>
         <div
           style={{
             border: BORDER_DEFAULT,
@@ -308,6 +320,17 @@ export default function LandingPage() {
             </span>
           ))}
         </div>
+        <p
+          style={{
+            fontSize: 13,
+            textAlign: 'center',
+            color: 'var(--text-secondary, #b7bcc4)',
+            marginTop: 18,
+            marginBottom: 0,
+          }}
+        >
+          {hero.credibilityBridge}
+        </p>
       </section>
 
       {/* Section 2 — Market Problem */}
@@ -361,17 +384,115 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 4 — Economic Control Chain */}
-      <section id="economic-control-chain" style={sectionStyle}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>The Economic Control Chain</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 32 }}>
-          {economicControlChain.stages.map((stage, idx) => (
-            <div key={stage.key} style={cardStyle}>
-              <div style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)' }}>{idx + 1}</div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>{stage.title}</div>
-              <div style={{ fontSize: 13, marginTop: 8, color: 'var(--text-secondary, #b7bcc4)' }}>{stage.description}</div>
+      {/* Section 4 — AI & Technology Exposure Report (commercial centrepiece) */}
+      <section id="exposure-report" style={sectionStyle}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>AI & Technology Exposure Report</h2>
+        <div
+          style={{
+            border: BORDER_DEFAULT,
+            borderRadius: 16,
+            background: 'var(--surface-3, rgba(255,255,255,0.07))',
+            marginTop: 32,
+            padding: 32,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              color: TEAL,
+              textAlign: 'center',
+            }}
+          >
+            {exposureReportSection.reportLabel}
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 18 }}>
+            <div
+              style={{
+                fontSize: 12,
+                textTransform: 'uppercase',
+                letterSpacing: '.04em',
+                color: 'var(--text-tertiary, #8a8f99)',
+              }}
+            >
+              {exposureReportSection.headlineMetricLabel}
             </div>
-          ))}
+            <div style={{ fontSize: 36, fontWeight: 500, marginTop: 6 }}>{exposureReportSection.headlineMetricValue}</div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 28 }}>
+            {exposureReportSection.secondaryMetrics.map((metric) => (
+              <div
+                key={metric.label}
+                style={{
+                  textAlign: 'center',
+                  fontSize: 14,
+                  padding: '14px 10px',
+                  borderRadius: 10,
+                  border: BORDER_DEFAULT,
+                  background: 'var(--surface-card, rgba(255,255,255,0.03))',
+                }}
+              >
+                {metric.sampleValue}
+              </div>
+            ))}
+            <div
+              style={{
+                textAlign: 'center',
+                fontSize: 14,
+                padding: '14px 10px',
+                borderRadius: 10,
+                border: BORDER_DEFAULT,
+                background: 'var(--surface-card, rgba(255,255,255,0.03))',
+              }}
+            >
+              <div style={{ color: 'var(--text-tertiary, #8a8f99)' }}>{exposureReportSection.copilotExposure.label}</div>
+              <div style={{ marginTop: 2 }}>{exposureReportSection.copilotExposure.sampleValue}</div>
+            </div>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+              gap: 20,
+              marginTop: 28,
+              fontSize: 14,
+              color: 'var(--text-secondary, #b7bcc4)',
+              textAlign: 'center',
+            }}
+          >
+            {exposureReportSection.trustLines.map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </div>
+          <div style={{ marginTop: 28 }}>
+            <a
+              href="#exposure-report"
+              style={{
+                display: 'block',
+                width: '100%',
+                textAlign: 'center',
+                padding: 14,
+                borderRadius: 8,
+                border: 'none',
+                background: TEAL,
+                color: '#06201c',
+                fontSize: 16,
+                fontWeight: 500,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+                textDecoration: 'none',
+                boxSizing: 'border-box',
+              }}
+            >
+              {exposureReportSection.cta}
+            </a>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)', textAlign: 'center', marginTop: 14, marginBottom: 0 }}>
+            {exposureReportSection.illustrativeNote}
+          </p>
         </div>
       </section>
 
@@ -411,39 +532,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Section 7 — AI & Technology Exposure Report */}
-      <section id="exposure-report" style={sectionStyle}>
-        <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>AI & Technology Exposure Report</h2>
-        <div
-          style={{
-            border: BORDER_DEFAULT,
-            borderRadius: 12,
-            background: 'var(--surface-card, rgba(255,255,255,0.05))',
-            marginTop: 32,
-            padding: 24,
-          }}
-        >
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14 }}>
-            {exposureReportSection.metrics.map((metric) => (
-              <div key={metric.label} style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-tertiary, #8a8f99)' }}>
-                  {metric.label}
-                </div>
-                <div style={{ fontSize: 20, fontWeight: 800, marginTop: 6 }}>{metric.sampleValue}</div>
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)', textAlign: 'center', marginTop: 14 }}>
-            {exposureReportSection.illustrativeNote}
-          </p>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, marginTop: 32, fontSize: 15 }}>
-          {exposureReportSection.flowSteps.map((step) => (
-            <div key={step}>{step}</div>
+      {/* Section 7 — Economic Control Chain (explainer, positioned below the fold) */}
+      <section id="economic-control-chain" style={sectionStyle}>
+        <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>The Economic Control Chain</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 32 }}>
+          {economicControlChain.stages.map((stage, idx) => (
+            <div key={stage.key} style={cardStyle}>
+              <div style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)' }}>{idx + 1}</div>
+              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4 }}>{stage.title}</div>
+              <div style={{ fontSize: 13, marginTop: 8, color: 'var(--text-secondary, #b7bcc4)' }}>{stage.description}</div>
+            </div>
           ))}
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 26 }}>
-          <PrimaryButton href="#exposure-report">{exposureReportSection.cta}</PrimaryButton>
         </div>
       </section>
 
@@ -454,7 +553,7 @@ export default function LandingPage() {
           {executiveReview.supportingCopy}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-          <PrimaryButton href="#economic-control-chain">{executiveReview.cta}</PrimaryButton>
+          <SecondaryButton href="#economic-control-chain">{executiveReview.cta}</SecondaryButton>
         </div>
       </section>
 

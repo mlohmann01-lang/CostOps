@@ -20,6 +20,8 @@ export interface HeroContent {
   primaryCta: string
   secondaryCta: string
   trustBanner: string[]
+  credibilityBridge: string
+  seeHowItWorksLabel: string
 }
 
 // Program 9A note: this is the 5-item trust strip shown in the restyled
@@ -36,7 +38,18 @@ export const TRUST_BANNER_ASSURANCES: string[] = [
   'Revoke access anytime',
 ]
 
-export const RUN_EXPOSURE_REVIEW_CTA = 'Run Free M365 Exposure Review'
+export const RUN_EXPOSURE_REVIEW_CTA = 'Run Free Exposure Review'
+
+export const BOOK_EXECUTIVE_REVIEW_CTA = 'Book Executive Review'
+
+// Program 9B: hero credibility bridge line, shown directly below the trust
+// strip and above the Market Problem stat row.
+export const HERO_CREDIBILITY_BRIDGE =
+  'Built for CIOs, CFOs, ITAM, FinOps and technology governance leaders.'
+
+// Program 9B: plain anchor link (not a button) shown near the hero CTAs,
+// replacing the former "See Economic Control Chain" secondary button.
+export const SEE_HOW_IT_WORKS_LINK = '↓ See how it works'
 
 // ─── Program 9A — Public header / footer / hero badge content ──────────────
 
@@ -86,7 +99,7 @@ export const PUBLIC_FOOTER: PublicFooterContent = {
   caption: 'Economic control for technology investments',
   signInLabel: 'Sign in',
   signInHref: '/login',
-  executiveReviewLabel: 'Book Executive Review',
+  executiveReviewLabel: BOOK_EXECUTIVE_REVIEW_CTA,
   executiveReviewHref: '#economic-control-chain',
 }
 
@@ -96,8 +109,10 @@ const hero: HeroContent = {
   subheadline:
     'Certen helps organisations uncover value, execute improvements, validate outcomes, reconcile savings to finance and protect gains from drift.',
   primaryCta: RUN_EXPOSURE_REVIEW_CTA,
-  secondaryCta: 'See Economic Control Chain',
+  secondaryCta: BOOK_EXECUTIVE_REVIEW_CTA,
   trustBanner: TRUST_BANNER_ASSURANCES,
+  credibilityBridge: HERO_CREDIBILITY_BRIDGE,
+  seeHowItWorksLabel: SEE_HOW_IT_WORKS_LINK,
 }
 
 // ─── Section 2 — Market Problem ─────────────────────────────────────────────
@@ -248,21 +263,48 @@ export interface ExposureReportSampleMetric {
 }
 
 export interface ExposureReportSectionContent {
+  reportLabel: string
+  headlineMetricLabel: string
+  headlineMetricValue: string
+  secondaryMetrics: ExposureReportSampleMetric[]
+  copilotExposure: ExposureReportSampleMetric
+  trustLines: string[]
   metrics: ExposureReportSampleMetric[]
   illustrativeNote: string
   flowSteps: string[]
   cta: string
 }
 
+// Program 9B: enlarged Exposure Report preview card. `metrics` is retained
+// (now derived from the new fields) so existing content-model consumers that
+// iterate `metrics` continue to see the full set, including Copilot
+// Exposure's updated "Requires review" value.
 const exposureReportSection: ExposureReportSectionContent = {
+  reportLabel: 'Free M365 Exposure Review',
+  headlineMetricLabel: 'Potential Annual Value',
+  headlineMetricValue: '$320,000',
   // Sample/illustrative values only, reusing the same metric labels as
   // Section 1 of the Exposure Report model (defaultExposureReport.ts).
   // Not claimed live customer data.
+  secondaryMetrics: [
+    { label: 'Inactive Licences', sampleValue: '184 inactive licences' },
+    { label: 'Ownerless Licences', sampleValue: '47 ownerless licences' },
+    { label: 'Governance Findings', sampleValue: '12 governance findings' },
+  ],
+  // Program 9B: replaces the former "Not available" value with "Requires
+  // review" — more commercially accurate framing for a sample report.
+  copilotExposure: { label: 'Copilot exposure', sampleValue: 'Requires review' },
+  trustLines: [
+    'Delivered in minutes',
+    'Read-only connection',
+    'No changes made',
+    'Generated from your own tenant data',
+  ],
   metrics: [
     { label: 'Potential Annual Value', sampleValue: '$320,000' },
     { label: 'Inactive Licences', sampleValue: '184' },
     { label: 'Ownerless Licences', sampleValue: '47' },
-    { label: 'Copilot Exposure', sampleValue: 'Not available' },
+    { label: 'Copilot Exposure', sampleValue: 'Requires review' },
     { label: 'Governance Findings', sampleValue: '12' },
   ],
   illustrativeNote: 'Sample figures shown for illustration. Your Exposure Report is generated from your own tenant data.',
@@ -287,7 +329,7 @@ const executiveReview: ExecutiveReviewContent = {
   headline: 'Understand what you own, what you spend, what is exposed and what value can be proven.',
   supportingCopy:
     'Review technology exposure, ownership, governance, opportunities, verified outcomes and protection readiness.',
-  cta: 'Book Executive Review',
+  cta: BOOK_EXECUTIVE_REVIEW_CTA,
 }
 
 // ─── Full landing page model ─────────────────────────────────────────────────
@@ -297,14 +339,17 @@ export interface LandingPageSection {
   title: string
 }
 
+// Program 9B: reordered so the Exposure Report is the commercial centrepiece
+// directly after the 3-step "How Certen Works" section, and the Economic
+// Control Chain becomes the explainer positioned last before the footer.
 export const LANDING_PAGE_SECTIONS: LandingPageSection[] = [
   { id: 1, title: 'Hero' },
   { id: 2, title: 'Market Problem' },
   { id: 3, title: 'Uncover, Execute, Protect' },
-  { id: 4, title: 'Economic Control Chain' },
+  { id: 4, title: 'AI & Technology Exposure Report' },
   { id: 5, title: 'Questions Certen Answers' },
   { id: 6, title: 'Governed Answers' },
-  { id: 7, title: 'AI & Technology Exposure Report' },
+  { id: 7, title: 'Economic Control Chain' },
   { id: 8, title: 'Executive Economic Review' },
 ]
 
