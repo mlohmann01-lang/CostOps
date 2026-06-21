@@ -343,7 +343,7 @@ export default function LandingPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
             border: BORDER_DEFAULT,
             borderRadius: 12,
             marginTop: 32,
@@ -374,7 +374,7 @@ export default function LandingPage() {
       {/* Section 3 — Uncover / Execute / Protect */}
       <section style={sectionStyle}>
         <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>How Certen works</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginTop: 32 }}>
           {commercialModel.columns.map((col) => (
             <div key={col.title} style={cardStyle}>
               <div style={{ fontSize: 17, fontWeight: 700 }}>{col.title}</div>
@@ -421,7 +421,7 @@ export default function LandingPage() {
             </div>
             <div style={{ fontSize: 36, fontWeight: 500, marginTop: 6 }}>{exposureReportSection.headlineMetricValue}</div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginTop: 28 }}>
             {exposureReportSection.secondaryMetrics.map((metric) => (
               <div
                 key={metric.label}
@@ -499,7 +499,7 @@ export default function LandingPage() {
       {/* Section 5 — Questions Certen Answers */}
       <section style={sectionStyle}>
         <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>Questions Certen Answers</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 32 }}>
           {questionsByAudience.map((group) => (
             <div key={group.audience} style={cardStyle}>
               <div style={{ fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.04em', color: 'var(--text-tertiary, #8a8f99)' }}>
@@ -522,7 +522,7 @@ export default function LandingPage() {
           <br />
           {governedAnswers.headlineLines[1]}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, marginTop: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16, marginTop: 32 }}>
           {governedAnswers.conceptCallouts.map((concept) => (
             <div key={concept.term} style={cardStyle}>
               <div style={{ fontSize: 15, fontWeight: 700 }}>{concept.term}</div>
@@ -535,7 +535,7 @@ export default function LandingPage() {
       {/* Section 7 — Economic Control Chain (explainer, positioned below the fold) */}
       <section id="economic-control-chain" style={sectionStyle}>
         <h2 style={{ fontSize: 24, fontWeight: 700, textAlign: 'center', margin: 0 }}>The Economic Control Chain</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginTop: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginTop: 32 }}>
           {economicControlChain.stages.map((stage, idx) => (
             <div key={stage.key} style={cardStyle}>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)' }}>{idx + 1}</div>
@@ -553,7 +553,7 @@ export default function LandingPage() {
           {executiveReview.supportingCopy}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: 24 }}>
-          <SecondaryButton href="#economic-control-chain">{executiveReview.cta}</SecondaryButton>
+          <SecondaryButton href={executiveReview.ctaHref}>{executiveReview.cta}</SecondaryButton>
         </div>
       </section>
 

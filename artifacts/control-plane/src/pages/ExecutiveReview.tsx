@@ -93,6 +93,26 @@ export default function ExecutiveReview() {
               Thank you, {form.name || 'there'}. A member of the Certen team will reach out to confirm your Executive
               Review.
             </p>
+            <div style={{ marginTop: 20 }}>
+              <a
+                href="/exposure-review/next-steps"
+                style={{
+                  display: 'inline-block',
+                  padding: '11px 24px',
+                  borderRadius: 8,
+                  border: '0.5px solid rgba(255,255,255,0.25)',
+                  background: 'transparent',
+                  color: 'inherit',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  textDecoration: 'none',
+                }}
+              >
+                See what happens next
+              </a>
+            </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 28 }}>

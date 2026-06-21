@@ -52,7 +52,7 @@ export default function ExposureReviewReport() {
           Generated {formatDate(report.generatedAt ?? new Date())}
         </p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 28 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginTop: 28 }}>
           <div style={cardStyle}>
             <div style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)' }}>Potential Annual Value</div>
             <div style={{ fontSize: 22, fontWeight: 700, marginTop: 6 }}>{formatCurrency(summary.potentialAnnualValue)}</div>

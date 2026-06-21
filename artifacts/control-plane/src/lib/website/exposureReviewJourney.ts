@@ -134,9 +134,12 @@ export type PreferredTimeframe = 'Immediately' | 'This Week' | 'Next Week' | 'Th
 
 export const PREFERRED_TIMEFRAMES: PreferredTimeframe[] = ['Immediately', 'This Week', 'Next Week', 'This Month']
 
-export type ReviewTopic = 'M365' | 'AI' | 'Cloud' | 'ITAM' | 'Technology Portfolio'
+// Workflow hardening fix: "Technology Portfolio" was the pre-Program-4
+// legacy name; customer-facing copy must use the canonical "Technology
+// Authority" term everywhere, including this public booking form.
+export type ReviewTopic = 'M365' | 'AI' | 'Cloud' | 'ITAM' | 'Technology Authority'
 
-export const REVIEW_TOPICS: ReviewTopic[] = ['M365', 'AI', 'Cloud', 'ITAM', 'Technology Portfolio']
+export const REVIEW_TOPICS: ReviewTopic[] = ['M365', 'AI', 'Cloud', 'ITAM', 'Technology Authority']
 
 export interface ExecutiveReviewFormState {
   name: string

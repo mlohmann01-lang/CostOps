@@ -162,7 +162,7 @@ test('Executive Review has all preferred timeframe options', () => {
 })
 
 test('Executive Review has all review topic options', () => {
-  assert.deepEqual(REVIEW_TOPICS, ['M365', 'AI', 'Cloud', 'ITAM', 'Technology Portfolio'])
+  assert.deepEqual(REVIEW_TOPICS, ['M365', 'AI', 'Cloud', 'ITAM', 'Technology Authority'])
 })
 
 test('Executive Review confirmation message is present', () => {

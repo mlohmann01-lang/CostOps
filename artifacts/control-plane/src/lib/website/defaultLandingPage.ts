@@ -103,7 +103,7 @@ export const PUBLIC_FOOTER: PublicFooterContent = {
   signInLabel: 'Sign in',
   signInHref: '/login',
   executiveReviewLabel: BOOK_EXECUTIVE_REVIEW_CTA,
-  executiveReviewHref: '#economic-control-chain',
+  executiveReviewHref: '/executive-review',
 }
 
 const hero: HeroContent = {
@@ -326,6 +326,7 @@ export interface ExecutiveReviewContent {
   headline: string
   supportingCopy: string
   cta: string
+  ctaHref: string
 }
 
 const executiveReview: ExecutiveReviewContent = {
@@ -333,6 +334,10 @@ const executiveReview: ExecutiveReviewContent = {
   supportingCopy:
     'Review technology exposure, ownership, governance, opportunities, verified outcomes and protection readiness.',
   cta: BOOK_EXECUTIVE_REVIEW_CTA,
+  // Workflow hardening fix: previously this CTA had no href wired through
+  // and the page rendered it pointing at the #economic-control-chain anchor
+  // — misleading, since the label promises an Executive Review booking.
+  ctaHref: '/executive-review',
 }
 
 // ─── Full landing page model ─────────────────────────────────────────────────
