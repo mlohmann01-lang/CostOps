@@ -55,6 +55,7 @@ import AuthorityCatalog from './pages/intelligence/AuthorityCatalog'
 import EconomicControlChain from './pages/intelligence/EconomicControlChain'
 import OutcomeFinance from './pages/executive/OutcomeFinance'
 import ExposureReport from './pages/ExposureReport'
+import LandingPage from './pages/LandingPage'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -486,6 +487,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={LoginRoute} />
+      <Route path="/welcome" component={LandingPage} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/overview" component={CommandRoute} />
