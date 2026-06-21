@@ -54,6 +54,7 @@ import GovernedExecution from './pages/GovernedExecution'
 import AuthorityCatalog from './pages/intelligence/AuthorityCatalog'
 import EconomicControlChain from './pages/intelligence/EconomicControlChain'
 import InformationGovernanceAuthority from './pages/intelligence/InformationGovernanceAuthority'
+import TenantIsolationVerificationAuthority from './pages/intelligence/TenantIsolationVerificationAuthority'
 import OutcomeFinance from './pages/executive/OutcomeFinance'
 import ExposureReport from './pages/ExposureReport'
 import LandingPage from './pages/LandingPage'
@@ -473,6 +474,10 @@ function InformationGovernanceAuthorityRoute() {
   return <RequireRuntime><InformationGovernanceAuthority /></RequireRuntime>
 }
 
+function TenantIsolationVerificationAuthorityRoute() {
+  return <RequireRuntime><TenantIsolationVerificationAuthority /></RequireRuntime>
+}
+
 function ExposureReportRoute() {
   return <RequireRuntime><ExposureReport /></RequireRuntime>
 }
@@ -536,6 +541,7 @@ function Router() {
       <Route path="/intelligence/economic-control-chain" component={EconomicControlChainRoute} />
       <Route path="/executive/outcome-finance" component={OutcomeFinanceRoute} />
       <Route path="/intelligence/information-governance-authority" component={InformationGovernanceAuthorityRoute} />
+      <Route path="/intelligence/tenant-isolation-verification-authority" component={TenantIsolationVerificationAuthorityRoute} />
       <Route path="/executive/exposure-report" component={ExposureReportRoute} />
       <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
       <Route path="/governed-actions" component={GovernedExecutionRoute} />
