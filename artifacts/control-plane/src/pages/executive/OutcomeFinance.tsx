@@ -90,15 +90,15 @@ export default function OutcomeFinance() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Reconciliations</div>
-              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.reconciliations ?? 'Not available'}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.reconciliations ?? 'Awaiting finance reconciliation.'}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Linked Outcomes</div>
-              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.linkedOutcomes ?? 'Not available'}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.linkedOutcomes ?? 'Awaiting finance reconciliation.'}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Variance Records</div>
-              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.varianceRecords ?? 'Not available'}</div>
+              <div style={{ fontSize: 18, fontWeight: 800, marginTop: 4 }}>{reconciliation.varianceRecords ?? 'Awaiting finance reconciliation.'}</div>
             </div>
             <div>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>Confidence</div>

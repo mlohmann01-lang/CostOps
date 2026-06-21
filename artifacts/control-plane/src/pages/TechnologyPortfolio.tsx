@@ -82,19 +82,19 @@ export default function TechnologyPortfolio() {
       subtitle="The authoritative view of your technology estate, ownership, spend, risk and value opportunities."
       chips={[
         { label: `Tenant mode: ${isDemo ? 'Demo' : 'Live'}`, tone: isDemo ? 'info' : 'warning' },
-        { label: `Last updated: ${snap ? formatDateTime(snap.generatedAt) : 'No technology data yet'}`, tone: 'info' },
-        { label: `Readiness: ${snap ? displayLabel(snap.readiness) : 'No technology data yet'}`, tone: statusToneFor(snap?.readiness ?? 'missing_data') as any },
+        { label: `Last updated: ${snap ? formatDateTime(snap.generatedAt) : 'No data available yet.'}`, tone: 'info' },
+        { label: `Readiness: ${snap ? displayLabel(snap.readiness) : 'No data available yet.'}`, tone: statusToneFor(snap?.readiness ?? 'missing_data') as any },
       ]}
     />
     {dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
-    {!isDemo && !snap && <EmptyState title="No technology data yet" description="Connect a source to begin discovery." />}
+    {!isDemo && !snap && <EmptyState title="No data available yet." description="Connect a source to begin discovery." />}
 
     <section style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(180px,1fr))', gap: 12 }}>
       <MetricCard label="Technology Assets" value={hasAssets ? snap!.assetCount : 'Connect sources to discover assets.'} description="Discovered technology assets" />
       <MetricCard label="Ownership Coverage" value={ownershipCoveragePercent !== undefined ? formatPercent(ownershipCoveragePercent) : 'Ownership mapping not yet available.'} description="Assets with an assigned owner" />
       <MetricCard label="Annual Spend" value={hasFinance ? money(snap?.totalAnnualSpend) : 'Financial sources not yet connected.'} description="Total annual technology spend" />
       <MetricCard label="Risk Exposure" value={hasRisks ? highRiskCount : 'Risk analysis begins after discovery.'} description="Critical and high severity risks" />
-      <MetricCard label="Value Opportunity" value={hasRecommendations ? money(valueOpportunity) : 'Opportunities appear after analysis.'} description="Projected value from recommendations" />
+      <MetricCard label="Value Opportunity" value={hasRecommendations ? money(valueOpportunity) : 'Available after analysis.'} description="Projected value from recommendations" />
     </section>
 
     <ExecutiveSection title="CIO Narrative" description="Technology Authority status">
@@ -148,17 +148,17 @@ export default function TechnologyPortfolio() {
     </ExecutiveSection>
 
     <ExecutiveSection title="Proof pack readiness" description="Board pack status · CFO pack status · Audit pack status · Evidence export safety">
-      <p>Board pack status: {summary.proofPackReadiness?.boardPackStatus ? displayLabel(summary.proofPackReadiness.boardPackStatus) : 'No technology data yet.'}</p>
-      <p>CFO pack status: {summary.proofPackReadiness?.cfoPackStatus ? displayLabel(summary.proofPackReadiness.cfoPackStatus) : 'No technology data yet.'}</p>
-      <p>Audit pack status: {summary.proofPackReadiness?.auditPackStatus ? displayLabel(summary.proofPackReadiness.auditPackStatus) : 'No technology data yet.'}</p>
-      <p>Evidence export safety: {summary.proofPackReadiness?.evidenceExportSafety ? displayLabel(summary.proofPackReadiness.evidenceExportSafety) : 'No technology data yet.'}</p>
+      <p>Board pack status: {summary.proofPackReadiness?.boardPackStatus ? displayLabel(summary.proofPackReadiness.boardPackStatus) : 'No data available yet.'}</p>
+      <p>CFO pack status: {summary.proofPackReadiness?.cfoPackStatus ? displayLabel(summary.proofPackReadiness.cfoPackStatus) : 'No data available yet.'}</p>
+      <p>Audit pack status: {summary.proofPackReadiness?.auditPackStatus ? displayLabel(summary.proofPackReadiness.auditPackStatus) : 'No data available yet.'}</p>
+      <p>Evidence export safety: {summary.proofPackReadiness?.evidenceExportSafety ? displayLabel(summary.proofPackReadiness.evidenceExportSafety) : 'No data available yet.'}</p>
     </ExecutiveSection>
 
     <ExecutiveSection title="Governed execution" description="Execution plan status · dry-run status · blocked execution count · ready execution count">
-      <p>Execution plan status: {summary.executionReadiness?.planStatus ? displayLabel(summary.executionReadiness.planStatus) : 'No technology data yet.'}</p>
-      <p>Dry-run status: {summary.executionReadiness?.dryRunStatus ? displayLabel(summary.executionReadiness.dryRunStatus) : 'No technology data yet.'}</p>
-      <p>Blocked execution count: {summary.executionReadiness?.blockedExecutionCount ?? 'No technology data yet.'}</p>
-      <p>Ready execution count: {summary.executionReadiness?.readyExecutionCount ?? 'No technology data yet.'}</p>
+      <p>Execution plan status: {summary.executionReadiness?.planStatus ? displayLabel(summary.executionReadiness.planStatus) : 'No data available yet.'}</p>
+      <p>Dry-run status: {summary.executionReadiness?.dryRunStatus ? displayLabel(summary.executionReadiness.dryRunStatus) : 'No data available yet.'}</p>
+      <p>Blocked execution count: {summary.executionReadiness?.blockedExecutionCount ?? 'No data available yet.'}</p>
+      <p>Ready execution count: {summary.executionReadiness?.readyExecutionCount ?? 'No data available yet.'}</p>
     </ExecutiveSection>
   </main></Shell>
 }

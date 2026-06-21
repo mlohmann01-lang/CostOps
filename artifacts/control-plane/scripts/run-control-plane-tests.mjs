@@ -62,6 +62,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/economicControlChain/economicControlChain.test.ts',
   '../artifacts/control-plane/src/lib/outcomeFinance/outcomeFinance.test.ts',
   '../artifacts/control-plane/src/lib/app-shell-routes.test.ts',
+  '../artifacts/control-plane/src/lib/terminology-consistency.test.ts',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')

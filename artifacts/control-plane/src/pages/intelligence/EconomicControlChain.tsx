@@ -23,7 +23,7 @@ function StageCard({ stage }: { stage: ChainStage }) {
           {stage.metrics.map((metric) => (
             <div key={metric.label}>
               <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>{metric.label}</div>
-              <div style={{ fontSize: 16, fontWeight: 800, marginTop: 4 }}>{metric.value ?? 'Not available'}</div>
+              <div style={{ fontSize: 16, fontWeight: 800, marginTop: 4 }}>{metric.value ?? 'No data available yet.'}</div>
             </div>
           ))}
         </div>
