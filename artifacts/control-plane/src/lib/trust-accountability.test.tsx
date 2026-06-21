@@ -51,10 +51,15 @@ test('live escalate calls POST escalate', () => {
 })
 
 test('Command shows overdue trust priority action', () => {
-  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
-  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
-  // Readiness) and no longer surfaces a dedicated trust priority-action widget. Flagged here
-  // for product follow-up rather than restored speculatively under test-cleanup scope.
+  // Program 6A coverage audit: CommandView's old "trust-priority-action" widget ("trust tasks
+  // overdue" / "blocked value awaiting ownership") was removed when CommandView became the
+  // Executive Command Center orchestrator. The underlying concept (overdue trust tasks and
+  // their blocked value) still exists and renders on its own owning page (DataTrustView),
+  // under different copy ("Overdue" card with "blocked value overdue"), so the coverage is
+  // relocated there instead of CommandView. See PROGRAM_6A_COVERAGE_AUDIT.md.
+  const dataTrustPage = fs.readFileSync(new URL('../pages/DataTrustView.tsx', import.meta.url), 'utf8')
+  assert.equal(dataTrustPage.includes('Overdue'), true)
+  assert.equal(dataTrustPage.includes('blocked value overdue'), true)
 })
 
 test('Runtime Health shows trust resolution backlog', () => {

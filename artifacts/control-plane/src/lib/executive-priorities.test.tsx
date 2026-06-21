@@ -29,10 +29,13 @@ test('live hook calls priority APIs with safe error state and no demo fallback',
 })
 
 test('nav, Command, and Runtime Health show executive prioritization surfaces', () => {
-  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
-  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
-  // Readiness) and no longer surfaces a dedicated "Top 5 Executive Priorities" widget. Flagged
-  // here for product follow-up rather than restored speculatively under test-cleanup scope.
+  // Program 6A coverage audit: CommandView's old "Top 5 Executive Priorities" /
+  // "executive-priorities-command" widget was removed when CommandView became the Executive
+  // Command Center orchestrator. The underlying content (top-5 monthly/annual savings, top
+  // priorities table) still exists and is already covered against its real owning page
+  // (ExecutivePrioritiesView) by the test above ('Executive Priorities page renders summary
+  // cards, top priorities, and rationale expansion'), so no additional CommandView-specific
+  // assertion is needed here. See PROGRAM_6A_COVERAGE_AUDIT.md.
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
   const runtime = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')

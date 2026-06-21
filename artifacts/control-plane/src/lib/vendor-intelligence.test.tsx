@@ -40,11 +40,17 @@ test('live API wiring uses vendor change APIs and no demo fallback', () => {
 })
 
 test('Command and Runtime Health integrate vendor signals', () => {
-  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
-  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
-  // Readiness) and no longer surfaces a dedicated vendor-changes widget. Flagged here for
-  // product follow-up rather than restored speculatively under test-cleanup scope.
+  // Program 6A coverage audit: CommandView's old "Vendor Changes Requiring Review" /
+  // "potentially affected spend" widget was removed when CommandView became the Executive
+  // Command Center orchestrator. The underlying concept (detected vendor changes and their
+  // affected spend) still exists and renders on its own owning page
+  // (VendorIntelligenceView), under different copy ("Vendor Changes Detected" / "Affected
+  // Spend"), so the coverage is relocated there instead of CommandView.
+  // See PROGRAM_6A_COVERAGE_AUDIT.md.
+  const vendorPage = fs.readFileSync(new URL('../pages/VendorIntelligenceView.tsx', import.meta.url), 'utf8')
   const runtime = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')
+  assert.equal(vendorPage.includes('Vendor Changes Detected'), true)
+  assert.equal(vendorPage.includes('Affected Spend'), true)
   assert.equal(runtime.includes('Vendor Intelligence Pipeline'), true)
   assert.equal(runtime.includes('vendor-intelligence-pipeline'), true)
 })

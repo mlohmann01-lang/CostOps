@@ -36,11 +36,14 @@ test('live API wiring uses benchmark APIs without demo fallback', () => {
 })
 
 test('Command and Runtime Health show benchmark intelligence signals', () => {
-  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
-  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
-  // Readiness) and no longer surfaces a dedicated benchmark-gaps widget. Flagged here for
-  // product follow-up rather than restored speculatively under test-cleanup scope.
+  // Program 6A coverage audit: CommandView's old "Benchmark Gaps" / "Potential Value:" widget
+  // was removed when CommandView became the Executive Command Center orchestrator. The
+  // Benchmark Gaps table itself still exists and renders on its own owning page
+  // (BenchmarkIntelligenceView), so the coverage is relocated there instead of CommandView.
+  // See PROGRAM_6A_COVERAGE_AUDIT.md.
+  const benchmarkPage = fs.readFileSync(new URL('../pages/BenchmarkIntelligenceView.tsx', import.meta.url), 'utf8')
   const runtime = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')
+  assert.equal(benchmarkPage.includes('Benchmark Gaps'), true)
   assert.equal(runtime.includes('Benchmark Intelligence Pipeline'), true)
   assert.equal(runtime.includes('benchmark-intelligence-pipeline'), true)
 })
