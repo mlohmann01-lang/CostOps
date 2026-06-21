@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { getDefaultExposureReport } from '../lib/exposureReport/defaultExposureReport'
 import { formatDate, formatCurrency } from '../lib/display/formatters'
 import {
@@ -7,11 +7,23 @@ import {
   EXPOSURE_REPORT_BOOK_REVIEW_HREF,
   EXPOSURE_REPORT_EXPLORE_PLATFORM_CTA,
   EXPOSURE_REPORT_EXPLORE_PLATFORM_HREF,
+  getExposureReviewSessionId,
 } from '../lib/website/exposureReviewJourney'
+import { getExposureReviewReport, type ExposureReviewReport } from '../lib/website/exposure-review-client'
 
-// Program 10, Part 4 — Exposure Report delivery experience. Reuses
-// defaultExposureReport.ts directly (the canonical report model from
-// Program 8) rather than creating a parallel report model.
+// Program 10, Part 4 — Exposure Report delivery experience. Originally
+// reused defaultExposureReport.ts directly (the canonical static report
+// model from Program 8).
+//
+// Program 11 — now attempts to populate the report from real, read-only
+// Microsoft Graph discovery findings (/api/exposure-review/m365/report).
+// When real findings are not yet available for this review session, this
+// page falls back to the honest "Report generated from read-only
+// discovery." trust statement with an explicit "no data yet" message rather
+// than fabricating sample values in a live context. The static
+// defaultExposureReport.ts model is still used as visual/structural
+// scaffolding (sections, domains, next steps) since those are not yet
+// backed by live discovery for non-M365 domains.
 
 const BORDER_DEFAULT = 'var(--border-default, 0.5px solid rgba(255,255,255,0.08))'
 const TEAL = 'var(--teal, #1D9E75)'
@@ -37,9 +49,49 @@ const cardStyle: React.CSSProperties = {
 }
 
 export default function ExposureReviewReport() {
-  const report = getDefaultExposureReport()
-  const summary = report.summary
-  const findings = report.keyFindings
+  const staticReport = getDefaultExposureReport()
+  const tenantId = getExposureReviewSessionId()
+  const [liveReport, setLiveReport] = useState<ExposureReviewReport | undefined>(undefined)
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    getExposureReviewReport(tenantId)
+      .then((result) => {
+        if (!cancelled) setLiveReport(result)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setLoaded(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [tenantId])
+
+  const hasLiveData = loaded && liveReport && !('available' in liveReport && liveReport.available === false)
+  const liveAvailable = hasLiveData ? (liveReport as Exclude<ExposureReviewReport, { available: false }>) : undefined
+
+  const summary = liveAvailable
+    ? {
+        potentialAnnualValue: liveAvailable.summary.potentialAnnualValue ?? undefined,
+        inactiveLicences: liveAvailable.summary.inactiveLicences,
+        ownerlessLicences: liveAvailable.summary.ownerlessLicences,
+        governanceFindings: liveAvailable.summary.governanceFindings,
+      }
+    : staticReport.summary
+
+  const findings = liveAvailable
+    ? liveAvailable.findings.map((finding) => ({
+        finding: finding.title,
+        impact: finding.impact,
+        recommendedAction: finding.recommendedAction,
+        potentialValue: finding.potentialAnnualValue ?? undefined,
+      }))
+    : staticReport.keyFindings
+
+  const report = staticReport
+  const noLiveDataYet = loaded && !hasLiveData
 
   return (
     <div style={pageStyle}>
@@ -49,8 +101,14 @@ export default function ExposureReviewReport() {
         </a>
         <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>{report.title}</h1>
         <p style={{ fontSize: 13, color: 'var(--text-tertiary, #8a8f99)', marginTop: 6 }}>
-          Generated {formatDate(report.generatedAt ?? new Date())}
+          Generated {formatDate(hasLiveData ? liveAvailable!.generatedAt : report.generatedAt ?? new Date())}
         </p>
+
+        {noLiveDataYet && (
+          <p style={{ fontSize: 14, color: 'var(--text-secondary, #b7bcc4)', marginTop: 16 }}>
+            {(liveReport as { available: false; reason: string } | undefined)?.reason ?? 'No discovered data is available yet for this tenant.'}
+          </p>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginTop: 28 }}>
           <div style={cardStyle}>

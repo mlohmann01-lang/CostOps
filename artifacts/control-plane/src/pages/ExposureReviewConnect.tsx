@@ -1,16 +1,23 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { EXPOSURE_REVIEW_CONNECT, getExposureReviewSessionId } from '../lib/website/exposureReviewJourney'
 import {
-  EXPOSURE_REVIEW_CONNECT,
-  CONNECT_SIMULATED_DELAY_MS,
-  type ConnectState,
-} from '../lib/website/exposureReviewJourney'
+  getExposureReviewConfigured,
+  startExposureReviewConnect,
+  getExposureReviewConnectStatus,
+  handleExposureReviewConnectCallback,
+} from '../lib/website/exposure-review-client'
 
-// Program 10, Part 2 — simulated M365 connection step. This is NOT
-// production OAuth: there is no redirect to a real Microsoft identity
-// endpoint, no application secret, no real auth library call. It is a local
-// state machine (NOT_CONNECTED -> CONNECTING -> CONNECTED) driven by a
-// button click and a fixed deterministic delay, purely to demonstrate the
-// workflow.
+// Program 11 — real M365 connection step. Replaces the Program 10 simulated
+// setTimeout state machine with a real call to the api-server, which wires
+// to MicrosoftOAuthService / EncryptedMicrosoftTokenStore. This page never
+// fabricates a CONNECTED state: it only reaches CONNECTED after the backend
+// confirms a real OAuth callback succeeded (see ExposureReviewConnectCallback
+// handling below, driven by the ?state=&code= query params on return from
+// Microsoft's consent screen).
+
+type PageState = 'NOT_CONNECTED' | 'CONNECTING' | 'CONNECTED' | 'DISCOVERY_READY' | 'ERROR'
+
+const NOT_CONFIGURED_MESSAGE = 'Microsoft 365 connection is not configured for this environment.'
 
 const BORDER_DEFAULT = 'var(--border-default, 0.5px solid rgba(255,255,255,0.08))'
 const TEAL = 'var(--teal, #1D9E75)'
@@ -40,13 +47,98 @@ const cardStyle: React.CSSProperties = {
 
 export default function ExposureReviewConnect() {
   const content = EXPOSURE_REVIEW_CONNECT
-  const [state, setState] = useState<ConnectState>('NOT_CONNECTED')
+  const [state, setState] = useState<PageState>('NOT_CONNECTED')
+  const [configured, setConfigured] = useState<boolean | undefined>(undefined)
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined)
+  const tenantId = getExposureReviewSessionId()
 
-  function handleConnect() {
+  useEffect(() => {
+    let cancelled = false
+    getExposureReviewConfigured()
+      .then((result) => {
+        if (!cancelled) setConfigured(result.configured)
+      })
+      .catch(() => {
+        if (!cancelled) setConfigured(false)
+      })
+
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code') ?? undefined
+    const oauthState = params.get('state')
+    const oauthError = params.get('error') ?? undefined
+
+    if (oauthState) {
+      setState('CONNECTING')
+      handleExposureReviewConnectCallback(tenantId, { code, state: oauthState, error: oauthError })
+        .then((result) => {
+          if (cancelled) return
+          if ('error' in result) {
+            setState('ERROR')
+            setErrorMessage(result.reason)
+            return
+          }
+          setState('CONNECTED')
+          window.history.replaceState({}, '', window.location.pathname)
+        })
+        .catch((error) => {
+          if (cancelled) return
+          setState('ERROR')
+          setErrorMessage(error instanceof Error ? error.message : 'Microsoft 365 Exposure Review could not be completed.')
+        })
+      return () => {
+        cancelled = true
+      }
+    }
+
+    getExposureReviewConnectStatus(tenantId)
+      .then((result) => {
+        if (cancelled) return
+        if (result.connection?.status === 'CONNECTED') setState('CONNECTED')
+        else if (result.connection?.status === 'ERROR') {
+          setState('ERROR')
+          setErrorMessage(result.connection.failureReason)
+        }
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [tenantId])
+
+  async function handleConnect() {
     setState('CONNECTING')
-    setTimeout(() => {
-      setState('CONNECTED')
-    }, CONNECT_SIMULATED_DELAY_MS)
+    setErrorMessage(undefined)
+    try {
+      const result = await startExposureReviewConnect(tenantId)
+      if (!result.configured) {
+        setState('ERROR')
+        setErrorMessage(result.reason)
+        return
+      }
+      if ('error' in result) {
+        setState('ERROR')
+        setErrorMessage('Required read-only permission is missing.')
+        return
+      }
+      window.location.href = result.authorizationUrl
+    } catch (error) {
+      setState('ERROR')
+      setErrorMessage(error instanceof Error ? error.message : 'Microsoft 365 Exposure Review could not be completed.')
+    }
+  }
+
+  if (configured === false) {
+    return (
+      <div style={pageStyle}>
+        <section style={sectionStyle}>
+          <a href="/exposure-review" style={{ textDecoration: 'none', color: 'inherit', fontSize: 14, fontWeight: 500 }}>
+            ← Certen
+          </a>
+          <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>Connect Microsoft 365</h1>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', marginTop: 12 }}>{NOT_CONFIGURED_MESSAGE}</p>
+        </section>
+      </div>
+    )
   }
 
   return (
@@ -57,8 +149,7 @@ export default function ExposureReviewConnect() {
         </a>
         <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>Connect Microsoft 365</h1>
         <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', marginTop: 12 }}>
-          This is a simulated connection for the purposes of the Exposure Review demonstration. No real Microsoft
-          authentication is performed.
+          Certen requests read-only access to your Microsoft 365 tenant for the duration of this Exposure Review.
         </p>
 
         <div style={cardStyle}>
@@ -110,7 +201,32 @@ export default function ExposureReviewConnect() {
             <div style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)' }}>Connecting to Microsoft 365…</div>
           )}
 
-          {state === 'CONNECTED' && (
+          {state === 'ERROR' && (
+            <div>
+              <div style={{ fontSize: 15, color: '#e5484d', fontWeight: 500, marginBottom: 18 }}>
+                {errorMessage ?? 'Microsoft 365 Exposure Review could not be completed.'}
+              </div>
+              <button
+                type="button"
+                onClick={handleConnect}
+                style={{
+                  padding: '13px 28px',
+                  borderRadius: 8,
+                  border: '0.5px solid rgba(255,255,255,0.25)',
+                  background: 'transparent',
+                  color: 'inherit',
+                  fontSize: 15,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+
+          {(state === 'CONNECTED' || state === 'DISCOVERY_READY') && (
             <>
               <div style={{ fontSize: 15, color: TEAL, fontWeight: 500, marginBottom: 18 }}>
                 ✓ Microsoft 365 connected (read-only)

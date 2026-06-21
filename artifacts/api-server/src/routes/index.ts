@@ -85,6 +85,7 @@ import aiValueAttributionRouter from "./ai-value-attribution";
 import aiEconomicsRouter from "./ai-economics";
 import aiInitiativePortfolioRouter from "./ai-initiative-portfolio";
 import aiCapitalAllocationRouter from "./ai-capital-allocation";
+import exposureReviewRouter from "./exposure-review";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -180,5 +181,9 @@ router.use("/economic-operations", economicOperationsRouter);
 router.use("/packs", packsRouter);
 router.use('/', executionResultsOutcomeRouter);
 router.use("/", pilotRouter);
+// Public, pre-login Exposure Review journey — no requireCapability() since
+// there is no platform login at this point in the funnel. See
+// exposure-review.ts header comment.
+router.use("/exposure-review", exposureReviewRouter);
 
 export default router;

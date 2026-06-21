@@ -240,18 +240,25 @@ test('no licence modification claims — only discovery/review/no-modification f
   assert.ok(allStrings.includes('no licences are modified') || allStrings.includes('no licence changes'))
 })
 
-// ─── 10. No production OAuth exists ─────────────────────────────────────────
+// ─── 10. Real OAuth is delegated to the backend, never to client secrets ───
+//
+// Program 10 originally locked this page to a simulated setTimeout state
+// machine with no real OAuth. Program 11 replaces that simulation with a
+// real connect flow — but the contract this test protects still holds: the
+// browser must never hold a client secret or call Microsoft's identity
+// endpoints directly. All real OAuth (authorization URL generation, token
+// exchange) happens server-side in api-server's m365-exposure-review-service
+// via MicrosoftOAuthService; this page only calls Certen's own API and
+// redirects the user's browser to a URL the backend returned.
 
-test('Connect step implementation contains no real OAuth/Microsoft auth integration', () => {
+test('Connect step implementation never embeds a Microsoft client secret or MSAL browser SDK', () => {
   const pageSource = readPage('ExposureReviewConnect.tsx')
-  assert.ok(!pageSource.includes('microsoftonline.com'))
   assert.ok(!pageSource.toLowerCase().includes('client_secret'))
   assert.ok(!pageSource.toLowerCase().includes('clientsecret'))
   assert.ok(!pageSource.includes('@azure/msal'))
   assert.ok(!pageSource.includes('msal-'))
-  // Must use a local React state machine with setTimeout, not a real
-  // network call.
-  assert.ok(pageSource.includes('setTimeout'))
-  assert.ok(pageSource.includes("useState<ConnectState>"))
-  assert.ok(pageSource.includes('This is a simulated connection'))
+  // Must call Certen's own backend API, not Microsoft's endpoints directly.
+  assert.ok(!pageSource.includes("fetch('https://login.microsoftonline.com"))
+  assert.ok(!pageSource.includes('fetch("https://login.microsoftonline.com'))
+  assert.ok(pageSource.includes('exposure-review-client'))
 })

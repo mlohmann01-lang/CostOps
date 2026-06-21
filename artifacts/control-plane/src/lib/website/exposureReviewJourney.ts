@@ -10,6 +10,25 @@
 // click-through funnel (connect → discovery → report → booking →
 // conversion). No real OAuth, no real network calls, no random data.
 
+// ─── Anonymous review session binding ───────────────────────────────────────
+// The Exposure Review journey is pre-login/public — there is no platform
+// tenant/session at this point. We bind the public funnel to a single
+// browser-local anonymous review id (persisted in sessionStorage) so the
+// backend can scope connect/discovery/report state without requiring login.
+// This is NOT a platform tenantId and grants no platform access.
+
+const EXPOSURE_REVIEW_SESSION_KEY = 'certen.exposureReview.reviewId'
+
+export function getExposureReviewSessionId(): string {
+  if (typeof window === 'undefined' || !window.sessionStorage) return 'anonymous-exposure-review'
+  let id = window.sessionStorage.getItem(EXPOSURE_REVIEW_SESSION_KEY)
+  if (!id) {
+    id = `exposure-review-${Math.random().toString(36).slice(2)}-${Date.now()}`
+    window.sessionStorage.setItem(EXPOSURE_REVIEW_SESSION_KEY, id)
+  }
+  return id
+}
+
 // ─── Route paths ─────────────────────────────────────────────────────────────
 
 export const EXPOSURE_REVIEW_ROUTES = {

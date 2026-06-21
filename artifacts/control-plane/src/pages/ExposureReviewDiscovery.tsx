@@ -1,20 +1,25 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
-  DISCOVERY_STEPS,
-  DISCOVERY_STEP_DURATION_MS,
-  DISCOVERY_SAMPLE_LABEL,
   DISCOVERY_COMPLETE_HEADLINE,
   DISCOVERY_COMPLETE_SUBHEADLINE,
   DISCOVERY_VIEW_REPORT_CTA,
   DISCOVERY_VIEW_REPORT_HREF,
-  type DiscoveryStepStatus,
+  getExposureReviewSessionId,
 } from '../lib/website/exposureReviewJourney'
+import {
+  getExposureReviewConfigured,
+  runExposureReviewDiscovery,
+  getExposureReviewDiscoveryStatus,
+  type ExposureReviewDiscoveryRun,
+} from '../lib/website/exposure-review-client'
 
-// Program 10, Part 3 — simulated, deterministic discovery progress
-// experience. On mount, each of the 6 steps advances Queued -> Running ->
-// Completed sequentially on a fixed timer (DISCOVERY_STEP_DURATION_MS per
-// step). No randomness, no live telemetry — explicitly labelled as a sample
-// discovery experience.
+// Program 11 — real read-only Microsoft Graph discovery progress. Replaces
+// the Program 10 fixed-timer simulation with polling against
+// /api/exposure-review/m365/discovery/status, which reflects the actual
+// m365-discovery-service.ts run state.
+
+const NOT_CONFIGURED_MESSAGE = 'Discovery is not configured for this environment.'
+const POLL_INTERVAL_MS = 1500
 
 const BORDER_DEFAULT = 'var(--border-default, 0.5px solid rgba(255,255,255,0.08))'
 const TEAL = 'var(--teal, #1D9E75)'
@@ -32,42 +37,110 @@ const sectionStyle: React.CSSProperties = {
   padding: '5rem 2rem',
 }
 
-function statusLabel(status: DiscoveryStepStatus): string {
-  return status
-}
-
-function statusColor(status: DiscoveryStepStatus): string {
-  if (status === 'Completed') return TEAL
-  if (status === 'Running') return 'var(--text-primary, #f5f5f5)'
+function statusColor(status: string): string {
+  if (status === 'COMPLETED') return TEAL
+  if (status === 'RUNNING') return 'var(--text-primary, #f5f5f5)'
+  if (status === 'FAILED') return '#e5484d'
   return 'var(--text-tertiary, #8a8f99)'
 }
 
+function statusLabel(status: string): string {
+  switch (status) {
+    case 'QUEUED':
+      return 'Queued'
+    case 'RUNNING':
+      return 'Running'
+    case 'COMPLETED':
+      return 'Completed'
+    case 'FAILED':
+      return 'Failed'
+    default:
+      return status
+  }
+}
+
 export default function ExposureReviewDiscovery() {
-  const [statuses, setStatuses] = useState<DiscoveryStepStatus[]>(() => DISCOVERY_STEPS.map(() => 'Queued'))
-  const [currentIndex, setCurrentIndex] = useState(0)
+  const [configured, setConfigured] = useState<boolean | undefined>(undefined)
+  const [run, setRun] = useState<ExposureReviewDiscoveryRun | undefined>(undefined)
+  const tenantId = getExposureReviewSessionId()
+  const startedRef = useRef(false)
 
   useEffect(() => {
-    if (currentIndex >= DISCOVERY_STEPS.length) return
-
-    setStatuses((prev) => {
-      const next = [...prev]
-      next[currentIndex] = 'Running'
-      return next
-    })
-
-    const timer = setTimeout(() => {
-      setStatuses((prev) => {
-        const next = [...prev]
-        next[currentIndex] = 'Completed'
-        return next
+    let cancelled = false
+    getExposureReviewConfigured()
+      .then((result) => {
+        if (!cancelled) setConfigured(result.configured)
       })
-      setCurrentIndex((idx) => idx + 1)
-    }, DISCOVERY_STEP_DURATION_MS)
+      .catch(() => {
+        if (!cancelled) setConfigured(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
-    return () => clearTimeout(timer)
-  }, [currentIndex])
+  useEffect(() => {
+    if (configured !== true || startedRef.current) return
+    startedRef.current = true
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | undefined
 
-  const allComplete = statuses.every((status) => status === 'Completed')
+    async function poll() {
+      try {
+        const status = await getExposureReviewDiscoveryStatus(tenantId)
+        if (cancelled) return
+        if (status.run) {
+          setRun(status.run)
+          if (status.run.status === 'RUNNING' || status.run.status === 'NOT_STARTED') {
+            timer = setTimeout(poll, POLL_INTERVAL_MS)
+          }
+          return
+        }
+      } catch {
+        // fall through to attempt a run
+      }
+      try {
+        const started = await runExposureReviewDiscovery(tenantId)
+        if (cancelled) return
+        setRun(started.run)
+        if (started.run.status === 'RUNNING') timer = setTimeout(poll, POLL_INTERVAL_MS)
+      } catch {
+        if (!cancelled) {
+          setRun({
+            id: 'client-error',
+            tenantId,
+            status: 'FAILED',
+            steps: [],
+            lastUpdatedAt: new Date().toISOString(),
+            errors: ['Microsoft 365 Exposure Review could not be completed.'],
+          })
+        }
+      }
+    }
+
+    poll()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [configured, tenantId])
+
+  if (configured === false) {
+    return (
+      <div style={pageStyle}>
+        <section style={sectionStyle}>
+          <a href="/exposure-review/connect" style={{ textDecoration: 'none', color: 'inherit', fontSize: 14, fontWeight: 500 }}>
+            ← Certen
+          </a>
+          <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>Running Discovery</h1>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', marginTop: 12 }}>{NOT_CONFIGURED_MESSAGE}</p>
+        </section>
+      </div>
+    )
+  }
+
+  const allComplete = run?.status === 'COMPLETED' || run?.status === 'PARTIAL'
+  const failed = run?.status === 'FAILED'
 
   return (
     <div style={pageStyle}>
@@ -76,7 +149,9 @@ export default function ExposureReviewDiscovery() {
           ← Certen
         </a>
         <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>Running Discovery</h1>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary, #b7bcc4)', marginTop: 8 }}>{DISCOVERY_SAMPLE_LABEL}</p>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary, #b7bcc4)', marginTop: 8 }}>
+          Read-only Microsoft Graph discovery in progress.
+        </p>
 
         <div
           style={{
@@ -87,9 +162,9 @@ export default function ExposureReviewDiscovery() {
             overflow: 'hidden',
           }}
         >
-          {DISCOVERY_STEPS.map((step, idx) => (
+          {(run?.steps ?? []).map((step, idx) => (
             <div
-              key={step.step}
+              key={step.key}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -99,14 +174,18 @@ export default function ExposureReviewDiscovery() {
               }}
             >
               <span style={{ fontSize: 14 }}>
-                Step {step.step} {step.label}
+                Step {idx + 1} {step.label}
               </span>
-              <span style={{ fontSize: 13, fontWeight: 500, color: statusColor(statuses[idx]) }}>
-                {statusLabel(statuses[idx])}
-              </span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: statusColor(step.status) }}>{statusLabel(step.status)}</span>
             </div>
           ))}
         </div>
+
+        {failed && (
+          <div style={{ marginTop: 28, fontSize: 14, color: '#e5484d' }}>
+            {run?.errors?.[0] ?? 'Microsoft 365 Exposure Review could not be completed.'}
+          </div>
+        )}
 
         {allComplete && (
           <div style={{ marginTop: 32, textAlign: 'center' }}>
