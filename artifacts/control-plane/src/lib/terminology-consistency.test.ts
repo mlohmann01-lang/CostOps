@@ -44,3 +44,9 @@ test('Economic Control Chain page renders the stage-level unavailableMessage cop
   const page = read('../pages/intelligence/EconomicControlChain.tsx')
   assert.equal(page.includes('stage.unavailableMessage'), true)
 })
+
+test('Economic Control Chain page uses canonical "No data available yet." for state A instead of "Not available"', () => {
+  const page = read('../pages/intelligence/EconomicControlChain.tsx')
+  assert.equal(page.includes('No data available yet.'), true)
+  assert.equal(page.includes("'Not available'"), false)
+})
