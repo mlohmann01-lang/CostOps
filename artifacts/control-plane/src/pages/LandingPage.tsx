@@ -277,7 +277,7 @@ export default function LandingPage() {
           {hero.subheadline}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 28, flexWrap: 'wrap' }}>
-          <PrimaryButton href="#exposure-report">{hero.primaryCta}</PrimaryButton>
+          <PrimaryButton href="/exposure-review">{hero.primaryCta}</PrimaryButton>
           <SecondaryButton href="#economic-control-chain">{hero.secondaryCta}</SecondaryButton>
         </div>
         <div style={{ marginTop: 14 }}>
@@ -469,7 +469,7 @@ export default function LandingPage() {
           </div>
           <div style={{ marginTop: 28 }}>
             <a
-              href="#exposure-report"
+              href="/exposure-review"
               style={{
                 display: 'block',
                 width: '100%',

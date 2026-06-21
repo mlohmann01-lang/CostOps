@@ -127,7 +127,9 @@ test('Public header has Certen wordmark, nav links, sign-in and get-started', ()
   assert.equal(page.header.signInLabel, 'Sign in')
   assert.ok(page.header.signInHref.length > 0)
   assert.equal(page.header.getStartedLabel, 'Get started')
-  assert.equal(page.header.getStartedHref, '#exposure-report')
+  // Program 10: "Get started" now routes into the M365 Exposure Review
+  // journey rather than the in-page anchor.
+  assert.equal(page.header.getStartedHref, '/exposure-review')
 })
 
 test('Public footer has Certen wordmark, caption, sign-in and Book Executive Review', () => {

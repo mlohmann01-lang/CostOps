@@ -56,6 +56,12 @@ import EconomicControlChain from './pages/intelligence/EconomicControlChain'
 import OutcomeFinance from './pages/executive/OutcomeFinance'
 import ExposureReport from './pages/ExposureReport'
 import LandingPage from './pages/LandingPage'
+import ExposureReviewStart from './pages/ExposureReviewStart'
+import ExposureReviewConnect from './pages/ExposureReviewConnect'
+import ExposureReviewDiscovery from './pages/ExposureReviewDiscovery'
+import ExposureReviewReport from './pages/ExposureReviewReport'
+import ExecutiveReview from './pages/ExecutiveReview'
+import ExposureReviewConversion from './pages/ExposureReviewConversion'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -488,6 +494,15 @@ function Router() {
     <Switch>
       <Route path="/login" component={LoginRoute} />
       <Route path="/welcome" component={LandingPage} />
+      {/* Program 10 — public M365 Exposure Review journey. Not behind
+          RequireRuntime, not wrapped in <Shell>; reachable only by URL/CTA
+          chaining like /welcome above. */}
+      <Route path="/exposure-review" component={ExposureReviewStart} />
+      <Route path="/exposure-review/connect" component={ExposureReviewConnect} />
+      <Route path="/exposure-review/discovery" component={ExposureReviewDiscovery} />
+      <Route path="/exposure-review/report" component={ExposureReviewReport} />
+      <Route path="/exposure-review/next-steps" component={ExposureReviewConversion} />
+      <Route path="/executive-review" component={ExecutiveReview} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/overview" component={CommandRoute} />

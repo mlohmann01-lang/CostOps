@@ -82,7 +82,10 @@ export const PUBLIC_HEADER: PublicHeaderContent = {
   // auth entry point exists; reusing the app's existing /login route for now.
   signInHref: '/login',
   getStartedLabel: 'Get started',
-  getStartedHref: '#exposure-report',
+  // Program 10: routed into the new M365 Exposure Review journey rather
+  // than the in-page anchor, so "Get started" begins the actual prospect
+  // flow (Connect -> Discovery -> Report -> Executive Review -> Certen).
+  getStartedHref: '/exposure-review',
 }
 
 export interface PublicFooterContent {

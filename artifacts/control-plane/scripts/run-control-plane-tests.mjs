@@ -66,6 +66,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/terminology-consistency.test.ts',
   '../artifacts/control-plane/src/lib/headlessCerten/headlessCerten.test.ts',
   '../artifacts/control-plane/src/lib/website/defaultLandingPage.test.ts',
+  '../artifacts/control-plane/src/lib/website/exposureReviewJourney.test.ts',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')
