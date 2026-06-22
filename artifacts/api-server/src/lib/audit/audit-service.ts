@@ -1,6 +1,25 @@
 import { db, auditEventsTable } from '@workspace/db'
 import type { AuditEventType, InsertAuditEvent } from '@workspace/db'
+import { desc, eq } from 'drizzle-orm'
 import { logger } from '../logger.js'
+import { auditHash } from '../security/audit-integrity.js'
+
+// Program 14B-R: deterministic fields hashed into the tamper-evidence chain.
+// createdAt is intentionally excluded — it is DB-assigned (defaultNow()) and
+// not known until after insert, so it cannot be part of a hash computed
+// before the row is written.
+function deterministicAuditFields(record: Omit<InsertAuditEvent, 'prevHash' | 'tamperHash'>) {
+  return {
+    tenantId: record.tenantId,
+    actorId: record.actorId,
+    actorRole: record.actorRole,
+    eventType: record.eventType,
+    resourceType: record.resourceType,
+    resourceId: record.resourceId ?? null,
+    payload: record.payload ?? {},
+    outcome: record.outcome ?? 'SUCCESS',
+  }
+}
 
 // Insert an audit event. Never throws — failures are logged but don't block the caller.
 export async function recordAuditEvent(event: {
@@ -30,6 +49,15 @@ export async function recordAuditEvent(event: {
       payload: event.payload ?? {},
       outcome: event.outcome ?? 'SUCCESS',
     }
+    const [previous] = await db
+      .select({ tamperHash: auditEventsTable.tamperHash })
+      .from(auditEventsTable)
+      .where(eq(auditEventsTable.tenantId, event.tenantId))
+      .orderBy(desc(auditEventsTable.id))
+      .limit(1)
+    const prevHash = previous?.tamperHash ?? ''
+    record.prevHash = prevHash
+    record.tamperHash = auditHash(prevHash, deterministicAuditFields(record))
     await db.insert(auditEventsTable).values(record)
   } catch (err) {
     logger.error({ err }, 'Audit event write failed')

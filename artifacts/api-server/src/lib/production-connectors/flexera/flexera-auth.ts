@@ -1,8 +1,9 @@
 import crypto from 'node:crypto';
 import type { FlexeraAuthResult, FlexeraConnection, FlexeraCredentials, FlexeraTenant } from './flexera-types';
+import { resolveEncryptionKeySecret } from '../../security/encryption-key-resolution';
 export const flexeraRequiredPermissions = ['asset.read', 'contract.read', 'entitlement.read', 'renewal.read', 'consumption.read', 'vendor.read', 'application.read'];
 export const flexeraAuthRequirements = { credentialRefRequired: true, tokenProviderRequiredForLiveCalls: true, storesRawCredentials: false };
-const key = crypto.createHash('sha256').update(process.env.FLEXERA_CREDENTIAL_KEY ?? 'local-flexera-credential-key').digest();
+const key = crypto.createHash('sha256').update(resolveEncryptionKeySecret('FLEXERA_CREDENTIAL_KEY', 'local-flexera-credential-key')).digest();
 function encrypt(value: unknown) { const iv = crypto.randomBytes(12); const cipher = crypto.createCipheriv('aes-256-gcm', key, iv); const encrypted = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]); const tag = cipher.getAuthTag(); return Buffer.concat([iv, tag, encrypted]).toString('base64'); }
 function decrypt<T>(value: string): T { const raw = Buffer.from(value, 'base64'); const iv = raw.subarray(0, 12); const tag = raw.subarray(12, 28); const data = raw.subarray(28); const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv); decipher.setAuthTag(tag); return JSON.parse(Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8')) as T; }
 export class FlexeraCredentialStore { private rows = new Map<string, string>(); async save(tenantId: string, credentials: FlexeraCredentials) { const ref = `flexera-cred-${tenantId}-${crypto.randomUUID()}`; this.rows.set(ref, encrypt(credentials)); return ref; } async get(ref: string) { const row = this.rows.get(ref); return row ? decrypt<FlexeraCredentials>(row) : undefined; } }

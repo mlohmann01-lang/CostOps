@@ -1,9 +1,10 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 import type { MicrosoftOAuthConnection, MicrosoftTokenSet, StoredMicrosoftCredential } from "./microsoft-auth-types";
+import { resolveEncryptionKeySecret } from "../security/encryption-key-resolution";
 const keyFromSecret = (secret: string) => createHash("sha256").update(secret).digest();
 export class EncryptedMicrosoftTokenStore {
   private readonly records = new Map<string, StoredMicrosoftCredential>();
-  constructor(private readonly encryptionSecret = process.env.MICROSOFT_TOKEN_ENCRYPTION_KEY ?? "local-dev-encryption-boundary") {}
+  constructor(private readonly encryptionSecret = resolveEncryptionKeySecret("MICROSOFT_TOKEN_ENCRYPTION_KEY", "local-dev-encryption-boundary")) {}
   async store(connection: Omit<MicrosoftOAuthConnection, "credentialRef" | "createdAt" | "updatedAt"> & { credentialRef?: string }, tokens: MicrosoftTokenSet): Promise<MicrosoftOAuthConnection> {
     const now = new Date().toISOString();
     const credentialRef = connection.credentialRef ?? `mscred_${randomBytes(12).toString("hex")}`;

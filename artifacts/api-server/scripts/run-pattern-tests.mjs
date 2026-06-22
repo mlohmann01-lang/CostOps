@@ -12,6 +12,7 @@ const distDir = resolve(import.meta.dirname, '../dist/tests');
 export const dbIntegrationTests = new Set([
   'approval-workflow.test.ts',
   'approval-workflow-execution-request.test.ts',
+  'audit-tamper-evidence-live.test.ts',
   'connector-readiness-persistence.test.ts',
   'database-tenant-isolation-live-integration.test.ts',
   'live-tenant-readiness-persistence.test.ts',

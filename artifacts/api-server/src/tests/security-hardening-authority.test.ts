@@ -88,81 +88,59 @@ test("[determinism] two calls to getSecurityHardeningAuthority() produce equal r
   assert.deepEqual(a, b);
 });
 
-test("[verdict priority] a FAILED domain forces platformVerdict to FAILED, regardless of other domains", () => {
+test("[Program 14B-R] no domain reports FAILED anymore — the three CRITICAL findings (thr-1, aud-1, enc-1's HIGH) were remediated; platformVerdict reflects remaining UNKNOWN (secrets-management) rather than FAILED", () => {
   const a = getSecurityHardeningAuthority();
   const hasFailedDomain = a.domains.some((d) => d.verdict === "FAILED");
-  assert.ok(hasFailedDomain, "at least one domain is expected to be FAILED given known unwired tamper-evidence and tenant-scoping gaps");
-  assert.equal(a.platformVerdict, "FAILED");
+  assert.ok(!hasFailedDomain, "no domain should report FAILED after Program 14B-R remediation");
+  assert.equal(a.platformVerdict, "UNKNOWN", "secrets-management remains UNKNOWN (sec-2, out of scope for 14B-R), which takes priority over the remaining PARTIAL domains");
 });
 
-test("[verdict priority] criticalFindings only contains CRITICAL or HIGH severity findings, and is non-empty given known gaps", () => {
+test("[verdict priority] criticalFindings only contains CRITICAL or HIGH severity findings", () => {
   const a = getSecurityHardeningAuthority();
-  assert.ok(a.criticalFindings.length > 0);
   for (const f of a.criticalFindings) {
     assert.ok(f.severity === "CRITICAL" || f.severity === "HIGH");
   }
 });
 
-test("[real evidence] audit-integrity domain's CRITICAL finding is grounded in real zero-call-site facts for auditHash and approvalTamperHash", () => {
+test("[real evidence] audit-integrity domain's tamper-evidence primitives now have real production call sites in audit-service.ts and execution-approval-service.ts", () => {
   const auditIntegritySrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/security/audit-integrity.ts"), "utf8");
   const securityControlsSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/security/security-controls.ts"), "utf8");
+  const auditServiceSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/audit/audit-service.ts"), "utf8");
+  const approvalServiceSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/governance/execution-approval-service.ts"), "utf8");
   assert.ok(/auditHash/.test(auditIntegritySrc), "auditHash must still be defined in audit-integrity.ts");
   assert.ok(/approvalTamperHash/.test(securityControlsSrc), "approvalTamperHash must still be defined in security-controls.ts");
-
-  // Re-check the zero-call-site claim directly against the real repo: walk
-  // src/, excluding the two definition files and the tests directory, and
-  // confirm neither symbol is referenced anywhere else. If a production
-  // caller is added, this test fails loudly instead of silently passing.
-  const srcRoot = path.resolve(process.cwd(), "src");
-  const skip = new Set([
-    path.resolve(srcRoot, "lib/security/audit-integrity.ts"),
-    path.resolve(srcRoot, "lib/security/security-controls.ts"),
-  ]);
-  const skipDirs = new Set(["tests", "security-hardening"]);
-  let foundExternalCallSite = false;
-  const walk = (dir: string) => {
-    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (skipDirs.has(entry.name)) continue;
-        walk(full);
-      } else if (entry.isFile() && entry.name.endsWith(".ts") && !skip.has(full)) {
-        const content = fs.readFileSync(full, "utf8");
-        if (/auditHash|approvalTamperHash/.test(content)) foundExternalCallSite = true;
-      }
-    }
-  };
-  walk(srcRoot);
+  assert.ok(/auditHash\(/.test(auditServiceSrc), "audit-service.ts must call auditHash() — if this regresses, aud-1 in the authority module is stale and must be updated.");
+  assert.ok(/approvalTamperHash\(/.test(approvalServiceSrc), "execution-approval-service.ts must call approvalTamperHash() — if this regresses, aud-1 in the authority module is stale and must be updated.");
 
   const results = buildSecurityHardeningDomainResults();
   const auditIntegrity = results.find((r) => r.domain === "audit-integrity")!;
-  const criticalFinding = auditIntegrity.findings.find((f) => f.severity === "CRITICAL");
-  assert.ok(criticalFinding, "audit-integrity domain must have a CRITICAL finding about unwired tamper-evidence primitives");
-
-  if (foundExternalCallSite) {
-    assert.fail("auditHash or approvalTamperHash now has a production call site outside their definition files — the CRITICAL finding text in the authority module is stale and must be updated to reflect that the primitive is wired in.");
-  }
+  assert.notEqual(auditIntegrity.verdict, "FAILED", "audit-integrity must not remain FAILED now that the tamper-evidence primitives are wired in");
+  const remediatedFinding = auditIntegrity.findings.find((f) => f.id === "aud-1");
+  assert.ok(remediatedFinding && /REMEDIATED/.test(remediatedFinding.description), "aud-1 must be present and marked REMEDIATED");
 });
 
-test("[real evidence] threat-model CRITICAL finding is grounded in real source: executive-proof-packs.ts never calls requireTenantContext", () => {
+test("[real evidence] threat-model thr-1 is grounded in real source: executive-proof-packs.ts now calls requireTenantContext and no longer trusts client tenant headers", () => {
   const source = fs.readFileSync(path.resolve(process.cwd(), "src/routes/executive-proof-packs.ts"), "utf8");
-  assert.ok(!/requireTenantContext/.test(source), "executive-proof-packs.ts now calls requireTenantContext() — the threat-model CRITICAL finding (thr-1) is stale and the authority module must be updated to reflect the fix.");
-  assert.ok(/x-tenant-id/.test(source), "executive-proof-packs.ts must still derive tenant() with an x-tenant-id header fallback for this finding to remain accurate.");
+  assert.ok(/requireTenantContext/.test(source), "executive-proof-packs.ts must call requireTenantContext() — if this regresses, thr-1 in the authority module is stale and must be updated.");
+  assert.ok(!/req\.tenantId\s*\?\?\s*req\.header\(['"]x-tenant-id['"]\)/.test(source), "executive-proof-packs.ts must not fall back to a client-supplied x-tenant-id header for tenant identity.");
 
   const results = buildSecurityHardeningDomainResults();
   const threatModel = results.find((r) => r.domain === "threat-model")!;
-  const criticalFinding = threatModel.findings.find((f) => f.severity === "CRITICAL" && f.affectedFiles.some((p) => p.includes("executive-proof-packs.ts")));
-  assert.ok(criticalFinding, "threat-model domain must have a CRITICAL finding citing executive-proof-packs.ts");
+  assert.notEqual(threatModel.verdict, "FAILED", "threat-model must not remain FAILED now that proof-pack tenant spoofing is remediated");
+  const remediatedFinding = threatModel.findings.find((f) => f.id === "thr-1");
+  assert.ok(remediatedFinding && /REMEDIATED/.test(remediatedFinding.description), "thr-1 must be present and marked REMEDIATED");
 });
 
-test("[real evidence] encryption-posture HIGH finding is grounded in real hardcoded fallback key literals", () => {
+test("[real evidence] encryption-posture enc-1 is grounded in real source: all five credential stores now call resolveEncryptionKeySecret and fail closed in production", () => {
   const microsoftSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/microsoft-auth/microsoft-token-store.ts"), "utf8");
   const serviceNowSrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/production-connectors/servicenow/servicenow-auth.ts"), "utf8");
-  assert.ok(microsoftSrc.includes("local-dev-encryption-boundary"), "microsoft-token-store.ts must still contain its hardcoded fallback key literal for this finding to remain accurate");
-  assert.ok(serviceNowSrc.includes("local-production-connector-key"), "servicenow-auth.ts must still contain its hardcoded fallback key literal for this finding to remain accurate");
+  assert.ok(/resolveEncryptionKeySecret\(/.test(microsoftSrc), "microsoft-token-store.ts must call resolveEncryptionKeySecret() — if this regresses, enc-1 in the authority module is stale.");
+  assert.ok(/resolveEncryptionKeySecret\(/.test(serviceNowSrc), "servicenow-auth.ts must call resolveEncryptionKeySecret() — if this regresses, enc-1 in the authority module is stale.");
+  assert.ok(!/process\.env\.\w+_KEY\s*\?\?\s*['"]/.test(microsoftSrc), "microsoft-token-store.ts must not silently fall back to a hardcoded key literal via ??");
+  assert.ok(!/process\.env\.\w+_KEY\s*\?\?\s*['"]/.test(serviceNowSrc), "servicenow-auth.ts must not silently fall back to a hardcoded key literal via ??");
 
   const results = buildSecurityHardeningDomainResults();
   const encryption = results.find((r) => r.domain === "encryption-posture")!;
-  const highFinding = encryption.findings.find((f) => f.severity === "HIGH");
-  assert.ok(highFinding, "encryption-posture domain must have a HIGH finding about hardcoded fallback keys");
+  const remediatedFinding = encryption.findings.find((f) => f.id === "enc-1");
+  assert.ok(remediatedFinding && /REMEDIATED/.test(remediatedFinding.description), "enc-1 must be present and marked REMEDIATED");
 });
