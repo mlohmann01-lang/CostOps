@@ -36,10 +36,10 @@ test("no domain reports VERIFIED — proof requires repository scoping + trusted
   }
 });
 
-test("a domain is never VERIFIED merely because it has a tenantId column — audit-ledger-tables is UNKNOWN despite tenantId columns", () => {
+test("[Program 14A-C] a domain is never VERIFIED merely because it has a tenantId column — audit-ledger-tables is PARTIAL, not VERIFIED", () => {
   const results = buildDatabaseTenantIsolationDomainResults();
   const auditLedger = results.find((r) => r.domain === "audit-ledger-tables")!;
-  assert.equal(auditLedger.verdict, "UNKNOWN");
+  assert.equal(auditLedger.verdict, "PARTIAL");
   assert.ok(auditLedger.evidence.some((e) => e.description.toLowerCase().includes("column")));
 });
 
@@ -74,10 +74,11 @@ test("evidence registry db domain cites the real Drizzle schema and repository, 
   assert.ok(erd.evidence.some((e) => e.filePath.includes("evidence-registry-repository.ts")));
 });
 
-test("cross-tenant test coverage meta-domain is UNKNOWN, honestly documenting that no test proves live-DB cross-tenant denial", () => {
+test("[Program 14A-C] cross-tenant test coverage meta-domain is PARTIAL: a real live-DB test now proves cross-tenant denial", () => {
   const results = buildDatabaseTenantIsolationDomainResults();
   const ctc = results.find((r) => r.domain === "cross-tenant-test-coverage")!;
-  assert.equal(ctc.verdict, "UNKNOWN");
+  assert.equal(ctc.verdict, "PARTIAL");
+  assert.ok(ctc.evidence.some((e) => e.filePath.includes("database-tenant-isolation-live-integration.test.ts")));
 });
 
 test("every FAILED or UNKNOWN domain has at least one finding with a concrete remediation", () => {
@@ -93,10 +94,12 @@ test("every FAILED or UNKNOWN domain has at least one finding with a concrete re
   }
 });
 
-test("[Program 14A-R] getDatabaseTenantIsolationAuthority reports authority name and no longer reports a FAILED platform verdict", () => {
+test("[Program 14A-C] getDatabaseTenantIsolationAuthority reports authority name and platform verdict PARTIAL: no domain remains FAILED or UNKNOWN", () => {
   const a = getDatabaseTenantIsolationAuthority();
   assert.equal(a.authority, "DATABASE_TENANT_ISOLATION_VERIFICATION");
-  assert.notEqual(a.platformVerdict, "FAILED", "no domain should remain FAILED after the Program 14A-R remediation");
+  assert.notEqual(a.platformVerdict, "FAILED", "no domain should remain FAILED");
+  assert.notEqual(a.platformVerdict, "UNKNOWN", "no domain should remain UNKNOWN after Program 14A-C closure");
+  assert.equal(a.platformVerdict, "PARTIAL");
   const b = getDatabaseTenantIsolationAuthority();
   assert.equal(a.platformVerdict, b.platformVerdict);
   assert.deepEqual(a.summary, b.summary);

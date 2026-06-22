@@ -321,32 +321,47 @@ function verifyConnectorCredentialStore(): DatabaseTenantIsolationDomainResult {
 }
 
 // ─── Part 7 — Audit & Outcome Ledger Tables ─────────────────────────────────
-// Real evidence: lib/db/src/schema/auditEvents.ts and outcomeLedger.ts
-// define genuine Drizzle/Postgres tables with `tenantId: text('tenant_id')
-// .notNull()` columns. This proves the schema is tenant-aware, but no
-// repository/query-layer code path or test was found in this audit that
-// reads these specific tables back out filtered by tenantId (unlike the
-// createPersistenceStore<T> family, which was directly verified end to
-// end). A column existing is not query-level proof — per the spec's
-// explicit rule, a tenantId field alone must not be reported VERIFIED.
+// Program 14A-C closure: a real live-Postgres integration test
+// (database-tenant-isolation-live-integration.test.ts) now proves, against
+// the actual auditEventsTable and outcomeLedgerTable, that (a) every
+// production write path stamps the correct tenantId, and (b) filtering by
+// tenantId at the row level genuinely separates two tenants' rows — for
+// outcomeLedgerTable this closes both the write- and read-path gap, because
+// execution-outcome-repository.ts's real production read calls
+// (`eq(outcomeLedgerTable.tenantId, tenantId)`) are the exact pattern the
+// test exercises. For auditEventsTable, the investigation confirmed (again,
+// directly reading audit-service.ts) that recordAuditEvent() is the only
+// write path and always sets tenantId from the caller — but NO
+// application-level reader/repository for auditEventsTable exists anywhere
+// in the codebase today. The new test proves the table and write path are
+// tenant-safe at the row level, which is the necessary precondition for any
+// future reader, but it does not — and does not claim to — verify an
+// application read path that does not exist. Per the spec's explicit rule
+// ("a tenantId column existing is not evidence of isolation by itself"),
+// this domain is raised to PARTIAL (real write-path + live cross-tenant
+// proof for both tables, plus a verified production read path for
+// outcomeLedger), not VERIFIED, because auditEventsTable still lacks any
+// real application read path to verify.
 
 function verifyAuditLedgerTables(): DatabaseTenantIsolationDomainResult {
   const domain = 'audit-ledger-tables'
   const ev: DatabaseTenantIsolationEvidence[] = [
     evidence(domain, 'alt-ev-1', 'WRITE_SCOPE', 'lib/db/src/schema/auditEvents.ts', 'auditEvents Drizzle table defines `tenantId: text(\'tenant_id\').notNull()` — every audit event row is required to carry a tenant identifier at the schema level.', true, 0.55, 'auditEvents'),
-    evidence(domain, 'alt-ev-2', 'WRITE_SCOPE', 'lib/db/src/schema/outcomeLedger.ts', 'outcomeLedger Drizzle table defines `tenantId: text("tenant_id").notNull().default("default")` — note the default("default") fallback means a row CAN be written without an explicit tenantId and will silently land in a shared "default" tenant bucket if the application layer fails to pass one.', true, 0.5, 'outcomeLedger'),
-    evidence(domain, 'alt-ev-3', 'AUDIT_SCOPE', 'lib/db/src/schema/auditEvents.ts', 'No repository class, query helper, or route handler reading from auditEventsTable with a tenantId filter was found in this audit — the column exists in the schema but no corresponding tenant-scoped read/list query was located, so per-tenant audit isolation at the query layer is UNVERIFIED, not just unproven.', false, 0.4),
+    evidence(domain, 'alt-ev-2', 'WRITE_SCOPE', 'lib/db/src/schema/outcomeLedger.ts', 'outcomeLedger Drizzle table defines `tenantId: text("tenant_id").notNull().default("default")` — note the default("default") fallback means a row CAN be written without an explicit tenantId and will silently land in a shared "default" tenant bucket if the application layer fails to pass one; however every real production write path found (execution-outcome-repository.ts, m365-disabled-user-reclaim-slice.ts, routes/execution.ts, routes/connectors.ts) explicitly passes tenantId from the calling context.', true, 0.55, 'outcomeLedger'),
+    evidence(domain, 'alt-ev-3', 'READ_SCOPE', 'src/lib/outcomes/execution-outcome-repository.ts', 'ExecutionOutcomeRepository.latest(tenantId) filters via `eq(executionOutcomesTable.tenantId, tenantId)`, and 7 real production call sites across the codebase read outcomeLedgerTable filtered by `eq(outcomeLedgerTable.tenantId, t)` — this is a genuine, verified tenant-scoped read path for outcomeLedger, not just a column.', true, 0.65, 'ExecutionOutcomeRepository.latest'),
+    evidence(domain, 'alt-ev-4', 'AUDIT_SCOPE', 'src/lib/audit/audit-service.ts', 'recordAuditEvent() is the only write path for auditEventsTable and always sets `tenantId: event.tenantId` from the caller (verified by direct read) — but no repository class, query helper, or route handler that READS auditEventsTable with a tenantId filter exists anywhere in this codebase; the write path is tenant-safe, the read path simply does not exist yet.', false, 0.45),
+    evidence(domain, 'alt-ev-5', 'TEST_PROOF', 'src/tests/database-tenant-isolation-live-integration.test.ts', '[Program 14A-C] A real live-Postgres integration test inserts rows for two tenants into both outcomeLedgerTable and auditEventsTable and proves: (1) `eq(outcomeLedgerTable.tenantId, t)` reads never cross tenants, including a direct by-id cross-tenant lookup returning zero rows; (2) recordAuditEvent() correctly tenant-stamps writes and a `eq(auditEventsTable.tenantId, t)` filter genuinely separates the two tenants\' rows at the row level. Executed against a real Postgres connection with RUN_DB_INTEGRATION_TESTS=true — 3/3 passing.', true, 0.7, 'database-tenant-isolation-live-integration.test.ts'),
   ]
   const findings: DatabaseTenantIsolationFinding[] = [
-    finding(domain, 'alt-finding-1', 'HIGH', 'UNKNOWN', 'Audit and outcome-ledger tables have a tenantId column but no verified tenant-scoped query path', 'A tenantId column existing on auditEvents/outcomeLedger is necessary but not sufficient evidence of isolation — no reader/repository code was found in this audit that actually filters these tables by tenantId, and outcomeLedger\'s `default("default")` fallback is a real risk of silent cross-tenant bucketing if a write path omits tenantId.', ['lib/db/src/schema/auditEvents.ts', 'lib/db/src/schema/outcomeLedger.ts'], 'Locate or build the repository/query layer for these tables, confirm every read filters by tenantId, remove the `default("default")` fallback on outcomeLedger.tenantId (require it explicitly), and add a cross-tenant test before any VERIFIED claim is made.'),
+    finding(domain, 'alt-finding-2', 'LOW', 'PARTIAL', 'outcomeLedger now has a verified read path and live cross-tenant proof, but auditEvents still has no application-level reader', 'outcomeLedgerTable\'s write and read paths are both genuinely tenant-scoped and now proven against a live database. auditEventsTable\'s write path is tenant-safe and the table is proven row-separable by tenantId in a live database, but no application code anywhere reads auditEventsTable, so there is no read path to verify yet — this is an absence-of-feature gap, not a known vulnerability, and is correctly held at PARTIAL rather than VERIFIED or FAILED.', ['lib/db/src/schema/auditEvents.ts', 'src/lib/audit/audit-service.ts'], 'When an application-level audit-log reader is built, ensure it filters by tenantId from server-derived auth context (never a client-supplied value) and add a test proving cross-tenant denial through that specific reader before claiming VERIFIED for this domain. Also consider removing outcomeLedger.tenantId\'s `default("default")` fallback to require callers to be explicit.'),
   ]
   return {
     domain,
-    verdict: 'UNKNOWN',
-    confidence: 0.35,
+    verdict: 'PARTIAL',
+    confidence: 0.55,
     evidence: ev,
     findings,
-    testedOperations: { read: false, list: false, create: false, update: false, delete: false, audit: false },
+    testedOperations: { read: true, list: false, create: true, update: false, delete: false, audit: true },
   }
 }
 
@@ -416,33 +431,34 @@ function verifyRawSqlQueryConstruction(): DatabaseTenantIsolationDomainResult {
 }
 
 // ─── Part 10 — Cross-Tenant Database Test Coverage (Meta) ──────────────────
-// A meta-domain answering: does the test suite actually prove cross-tenant
-// denial against real persistence code, or only against in-memory helpers?
-// Program 13 already found that most "tenant isolation" test files
-// (tenant-isolation-v2/v3, scale-tenant-isolation-pressure, historical-
-// tenant-isolation-replay) exercise in-memory array-filtering helpers, not
-// real repositories. This audit's own review of *-persistence.test.ts files
-// confirms the same pattern one layer deeper: real behavioural coverage
-// exists for the in-memory store variant, but no test in the repository
-// exercises DatabasePersistenceStore against a live database with two
-// tenants. This program's own tests (added below) are the first to assert
-// cross-tenant denial directly against MemoryPersistenceStore-shaped logic
-// and to add meta-tests guarding the honesty of this very authority.
+// Program 14A-C closure: database-tenant-isolation-live-integration.test.ts
+// is the first test in this repository that runs against a REAL Postgres
+// connection (gated by the standard RUN_DB_INTEGRATION_TESTS=true
+// convention) and proves cross-tenant denial directly against
+// DatabasePersistenceStore (evidence-registry), outcomeLedgerTable, and
+// auditEventsTable — closing the specific gap this meta-domain previously
+// flagged as the reason the platform verdict could not move past UNKNOWN.
+// Raised to PARTIAL, not VERIFIED: this test proves the gap is closed for
+// the three persistence paths it directly exercises, but it does not cover
+// every one of the other 16 createPersistenceStore<T> modules, nor a live
+// HTTP request/response path through the route layer — so it is genuine,
+// real proof of live-DB cross-tenant denial, but not yet exhaustive
+// platform-wide coverage.
 
 function verifyCrossTenantTestCoverage(): DatabaseTenantIsolationDomainResult {
   const domain = 'cross-tenant-test-coverage'
   const ev: DatabaseTenantIsolationEvidence[] = [
     evidence(domain, 'ctc-ev-1', 'TEST_PROOF', 'src/tests/evidence-registry-persistence.test.ts', 'Confirms provider selection (Memory vs Database) and schema column existence, but not cross-tenant denial against a live database.', false, 0.45),
     evidence(domain, 'ctc-ev-2', 'TEST_PROOF', 'src/tests/economic-operations-tenant-isolation.test.ts', 'Real behavioural cross-tenant test against EconomicOperationsIntentService (an in-memory service, not a Drizzle-backed repository) — strong proof for that service, but not evidence about the database-backed persistence stores audited by this program.', true, 0.5),
-    evidence(domain, 'ctc-ev-3', 'TEST_PROOF', 'src/lib/databaseTenantIsolation_or_equivalent', 'No pre-existing test in the repository was found that creates rows for two tenants via a DatabasePersistenceStore-backed repository and asserts list()/get() denial — this program adds the first such tests against the in-memory MemoryPersistenceStore-equivalent logic exercised directly in this authority\'s own test file, and documents the live-database gap as a finding rather than fabricating DB coverage.', false, 0.4),
+    evidence(domain, 'ctc-ev-3', 'TEST_PROOF', 'src/tests/database-tenant-isolation-live-integration.test.ts', '[Program 14A-C] The first test in this repository to run against a REAL Postgres connection and prove cross-tenant denial against actual database-backed code: DatabasePersistenceStore (evidence-registry, list/get/upsert/deleteTenant), outcomeLedgerTable (filtered reads and a direct cross-tenant by-id lookup returning zero rows), and auditEventsTable (tenant-stamped writes, row-level separation). Gated by RUN_DB_INTEGRATION_TESTS=true per the standard convention in scripts/run-pattern-tests.mjs; executed against a live Postgres instance — 3/3 passing.', true, 0.7, 'database-tenant-isolation-live-integration.test.ts'),
   ]
   const findings: DatabaseTenantIsolationFinding[] = [
-    finding(domain, 'ctc-finding-1', 'HIGH', 'UNKNOWN', 'No test in the repository proves cross-tenant denial against a live Postgres-backed persistence store', 'Every cross-tenant test found in api-server/src/tests (tenant-isolation-v2/v3, scale-tenant-isolation-pressure, historical-tenant-isolation-replay, economic-operations-tenant-isolation) exercises an in-memory data structure, not a real Drizzle/Postgres query path. This program\'s own added tests close part of this gap for the createPersistenceStore<T> in-memory variant, but the live-database variant remains genuinely untested in this codebase.', ['src/tests/evidence-registry-persistence.test.ts'], 'Stand up a test database (or test-container) in CI and add at least one integration test per persistence family proving DatabasePersistenceStore enforces tenant isolation against a real connection, not just the in-memory fallback.'),
+    finding(domain, 'ctc-finding-2', 'LOW', 'PARTIAL', 'Live-DB cross-tenant proof now exists for 3 persistence paths, but not for the other 14+ createPersistenceStore<T> modules or the HTTP route layer', 'database-tenant-isolation-live-integration.test.ts closes the core gap this domain previously reported as UNKNOWN — real, executed proof of cross-tenant denial against a live Postgres connection now exists. It is held at PARTIAL rather than VERIFIED because it directly covers only evidence-registry, outcomeLedgerTable, and auditEventsTable, not every sibling persistence module (financial-truth-authority, governed-execution, etc.) and not a live HTTP request/response path.', ['src/tests/database-tenant-isolation-live-integration.test.ts'], 'Extend the same live-DB test pattern to at least one representative test per remaining createPersistenceStore<T> family, and add an HTTP-level test that proves the route layer cannot be tricked into cross-tenant access, to raise this domain to VERIFIED.'),
   ]
   return {
     domain,
-    verdict: 'UNKNOWN',
-    confidence: 0.4,
+    verdict: 'PARTIAL',
+    confidence: 0.6,
     evidence: ev,
     findings,
     testedOperations: { read: false, list: false, create: false, update: false, delete: false, audit: false },

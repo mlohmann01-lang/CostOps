@@ -32,10 +32,10 @@ test('no domain reports VERIFIED — proof requires repository scoping + trusted
   }
 })
 
-test('a domain is never VERIFIED merely because it has a tenantId field — audit-ledger-tables has tenantId columns but is UNKNOWN, not VERIFIED', () => {
+test('[Program 14A-C] a domain is never VERIFIED merely because it has a tenantId field — audit-ledger-tables is PARTIAL, not VERIFIED', () => {
   const results = buildDatabaseTenantIsolationDomainResults()
   const auditLedger = results.find((r) => r.domain === 'audit-ledger-tables')!
-  assert.notEqual(auditLedger.verdict, 'VERIFIED')
+  assert.equal(auditLedger.verdict, 'PARTIAL')
   assert.ok(auditLedger.evidence.some((e) => e.description.toLowerCase().includes('column')))
 })
 
@@ -77,10 +77,11 @@ test('evidence registry db domain cites the real Drizzle schema and repository, 
   assert.ok(erd.evidence.some((e) => e.filePath.includes('evidence-registry-repository.ts')))
 })
 
-test('cross-tenant test coverage meta-domain is UNKNOWN, honestly documenting that no test proves DB-level cross-tenant denial', () => {
+test('[Program 14A-C] cross-tenant test coverage meta-domain is PARTIAL: a real live-DB test now proves cross-tenant denial against actual Postgres-backed code', () => {
   const results = buildDatabaseTenantIsolationDomainResults()
   const ctc = results.find((r) => r.domain === 'cross-tenant-test-coverage')!
-  assert.equal(ctc.verdict, 'UNKNOWN')
+  assert.equal(ctc.verdict, 'PARTIAL')
+  assert.ok(ctc.evidence.some((e) => e.filePath.includes('database-tenant-isolation-live-integration.test.ts')))
 })
 
 // ─── Findings quality ───────────────────────────────────────────────────────
@@ -118,14 +119,14 @@ test('authority result reports authority name and a deterministic platform verdi
   assert.ok(a.platformVerdict)
 })
 
-test('[Program 14A-R] platform verdict is no longer FAILED now that both known FAILED domains are remediated', () => {
+test('[Program 14A-C] platform verdict is now PARTIAL: both previously-UNKNOWN domains (audit-ledger-tables, cross-tenant-test-coverage) are closed with real evidence, and no domain remains FAILED or UNKNOWN', () => {
   const a = getDatabaseTenantIsolationAuthority()
-  assert.notEqual(a.platformVerdict, 'FAILED', 'no domain should remain FAILED after the Program 14A-R remediation')
-  // The platform verdict honestly surfaces as UNKNOWN (not PARTIAL) because
-  // audit-ledger-tables and cross-tenant-test-coverage remain UNKNOWN, and
-  // platformVerdictFrom() treats UNKNOWN as more blocking than PARTIAL —
-  // this is the genuine, unmassaged computed result, not a target to hide.
-  assert.equal(a.platformVerdict, 'UNKNOWN')
+  assert.notEqual(a.platformVerdict, 'FAILED', 'no domain should remain FAILED')
+  assert.notEqual(a.platformVerdict, 'UNKNOWN', 'no domain should remain UNKNOWN after Program 14A-C closure')
+  // The platform verdict honestly surfaces as PARTIAL (not VERIFIED) because
+  // several domains still lack full live-DB + route-level proof — this is
+  // the genuine, unmassaged computed result, not a target to hide.
+  assert.equal(a.platformVerdict, 'PARTIAL')
 })
 
 test('platform verdict is deterministic across repeated calls', () => {

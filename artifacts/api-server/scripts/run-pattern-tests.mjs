@@ -13,6 +13,7 @@ export const dbIntegrationTests = new Set([
   'approval-workflow.test.ts',
   'approval-workflow-execution-request.test.ts',
   'connector-readiness-persistence.test.ts',
+  'database-tenant-isolation-live-integration.test.ts',
   'live-tenant-readiness-persistence.test.ts',
   'm365-beta-e2e-fixture.test.ts',
   'outcome-finance-reconciliation-persistence.test.ts',
