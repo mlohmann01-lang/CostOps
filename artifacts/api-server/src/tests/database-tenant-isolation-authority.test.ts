@@ -50,19 +50,20 @@ test("memory-only stores are never reported as database-verified — m365 snapsh
   assert.ok(m365.evidence.some((e) => e.description.toLowerCase().includes("memory-only")));
 });
 
-test("route boundary domain is FAILED, citing the real governed-execution.ts client-override bug", () => {
+test("[Program 14A-R] route boundary domain is PARTIAL: governed-execution.ts client-override bug is fixed and regression-guarded", () => {
   const results = buildDatabaseTenantIsolationDomainResults();
   const route = results.find((r) => r.domain === "route-to-repository-boundary")!;
-  assert.equal(route.verdict, "FAILED");
+  assert.equal(route.verdict, "PARTIAL");
   assert.ok(route.findings.some((f) => f.affectedFiles.some((p) => p.includes("governed-execution.ts"))));
-  assert.ok(route.findings.some((f) => f.severity === "CRITICAL"));
+  assert.ok(!route.findings.some((f) => f.severity === "CRITICAL"), "the CRITICAL override bug must no longer be an open finding once fixed");
 });
 
-test("connector credential store domain is FAILED, citing the absence of any tenantId parameter in the token store API", () => {
+test("[Program 14A-R] connector credential store domain is PARTIAL: every token-store method now requires and checks tenantId", () => {
   const results = buildDatabaseTenantIsolationDomainResults();
   const ccs = results.find((r) => r.domain === "connector-credential-store")!;
-  assert.equal(ccs.verdict, "FAILED");
-  assert.ok(ccs.evidence.some((e) => e.filePath.includes("microsoft-token-store.ts") && e.tenantScoped === false));
+  assert.equal(ccs.verdict, "PARTIAL");
+  assert.ok(ccs.evidence.every((e) => e.filePath.includes("microsoft-token-store.ts") ? e.tenantScoped === true : true), "no remaining evidence should describe microsoft-token-store.ts as unscoped");
+  assert.ok(!ccs.findings.some((f) => f.severity === "HIGH" || f.severity === "CRITICAL"), "the HIGH-severity no-tenant-scoping finding must be gone once fixed");
 });
 
 test("evidence registry db domain cites the real Drizzle schema and repository, and is PARTIAL not VERIFIED", () => {
@@ -92,29 +93,29 @@ test("every FAILED or UNKNOWN domain has at least one finding with a concrete re
   }
 });
 
-test("getDatabaseTenantIsolationAuthority reports authority name and FAILED platform verdict deterministically", () => {
+test("[Program 14A-R] getDatabaseTenantIsolationAuthority reports authority name and no longer reports a FAILED platform verdict", () => {
   const a = getDatabaseTenantIsolationAuthority();
   assert.equal(a.authority, "DATABASE_TENANT_ISOLATION_VERIFICATION");
-  assert.equal(a.platformVerdict, "FAILED");
+  assert.notEqual(a.platformVerdict, "FAILED", "no domain should remain FAILED after the Program 14A-R remediation");
   const b = getDatabaseTenantIsolationAuthority();
   assert.equal(a.platformVerdict, b.platformVerdict);
   assert.deepEqual(a.summary, b.summary);
 });
 
-test("summary reports zero VERIFIED domains and counts add up to total domains", () => {
+test("[Program 14A-R] summary reports zero FAILED domains and counts add up to total domains", () => {
   const a = getDatabaseTenantIsolationAuthority();
-  assert.equal(a.summary.verifiedDomains, 0);
+  assert.equal(a.summary.failedDomains, 0);
   const total = a.summary.verifiedDomains + a.summary.partialDomains + a.summary.unknownDomains + a.summary.failedDomains + a.summary.notApplicableDomains;
   assert.equal(total, a.domainResults.length);
 });
 
-test("criticalFindings includes only CRITICAL/HIGH severity findings, and includes governed-execution and token-store findings", () => {
+test("[Program 14A-R] criticalFindings no longer includes the governed-execution.ts override bug or the token-store no-scoping finding", () => {
   const a = getDatabaseTenantIsolationAuthority();
   for (const f of a.criticalFindings) {
     assert.ok(f.severity === "CRITICAL" || f.severity === "HIGH");
   }
-  assert.ok(a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes("governed-execution.ts"))));
-  assert.ok(a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes("microsoft-token-store.ts"))));
+  assert.ok(!a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes("governed-execution.ts"))), "the fixed override bug must no longer surface as a CRITICAL/HIGH finding");
+  assert.ok(!a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes("microsoft-token-store.ts"))), "the fixed token-store scoping gap must no longer surface as a CRITICAL/HIGH finding");
 });
 
 test("[meta] confidence scores are within [0,1] and never claim full (1.0) confidence anywhere", () => {
@@ -213,29 +214,45 @@ test("[real enforcement] M365SnapshotRepository: tenant B cannot read tenant A's
 
 // ─── Part C — Honest documentation of FAILED/UNKNOWN domains ──────────────
 
-test("[honest gap] governed-execution.ts route boundary bug is real: client tenantId in body silently overrides server-derived tenant", async () => {
-  // This is a direct static-pattern regression guard: the file's create
-  // handler must use the SAFE spread order ({...req.body, tenantId}) once
-  // fixed. Until then, this test documents the FAILED finding rather than
-  // fabricating a passing assertion about a control that doesn't exist.
+test("[Program 14A-R regression] governed-execution.ts route boundary bug is fixed: server-derived tenantId always wins over client body", async () => {
+  // Program 14A-R fixed the unsafe spread order. This test guards against
+  // the exact regression recurring: it fails loudly if anyone reintroduces
+  // the unsafe tenantId-first order, instead of silently passing.
   const fs = await import("node:fs");
   const path = await import("node:path");
   const filePath = path.resolve(process.cwd(), "src/routes/governed-execution.ts");
   const source = fs.readFileSync(filePath, "utf8");
   const hasUnsafeOrder = /tenantId:\s*tenant\(req\)\s*,\s*\.\.\.\(?req\.body/.test(source);
-  // Document the current state: if the unsafe order is still present, the
-  // FAILED verdict above is justified and this assertion passes, honestly
-  // reflecting the real bug. If a future fix changes the order, this
-  // assertion will fail, signalling the authority model's finding must be
-  // updated too — preventing silent drift between code and audit.
-  assert.ok(hasUnsafeOrder, "governed-execution.ts still has the unsafe tenantId-first spread order this audit's FAILED verdict is based on");
+  const hasSafeOrder = /\.\.\.\(?req\.body[^)]*\)?\s*,\s*tenantId:\s*tenant\(req\)/.test(source);
+  assert.ok(!hasUnsafeOrder, "governed-execution.ts must never reintroduce the unsafe tenantId-first spread order (Program 14A-R regression)");
+  assert.ok(hasSafeOrder, "governed-execution.ts must build the create payload with tenantId spread LAST so it cannot be overridden by req.body");
 });
 
-test("[honest gap] microsoft-token-store.ts genuinely has no tenantId parameter on any lookup method", async () => {
+test("[Program 14A-R regression] microsoft-token-store.ts now requires tenantId on every lookup/mutation method", async () => {
   const fs = await import("node:fs");
   const path = await import("node:path");
   const filePath = path.resolve(process.cwd(), "src/lib/microsoft-auth/microsoft-token-store.ts");
   const source = fs.readFileSync(filePath, "utf8");
-  assert.ok(!/getConnection\([^)]*tenantId/.test(source), "getConnection must currently have no tenantId parameter (documents the FAILED finding)");
-  assert.ok(!/getTokenSet\([^)]*tenantId/.test(source), "getTokenSet must currently have no tenantId parameter (documents the FAILED finding)");
+  assert.ok(/getConnection\(\s*tenantId/.test(source), "getConnection must require tenantId as its first parameter (Program 14A-R fix)");
+  assert.ok(/getTokenSet\(\s*tenantId/.test(source), "getTokenSet must require tenantId as its first parameter (Program 14A-R fix)");
+  assert.ok(/updateStatus\(\s*tenantId/.test(source), "updateStatus must require tenantId as its first parameter (Program 14A-R fix)");
+  assert.ok(/revoke\(\s*tenantId/.test(source), "revoke must require tenantId as its first parameter (Program 14A-R fix)");
+});
+
+test("[real enforcement] EncryptedMicrosoftTokenStore: tenant B cannot read, update, or revoke tenant A's connector credential (Program 14A-R)", async () => {
+  const { EncryptedMicrosoftTokenStore } = await import("../lib/microsoft-auth");
+  const store = new EncryptedMicrosoftTokenStore("test-secret-14a-r");
+  const tokens = { accessToken: "access", refreshToken: "refresh", expiresAt: new Date(Date.now() + 3600_000).toISOString(), scopes: ["User.Read.All"] } as any;
+  const conn = await store.store({ id: "msconn_test", tenantId: "TENANT-A", connectorKey: "M365", authFlow: "AUTH_CODE", grantedScopes: ["User.Read.All"], status: "CONNECTED", connectedAt: new Date().toISOString() } as any, tokens);
+
+  assert.equal(await store.getConnection("TENANT-B", conn.credentialRef), undefined);
+  assert.equal(await store.getTokenSet("TENANT-B", conn.credentialRef), undefined);
+  assert.equal(await store.updateStatus("TENANT-B", conn.credentialRef, "REVOKED"), undefined);
+  assert.equal(await store.revoke("TENANT-B", conn.credentialRef), undefined);
+
+  const stillConnected = await store.getConnection("TENANT-A", conn.credentialRef);
+  assert.equal(stillConnected?.status, "CONNECTED", "tenant B's no-op mutations must not have affected tenant A's record");
+
+  const ownTokens = await store.getTokenSet("TENANT-A", conn.credentialRef);
+  assert.equal(ownTokens?.accessToken, "access", "the owning tenant must still be able to read its own token set");
 });

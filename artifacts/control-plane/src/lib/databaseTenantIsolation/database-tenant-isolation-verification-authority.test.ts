@@ -46,19 +46,20 @@ test('memory-only stores are never reported as database-verified — m365 snapsh
   assert.ok(m365.evidence.some((e) => e.description.toLowerCase().includes('memory-only')))
 })
 
-test('route boundary domain is FAILED, citing the real governed-execution.ts client-override bug', () => {
+test('[Program 14A-R] route boundary domain is PARTIAL: governed-execution.ts client-override bug is fixed and regression-guarded', () => {
   const results = buildDatabaseTenantIsolationDomainResults()
   const route = results.find((r) => r.domain === 'route-to-repository-boundary')!
-  assert.equal(route.verdict, 'FAILED')
+  assert.equal(route.verdict, 'PARTIAL')
   assert.ok(route.findings.some((f) => f.affectedFiles.some((p) => p.includes('governed-execution.ts'))))
-  assert.ok(route.findings.some((f) => f.severity === 'CRITICAL'))
+  assert.ok(!route.findings.some((f) => f.severity === 'CRITICAL'), 'the CRITICAL override bug must no longer be an open finding once fixed')
 })
 
-test('connector credential store domain is FAILED, citing the absence of any tenantId parameter in the token store API', () => {
+test('[Program 14A-R] connector credential store domain is PARTIAL: every token-store method now requires and checks tenantId', () => {
   const results = buildDatabaseTenantIsolationDomainResults()
   const ccs = results.find((r) => r.domain === 'connector-credential-store')!
-  assert.equal(ccs.verdict, 'FAILED')
-  assert.ok(ccs.evidence.some((e) => e.filePath.includes('microsoft-token-store.ts') && e.tenantScoped === false))
+  assert.equal(ccs.verdict, 'PARTIAL')
+  assert.ok(ccs.evidence.every((e) => (e.filePath.includes('microsoft-token-store.ts') ? e.tenantScoped === true : true)), 'no remaining evidence should describe microsoft-token-store.ts as unscoped')
+  assert.ok(!ccs.findings.some((f) => f.severity === 'HIGH' || f.severity === 'CRITICAL'), 'the HIGH-severity no-tenant-scoping finding must be gone once fixed')
 })
 
 test('core persistence stores domain is PARTIAL, not VERIFIED — structural scoping is real but live-DB cross-tenant test is missing', () => {
@@ -117,9 +118,14 @@ test('authority result reports authority name and a deterministic platform verdi
   assert.ok(a.platformVerdict)
 })
 
-test('platform verdict is FAILED because at least one domain (route-to-repository-boundary) is FAILED — never silently upgraded', () => {
+test('[Program 14A-R] platform verdict is no longer FAILED now that both known FAILED domains are remediated', () => {
   const a = getDatabaseTenantIsolationAuthority()
-  assert.equal(a.platformVerdict, 'FAILED')
+  assert.notEqual(a.platformVerdict, 'FAILED', 'no domain should remain FAILED after the Program 14A-R remediation')
+  // The platform verdict honestly surfaces as UNKNOWN (not PARTIAL) because
+  // audit-ledger-tables and cross-tenant-test-coverage remain UNKNOWN, and
+  // platformVerdictFrom() treats UNKNOWN as more blocking than PARTIAL —
+  // this is the genuine, unmassaged computed result, not a target to hide.
+  assert.equal(a.platformVerdict, 'UNKNOWN')
 })
 
 test('platform verdict is deterministic across repeated calls', () => {
@@ -140,13 +146,13 @@ test('summary reports zero VERIFIED domains', () => {
   assert.equal(a.summary.verifiedDomains, 0)
 })
 
-test('criticalFindings includes only CRITICAL/HIGH severity findings, and includes the governed-execution and token-store findings', () => {
+test('[Program 14A-R] criticalFindings no longer includes the governed-execution.ts override bug or the token-store no-scoping finding', () => {
   const a = getDatabaseTenantIsolationAuthority()
   for (const f of a.criticalFindings) {
     assert.ok(f.severity === 'CRITICAL' || f.severity === 'HIGH')
   }
-  assert.ok(a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes('governed-execution.ts'))))
-  assert.ok(a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes('microsoft-token-store.ts'))))
+  assert.ok(!a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes('governed-execution.ts'))), 'the fixed override bug must no longer surface as a CRITICAL/HIGH finding')
+  assert.ok(!a.criticalFindings.some((f) => f.affectedFiles.some((p) => p.includes('microsoft-token-store.ts'))), 'the fixed token-store scoping gap must no longer surface as a CRITICAL/HIGH finding')
 })
 
 // ─── Meta: classification-system honesty guard ─────────────────────────────

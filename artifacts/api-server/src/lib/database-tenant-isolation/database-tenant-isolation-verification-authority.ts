@@ -211,20 +211,29 @@ function verifyCorePersistenceStores(): DatabaseTenantIsolationDomainResult {
 // Real evidence: requireTenantContext() (api-server/src/middleware/
 // security-guards.ts) sets `req.tenantId` only after validating the
 // requested tenantId against the authenticated session's tenantId (403
-// TENANT_ACCESS_DENIED on mismatch, unless PLATFORM_ADMIN). Most routes
-// (evidence-registry, financial-truth-authority, ownership-intelligence,
-// outcome-finance-reconciliation, live-tenant-readiness, technology-
-// commercial-authority) correctly spread `{...req.body, tenantId:
-// tenant(req)}` — tenantId last, so the server-derived value always wins
-// even if a client sends a conflicting tenantId in the body. However,
-// governed-execution.ts's POST /plans handler spreads in the OPPOSITE
-// order — `{tenantId: tenant(req), ...(req.body ?? {})}` — meaning a
-// client-supplied `tenantId` in the request body silently OVERRIDES the
-// server-derived value. This is a real, concrete cross-tenant write/read
-// vector: a tenant A session can create an execution plan with
-// `tenantId: "TENANT-B"` in the body and have it persisted under tenant
-// B's key. Verdict: FAILED for this specific path; PARTIAL overall because
-// the majority of routes get the order right.
+// TENANT_ACCESS_DENIED on mismatch, unless PLATFORM_ADMIN). Every route
+// found that builds a tenant-scoped write payload now spreads tenantId
+// LAST — `{...req.body, tenantId: tenant(req)}` — so the server-derived
+// value always wins even if a client sends a conflicting tenantId in the
+// body.
+//
+// Program 14A-R remediation: governed-execution.ts's POST /plans handler
+// previously spread in the unsafe order (`{tenantId: tenant(req),
+// ...(req.body ?? {})}`), letting a client-supplied body tenantId silently
+// override the server-derived value. This has been fixed to
+// `{...(req.body ?? {}), tenantId: tenant(req)}`, matching the safe pattern
+// already used elsewhere, and a regression test
+// (database-tenant-isolation-authority.test.ts) now asserts the unsafe
+// order can never reappear. The connector-credential-store gap that used
+// to also surface here (rtb-ev-5) has likewise been fixed and is tracked
+// in its own domain below.
+//
+// Verdict raised from FAILED to PARTIAL: the known override bug is fixed
+// and regression-guarded, but this domain still lacks a live, runtime
+// integration test that actually sends two conflicting tenantIds through
+// every route and asserts the server-derived one always wins end-to-end —
+// the current proof is a static source-pattern guard, not a full request/
+// response test. That gap keeps this domain below VERIFIED.
 
 function verifyRouteToRepositoryBoundary(): DatabaseTenantIsolationDomainResult {
   const domain = 'route-to-repository-boundary'
@@ -232,17 +241,16 @@ function verifyRouteToRepositoryBoundary(): DatabaseTenantIsolationDomainResult 
     evidence(domain, 'rtb-ev-1', 'ROUTE_BOUNDARY', 'src/middleware/security-guards.ts', 'requireTenantContext() sets `req.tenantId` only after validating that the requested tenantId matches `auth.tenantId` (derived server-side via buildAuthContextSync), rejecting mismatches with 403 TENANT_ACCESS_DENIED unless the caller is PLATFORM_ADMIN.', true, 0.75, 'requireTenantContext'),
     evidence(domain, 'rtb-ev-2', 'ROUTE_BOUNDARY', 'src/routes/evidence-registry.ts', 'tenant() helper reads `req.__authContext?.tenantId` first, with header/query/body fallbacks; write handlers build `{...req.body, tenantId: tenant(req)}` — tenantId spread LAST, so it cannot be overridden by a client-supplied tenantId in the body.', true, 0.65, 'tenant'),
     evidence(domain, 'rtb-ev-3', 'ROUTE_BOUNDARY', 'src/routes/financial-truth-authority.ts', 'Same safe ordering (`{...req.body, tenantId: tenant(req)}`) confirmed in financial-truth-authority.ts, ownership-intelligence.ts, outcome-finance-reconciliation.ts, live-tenant-readiness.ts and technology-commercial-authority.ts.', true, 0.65),
-    evidence(domain, 'rtb-ev-4', 'ROUTE_BOUNDARY', 'src/routes/governed-execution.ts', 'POST /plans builds the create payload as `{tenantId: tenant(req), ...(req.body ?? {})}` — tenantId spread FIRST, so if req.body contains a `tenantId` field it silently overwrites the server-derived value before reaching GovernedExecutionService.createExecutionPlan(). A tenant A caller can write a plan under any tenantId of their choosing.', false, 0.8, 'router.post(\'/plans\')'),
-    evidence(domain, 'rtb-ev-5', 'ROUTE_BOUNDARY', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'EncryptedMicrosoftTokenStore.getConnection(credentialRef)/getTokenSet(credentialRef) take ONLY an opaque credentialRef, with no tenantId parameter anywhere in the class — any caller who obtains or guesses a credentialRef can decrypt and read that connection\'s OAuth tokens regardless of which tenant they are authenticated as. There is no tenant check at this layer at all.', false, 0.75),
+    evidence(domain, 'rtb-ev-4', 'ROUTE_BOUNDARY', 'src/routes/governed-execution.ts', 'POST /plans now builds the create payload as `{...(req.body ?? {}), tenantId: tenant(req)}` — tenantId spread LAST, so any client-supplied `tenantId` in the body is overwritten by the server-derived value before reaching GovernedExecutionService.createExecutionPlan(). Fixed under Program 14A-R (previously spread tenantId first, the FAILED finding this audit originally surfaced).', true, 0.75, 'router.post(\'/plans\')'),
+    evidence(domain, 'rtb-ev-6', 'TEST_PROOF', 'src/tests/database-tenant-isolation-authority.test.ts', 'A static-pattern regression test asserts governed-execution.ts no longer contains the unsafe `{tenantId: tenant(req), ...req.body}` order and DOES contain the safe `{...req.body, tenantId: tenant(req)}` order — this guards against the exact bug recurring, though it is a source-pattern check, not a live HTTP request/response integration test.', true, 0.6),
   ]
   const findings: DatabaseTenantIsolationFinding[] = [
-    finding(domain, 'rtb-finding-1', 'CRITICAL', 'FAILED', 'governed-execution.ts POST /plans lets a client-supplied body tenantId override the server-derived tenant', 'The execution-plan create payload is built as `{tenantId: tenant(req), ...(req.body ?? {})}`. Because `req.body` is spread after `tenantId`, any `tenantId` key present in the client-supplied JSON body silently replaces the trusted, auth-derived tenantId before the repository ever sees the request. This breaks the rule that routes must pass server-derived tenant context, not trust client-supplied tenant IDs.', ['src/routes/governed-execution.ts'], 'Change the payload construction to `{...(req.body ?? {}), tenantId: tenant(req)}` (or explicitly strip `tenantId` from req.body before merging) so the server-derived tenantId always wins, matching the safe pattern already used in evidence-registry.ts, financial-truth-authority.ts and outcome-finance-reconciliation.ts.'),
-    finding(domain, 'rtb-finding-2', 'HIGH', 'FAILED', 'EncryptedMicrosoftTokenStore has no tenant scoping at the lookup-API level', 'getConnection()/getTokenSet()/revoke() are keyed only by credentialRef with no tenantId check. Encryption protects data at rest from a storage-level leak, but does not stop an authenticated caller from one tenant from decrypting another tenant\'s OAuth tokens if they can supply or guess a valid credentialRef. This is a real query path that can access data without tenant scope.', ['src/lib/microsoft-auth/microsoft-token-store.ts'], 'Add a tenantId parameter to getConnection/getTokenSet/revoke and verify it against the stored connection\'s tenantId before returning or decrypting any token payload, mirroring the explicit tenant checks used by M365SnapshotRepository.'),
+    finding(domain, 'rtb-finding-1', 'LOW', 'PARTIAL', 'governed-execution.ts override bug is fixed and regression-guarded, but no route in this domain has a live request/response integration test', 'The tenantId-override bug found in the original Program 14A audit has been fixed (safe spread order) and is now regression-guarded by a static source-pattern test. However, no route in this domain — including the now-fixed one — has an end-to-end test that sends an HTTP request with a conflicting client-supplied tenantId and asserts the response/persisted record uses the server-derived tenant. The proof that exists is static (source pattern), not behavioural (live request).', ['src/routes/governed-execution.ts', 'src/tests/database-tenant-isolation-authority.test.ts'], 'Add a supertest-style integration test that POSTs to /plans (and ideally the other tenant-scoped write routes) with a forged body.tenantId under one auth context and asserts the persisted/returned plan belongs to the authenticated tenant, not the forged one.'),
   ]
   return {
     domain,
-    verdict: 'FAILED',
-    confidence: 0.7,
+    verdict: 'PARTIAL',
+    confidence: 0.65,
     evidence: ev,
     findings,
     testedOperations: { read: true, list: false, create: true, update: false, delete: false, audit: false },
@@ -280,24 +288,31 @@ function verifyM365ConnectorSnapshotStore(): DatabaseTenantIsolationDomainResult
 }
 
 // ─── Part 6 — Connector Credential / Token Store ────────────────────────────
-// Already partially covered under route-to-repository-boundary (rtb-ev-5),
-// reported as its own domain because it is a distinct persistence
-// component (encrypted-at-rest, in-memory Map) with its own FAILED-grade
-// isolation gap at the lookup-API level, independent of any route issue.
+// Program 14A-R remediation: every lookup/mutation method on
+// EncryptedMicrosoftTokenStore now requires tenantId as its first argument
+// and resolves through a private recordFor(tenantId, credentialRef) helper
+// that treats a credentialRef belonging to a different tenant identically to
+// a non-existent record (returns undefined), never disclosing whether the
+// ref exists under another tenant. The calling route layer
+// (production-connectors.ts) already derives tenantId server-side via the
+// tenant(req) helper for both /microsoft/refresh and /microsoft/disconnect,
+// so the fix closes the gap end to end, not just at the store API.
 
 function verifyConnectorCredentialStore(): DatabaseTenantIsolationDomainResult {
   const domain = 'connector-credential-store'
   const ev: DatabaseTenantIsolationEvidence[] = [
     evidence(domain, 'ccs-ev-1', 'PERSISTENCE_PROVIDER', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'EncryptedMicrosoftTokenStore is an in-memory `Map<string, StoredMicrosoftCredential>` keyed by credentialRef — no Drizzle table, no DATABASE_URL branch.', true, 0.8, 'EncryptedMicrosoftTokenStore'),
-    evidence(domain, 'ccs-ev-2', 'READ_SCOPE', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'getConnection(credentialRef) and getTokenSet(credentialRef) accept no tenantId argument at all and perform no tenant comparison before decrypting and returning the stored token payload — the only secrecy boundary is "do you know the credentialRef", not "are you the owning tenant".', false, 0.75, 'getTokenSet'),
-    evidence(domain, 'ccs-ev-3', 'MUTATION_SCOPE', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'updateStatus(credentialRef, ...) and revoke(credentialRef) similarly have no tenant check — any caller who can reach these methods with a valid credentialRef can revoke or mutate another tenant\'s connector credential.', false, 0.7, 'updateStatus'),
+    evidence(domain, 'ccs-ev-2', 'READ_SCOPE', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'getConnection(tenantId, credentialRef) and getTokenSet(tenantId, credentialRef) now resolve through `recordFor(tenantId, credentialRef)`, which returns undefined unless `record.connection.tenantId === tenantId`, so decryption never happens for a record owned by a different tenant.', true, 0.8, 'getTokenSet'),
+    evidence(domain, 'ccs-ev-3', 'MUTATION_SCOPE', 'src/lib/microsoft-auth/microsoft-token-store.ts', 'updateStatus(tenantId, credentialRef, ...) and revoke(tenantId, credentialRef) both route through the same `recordFor` check before mutating, so a cross-tenant revoke/update silently no-ops instead of mutating another tenant\'s record.', true, 0.75, 'updateStatus'),
+    evidence(domain, 'ccs-ev-4', 'ROUTE_BOUNDARY', 'src/routes/production-connectors.ts', '/microsoft/refresh and /microsoft/disconnect both call `oauth.refreshAccessToken(tenant(req), ...)` / `oauth.revokeOrDisableConnection(tenant(req), ...)`, where tenant(req) reads the server-derived tenantId, not a client-supplied store-level override.', true, 0.75, 'tenant(req)'),
+    evidence(domain, 'ccs-ev-5', 'TEST_PROOF', 'src/tests/microsoft-oauth-service.test.ts', 'A new assertion proves that `inspectEncryptedRecord("t2-attacker", credentialRef)` for a credential created under tenant "t1" returns undefined, i.e. a different tenant cannot inspect or infer the existence of another tenant\'s credential record even with a known credentialRef.', true, 0.75, 'inspectEncryptedRecord'),
   ]
   const findings: DatabaseTenantIsolationFinding[] = [
-    finding(domain, 'ccs-finding-1', 'HIGH', 'FAILED', 'No tenant scoping at all in the connector credential store API', 'AES-256-GCM encryption protects the token payload from a passive storage leak, but every method in EncryptedMicrosoftTokenStore is reachable with just a credentialRef and performs no tenantId check, so cross-tenant read/mutate/revoke is possible at the store API itself if a credentialRef is known or guessable by a calling code path.', ['src/lib/microsoft-auth/microsoft-token-store.ts'], 'Require tenantId on every method and verify it against `connection.tenantId` (already present on MicrosoftOAuthConnection) before returning or mutating any record; add a test proving tenant B cannot read/revoke a credentialRef created under tenant A.'),
+    finding(domain, 'ccs-finding-1', 'LOW', 'PARTIAL', 'Tenant scoping is now real, but coverage is limited to one connector store and one test file', 'The fix is genuine and behaviorally proven for EncryptedMicrosoftTokenStore: every method now requires and checks tenantId via recordFor(), and a real test proves cross-tenant denial. The verdict is held at PARTIAL rather than VERIFIED because the regression coverage is a single in-memory unit test, not a live HTTP request/response test against /microsoft/refresh or /microsoft/disconnect, and because no equivalent runtime cross-tenant test exists yet for the route layer itself.', ['src/lib/microsoft-auth/microsoft-token-store.ts', 'src/tests/microsoft-oauth-service.test.ts'], 'Add an HTTP-level integration test that calls /microsoft/refresh and /microsoft/disconnect as tenant B with a credentialRef created under tenant A and asserts the request is rejected, to raise this to VERIFIED.'),
   ]
   return {
     domain,
-    verdict: 'FAILED',
+    verdict: 'PARTIAL',
     confidence: 0.75,
     evidence: ev,
     findings,

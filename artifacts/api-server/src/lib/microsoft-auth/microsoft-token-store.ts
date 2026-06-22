@@ -14,16 +14,23 @@ export class EncryptedMicrosoftTokenStore {
     this.records.set(credentialRef, { credentialRef, encryptedTokenPayload: [iv.toString("base64"), tag.toString("base64"), ciphertext.toString("base64")].join("."), connection: full });
     return full;
   }
-  async getConnection(credentialRef: string) { return this.records.get(credentialRef)?.connection; }
-  async getTokenSet(credentialRef: string): Promise<MicrosoftTokenSet | undefined> {
-    const record = this.records.get(credentialRef); if (!record) return undefined;
+  // Every lookup/mutation is tenant-scoped: a credentialRef that exists but belongs to a
+  // different tenant is treated identically to a non-existent record (undefined), never
+  // exposing whether the ref exists for another tenant.
+  private recordFor(tenantId: string, credentialRef: string) {
+    const record = this.records.get(credentialRef);
+    return record && record.connection.tenantId === tenantId ? record : undefined;
+  }
+  async getConnection(tenantId: string, credentialRef: string) { return this.recordFor(tenantId, credentialRef)?.connection; }
+  async getTokenSet(tenantId: string, credentialRef: string): Promise<MicrosoftTokenSet | undefined> {
+    const record = this.recordFor(tenantId, credentialRef); if (!record) return undefined;
     const [ivB64, tagB64, dataB64] = record.encryptedTokenPayload.split(".");
     const decipher = createDecipheriv("aes-256-gcm", keyFromSecret(this.encryptionSecret), Buffer.from(ivB64, "base64"));
     decipher.setAuthTag(Buffer.from(tagB64, "base64"));
     return JSON.parse(Buffer.concat([decipher.update(Buffer.from(dataB64, "base64")), decipher.final()]).toString("utf8"));
   }
-  async updateStatus(credentialRef: string, status: MicrosoftOAuthConnection["status"], failureReason?: string) { const r = this.records.get(credentialRef); if (r) r.connection = { ...r.connection, status, failureReason, updatedAt: new Date().toISOString(), lastValidatedAt: new Date().toISOString() }; return r?.connection; }
-  async revoke(credentialRef: string) { return this.updateStatus(credentialRef, "REVOKED"); }
+  async updateStatus(tenantId: string, credentialRef: string, status: MicrosoftOAuthConnection["status"], failureReason?: string) { const r = this.recordFor(tenantId, credentialRef); if (r) r.connection = { ...r.connection, status, failureReason, updatedAt: new Date().toISOString(), lastValidatedAt: new Date().toISOString() }; return r?.connection; }
+  async revoke(tenantId: string, credentialRef: string) { return this.updateStatus(tenantId, credentialRef, "REVOKED"); }
   // Deliberately exposes only encrypted payload metadata, never plaintext tokens.
-  async inspectEncryptedRecord(credentialRef: string) { return this.records.get(credentialRef); }
+  async inspectEncryptedRecord(tenantId: string, credentialRef: string) { return this.recordFor(tenantId, credentialRef); }
 }

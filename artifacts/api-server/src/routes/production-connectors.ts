@@ -13,9 +13,9 @@ const publicConnection = (connection: any) => connection ? ({ ...connection, cre
 router.get("/microsoft/auth-url", (req, res) => res.json(oauth.generateAuthorizationUrl({ tenantId: tenant(req), connectorKey: connectorKey(req.query.connectorKey), scopes: String(req.query.scopes ?? "User.Read.All Group.Read.All Reports.Read.All Directory.Read.All").split(/[,\s]+/).filter(Boolean), state: String(req.query.state ?? randomUUID()) })));
 router.post("/microsoft/oauth/callback", async (req, res) => res.json(publicConnection(await oauth.exchangeAuthorizationCode({ tenantId: tenant(req), connectorKey: connectorKey(req.body?.connectorKey), code: String(req.body?.code), state: String(req.body?.state), scopes: req.body?.scopes ?? [] }))));
 router.post("/microsoft/client-credentials/connect", async (req, res) => res.json(publicConnection(await oauth.connectClientCredentials({ tenantId: tenant(req), connectorKey: connectorKey(req.body?.connectorKey), scopes: req.body?.scopes ?? [] }))));
-router.post("/microsoft/refresh", async (req, res) => res.json(publicConnection(await oauth.refreshAccessToken(String(req.body?.credentialRef)))));
+router.post("/microsoft/refresh", async (req, res) => res.json(publicConnection(await oauth.refreshAccessToken(tenant(req), String(req.body?.credentialRef)))));
 router.post("/microsoft/validate-permissions", async (req, res) => res.json(new MicrosoftPermissionValidator().validate(req.body?.grantedScopes ?? [], req.body?.requiredScopes ?? [])));
-router.post("/microsoft/disconnect", async (req, res) => res.json(publicConnection(await oauth.revokeOrDisableConnection(String(req.body?.credentialRef)))));
+router.post("/microsoft/disconnect", async (req, res) => res.json(publicConnection(await oauth.revokeOrDisableConnection(tenant(req), String(req.body?.credentialRef)))));
 router.get("/connectors", (_req, res) => res.json(runner.listConnectors()));
 router.get("/connectors/:connectorKey/capabilities", async (req, res) => res.json(await runner.discoverCapabilities(tenant(req), String(req.params.connectorKey), req.body ?? {})));
 router.post("/connectors/:connectorKey/validate", async (req, res) => res.json(await runner.validateConnection(tenant(req), String(req.params.connectorKey), req.body ?? {})));
