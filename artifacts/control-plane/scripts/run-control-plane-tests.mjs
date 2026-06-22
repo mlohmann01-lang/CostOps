@@ -64,6 +64,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/exposureReport/defaultExposureReport.test.ts',
   '../artifacts/control-plane/src/lib/informationGovernance/information-governance-authority.test.ts',
   '../artifacts/control-plane/src/lib/tenantIsolation/tenant-isolation-authority.test.ts',
+  '../artifacts/control-plane/src/lib/databaseTenantIsolation/database-tenant-isolation-verification-authority.test.ts',
   '../artifacts/control-plane/src/lib/app-shell-routes.test.ts',
   '../artifacts/control-plane/src/lib/terminology-consistency.test.ts',
   '../artifacts/control-plane/src/lib/headlessCerten/headlessCerten.test.ts',

@@ -88,6 +88,7 @@ import aiCapitalAllocationRouter from "./ai-capital-allocation";
 import exposureReviewRouter from "./exposure-review";
 import informationGovernanceRouter from "./information-governance";
 import tenantIsolationRouter from "./tenant-isolation";
+import databaseTenantIsolationRouter from "./database-tenant-isolation";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -189,5 +190,6 @@ router.use("/", pilotRouter);
 router.use("/exposure-review", exposureReviewRouter);
 router.use("/information-governance", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), informationGovernanceRouter);
 router.use("/tenant-isolation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), tenantIsolationRouter);
+router.use("/database-tenant-isolation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), databaseTenantIsolationRouter);
 
 export default router;
