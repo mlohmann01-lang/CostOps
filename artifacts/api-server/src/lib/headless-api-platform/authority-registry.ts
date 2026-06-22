@@ -21,6 +21,7 @@ import { technologyPortfolioAuthorityService } from "../technology-portfolio-aut
 import { liveTenantReadinessService } from "../live-tenant-readiness";
 import { ExecutiveProofPackService } from "../executive-proof-packs";
 import { getOutcomeAttributionReadiness } from "../ai-value-attribution/outcome-attribution-readiness-authority";
+import { getAIInitiativePortfolioAuthority } from "../ai-initiative-portfolio/ai-initiative-portfolio-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -81,6 +82,12 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "Outcome Attribution Readiness Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => getOutcomeAttributionReadiness(tenantId as string),
+  },
+  {
+    id: "ai-initiative-portfolio",
+    name: "AI Initiative Portfolio Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getAIInitiativePortfolioAuthority(tenantId as string),
   },
 ];
 

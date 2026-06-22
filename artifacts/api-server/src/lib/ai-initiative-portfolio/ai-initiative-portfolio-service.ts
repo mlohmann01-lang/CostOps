@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import { AIInitiativePortfolioRepository, aiInitiativePortfolioRepository } from './ai-initiative-portfolio-repository';
 import type {
-  AIInitiative, AIInitiativeStatus, AIInitiativeType, InitiativeLineage, InitiativePortfolioEvaluation,
-  InitiativePortfolioGraph, PortfolioSummary, PortfolioVerdict,
+  AIInitiative, AIInitiativeLifecycle, AIInitiativeStatus, AIInitiativeType, ExecutivePortfolioView,
+  InitiativeConfidenceLevel, InitiativeConfidenceResult, InitiativeLineage, InitiativeOutcomeSummary,
+  InitiativeOwnershipEvaluation, InitiativePortfolioEvaluation, InitiativePortfolioGraph,
+  InitiativeRecommendation, InitiativeValueSummary, LifecycleTransitionCheck, PortfolioSummary, PortfolioVerdict,
 } from './ai-initiative-portfolio-types';
+import { aiValueAttributionRepository } from '../ai-value-attribution/ai-value-attribution-repository';
+import { aiValueAttributionService } from '../ai-value-attribution/ai-value-attribution-service';
 
 export interface CreateAIInitiativeInput {
   tenantId: string;
@@ -15,6 +19,30 @@ export interface CreateAIInitiativeInput {
   businessSponsorPrincipalId?: string;
   sourceSystem: string;
   sourceReference: string;
+  metadata?: Record<string, unknown>;
+  lifecycle?: AIInitiativeLifecycle;
+  ownerName?: string;
+  executiveSponsor?: string;
+  department?: string;
+  costCentre?: string;
+  objectiveIds?: string[];
+  assetIds?: string[];
+  tags?: string[];
+}
+
+export interface UpdateAIInitiativeInput {
+  name?: string;
+  description?: string;
+  initiativeType?: AIInitiativeType;
+  status?: AIInitiativeStatus;
+  ownerPrincipalId?: string;
+  businessSponsorPrincipalId?: string;
+  lifecycle?: AIInitiativeLifecycle;
+  ownerName?: string;
+  executiveSponsor?: string;
+  department?: string;
+  costCentre?: string;
+  tags?: string[];
   metadata?: Record<string, unknown>;
 }
 
@@ -64,8 +92,227 @@ export class AIInitiativePortfolioService {
       createdAt: now,
       updatedAt: now,
       metadata: input.metadata ?? {},
+      lifecycle: input.lifecycle ?? 'PROPOSED',
+      ownerName: input.ownerName,
+      executiveSponsor: input.executiveSponsor,
+      department: input.department,
+      costCentre: input.costCentre,
+      objectiveIds: input.objectiveIds ?? [],
+      assetIds: input.assetIds ?? [],
+      tags: input.tags ?? [],
     };
     return this.repo.upsertInitiative(initiative);
+  }
+
+  async updateInitiative(tenantId: string, initiativeId: string, patch: UpdateAIInitiativeInput): Promise<AIInitiative> {
+    const existing = await this.requireInitiative(tenantId, initiativeId);
+    if (patch.lifecycle && patch.lifecycle !== existing.lifecycle) {
+      const check = await this.validateLifecycleTransition(tenantId, initiativeId, patch.lifecycle);
+      if (!check.allowed) throw Object.assign(new Error(check.reason ?? 'LIFECYCLE_TRANSITION_NOT_ALLOWED'), { statusCode: 400 });
+    }
+    const updated: AIInitiative = {
+      ...existing,
+      ...patch,
+      id: existing.id,
+      tenantId,
+      updatedAt: new Date().toISOString(),
+      retiredAt: patch.lifecycle === 'RETIRED' ? new Date().toISOString() : existing.retiredAt,
+    };
+    return this.repo.upsertInitiative(updated);
+  }
+
+  async retireInitiative(tenantId: string, initiativeId: string): Promise<AIInitiative> {
+    return this.updateInitiative(tenantId, initiativeId, { lifecycle: 'RETIRED' });
+  }
+
+  async linkAsset(tenantId: string, initiativeId: string, assetId: string) {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const link = await this.repo.upsertAssetLink({ id: randomUUID(), tenantId, initiativeId, assetId, createdAt: new Date().toISOString() });
+    if (!(initiative.assetIds ?? []).includes(assetId)) {
+      await this.repo.upsertInitiative({ ...initiative, assetIds: [...(initiative.assetIds ?? []), assetId], updatedAt: new Date().toISOString() });
+    }
+    return link;
+  }
+
+  async linkObjective(tenantId: string, initiativeId: string, objectiveId: string) {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const link = await this.repo.upsertObjectiveLink({ id: randomUUID(), tenantId, initiativeId, objectiveId, createdAt: new Date().toISOString() });
+    if (!(initiative.objectiveIds ?? []).includes(objectiveId)) {
+      await this.repo.upsertInitiative({ ...initiative, objectiveIds: [...(initiative.objectiveIds ?? []), objectiveId], updatedAt: new Date().toISOString() });
+    }
+    return link;
+  }
+
+  // Capability 2 — Initiative Ownership. Never invents missing ownership data.
+  async evaluateOwnership(tenantId: string, initiativeId: string): Promise<InitiativeOwnershipEvaluation> {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const hasOwner = Boolean(initiative.ownerPrincipalId || initiative.ownerName);
+    const hasExecutiveSponsor = Boolean(initiative.businessSponsorPrincipalId || initiative.executiveSponsor);
+    const hasDepartment = Boolean(initiative.department);
+    const hasCostCentre = Boolean(initiative.costCentre);
+    const missing: string[] = [];
+    if (!hasOwner) missing.push('owner');
+    if (!hasExecutiveSponsor) missing.push('executiveSponsor');
+    if (!hasDepartment) missing.push('department');
+    if (!hasCostCentre) missing.push('costCentre');
+    return { initiativeId, hasOwner, hasExecutiveSponsor, hasDepartment, hasCostCentre, complete: missing.length === 0, missing };
+  }
+
+  // Capability 4 — Initiative Outcome Aggregation. Reuses AI1 attribution
+  // outputs only; never fabricates outcome counts.
+  async getInitiativeOutcomeSummary(tenantId: string, initiativeId: string): Promise<InitiativeOutcomeSummary> {
+    const attributionLinks = await this.repo.listAttributionLinks(tenantId, { initiativeId });
+    const attributions = (await Promise.all(attributionLinks.map((l) => aiValueAttributionRepository.getAttribution(tenantId, l.attributionId))))
+      .filter((a): a is NonNullable<typeof a> => Boolean(a));
+    const evidenceByAttribution = await Promise.all(attributions.map((a) => aiValueAttributionRepository.listEvidence(tenantId, { attributionId: a.id })));
+    const evidenceCount = evidenceByAttribution.flat().length;
+    const lineages = await Promise.all(attributions.map((a) => aiValueAttributionService.getAttributionLineage(tenantId, a.id)));
+    const completeLineageRatio = attributions.length ? lineages.filter((l) => l.complete).length / attributions.length : 0;
+    const outcomeLinks = await this.repo.listOutcomeLinks(tenantId, { initiativeId });
+    const assetLinks = await this.repo.listAssetLinks(tenantId, { initiativeId });
+    return {
+      initiativeId,
+      attributionCount: attributions.length,
+      outcomeCount: outcomeLinks.length,
+      assetCount: assetLinks.length,
+      evidenceCount,
+      completeLineageRatio: Math.round(completeLineageRatio * 1000) / 1000,
+    };
+  }
+
+  // Capability 6 — Initiative Confidence. Rolls up AI1 attribution confidence,
+  // evidence quality and lineage/outcome stability into one of
+  // LOW/MODERATE/HIGH/VERIFIED. Zero attributions is reported as LOW, not
+  // fabricated as higher confidence.
+  async getInitiativeConfidence(tenantId: string, initiativeId: string): Promise<InitiativeConfidenceResult> {
+    const attributionLinks = await this.repo.listAttributionLinks(tenantId, { initiativeId });
+    const attributions = (await Promise.all(attributionLinks.map((l) => aiValueAttributionRepository.getAttribution(tenantId, l.attributionId))))
+      .filter((a): a is NonNullable<typeof a> => Boolean(a));
+
+    if (attributions.length === 0) {
+      return {
+        initiativeId, level: 'LOW', score: 0, attributionCount: 0, averageAttributionConfidence: 0,
+        evidenceQualityRatio: 0, outcomeStabilityRatio: 0,
+        reasoning: 'No linked attributions; confidence cannot be claimed without evidence.',
+      };
+    }
+
+    const confidenceScores = attributions.map((a: any) => a.confidenceScore).filter((s: unknown): s is number => typeof s === 'number');
+    const averageAttributionConfidence = confidenceScores.length ? confidenceScores.reduce((sum, s) => sum + s, 0) / confidenceScores.length : 0;
+
+    const evidenceByAttribution = await Promise.all(attributions.map((a) => aiValueAttributionRepository.listEvidence(tenantId, { attributionId: a.id })));
+    const allEvidence = evidenceByAttribution.flat();
+    const strongEvidence = allEvidence.filter((e: any) => e.evidenceStrength === 'VERIFIED' || e.evidenceStrength === 'OBSERVED').length;
+    const evidenceQualityRatio = allEvidence.length ? strongEvidence / allEvidence.length : 0;
+
+    const lineages = await Promise.all(attributions.map((a) => aiValueAttributionService.getAttributionLineage(tenantId, a.id)));
+    const outcomeStabilityRatio = attributions.length ? lineages.filter((l) => l.complete).length / attributions.length : 0;
+
+    const score = Math.round((Math.min(1, averageAttributionConfidence / 100) * 40) + (evidenceQualityRatio * 30) + (outcomeStabilityRatio * 30));
+
+    let level: InitiativeConfidenceLevel;
+    if (score >= 85) level = 'VERIFIED';
+    else if (score >= 65) level = 'HIGH';
+    else if (score >= 35) level = 'MODERATE';
+    else level = 'LOW';
+
+    return {
+      initiativeId, level, score, attributionCount: attributions.length,
+      averageAttributionConfidence: Math.round(averageAttributionConfidence * 100) / 100,
+      evidenceQualityRatio: Math.round(evidenceQualityRatio * 1000) / 1000,
+      outcomeStabilityRatio: Math.round(outcomeStabilityRatio * 1000) / 1000,
+      reasoning: `${level} (${score}/100): average attribution confidence ${Math.round(averageAttributionConfidence)}, `
+        + `${strongEvidence}/${allEvidence.length || 0} evidence items VERIFIED/OBSERVED, `
+        + `${Math.round(outcomeStabilityRatio * 100)}% of attributions have complete lineage.`,
+    };
+  }
+
+  // Capability 5 — Initiative Value Aggregation. Reuses asset names and
+  // outcome/confidence rollups; never fabricates a monetary estimate.
+  async getInitiativeValueSummary(tenantId: string, initiativeId: string, assetNameResolver?: (assetId: string) => Promise<string | undefined>): Promise<InitiativeValueSummary> {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const outcomeSummary = await this.getInitiativeOutcomeSummary(tenantId, initiativeId);
+    const confidence = await this.getInitiativeConfidence(tenantId, initiativeId);
+    const assetLinks = await this.repo.listAssetLinks(tenantId, { initiativeId });
+    const assetNames = assetNameResolver
+      ? (await Promise.all(assetLinks.map((l) => assetNameResolver(l.assetId)))).filter((n): n is string => Boolean(n))
+      : assetLinks.map((l) => l.assetId);
+    const evaluation = await this.repo.getEvaluation(tenantId, initiativeId);
+    const valueEstimate: number | 'UNKNOWN' = evaluation && (evaluation.attributedValue > 0 || evaluation.totalSpend > 0) ? evaluation.attributedValue : 'UNKNOWN';
+    return {
+      initiativeId,
+      name: initiative.name,
+      assetNames,
+      outcomeCount: outcomeSummary.outcomeCount,
+      confidenceLevel: confidence.level,
+      valueSignalCount: outcomeSummary.evidenceCount,
+      valueEstimate,
+    };
+  }
+
+  // Capability 7 — Initiative Lifecycle Governance.
+  async validateLifecycleTransition(tenantId: string, initiativeId: string, target: AIInitiativeLifecycle): Promise<LifecycleTransitionCheck> {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const ownership = await this.evaluateOwnership(tenantId, initiativeId);
+    const outcomeSummary = await this.getInitiativeOutcomeSummary(tenantId, initiativeId);
+
+    if (target === 'OPERATIONAL' && !ownership.hasOwner) {
+      return { allowed: false, reason: 'No owner — cannot become OPERATIONAL.' };
+    }
+    if (target === 'SCALING' && outcomeSummary.outcomeCount === 0) {
+      return { allowed: false, reason: 'No outcomes — cannot become SCALING.' };
+    }
+    if ((target === 'PILOT' || target === 'SCALING' || target === 'OPERATIONAL') && !ownership.hasOwner) {
+      return { allowed: false, reason: `No owner — cannot become ${target}.` };
+    }
+    if (target === 'APPROVED' && initiative.lifecycle === 'RETIRED') {
+      return { allowed: false, reason: 'Retired initiatives cannot be re-approved.' };
+    }
+    return { allowed: true };
+  }
+
+  // Capability 8 — Initiative Recommendation Engine. Spend is intentionally
+  // excluded — AI Economics owns spend-based recommendations.
+  async recommendAction(tenantId: string, initiativeId: string): Promise<InitiativeRecommendation> {
+    const initiative = await this.requireInitiative(tenantId, initiativeId);
+    const ownership = await this.evaluateOwnership(tenantId, initiativeId);
+    const outcomeSummary = await this.getInitiativeOutcomeSummary(tenantId, initiativeId);
+    const confidence = await this.getInitiativeConfidence(tenantId, initiativeId);
+
+    if (initiative.lifecycle === 'RETIRED') {
+      return { initiativeId, action: 'RETIRE', reasoning: 'Initiative is already retired.' };
+    }
+    if (!ownership.hasOwner) {
+      return { initiativeId, action: 'REVIEW', reasoning: 'No accountable owner; ownership must be assigned before further investment decisions.' };
+    }
+    if (outcomeSummary.outcomeCount === 0 && outcomeSummary.attributionCount === 0) {
+      return { initiativeId, action: 'REVIEW', reasoning: 'No outcomes or attributions exist yet; insufficient evidence to recommend expansion or retirement.' };
+    }
+    if (confidence.level === 'LOW') {
+      return { initiativeId, action: 'REVIEW', reasoning: 'Confidence is LOW; evidence quality or lineage completeness is insufficient to act on.' };
+    }
+    if (outcomeSummary.outcomeCount === 0) {
+      return { initiativeId, action: 'OPTIMISE', reasoning: 'Attributions exist but no realised outcomes; optimise before scaling further.' };
+    }
+    if ((confidence.level === 'HIGH' || confidence.level === 'VERIFIED') && outcomeSummary.outcomeCount > 0 && outcomeSummary.evidenceCount > 0) {
+      return { initiativeId, action: 'EXPAND', reasoning: `Confidence is ${confidence.level} with ${outcomeSummary.outcomeCount} outcome(s) and ${outcomeSummary.evidenceCount} evidence item(s); expansion is supported.` };
+    }
+    return { initiativeId, action: 'KEEP', reasoning: `Confidence is ${confidence.level} with ${outcomeSummary.outcomeCount} outcome(s); continue at current scope.` };
+  }
+
+  // Capability 10 — Executive Portfolio View.
+  async getExecutivePortfolioView(tenantId: string): Promise<ExecutivePortfolioView> {
+    const initiatives = await this.repo.listInitiatives(tenantId);
+    const outcomeSummaries = await Promise.all(initiatives.map((i) => this.getInitiativeOutcomeSummary(tenantId, i.id)));
+    return {
+      tenantId,
+      totalInitiatives: initiatives.length,
+      activeInitiatives: initiatives.filter((i) => i.lifecycle && i.lifecycle !== 'PROPOSED' && i.lifecycle !== 'RETIRED').length,
+      scalingInitiatives: initiatives.filter((i) => i.lifecycle === 'SCALING').length,
+      initiativesWithOutcomes: outcomeSummaries.filter((s) => s.outcomeCount > 0).length,
+      initiativesWithEvidenceBackedValue: outcomeSummaries.filter((s) => s.evidenceCount > 0).length,
+      retiredInitiatives: initiatives.filter((i) => i.lifecycle === 'RETIRED').length,
+    };
   }
 
   async linkInvestment(tenantId: string, initiativeId: string, investmentId: string, confidence?: number) {

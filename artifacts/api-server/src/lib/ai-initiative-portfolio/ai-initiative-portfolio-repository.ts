@@ -1,7 +1,7 @@
 import { createPersistenceStore, MemoryPersistenceStore } from './ai-initiative-portfolio-persistence';
 import type {
-  AIInitiative, InitiativeAttributionLink, InitiativeEconomicsLink, InitiativeInvestmentLink,
-  InitiativeOutcomeLink, InitiativePortfolioEvaluation, InitiativeWorkflowLink, PersistenceStore,
+  AIInitiative, InitiativeAssetLink, InitiativeAttributionLink, InitiativeEconomicsLink, InitiativeInvestmentLink,
+  InitiativeObjectiveLink, InitiativeOutcomeLink, InitiativePortfolioEvaluation, InitiativeWorkflowLink, PersistenceStore,
 } from './ai-initiative-portfolio-types';
 
 export interface AIInitiativePortfolioStores {
@@ -12,6 +12,8 @@ export interface AIInitiativePortfolioStores {
   economicsLinks: PersistenceStore<InitiativeEconomicsLink>;
   outcomeLinks: PersistenceStore<InitiativeOutcomeLink>;
   evaluations: PersistenceStore<InitiativePortfolioEvaluation>;
+  assetLinks: PersistenceStore<InitiativeAssetLink>;
+  objectiveLinks: PersistenceStore<InitiativeObjectiveLink>;
 }
 
 export const createAIInitiativePortfolioStores = (): AIInitiativePortfolioStores => ({
@@ -22,6 +24,8 @@ export const createAIInitiativePortfolioStores = (): AIInitiativePortfolioStores
   economicsLinks: createPersistenceStore('INITIATIVE_ECONOMICS'),
   outcomeLinks: createPersistenceStore('INITIATIVE_OUTCOMES'),
   evaluations: createPersistenceStore('INITIATIVE_PORTFOLIO_EVALUATIONS'),
+  assetLinks: createPersistenceStore('INITIATIVE_ASSETS'),
+  objectiveLinks: createPersistenceStore('INITIATIVE_OBJECTIVES'),
 });
 
 export const createInMemoryAIInitiativePortfolioStores = (): AIInitiativePortfolioStores => ({
@@ -32,6 +36,8 @@ export const createInMemoryAIInitiativePortfolioStores = (): AIInitiativePortfol
   economicsLinks: new MemoryPersistenceStore('INITIATIVE_ECONOMICS'),
   outcomeLinks: new MemoryPersistenceStore('INITIATIVE_OUTCOMES'),
   evaluations: new MemoryPersistenceStore('INITIATIVE_PORTFOLIO_EVALUATIONS'),
+  assetLinks: new MemoryPersistenceStore('INITIATIVE_ASSETS'),
+  objectiveLinks: new MemoryPersistenceStore('INITIATIVE_OBJECTIVES'),
 });
 
 export class AIInitiativePortfolioRepository {
@@ -59,6 +65,12 @@ export class AIInitiativePortfolioRepository {
   upsertEvaluation(v: InitiativePortfolioEvaluation) { return this.s.evaluations.upsert(v); }
   getEvaluation(t: string, id: string) { return this.s.evaluations.get(t, id); }
   listEvaluations(t: string, f: Record<string, unknown> = {}) { return this.s.evaluations.list(t, f); }
+
+  upsertAssetLink(v: InitiativeAssetLink) { return this.s.assetLinks.upsert(v); }
+  listAssetLinks(t: string, f: Record<string, unknown> = {}) { return this.s.assetLinks.list(t, f); }
+
+  upsertObjectiveLink(v: InitiativeObjectiveLink) { return this.s.objectiveLinks.upsert(v); }
+  listObjectiveLinks(t: string, f: Record<string, unknown> = {}) { return this.s.objectiveLinks.list(t, f); }
 
   async deleteTenantAIInitiativePortfolioData(t: string) { await Promise.all(Object.values(this.s).map((x) => x.deleteTenant(t))); }
   async collectionStatus() {
