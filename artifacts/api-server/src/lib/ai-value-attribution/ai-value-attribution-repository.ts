@@ -1,7 +1,7 @@
 import { createPersistenceStore, MemoryPersistenceStore } from './ai-value-attribution-persistence';
 import type {
   AIActivity, AIActivityDecision, AIActivityOutcome, AIActivityValueSignal, AIActivityWorkflow,
-  AIValueAttribution, PersistenceStore,
+  AIValueAttribution, AttributionContributor, AttributionEvidenceRecord, PersistenceStore,
 } from './ai-value-attribution-types';
 
 export interface AIValueAttributionStores {
@@ -11,6 +11,8 @@ export interface AIValueAttributionStores {
   outcomeLinks: PersistenceStore<AIActivityOutcome>;
   decisionLinks: PersistenceStore<AIActivityDecision>;
   workflowLinks: PersistenceStore<AIActivityWorkflow>;
+  contributors: PersistenceStore<AttributionContributor>;
+  evidence: PersistenceStore<AttributionEvidenceRecord>;
 }
 
 export const createAIValueAttributionStores = (): AIValueAttributionStores => ({
@@ -20,6 +22,8 @@ export const createAIValueAttributionStores = (): AIValueAttributionStores => ({
   outcomeLinks: createPersistenceStore('AI_ACTIVITY_OUTCOMES'),
   decisionLinks: createPersistenceStore('AI_ACTIVITY_DECISIONS'),
   workflowLinks: createPersistenceStore('AI_ACTIVITY_WORKFLOWS'),
+  contributors: createPersistenceStore('AI_ATTRIBUTION_CONTRIBUTORS'),
+  evidence: createPersistenceStore('AI_ATTRIBUTION_EVIDENCE'),
 });
 
 export const createInMemoryAIValueAttributionStores = (): AIValueAttributionStores => ({
@@ -29,6 +33,8 @@ export const createInMemoryAIValueAttributionStores = (): AIValueAttributionStor
   outcomeLinks: new MemoryPersistenceStore('AI_ACTIVITY_OUTCOMES'),
   decisionLinks: new MemoryPersistenceStore('AI_ACTIVITY_DECISIONS'),
   workflowLinks: new MemoryPersistenceStore('AI_ACTIVITY_WORKFLOWS'),
+  contributors: new MemoryPersistenceStore('AI_ATTRIBUTION_CONTRIBUTORS'),
+  evidence: new MemoryPersistenceStore('AI_ATTRIBUTION_EVIDENCE'),
 });
 
 export class AIValueAttributionRepository {
@@ -53,6 +59,12 @@ export class AIValueAttributionRepository {
 
   upsertWorkflowLink(v: AIActivityWorkflow) { return this.s.workflowLinks.upsert(v); }
   listWorkflowLinks(t: string, f: Record<string, unknown> = {}) { return this.s.workflowLinks.list(t, f); }
+
+  upsertContributor(v: AttributionContributor) { return this.s.contributors.upsert(v); }
+  listContributors(t: string, f: Record<string, unknown> = {}) { return this.s.contributors.list(t, f); }
+
+  upsertEvidence(v: AttributionEvidenceRecord) { return this.s.evidence.upsert(v); }
+  listEvidence(t: string, f: Record<string, unknown> = {}) { return this.s.evidence.list(t, f); }
 
   async deleteTenantAIValueAttributionData(t: string) { await Promise.all(Object.values(this.s).map((x) => x.deleteTenant(t))); }
   async collectionStatus() {

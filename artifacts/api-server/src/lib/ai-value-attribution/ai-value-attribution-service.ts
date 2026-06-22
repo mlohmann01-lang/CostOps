@@ -1,9 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { AIValueAttributionRepository, aiValueAttributionRepository } from './ai-value-attribution-repository';
+import { computeAttributionConfidence } from './attribution-confidence-engine';
+import { recommendAttributionAction } from './attribution-decision-engine';
+import { economicOutcomeAttributionService } from '../economic-outcomes/economic-outcome-attribution';
 import type {
   AIActivity, AIActivityGraph, AIActivityLineage, AIActivityType,
   AIAttributionMethod, AIAttributionType, AIValueAttribution, AIValueAttributionEvaluation,
   AIValueAttributionVerdict, AIValueSummary,
+  AttributionContributor, AttributionContributorType, AttributionEvidenceRecord, AttributionEvidenceStrength,
+  AttributionEvidenceType, AttributionLineage, AttributionRecommendation,
 } from './ai-value-attribution-types';
 
 export interface CreateAIActivityInput {
@@ -50,12 +55,39 @@ export interface AIValueAttributionResolvers {
   resolveAIAsset?(tenantId: string, assetId: string): Promise<ResolvedAIAsset | undefined>;
   /** Workstream 7: additive hook so Value Realisation Authority's Verified/Protected Value can absorb AI attributions without this module owning that calculation. */
   recordInvestmentValueAttribution?(tenantId: string, attribution: AIValueAttribution): Promise<void>;
+  /**
+   * Program AI1 — "which executive objective benefited" must never be fabricated. The only
+   * honest resolution path is matching the attribution's assetId against a BusinessObjective's
+   * linkedAssetIds. Defaults to economic-outcomes' real service; overridable for tests/isolation.
+   */
+  listBusinessObjectivesForAsset?(tenantId: string, assetId: string): Promise<string[]>;
+}
+
+export interface SetContributorsInput {
+  contributorType: AttributionContributorType;
+  contributorId: string;
+  label?: string;
+  weight: number;
+}
+
+export interface AddEvidenceInput {
+  evidenceType: AttributionEvidenceType;
+  evidenceStrength: AttributionEvidenceStrength;
+  source: string;
+  timestamp: string;
+  confidenceContribution?: number;
+  description?: string;
 }
 
 export class AIValueAttributionService {
   constructor(
     private readonly repo: AIValueAttributionRepository = aiValueAttributionRepository,
-    private readonly resolvers: AIValueAttributionResolvers = {},
+    private readonly resolvers: AIValueAttributionResolvers = {
+      listBusinessObjectivesForAsset: async (tenantId, assetId) => {
+        const objectives = await economicOutcomeAttributionService.listBusinessObjectives(tenantId);
+        return objectives.filter((o) => o.linkedAssetIds.includes(assetId)).map((o) => o.id);
+      },
+    },
   ) {}
 
   async createAIActivity(input: CreateAIActivityInput): Promise<AIActivity> {
@@ -265,6 +297,139 @@ export class AIValueAttributionService {
       linkedOutcomeIds: [...new Set(outcomeLinks.map((l) => l.outcomeId))],
       evidenceCount: attributions.filter((a) => a.evidenceItemId).length,
     };
+  }
+
+  // ─── Program AI1 — Multi-Source Attribution ──────────────────────────────
+
+  /**
+   * Replaces the full contributor set for an attribution. Weights must sum to
+   * exactly 100 — rejected (not silently normalised) otherwise, since silent
+   * normalisation would fabricate a distribution the caller never asserted.
+   */
+  async setContributors(tenantId: string, attributionId: string, contributors: SetContributorsInput[]): Promise<AttributionContributor[]> {
+    await this.requireAttribution(tenantId, attributionId);
+    const totalWeight = contributors.reduce((sum, c) => sum + c.weight, 0);
+    if (Math.round(totalWeight * 100) / 100 !== 100) {
+      throw new Error(`contributor weights must sum to exactly 100, got ${totalWeight}`);
+    }
+    const existing = await this.repo.listContributors(tenantId, { attributionId });
+    await Promise.all(existing.map((c) => this.repo.upsertContributor({ ...c, weight: 0 })));
+    const now = new Date().toISOString();
+    return Promise.all(contributors.map((c) => this.repo.upsertContributor({
+      id: randomUUID(),
+      tenantId,
+      attributionId,
+      contributorType: c.contributorType,
+      contributorId: c.contributorId,
+      label: c.label,
+      weight: c.weight,
+      createdAt: now,
+    })));
+  }
+
+  async listContributors(tenantId: string, attributionId: string): Promise<AttributionContributor[]> {
+    const all = await this.repo.listContributors(tenantId, { attributionId });
+    return all.filter((c) => c.weight > 0);
+  }
+
+  // ─── Program AI1 — Attribution Evidence Registry ─────────────────────────
+
+  async addEvidence(tenantId: string, attributionId: string, input: AddEvidenceInput): Promise<AttributionEvidenceRecord> {
+    await this.requireAttribution(tenantId, attributionId);
+    const record: AttributionEvidenceRecord = {
+      id: randomUUID(),
+      tenantId,
+      attributionId,
+      evidenceType: input.evidenceType,
+      evidenceStrength: input.evidenceStrength,
+      source: input.source,
+      timestamp: input.timestamp,
+      confidenceContribution: input.confidenceContribution,
+      description: input.description,
+      createdAt: new Date().toISOString(),
+    };
+    return this.repo.upsertEvidence(record);
+  }
+
+  listEvidence(tenantId: string, attributionId: string): Promise<AttributionEvidenceRecord[]> {
+    return this.repo.listEvidence(tenantId, { attributionId });
+  }
+
+  private async requireAttribution(tenantId: string, attributionId: string): Promise<AIValueAttribution> {
+    const attribution = await this.repo.getAttribution(tenantId, attributionId);
+    if (!attribution) throw new Error(`ai attribution not found: ${attributionId}`);
+    return attribution;
+  }
+
+  // ─── Program AI1 — Attribution Confidence Engine ─────────────────────────
+
+  /**
+   * Recomputes and persists confidenceScore/confidenceLevel/confidenceReasoning from the
+   * attribution's currently-attached evidence and contributors. Never invents inputs: an
+   * attribution with no evidence yields LOW confidence with an explicit "no evidence" reason,
+   * it is never defaulted to a higher score.
+   */
+  async recomputeConfidence(tenantId: string, attributionId: string, signalStable?: boolean, timeCorrelationHours?: number): Promise<AIValueAttribution> {
+    const attribution = await this.requireAttribution(tenantId, attributionId);
+    const [evidence, contributors] = await Promise.all([
+      this.repo.listEvidence(tenantId, { attributionId }),
+      this.listContributors(tenantId, attributionId),
+    ]);
+    const sources = new Set<string>([...evidence.map((e) => e.source), ...contributors.map((c) => c.contributorId)]);
+    const result = computeAttributionConfidence({
+      evidenceStrengths: evidence.map((e) => e.evidenceStrength),
+      distinctSourceCount: sources.size,
+      signalStable,
+      timeCorrelationHours,
+    });
+    const updated: AIValueAttribution = {
+      ...attribution,
+      confidenceScore: result.score,
+      confidenceLevel: result.level,
+      confidenceReasoning: result.reasoning,
+      updatedAt: new Date().toISOString(),
+    };
+    return this.repo.upsertAttribution(updated);
+  }
+
+  // ─── Program AI1 — Attribution Lineage ───────────────────────────────────
+
+  async getAttributionLineage(tenantId: string, attributionId: string): Promise<AttributionLineage> {
+    const attribution = await this.requireAttribution(tenantId, attributionId);
+    const [evidence, contributors, activity] = await Promise.all([
+      this.repo.listEvidence(tenantId, { attributionId }),
+      this.listContributors(tenantId, attributionId),
+      attribution.activityId ? this.repo.getActivity(tenantId, attribution.activityId) : Promise.resolve(undefined),
+    ]);
+    const objectiveIds = attribution.assetId
+      ? await this.resolvers.listBusinessObjectivesForAsset?.(tenantId, attribution.assetId) ?? []
+      : [];
+    const complete = Boolean(activity || !attribution.activityId) && evidence.length > 0 && contributors.length > 0;
+    return {
+      attributionId,
+      tenantId,
+      activity,
+      evidence,
+      attribution,
+      contributors,
+      outcomeId: attribution.outcomeId,
+      valueSignalId: attribution.valueSignalId,
+      objectiveIds,
+      complete,
+    };
+  }
+
+  // ─── Program AI1 — Attribution Decision Framework ────────────────────────
+
+  async recommendAttributionAction(tenantId: string, attributionId: string, signalStable?: boolean): Promise<AttributionRecommendation> {
+    const attribution = await this.requireAttribution(tenantId, attributionId);
+    const [evidence, contributors] = await Promise.all([
+      this.repo.listEvidence(tenantId, { attributionId }),
+      this.listContributors(tenantId, attributionId),
+    ]);
+    const confidenceLevel = attribution.confidenceLevel ?? 'LOW';
+    const confidenceScore = attribution.confidenceScore ?? 0;
+    return recommendAttributionAction({ attributionId, confidenceLevel, confidenceScore, evidence, contributors, signalStable });
   }
 }
 

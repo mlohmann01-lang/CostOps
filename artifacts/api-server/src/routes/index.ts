@@ -82,6 +82,7 @@ import valueRealisationRouter from "./value-realisation";
 import governedExecutionRouter from "./governed-execution";
 import workflowValueGraphRouter from "./workflow-value-graph";
 import aiValueAttributionRouter from "./ai-value-attribution";
+import outcomeAttributionRouter from "./outcome-attribution";
 import aiEconomicsRouter from "./ai-economics";
 import aiInitiativePortfolioRouter from "./ai-initiative-portfolio";
 import aiCapitalAllocationRouter from "./ai-capital-allocation";
@@ -144,6 +145,7 @@ router.use("/value-realisation", requireTenantContext(), requireCapability("READ
 router.use("/governed-execution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), governedExecutionRouter);
 router.use("/workflow-value-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), workflowValueGraphRouter);
 router.use("/ai-value-attribution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiValueAttributionRouter);
+router.use("/outcomes/attribution", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), outcomeAttributionRouter);
 router.use("/ai-economics", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiEconomicsRouter);
 router.use("/ai-initiative-portfolio", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiInitiativePortfolioRouter);
 router.use("/ai-capital-allocation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiCapitalAllocationRouter);

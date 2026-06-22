@@ -20,6 +20,7 @@ import { getTenantIsolationAuthority } from "../tenant-isolation/tenant-isolatio
 import { technologyPortfolioAuthorityService } from "../technology-portfolio-authority";
 import { liveTenantReadinessService } from "../live-tenant-readiness";
 import { ExecutiveProofPackService } from "../executive-proof-packs";
+import { getOutcomeAttributionReadiness } from "../ai-value-attribution/outcome-attribution-readiness-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -74,6 +75,12 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "Live Tenant Onboarding Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => liveTenantReadinessService.summariseLiveTenantReadiness(tenantId as string),
+  },
+  {
+    id: "outcome-attribution-readiness",
+    name: "Outcome Attribution Readiness Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getOutcomeAttributionReadiness(tenantId as string),
   },
 ];
 
