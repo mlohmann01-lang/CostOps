@@ -86,6 +86,7 @@ import outcomeAttributionRouter from "./outcome-attribution";
 import aiEconomicsRouter from "./ai-economics";
 import aiInitiativePortfolioRouter from "./ai-initiative-portfolio";
 import aiValueGraphRouter from "./ai-value-graph";
+import aiEconomicsAuthorityRouter from "./ai-economics-authority";
 import aiInitiativesRouter from "./ai-initiatives";
 import aiCapitalAllocationRouter from "./ai-capital-allocation";
 import exposureReviewRouter from "./exposure-review";
@@ -151,6 +152,7 @@ router.use("/outcomes/attribution", requireTenantContext(), requireCapability("R
 router.use("/ai-economics", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiEconomicsRouter);
 router.use("/ai-initiative-portfolio", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiInitiativePortfolioRouter);
 router.use("/ai-value-graph", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiValueGraphRouter);
+router.use("/ai-economics-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiEconomicsAuthorityRouter);
 router.use("/ai-initiatives", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiInitiativesRouter);
 router.use("/ai-capital-allocation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), aiCapitalAllocationRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
