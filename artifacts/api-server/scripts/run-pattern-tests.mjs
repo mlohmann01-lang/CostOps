@@ -18,6 +18,7 @@ export const dbIntegrationTests = new Set([
   'live-tenant-readiness-persistence.test.ts',
   'm365-beta-e2e-fixture.test.ts',
   'outcome-finance-reconciliation-persistence.test.ts',
+  'technology-investment-authority.test.ts',
 ]);
 
 const allTests = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts'));
