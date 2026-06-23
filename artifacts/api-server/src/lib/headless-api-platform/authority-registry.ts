@@ -26,6 +26,8 @@ import { getAIValueGraphAuthority } from "../ai-value-graph/ai-value-graph-autho
 import { getAIEconomicsAuthority } from "../ai-economics-authority/ai-economics-authority";
 import { getAICapitalAllocationAuthority } from "../ai-capital-allocation-authority/ai-capital-allocation-authority";
 import { getTechnologyInvestmentAuthority } from "../technology-investment-authority/technology-investment-authority";
+import { getTechnologyEconomicsAuthority } from "../technology-economics-authority/technology-economics-authority";
+import { getTechnologyCapitalAllocationAuthority } from "../technology-capital-allocation-authority/technology-capital-allocation-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -116,6 +118,18 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "Technology Investment Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => getTechnologyInvestmentAuthority(tenantId as string),
+  },
+  {
+    id: "technology-economics-authority",
+    name: "Technology Economics Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getTechnologyEconomicsAuthority(tenantId as string),
+  },
+  {
+    id: "technology-capital-allocation-authority",
+    name: "Technology Capital Allocation Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getTechnologyCapitalAllocationAuthority(tenantId as string),
   },
 ];
 
