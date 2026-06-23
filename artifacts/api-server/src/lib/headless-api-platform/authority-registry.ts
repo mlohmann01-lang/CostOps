@@ -22,6 +22,7 @@ import { liveTenantReadinessService } from "../live-tenant-readiness";
 import { ExecutiveProofPackService } from "../executive-proof-packs";
 import { getOutcomeAttributionReadiness } from "../ai-value-attribution/outcome-attribution-readiness-authority";
 import { getAIInitiativePortfolioAuthority } from "../ai-initiative-portfolio/ai-initiative-portfolio-authority";
+import { getAIValueGraphAuthority } from "../ai-value-graph/ai-value-graph-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -88,6 +89,12 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "AI Initiative Portfolio Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => getAIInitiativePortfolioAuthority(tenantId as string),
+  },
+  {
+    id: "ai-value-graph",
+    name: "AI Value Graph Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getAIValueGraphAuthority(tenantId as string),
   },
 ];
 
