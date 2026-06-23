@@ -23,6 +23,8 @@ export const dbIntegrationTests = new Set([
   'technology-capital-allocation-authority.test.ts',
   'executive-command-center-and-decision-authority.test.ts',
   'executive-experience.test.ts',
+  'scenario-planning.test.ts',
+  'recommendation-orchestration.test.ts',
 ]);
 
 const allTests = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts'));
