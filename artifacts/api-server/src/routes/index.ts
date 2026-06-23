@@ -95,6 +95,7 @@ import technologyEconomicsRouter from "./technology-economics";
 import technologyCapitalAllocationRouter from "./technology-capital-allocation";
 import executiveCommandCenterRouter from "./executive-command-center";
 import executiveDecisionAuthorityRouter from "./executive-decision-authority";
+import executiveExperienceRouter from "./executive-experience";
 import exposureReviewRouter from "./exposure-review";
 import informationGovernanceRouter from "./information-governance";
 import tenantIsolationRouter from "./tenant-isolation";
@@ -167,6 +168,7 @@ router.use("/technology-economics", requireTenantContext(), requireCapability("R
 router.use("/technology-capital-allocation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), technologyCapitalAllocationRouter);
 router.use("/executive-command-center", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveCommandCenterRouter);
 router.use("/executive-decision-authority", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveDecisionAuthorityRouter);
+router.use("/executive-experience", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveExperienceRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);

@@ -29,6 +29,7 @@ import { getTechnologyInvestmentAuthority } from "../technology-investment-autho
 import { getTechnologyEconomicsAuthority } from "../technology-economics-authority/technology-economics-authority";
 import { getTechnologyCapitalAllocationAuthority } from "../technology-capital-allocation-authority/technology-capital-allocation-authority";
 import { getExecutiveDecisionAuthority } from "../executive-decision-authority/executive-decision-authority";
+import { getExecutiveExperienceAuthority } from "../executive-experience/executive-experience-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -137,6 +138,12 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "Executive Decision Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => getExecutiveDecisionAuthority(tenantId as string),
+  },
+  {
+    id: "executive-experience-authority",
+    name: "Executive Experience Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getExecutiveExperienceAuthority(tenantId as string),
   },
 ];
 
