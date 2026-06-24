@@ -106,6 +106,7 @@ import databaseTenantIsolationRouter from "./database-tenant-isolation";
 import securityHardeningRouter from "./security-hardening";
 import headlessPlatformRouter from "./headless-platform";
 import authoritiesRouter from "./authorities";
+import px0Router from "./px0";
 import { requireCapability, requireTenantContext } from "../middleware/security-guards";
 import { buildGovernanceGraph } from "../lib/governance-graph/governance-graph-builder";
 import { demoGovernanceGraphInput } from "../lib/governance-graph/governance-graph-demo-data";
@@ -225,5 +226,6 @@ router.use("/database-tenant-isolation", requireTenantContext(), requireCapabili
 router.use("/security-hardening", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), securityHardeningRouter);
 router.use("/headless-platform", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), headlessPlatformRouter);
 router.use("/authorities", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), authoritiesRouter);
+router.use("/px0", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), px0Router);
 
 export default router;
