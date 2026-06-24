@@ -1,0 +1,661 @@
+Certen Premium Visual Redesign — Landing Page + Platform UI
+
+## Objective
+
+Upgrade Certen from a standard dark SaaS interface into a premium executive-grade Economic Control System.
+
+The goal is not just colour polish. The product must visually feel like:
+
+* an executive command center
+* a finance-grade control system
+* an evidence-backed value platform
+* a governance and proof layer
+
+Use the provided mockup as direction for layout, hierarchy, dashboard composition and premium feel.
+
+Do not copy the Certen.io logo, icon, wave motif, typography or brand identity.
+
+Create an original Certen visual system.
+
+---
+
+## Design Direction
+
+Move away from the current teal/green accent.
+
+Adopt an original **Economic Gold** accent system.
+
+Suggested tokens:
+
+```css
+--background: #050505;
+--surface: #0B0D0E;
+--surface-elevated: #101214;
+--surface-card: #121416;
+
+--border-subtle: rgba(255,255,255,0.08);
+--border-strong: rgba(245,196,81,0.35);
+
+--text-primary: #F8F8F5;
+--text-secondary: #A7A9AC;
+--text-muted: #6F7377;
+
+--accent: #D4A017;
+--accent-bright: #F5C451;
+--accent-soft: rgba(212,160,23,0.14);
+--accent-glow: rgba(212,160,23,0.28);
+
+--success: #18C37E;
+--warning: #F5A623;
+--danger: #FF4D4F;
+--info: #4EA8DE;
+```
+
+Important:
+
+* Do not use crypto-orange.
+* Do not copy Certen.io’s orange.
+* Use gold as a finance/value/proof accent.
+* Green may remain only for success/complete states.
+* Red only for risk.
+* Blue only for informational states.
+
+---
+
+## Visual Motif
+
+Do not use the orange wave from Certen.io.
+
+Instead create an original **Evidence Chain / Economic Control Chain** motif.
+
+Use:
+
+* connected nodes
+* proof trails
+* ledger lines
+* subtle grid
+* value-flow connectors
+* control-loop diagrams
+* waterfall charts
+* governance graph style visuals
+
+This should feel like:
+
+```text
+Discover → Own → Analyse → Approve → Execute → Verify → Protect
+```
+
+as a visual system.
+
+---
+
+# Part 1 — Landing Page Redesign
+
+## Current issue
+
+The copy is strong but the page is visually underpowered.
+
+It currently feels like:
+
+```text
+Headline
+Text
+Buttons
+Trust strip
+```
+
+It needs to feel like the product already proves the claim.
+
+---
+
+## Required hero structure
+
+Create a split hero.
+
+### Left side
+
+Keep the core copy:
+
+```text
+ECONOMIC CONTROL SYSTEM
+
+You approved the technology budget.
+Can you prove what it delivered?
+
+Certen helps organisations uncover value, execute improvements, validate outcomes, reconcile savings to finance and protect gains from drift.
+```
+
+Primary CTA:
+
+```text
+Run Free Exposure Review
+```
+
+Secondary CTA:
+
+```text
+Book Executive Review
+```
+
+Trust strip:
+
+```text
+Read-only review
+No changes made
+Discovery only
+No licence modifications
+Revoke access anytime
+```
+
+---
+
+### Right side
+
+Add a product preview panel directly in the hero.
+
+This must not be a static decorative box.
+
+It should look like a real Executive Command Center preview.
+
+Include:
+
+```text
+Potential Annual Value
+$320,000
+
+Verified Value
+$186,000
+
+Protected Value
+$174,000
+
+Finance Verified
+96%
+```
+
+Also include a mini Economic Control Chain:
+
+```text
+Discover → Own → Analyse → Approve → Execute → Verify → Protect
+```
+
+Status examples:
+
+```text
+Discover: Complete
+Own: Complete
+Analyse: Complete
+Approve: In progress
+Execute: Pending
+Verify: Pending
+Protect: Pending
+```
+
+Include one small chart or sparkline.
+
+---
+
+## Landing page sections to redesign
+
+### 1. From exposure to verified value
+
+Make this a visual proof chain, not text cards.
+
+Show:
+
+```text
+Identified
+$320,000
+
+Approved
+$210,000
+
+Finance Verified
+$186,000
+
+Protected
+$174,000
+```
+
+Use arrows/connector lines between stages.
+
+---
+
+### 2. Start with Microsoft 365. Expand into economic control.
+
+Convert current capability grid into icon cards with stronger visual hierarchy.
+
+Capabilities:
+
+```text
+Microsoft 365
+SaaS Applications
+AI Platforms
+Cloud Platforms
+ITAM & Contracts
+ServiceNow & Workflows
+Finance
+Executive Proof Packs
+```
+
+Each card should have:
+
+* icon
+* short label
+* subtle accent border on hover
+* no long paragraphs
+
+---
+
+### 3. Questions Certen Answers
+
+Convert this from plain text into audience cards.
+
+Cards:
+
+```text
+CFO
+What value has been verified?
+What value has finance validated?
+What variance exists?
+
+CIO
+What technology do we own?
+Where are we exposed?
+What should I do next?
+
+Executive
+What requires attention?
+What value is protected?
+
+ITAM
+What authorities are available?
+What actions require approval?
+```
+
+---
+
+### 4. Economic Control Chain
+
+This should become a large visual timeline.
+
+Stages:
+
+```text
+Discover
+Own
+Analyse
+Approve
+Execute
+Verify
+Protect
+```
+
+Each stage should have:
+
+* number
+* icon
+* one-line explanation
+* status-ready visual style
+
+---
+
+# Part 2 — Platform UI Redesign
+
+## Current issue
+
+The platform currently feels dull:
+
+* too many dark cards
+* too much text
+* weak hierarchy
+* not enough charts
+* no strong visual sense of command
+* important values do not stand out
+
+The goal is to make the platform feel like an executive operating system.
+
+---
+
+## Executive Command Center target layout
+
+Redesign the Executive Command Center overview with this hierarchy:
+
+### Row 1 — Executive KPI cards
+
+Four major cards:
+
+```text
+Potential Annual Value
+Verified Value
+Protected Value
+Finance Verified
+```
+
+Each card should include:
+
+* large number
+* small delta
+* tiny sparkline / mini bar chart / radial progress
+* evidence/status label
+
+Example:
+
+```text
+Verified Value
+$186,000
+↑ 24% vs last 30 days
+Evidence-backed
+```
+
+---
+
+### Row 2 — Economic Control Chain
+
+A full-width visual chain:
+
+```text
+Discover → Own → Analyse → Approve → Execute → Verify → Protect
+```
+
+Use:
+
+* circular nodes
+* connecting lines
+* green for complete
+* gold for current/in progress
+* grey for pending
+
+Do not render this as plain pills.
+
+---
+
+### Row 3 — Analytical visuals
+
+Three columns:
+
+#### Value Waterfall
+
+Show value movement:
+
+```text
+Identified → Approved → Executed → Verified → Protected
+```
+
+This can be a simple CSS/SVG bar chart. No external charting dependency required unless already available.
+
+#### Top Value Opportunities
+
+Ranked list:
+
+```text
+Microsoft 365 Licences
+SaaS Optimisation
+AI Tool Consolidation
+Cloud Rightsizing
+```
+
+Each item should show:
+
+* value
+* share of total
+* small bar/progress indicator
+
+#### Risk & Exposure Overview
+
+Show:
+
+* donut/ring chart or segmented radial
+* high/medium/low counts
+* mini risk trend sparkline
+
+---
+
+### Row 4 — Recommended Next Actions
+
+Action cards:
+
+```text
+1. Review owners
+47 ownerless assets
+$76,000 potential value
+
+2. Optimise licences
+184 inactive licences
+$64,000 potential value
+
+3. Consolidate tools
+12 duplicate capabilities
+$52,000 potential value
+
+4. Negotiate renewals
+6 renewals in 90 days
+$38,000 potential value
+```
+
+Each action card should feel clickable and decision-oriented.
+
+---
+
+## Sidebar redesign
+
+Keep existing navigation structure but improve visual clarity.
+
+Requirements:
+
+* reduce visual noise
+* stronger active state
+* gold active indicator
+* section headings smaller and cleaner
+* icons aligned
+* badge counts in gold
+* avoid teal active states
+
+Groups:
+
+```text
+COMMAND
+Executive Command Center
+Outcome Ledger
+Economic Control Chain
+Actions & Approvals
+Evidence Registry
+
+DISCOVER
+Technology Portfolio
+AI & SaaS Discovery
+Exposure & Risk
+Renewal Center
+
+EXECUTE
+Execution Hub
+Workflow & Approvals
+
+PROTECT
+Value Protection
+Drift Monitor
+Guardrails
+
+PLATFORM
+Connectors
+Workspace
+Settings
+```
+
+Map existing pages into these groups as closely as possible. Do not delete functionality.
+
+---
+
+## Header / TopBar redesign
+
+Update to match premium theme.
+
+Must show:
+
+```text
+Data Trust
+Environment: DEMO / LIVE
+Notifications
+User avatar
+```
+
+Rules:
+
+* Data Trust should be gold/green only when meaningful.
+* In LIVE_UNCONNECTED, show `Data Trust N/A`.
+* DEMO must remain visually obvious.
+* LIVE must not look connected unless production systems are connected.
+
+---
+
+# Part 3 — State-Aware UI Rules
+
+Do not break the existing runtime state enforcement.
+
+The redesign must preserve:
+
+```text
+DEMO
+LIVE_UNCONNECTED
+LIVE_DISCOVERING
+LIVE_OPERATIONAL
+```
+
+Rules:
+
+## DEMO
+
+Can show synthetic charts, sample values and sample findings.
+
+Must clearly show:
+
+```text
+Synthetic evidence only.
+No production systems connected.
+Live execution disabled.
+```
+
+## LIVE_UNCONNECTED
+
+Must show:
+
+```text
+No production systems connected.
+Connect Microsoft 365 or another supported platform to begin discovery.
+```
+
+Must not show:
+
+* synthetic findings
+* synthetic values
+* fake charts
+* fake finance verification
+* fake trust percentages
+
+In LIVE_UNCONNECTED charts should show empty states, not demo data.
+
+## LIVE_DISCOVERING
+
+Can show discovered values only.
+
+Approved / Executed / Verified / Protected must show Pending until evidence exists.
+
+## LIVE_OPERATIONAL
+
+Can show full operational data.
+
+---
+
+# Part 4 — Implementation Requirements
+
+## 1. Create reusable visual components
+
+Add or update components such as:
+
+```text
+MetricCard
+MiniSparkline
+MiniBarChart
+ValueWaterfall
+ControlChainVisual
+RiskDonut
+OpportunityList
+ActionCard
+ProductPreviewPanel
+```
+
+Prefer pure React/CSS/SVG.
+
+Do not add heavy dependencies unless already present.
+
+---
+
+## 2. Create design tokens
+
+Centralise the theme in the existing CSS/theme system.
+
+Do not hardcode gold colours repeatedly across components.
+
+Use tokens/classes.
+
+---
+
+## 3. Preserve current routes and data contracts
+
+Do not break existing APIs.
+
+Do not rename routes unless necessary.
+
+Do not remove current data logic.
+
+Wrap and visualise existing data.
+
+---
+
+## 4. Improve responsiveness
+
+Landing page and platform must remain usable on:
+
+```text
+Desktop
+Tablet
+Mobile
+```
+
+Hero product preview should stack below copy on small screens.
+
+Dashboard cards should collapse into one/two columns.
+
+---
+
+# Part 5 — Acceptance Criteria
+
+Work is complete when:
+
+```text
+1. Landing page no longer feels like plain text on black.
+2. Hero includes a real product-style preview panel.
+3. Gold Economic Control visual system replaces teal/green as primary accent.
+4. Platform UI feels like an executive command center, not a database viewer.
+5. Executive KPI cards include visual data elements.
+6. Economic Control Chain is rendered as a visual connected chain.
+7. Value Waterfall is visible in the Command Center.
+8. Risk & Exposure Overview includes visual/ring/chart treatment.
+9. Recommended Next Actions are clickable decision cards.
+10. Sidebar and TopBar use the new premium design language.
+11. DEMO remains clearly labelled as synthetic.
+12. LIVE_UNCONNECTED never shows synthetic values, charts or findings.
+13. Typecheck passes.
+14. Full test suite passes.
+15. Visual browser verification has been performed after restarting the dev server.
+```
+
+Run:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Do not report completion until the browser has been visually checked.

@@ -1,2 +1,4 @@
 - [WorkspaceRuntimeState pattern](workspace-runtime-state.md) — four-state enum gates all synthetic fallbacks; test files must include runtimeState+connectedCount when constructing WorkspaceContext literals.
 - [Landing page CTA label](landing-page-cta.md) — getStartedLabel is 'Run Free Exposure Review' and getStartedHref is '/exposure-review/start' in PUBLIC_HEADER; tests that assert these values must match.
+- [Sidebar group label compatibility](sidebar-group-labels.md) — NAV_GROUPS group labels must stay as 'Auto Execution'/'Value Realisation'/'Protected Governance'/'Intelligence'/'Platform'; use displayLabel for visual renames. Tests import NAV_GROUPS directly and assert on label field.
+- [CommandView rendered HTML >1< trap](commandview-number-rendering.md) — LIVE_UNCONNECTED test asserts html.includes('Authorities Active</') && html.includes('>1<') must not both be true; numbered circles/buttons produce >1< so render as '{n}.' not '{n}'.
