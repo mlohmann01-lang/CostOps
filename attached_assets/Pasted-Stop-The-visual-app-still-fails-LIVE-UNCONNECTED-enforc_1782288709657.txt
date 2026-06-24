@@ -1,0 +1,156 @@
+Stop. The visual app still fails LIVE_UNCONNECTED enforcement.
+
+Current LIVE mode still shows:
+
+* Authorities Active = 1
+* Chain Stages Active = 1 / 7
+* ChatGPT / Slack / Tableau / Claude findings
+* Discover = Active
+* Outcome Finance Verified = $50,400
+* Recommended Next Actions from old live flow
+* "No Data — Connected, but no data has been recorded yet"
+
+Do not rely on the new helper-only tests. They are not catching the actual rendered page.
+
+Required fix:
+
+1. Add a rendered component test for `CommandView` in `LIVE_UNCONNECTED`.
+
+The test must render the actual `CommandView` component with:
+
+```ts
+workspace.runtimeState = "LIVE_UNCONNECTED"
+workspace.mode = "LIVE"
+workspace.connectedCount = 0
+```
+
+Then assert the rendered DOM does not contain:
+
+```text
+ChatGPT
+Slack
+Claude
+Tableau
+Dropbox
+$50,400
+1 / 7
+Authorities Active
+1
+Discover
+Active
+$0
+```
+
+And does contain:
+
+```text
+No production systems connected.
+Connect Microsoft 365 or another supported platform to begin discovery.
+No Findings Yet
+Connect a supported platform to begin discovery.
+Connect Microsoft 365
+Run Tenant Readiness
+Begin Discovery
+```
+
+2. Trace why `CommandView` is not receiving `runtimeState === "LIVE_UNCONNECTED"` in the browser.
+
+Add temporary console logging if needed:
+
+```ts
+console.log("CommandView workspace", workspace);
+```
+
+Verify browser runtime state is actually:
+
+```ts
+LIVE_UNCONNECTED
+```
+
+not:
+
+```ts
+LIVE_DISCOVERING
+```
+
+3. Fix connector count calculation.
+
+`connectedCount` must only count connectors where:
+
+```ts
+connector.status === "CONNECTED"
+```
+
+It must not count registered connectors, available connectors, capability registry entries, configured connector definitions, or demo connectors.
+
+If no production connector is connected, runtimeState must be:
+
+```ts
+LIVE_UNCONNECTED
+```
+
+4. Fix the banner copy.
+
+For `LIVE_UNCONNECTED`, replace:
+
+```text
+No Data
+Connected, but no data has been recorded yet for this view.
+```
+
+with:
+
+```text
+No production systems connected.
+Connect Microsoft 365 or another supported platform to begin discovery.
+```
+
+5. Fix `CommandView` directly, not just helpers.
+
+At the top of the component define:
+
+```ts
+const isLiveUnconnected = workspace.runtimeState === "LIVE_UNCONNECTED";
+```
+
+Then force all values:
+
+```ts
+const displayedAuthoritiesActive = isLiveUnconnected ? 0 : authoritiesActive;
+const displayedChainStagesActive = isLiveUnconnected ? 0 : chainStagesActive;
+const displayedAttentionItems = isLiveUnconnected ? [] : attentionItems;
+const displayedOutcomeFinance = isLiveUnconnected ? null : outcomeFinance;
+const displayedExecutiveValue = isLiveUnconnected ? null : executiveValue;
+```
+
+6. In LIVE_UNCONNECTED, do not call or consume demo/default data for:
+
+* executive risks
+* executive value
+* outcome finance
+* economic control chain
+* authorities
+* recommended actions
+
+7. Restart the dev server after the code change.
+
+Then visually verify in browser that LIVE mode shows:
+
+```text
+Authorities Active: 0
+Chain Stages Active: 0 / 7
+Verified Value: —
+Protected Value: —
+No Findings Yet
+All chain stages: Not Active
+Executive Value Snapshot: all —
+Outcome Finance Snapshot: all —
+Recommended Next Actions:
+1. Connect Microsoft 365
+2. Run Tenant Readiness
+3. Begin Discovery
+```
+
+Acceptance:
+
+Do not report success until the real browser screen matches the required LIVE_UNCONNECTED state. Tests alone are not sufficient.

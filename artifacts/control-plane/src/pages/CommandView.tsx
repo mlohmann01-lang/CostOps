@@ -47,7 +47,7 @@ const ONBOARDING_ACTIONS: NextAction[] = [
   { label: 'Begin Discovery', href: '/connectors' },
 ]
 
-export default function CommandView(_props: { params?: { domain?: string } } = {}) {
+export function CommandViewBody() {
   const executiveValue = useExecutiveValueData()
   const executivePriorities = useExecutivePrioritiesData()
   const executiveRisk = useExecutiveRiskData()
@@ -135,9 +135,14 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
   const fmtOrPending = (v: number) => isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : formatCurrency(v)
   const fmtFinance = (v: number | undefined) => isLiveUnconnected ? '—' : formatCurrency(v)
 
-  return <Shell><main style={{ padding: '24px clamp(18px, 3vw, 34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+  return <main data-testid='command-view-body' style={{ padding: '24px clamp(18px, 3vw, 34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
     <ExecutivePageHeader title='Executive Command Center' subtitle='A single orchestrated view of authorities, the economic control chain, value, finance and protection across Certen.' />
-    {dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
+    {isLiveUnconnected
+      ? <article data-testid='live-unconnected-notice' style={{ border: '0.5px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.03)', borderRadius: 14, padding: 16 }}>
+          <strong>No production systems connected.</strong>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-secondary)', fontSize: 13 }}>Connect Microsoft 365 or another supported platform to begin discovery.</p>
+        </article>
+      : (dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />)}
 
     <ExecutiveSection testId='executive-command-center-summary' title='Executive Summary'>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12 }}>
@@ -207,5 +212,9 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
             </div>)}
           </div>}
     </ExecutiveSection>
-  </main></Shell>
+  </main>
+}
+
+export default function CommandView(_props: { params?: { domain?: string } } = {}) {
+  return <Shell><CommandViewBody /></Shell>
 }
