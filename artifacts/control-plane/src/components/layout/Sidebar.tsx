@@ -100,11 +100,12 @@ export function Sidebar(){
 
   {/* Nav groups */}
   <div style={{flex:1,overflowY:'auto',padding:'10px 8px',minHeight:0}}>
-    {visibleGroups.map((group)=>{
+    {visibleGroups.map((group, gIdx)=>{
       const open=Boolean(openGroups[group.label])
       const containsActive=group.label===activeGroupLabel
       return (
-        <div key={group.label} style={{marginBottom:4}}>
+        <div key={group.label} style={{marginBottom:2}}>
+          {gIdx > 0 && <div style={{height:1,background:'rgba(245,196,81,0.08)',marginBottom:6,marginTop:2}}/>}
           <button
             type='button'
             aria-expanded={open}
@@ -112,7 +113,7 @@ export function Sidebar(){
             style={{
               width:'100%',display:'flex',alignItems:'center',gap:6,
               padding:'7px 8px',border:0,background:'transparent',
-              color:containsActive?'var(--accent)':'var(--text-muted)',
+              color:containsActive?'#F5C451':'var(--text-muted)',
               fontSize:10,fontWeight:800,letterSpacing:'0.16em',textTransform:'uppercase',
               cursor:'pointer',fontFamily:'inherit',borderRadius:6,
               transition:'color 0.15s',
@@ -122,7 +123,7 @@ export function Sidebar(){
               ? <ChevronDown size={11} style={{flexShrink:0}}/>
               : <ChevronRight size={11} style={{flexShrink:0}}/>}
             <span style={{flex:1,textAlign:'left'}}>{group.displayLabel ?? group.label}</span>
-            {containsActive && <span style={{width:5,height:5,borderRadius:'50%',background:'var(--accent)',flexShrink:0}}/>}
+            {containsActive && <span style={{width:5,height:5,borderRadius:'50%',background:'#F5C451',flexShrink:0}}/>}
           </button>
 
           {open && (
@@ -135,16 +136,17 @@ export function Sidebar(){
                     <div style={{
                       display:'flex',alignItems:'center',gap:9,
                       padding:'7px 10px 7px 12px',
-                      fontSize:13,fontWeight:active?600:400,
-                      color:active?'var(--accent-bright)':'var(--text-secondary)',
-                      background:active?'var(--accent-soft)':'transparent',
-                      borderLeft:`2px solid ${active?'var(--accent)':'transparent'}`,
+                      fontSize:13,fontWeight:active?700:400,
+                      color:active?'#FFCC4D':'var(--text-secondary)',
+                      background:active?'rgba(245,196,81,0.10)':'transparent',
+                      borderLeft:`3px solid ${active?'#F5C451':'transparent'}`,
                       borderRadius:'0 8px 8px 0',
                       transition:'all 0.12s',
+                      boxShadow:active?'inset 0 0 0 0 transparent, 0 0 12px rgba(245,196,81,0.06)':'none',
                     }}>
-                      <Icon size={13} style={{flexShrink:0,opacity:active?1:0.7}}/>
+                      <Icon size={13} style={{flexShrink:0,opacity:active?1:0.6,color:active?'#FFCC4D':'inherit'}}/>
                       <span style={{flex:1,lineHeight:1.3}}>{item.label}</span>
-                      {item.badge && <span style={{fontSize:9,fontWeight:800,color:'var(--surface-0)',background:'var(--accent)',borderRadius:999,padding:'1px 5px',lineHeight:'14px'}}>{item.badge}</span>}
+                      {item.badge && <span style={{fontSize:9,fontWeight:800,color:'var(--surface-0)',background:'#F5C451',borderRadius:999,padding:'1px 5px',lineHeight:'14px'}}>{item.badge}</span>}
                     </div>
                   </Link>
                 )

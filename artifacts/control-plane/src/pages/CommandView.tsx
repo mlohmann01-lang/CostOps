@@ -284,11 +284,11 @@ export function CommandViewBody() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
 
           {/* KPI: Potential Annual Value */}
-          <div style={{ background: 'var(--surface-1)', border: '1px solid var(--border-gold)', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 8px 30px rgba(212,160,23,0.06)' }}>
-            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-secondary)' }}>Potential Annual Value</div>
-            <div style={{ fontSize: 38, fontWeight: 800, letterSpacing: '-1.5px', color: 'var(--accent-bright)', lineHeight: 1 }}>{fmtOrDash(identifiedAnnualValue)}</div>
-            <MiniSparkline values={sparklines.identified} color="var(--accent-bright)" />
-            {!isLiveUnconnected && <span style={{ alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: 'var(--accent-bright)', background: 'var(--accent-soft)', borderRadius: 999, padding: '3px 10px', border: '1px solid rgba(212,160,23,0.3)' }}>↑ Identified</span>}
+          <div style={{ background: 'var(--surface-0)', border: '1px solid rgba(245,196,81,0.4)', borderRadius: 20, padding: 24, display: 'flex', flexDirection: 'column', gap: 10, boxShadow: '0 0 32px rgba(245,196,81,0.10), inset 0 1px 0 rgba(245,196,81,0.12)' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-muted)' }}>Potential Annual Value</div>
+            <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px', color: '#F5C451', lineHeight: 1 }}>{fmtOrDash(identifiedAnnualValue)}</div>
+            <MiniSparkline values={sparklines.identified} color="#F5C451" />
+            {!isLiveUnconnected && <span style={{ alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: '#FFCC4D', background: 'rgba(245,196,81,0.1)', borderRadius: 999, padding: '3px 10px', border: '1px solid rgba(245,196,81,0.4)' }}>↑ Identified</span>}
           </div>
 
           {/* KPI: Verified Value */}
@@ -333,25 +333,25 @@ export function CommandViewBody() {
       <ExecutiveSection testId='executive-command-center-chain' title="Economic Control Chain Status">
         <div style={{ background: 'var(--surface-0)', borderRadius: 20, border: '1px solid var(--border-default)', padding: '28px 32px', position: 'relative', overflowX: 'auto' }}>
           {/* Connecting track */}
-          <div style={{ position: 'absolute', top: '50%', left: 80, right: 80, height: 2, background: isLiveUnconnected ? 'rgba(255,255,255,0.06)' : 'linear-gradient(90deg, var(--accent) 0%, var(--border-default) 60%)', zIndex: 0, transform: 'translateY(-50%)', borderRadius: 1 }} />
+          <div style={{ position: 'absolute', top: '50%', left: 80, right: 80, height: 2, background: isLiveUnconnected ? 'rgba(255,255,255,0.05)' : 'linear-gradient(90deg, rgba(245,196,81,0.7) 0%, rgba(245,196,81,0.15) 55%, rgba(255,255,255,0.05) 100%)', zIndex: 0, transform: 'translateY(-50%)', borderRadius: 1 }} />
 
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, position: 'relative', zIndex: 1, minWidth: 640 }}>
             {economicControlChain.stages.map((stage, idx) => {
               const isActive = !isLiveUnconnected && stage.active
               const isComplete = isActive && idx < chainStagesActive - 1
-              const nodeColor = isLiveUnconnected ? 'var(--surface-2)' : isComplete ? 'rgba(46,204,113,0.15)' : isActive ? 'var(--accent-soft)' : 'var(--surface-2)'
-              const borderColor = isLiveUnconnected ? 'var(--border-default)' : isComplete ? 'var(--success, #2ECC71)' : isActive ? 'var(--accent)' : 'var(--border-default)'
-              const iconColor = isLiveUnconnected ? 'var(--text-muted)' : isComplete ? 'var(--success, #2ECC71)' : isActive ? 'var(--accent-bright)' : 'var(--text-muted)'
+              const nodeColor = isLiveUnconnected ? 'var(--surface-2)' : isComplete ? 'rgba(46,204,113,0.15)' : isActive ? 'rgba(245,196,81,0.12)' : 'var(--surface-2)'
+              const borderColor = isLiveUnconnected ? 'var(--border-default)' : isComplete ? '#18C37E' : isActive ? 'rgba(245,196,81,0.55)' : 'rgba(255,255,255,0.1)'
+              const iconColor = isLiveUnconnected ? 'var(--text-muted)' : isComplete ? '#18C37E' : isActive ? '#FFCC4D' : 'var(--text-muted)'
               const labelColor = isActive || isComplete ? 'var(--text-primary)' : 'var(--text-muted)'
               return (
                 <div key={stage.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, flex: 1 }}>
                   <div style={{
                     width: 52, height: 52, borderRadius: '50%',
                     background: nodeColor,
-                    border: `2px solid ${borderColor}`,
+                    border: `1.5px solid ${borderColor}`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: iconColor,
-                    boxShadow: isActive && !isComplete ? '0 0 24px rgba(212,160,23,0.35)' : isComplete ? '0 0 16px rgba(46,204,113,0.2)' : 'none',
+                    boxShadow: isActive && !isComplete ? '0 0 26px rgba(245,196,81,0.30), 0 0 8px rgba(245,196,81,0.15)' : isComplete ? '0 0 16px rgba(24,195,126,0.25)' : 'none',
                     transition: 'all 0.2s',
                   }}>
                     {CHAIN_ICON[stage.key] ?? <Zap size={16} />}
@@ -384,17 +384,38 @@ export function CommandViewBody() {
         {/* Labels: Identified, Approved, Executed, Verified, Protected */}
         <ExecutiveSection testId='executive-command-center-value-snapshot' title="Executive Value Snapshot">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            {/* Value Waterfall */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {waterfallData.map((d) => (
-                <div key={d.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 72, fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.4px', flexShrink: 0 }}>{d.label}</div>
-                  <div style={{ flex: 1, background: 'var(--surface-2)', height: 28, borderRadius: 14, overflow: 'hidden', position: 'relative' }}>
-                    <div style={{ height: '100%', width: isLiveUnconnected ? '4%' : `${Math.max((d.value / maxVal) * 100, 4)}%`, background: d.color, borderRadius: 14, opacity: isLiveUnconnected ? 0.2 : 1, transition: 'width 1.2s cubic-bezier(0.25, 1, 0.5, 1)' }} />
+            {/* Value Waterfall — hero visualization */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+              {waterfallData.map((d, i) => {
+                const isGold = d.color === 'var(--accent)' || d.color === 'var(--accent-bright)'
+                const barFill = isGold
+                  ? 'linear-gradient(90deg, #F5C451 0%, #FFCC4D 100%)'
+                  : 'linear-gradient(90deg, #18C37E 0%, #22D98E 100%)'
+                const valColor = isGold ? '#F5C451' : '#18C37E'
+                return (
+                  <div key={d.label}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+                      <div style={{ width: 78, fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', flexShrink: 0 }}>{d.label}</div>
+                      <div style={{ flex: 1, background: 'rgba(255,255,255,0.04)', height: 48, borderRadius: 10, overflow: 'hidden', position: 'relative' }}>
+                        <div style={{
+                          height: '100%',
+                          width: isLiveUnconnected ? '3%' : `${Math.max((d.value / maxVal) * 100, 3)}%`,
+                          background: barFill,
+                          borderRadius: 10,
+                          opacity: isLiveUnconnected ? 0.12 : 1,
+                          transition: 'width 1.4s cubic-bezier(0.22, 1, 0.36, 1)',
+                        }} />
+                      </div>
+                      <div style={{ width: 100, textAlign: 'right', fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px', color: isLiveUnconnected ? 'var(--text-muted)' : valColor, flexShrink: 0 }}>{fmtOrPending(d.value)}</div>
+                    </div>
+                    {i < waterfallData.length - 1 && (
+                      <div style={{ display: 'flex', alignItems: 'center', height: 14, paddingLeft: 92 }}>
+                        <div style={{ width: 1, height: '100%', background: 'rgba(255,255,255,0.06)' }} />
+                      </div>
+                    )}
                   </div>
-                  <div style={{ width: 90, textAlign: 'right', fontSize: 13, fontWeight: 800, color: 'var(--text-primary)', flexShrink: 0 }}>{fmtOrPending(d.value)}</div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             {/* Opportunity Portfolio (demo only) */}

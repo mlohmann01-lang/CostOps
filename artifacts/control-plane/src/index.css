@@ -73,10 +73,10 @@
   --surface-1: #101214;
   --surface-card: #121416;
 
-  --accent: #D4A017;
-  --accent-bright: #F5C451;
-  --accent-soft: rgba(212,160,23,0.14);
-  --accent-glow: rgba(212,160,23,0.28);
+  --accent: #F5C451;
+  --accent-bright: #FFCC4D;
+  --accent-soft: rgba(245,196,81,0.08);
+  --accent-glow: rgba(245,196,81,0.22);
   --border-accent: 0.5px solid rgba(245,196,81,0.35);
   --border-gold: rgba(245,196,81,0.35);
 
@@ -88,10 +88,10 @@
   --border-hover:     0.5px solid rgba(255,255,255,0.16);
   --border-emphasis:  0.5px solid rgba(255,255,255,0.20);
   
-  --teal: #D4A017;
-  --teal-light: #F5C451;
-  --teal-bg: rgba(212,160,23,0.12);
-  --teal-bg-strong: rgba(212,160,23,0.20);
+  --teal: #F5C451;
+  --teal-light: #FFCC4D;
+  --teal-bg: rgba(245,196,81,0.08);
+  --teal-bg-strong: rgba(245,196,81,0.16);
   --border-teal: 0.5px solid rgba(245,196,81,0.35);
 
   --border-amber:     0.5px solid rgba(239,159,39,0.25);
