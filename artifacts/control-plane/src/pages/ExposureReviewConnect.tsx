@@ -131,11 +131,54 @@ export default function ExposureReviewConnect() {
     return (
       <div style={pageStyle}>
         <section style={sectionStyle}>
-          <a href="/exposure-review" style={{ textDecoration: 'none', color: 'inherit', fontSize: 14, fontWeight: 500 }}>
+          <a href="/welcome" style={{ textDecoration: 'none', color: 'inherit', fontSize: 14, fontWeight: 500 }}>
             ← Certen
           </a>
           <h1 style={{ fontSize: 30, fontWeight: 800, margin: '24px 0 0' }}>Connect Microsoft 365</h1>
-          <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', marginTop: 12 }}>{NOT_CONFIGURED_MESSAGE}</p>
+          <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', marginTop: 12, lineHeight: 1.65 }}>
+            Live Microsoft 365 connection is not enabled in this environment.
+          </p>
+          <p style={{ fontSize: 14, color: 'var(--text-secondary, #b7bcc4)', marginTop: 8, lineHeight: 1.65 }}>
+            You can continue with demo data or request a live onboarding session.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 28 }}>
+            <a
+              href="/exposure-review/report?mode=demo"
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                padding: '13px 0',
+                borderRadius: 8,
+                background: TEAL,
+                color: '#06201c',
+                fontWeight: 500,
+                fontSize: 15,
+                textDecoration: 'none',
+              }}
+            >
+              View Demo Exposure Report
+            </a>
+            <a
+              href="mailto:onboarding@certen.io?subject=Live%20Onboarding%20Request"
+              style={{
+                display: 'block',
+                textAlign: 'center',
+                padding: '13px 0',
+                borderRadius: 8,
+                background: 'transparent',
+                color: 'var(--text-primary, #f5f5f5)',
+                fontWeight: 500,
+                fontSize: 15,
+                textDecoration: 'none',
+                border: '0.5px solid rgba(255,255,255,0.25)',
+              }}
+            >
+              Request Live Onboarding
+            </a>
+          </div>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)', marginTop: 20 }}>
+            Read-only review · No licence changes · No automated execution · Access revocable at any time
+          </p>
         </section>
       </div>
     )

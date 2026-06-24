@@ -59,6 +59,8 @@ import OutcomeFinance from './pages/executive/OutcomeFinance'
 import ExposureReport from './pages/ExposureReport'
 import LandingPage from './pages/LandingPage'
 import ExposureReviewStart from './pages/ExposureReviewStart'
+import ExposureReviewSignup from './pages/ExposureReviewSignup'
+import ExposureReviewWorkspace from './pages/ExposureReviewWorkspace'
 import ExposureReviewConnect from './pages/ExposureReviewConnect'
 import ExposureReviewDiscovery from './pages/ExposureReviewDiscovery'
 import ExposureReviewReport from './pages/ExposureReviewReport'
@@ -508,6 +510,8 @@ function Router() {
           RequireRuntime, not wrapped in <Shell>; reachable only by URL/CTA
           chaining like /welcome above. */}
       <Route path="/exposure-review" component={ExposureReviewStart} />
+      <Route path="/exposure-review/start" component={ExposureReviewSignup} />
+      <Route path="/exposure-review/workspace" component={ExposureReviewWorkspace} />
       <Route path="/exposure-review/connect" component={ExposureReviewConnect} />
       <Route path="/exposure-review/discovery" component={ExposureReviewDiscovery} />
       <Route path="/exposure-review/report" component={ExposureReviewReport} />

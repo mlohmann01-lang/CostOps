@@ -81,11 +81,10 @@ export const PUBLIC_HEADER: PublicHeaderContent = {
   // TODO: confirm canonical public sign-in route once a dedicated marketing
   // auth entry point exists; reusing the app's existing /login route for now.
   signInHref: '/login',
-  getStartedLabel: 'Get started',
-  // Program 10: routed into the new M365 Exposure Review journey rather
-  // than the in-page anchor, so "Get started" begins the actual prospect
-  // flow (Connect -> Discovery -> Report -> Executive Review -> Certen).
-  getStartedHref: '/exposure-review',
+  getStartedLabel: 'Run Free Exposure Review',
+  // P1: routes to the signup/access form rather than directly to connect,
+  // so prospects create a workspace session before hitting M365 connect.
+  getStartedHref: '/exposure-review/start',
 }
 
 export interface PublicFooterContent {

@@ -277,7 +277,7 @@ export default function LandingPage() {
           {hero.subheadline}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 28, flexWrap: 'wrap' }}>
-          <PrimaryButton href="/exposure-review">{hero.primaryCta}</PrimaryButton>
+          <PrimaryButton href="/exposure-review/start">{hero.primaryCta}</PrimaryButton>
           <SecondaryButton href="#economic-control-chain">{hero.secondaryCta}</SecondaryButton>
         </div>
         <div style={{ marginTop: 14 }}>
@@ -330,6 +330,48 @@ export default function LandingPage() {
           }}
         >
           {hero.credibilityBridge}
+        </p>
+      </section>
+
+      {/* Section 1B — Proof Chain (P3) */}
+      <section style={{ ...sectionStyle, paddingTop: '3rem', paddingBottom: '3rem' }}>
+        <h2 style={{ fontSize: 26, fontWeight: 700, textAlign: 'center', margin: '0 0 8px' }}>From exposure to verified value</h2>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', textAlign: 'center', maxWidth: 680, margin: '0 auto 32px', lineHeight: 1.6 }}>
+          Certen does not stop at recommendations. Every opportunity is tracked through evidence, approval, execution, finance validation and drift protection.
+        </p>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            border: BORDER_DEFAULT,
+            borderRadius: 14,
+            overflow: 'hidden',
+          }}
+        >
+          {[
+            { step: '1', label: 'Potential Value Identified', value: '$320,000', body: 'Unused licences, ownerless assets, duplicate tools and governance exposure.' },
+            { step: '2', label: 'Governed Actions Approved', value: '$210,000', body: 'Recommendations converted into controlled actions with approval and trust checks.' },
+            { step: '3', label: 'Finance Verified', value: '$186,000', body: 'Realised value reconciled against finance-confirmed figures.' },
+            { step: '4', label: 'Protected Value', value: '$174,000', body: 'Savings monitored for drift, reactivation and ownership decay.' },
+          ].map((card, idx) => (
+            <div
+              key={card.step}
+              style={{
+                padding: '24px 20px',
+                textAlign: 'center',
+                borderLeft: idx === 0 ? 'none' : '0.5px solid rgba(255,255,255,0.08)',
+              }}
+            >
+              <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: 'var(--text-tertiary, #8a8f99)', marginBottom: 8 }}>
+                {card.step}. {card.label}
+              </div>
+              <div style={{ fontSize: 30, fontWeight: 800, color: TEAL, margin: '6px 0 10px' }}>{card.value}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary, #b7bcc4)', lineHeight: 1.6 }}>{card.body}</div>
+            </div>
+          ))}
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--text-secondary, #b7bcc4)', textAlign: 'center', marginTop: 18, marginBottom: 0 }}>
+          Every figure is evidence-backed, traceable and exportable into an executive proof pack.
         </p>
       </section>
 
@@ -469,7 +511,7 @@ export default function LandingPage() {
           </div>
           <div style={{ marginTop: 28 }}>
             <a
-              href="/exposure-review"
+              href="/exposure-review/start"
               style={{
                 display: 'block',
                 width: '100%',
@@ -494,6 +536,40 @@ export default function LandingPage() {
             {exposureReportSection.illustrativeNote}
           </p>
         </div>
+      </section>
+
+      {/* Section 4B — Platform Expansion (P5) */}
+      <section style={sectionStyle}>
+        <h2 style={{ fontSize: 26, fontWeight: 700, textAlign: 'center', margin: '0 0 10px', lineHeight: 1.3 }}>
+          Start with Microsoft 365. Expand into economic control.
+        </h2>
+        <p style={{ fontSize: 15, color: 'var(--text-secondary, #b7bcc4)', textAlign: 'center', maxWidth: 680, margin: '0 auto 32px', lineHeight: 1.6 }}>
+          The free exposure review is the first wedge. Certen is built to connect spend, ownership, usage, risk and verified outcomes across the technology estate.
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 14 }}>
+          {[
+            { title: 'Microsoft 365', body: 'Unused licences, inactive users, ownership gaps and Copilot exposure.' },
+            { title: 'AI Platforms', body: 'AI assets, models, agents, token spend, shadow AI and outcome attribution.' },
+            { title: 'SaaS Applications', body: 'Duplication, under-utilisation, renewal exposure and business ownership.' },
+            { title: 'Cloud Platforms', body: 'Spend, rightsizing, idle resources, tagging gaps and optimisation actions.' },
+            { title: 'ITAM / Contracts', body: 'Entitlements, renewals, vendor exposure and commercial governance.' },
+            { title: 'ServiceNow / Workflow', body: 'Governed action execution, approval evidence and operational verification.' },
+            { title: 'Finance', body: 'Projected value, realised value, variance and finance reconciliation.' },
+            { title: 'Executive Proof Packs', body: 'Board, CFO, CIO, procurement and audit-ready evidence packs.' },
+          ].map((cap) => (
+            <div key={cap.title} style={cardStyle}>
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 8 }}>{cap.title}</div>
+              <div style={{ fontSize: 13, color: 'var(--text-secondary, #b7bcc4)', lineHeight: 1.6 }}>{cap.body}</div>
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 14, marginTop: 36, flexWrap: 'wrap' }}>
+          <PrimaryButton href="/exposure-review/start">Run Free Exposure Review</PrimaryButton>
+          <SecondaryButton href="/welcome#executive-review">Book Executive Review</SecondaryButton>
+        </div>
+        <p style={{ fontSize: 12, color: 'var(--text-tertiary, #8a8f99)', textAlign: 'center', marginTop: 14, marginBottom: 0 }}>
+          Read-only review. No licence changes. No automated execution. Access revocable at any time.
+        </p>
       </section>
 
       {/* Section 5 — Questions Certen Answers */}
