@@ -32,6 +32,7 @@ import { getExecutiveDecisionAuthority } from "../executive-decision-authority/e
 import { getExecutiveExperienceAuthority } from "../executive-experience/executive-experience-authority";
 import { getScenarioPlanningAuthority } from "../scenario-planning/scenario-planning-authority";
 import { getRecommendationOrchestrationAuthority } from "../recommendation-orchestration/recommendation-orchestration-authority";
+import { getClosedLoopOptimisationAuthority } from "../closed-loop-optimisation/closed-loop-optimisation-authority";
 
 const executiveProofPackService = new ExecutiveProofPackService();
 
@@ -158,6 +159,12 @@ export const AUTHORITY_REGISTRY: AuthorityRegistryEntry[] = [
     name: "Recommendation Orchestration Authority",
     kind: "TENANT_SCOPED",
     resolve: (tenantId) => getRecommendationOrchestrationAuthority(tenantId as string),
+  },
+  {
+    id: "closed-loop-optimisation-authority",
+    name: "Closed Loop Optimisation Authority",
+    kind: "TENANT_SCOPED",
+    resolve: (tenantId) => getClosedLoopOptimisationAuthority(tenantId as string),
   },
 ];
 

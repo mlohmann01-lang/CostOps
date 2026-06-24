@@ -25,6 +25,7 @@ export const dbIntegrationTests = new Set([
   'executive-experience.test.ts',
   'scenario-planning.test.ts',
   'recommendation-orchestration.test.ts',
+  'closed-loop-optimisation.test.ts',
 ]);
 
 const allTests = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts'));

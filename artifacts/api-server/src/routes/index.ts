@@ -98,6 +98,7 @@ import executiveDecisionAuthorityRouter from "./executive-decision-authority";
 import executiveExperienceRouter from "./executive-experience";
 import scenarioPlanningRouter from "./scenario-planning";
 import recommendationOrchestrationRouter from "./recommendation-orchestration";
+import closedLoopOptimisationRouter from "./closed-loop-optimisation";
 import exposureReviewRouter from "./exposure-review";
 import informationGovernanceRouter from "./information-governance";
 import tenantIsolationRouter from "./tenant-isolation";
@@ -173,6 +174,7 @@ router.use("/executive-decision-authority", requireTenantContext(), requireCapab
 router.use("/executive-experience", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), executiveExperienceRouter);
 router.use("/scenario-planning", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), scenarioPlanningRouter);
 router.use("/recommendation-orchestration", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), recommendationOrchestrationRouter);
+router.use("/closed-loop-optimisation", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), closedLoopOptimisationRouter);
 router.use("/campaigns", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), campaignsRouter);
 router.use("/schedules", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), schedulesRouter);
 router.use("/approval-workflows", requireTenantContext(), requireCapability("READ_RECOMMENDATIONS"), approvalWorkflowsRouter);
