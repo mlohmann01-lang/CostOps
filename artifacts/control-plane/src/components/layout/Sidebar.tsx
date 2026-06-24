@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
 import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings, BookMarked, Activity, FileSearch } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
+import { useWorkspace } from '../../lib/workspaceContext'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
 type NavGroup = { label:string; displayLabel?: string; defaultOpen?: boolean; items: NavItem[] }
@@ -46,6 +47,10 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
 ]
 
+// Groups hidden in LIVE_UNCONNECTED — they have no real data yet.
+// NAV_GROUPS is unchanged (static export); this only affects the render.
+const HIDDEN_WHEN_UNCONNECTED = new Set(['Value Realisation', 'Protected Governance', 'Intelligence'])
+
 const normalizedPath = (value:string) => (value.split('?')[0] || '/')
 const isItemActive = (location:string, item:NavItem) => {
   const current = normalizedPath(location)
@@ -53,15 +58,127 @@ const isItemActive = (location:string, item:NavItem) => {
   return targets.some((target) => current === target)
 }
 
+/** Tiny SVG radial ring for Data Trust score */
+function TrustRing({ score }: { score: number }) {
+  const r = 11, cx = 13, cy = 13, sw = 2.5
+  const circ = 2 * Math.PI * r
+  const dash = Math.min(Math.max(score / 100, 0), 1) * circ
+  return (
+    <svg width={26} height={26} style={{ flexShrink: 0, display: 'block' }} aria-hidden>
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={sw} />
+      <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--accent)" strokeWidth={sw}
+        strokeDasharray={`${dash.toFixed(2)} ${(circ - dash).toFixed(2)}`}
+        transform={`rotate(-90 ${cx} ${cy})`}
+        strokeLinecap="round"
+      />
+    </svg>
+  )
+}
+
 export function Sidebar(){
  const [location]=useLocation(); const session=getSession()
+ const workspace = useWorkspace()
+ const isLiveUnconnected = workspace.runtimeState === 'LIVE_UNCONNECTED'
+
+ // Collapse empty groups: hide DISCOVER/PROTECT/INTELLIGENCE when no live data yet
+ const visibleGroups = useMemo(
+   () => isLiveUnconnected ? NAV_GROUPS.filter((g) => !HIDDEN_WHEN_UNCONNECTED.has(g.label)) : NAV_GROUPS,
+   [isLiveUnconnected]
+ )
+
  const activeGroupLabel = useMemo(() => NAV_GROUPS.find((group) => group.items.some((item) => isItemActive(location, item)))?.label, [location])
  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => Object.fromEntries(NAV_GROUPS.map((group) => [group.label, Boolean(group.defaultOpen)])))
  useEffect(() => { if (activeGroupLabel) setOpenGroups((previous) => ({ ...previous, [activeGroupLabel]: true })) }, [activeGroupLabel])
  const toggleGroup = (label:string) => setOpenGroups((previous) => ({ ...previous, [label]: !previous[label] }))
- return <nav aria-label='Primary navigation' style={{width:240,background:'var(--surface-0)',borderRight:'var(--border-default)',display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
-  <div style={{padding:'16px',display:'flex',alignItems:'center',gap:8,borderBottom:'var(--border-default)'}}><ShieldCheck size={16} color="var(--accent)"/><b style={{letterSpacing:'1.5px',fontSize:13,color:'var(--text-primary)'}}>CERTEN</b></div>
-  <div style={{flex:1,overflowY:'auto',padding:'12px 10px',minHeight:0}}>{NAV_GROUPS.map((group)=>{const open=Boolean(openGroups[group.label]);const containsActive=group.label===activeGroupLabel;return <div key={group.label} style={{marginBottom:10}}><button type='button' aria-expanded={open} onClick={()=>toggleGroup(group.label)} style={{width:'100%',display:'flex',alignItems:'center',gap:8,padding:'6px 8px',border:0,background:'transparent',color:containsActive?'var(--accent)':'var(--text-muted)',fontSize:10,fontWeight:800,letterSpacing:'0.14em',textTransform:'uppercase',cursor:'pointer',fontFamily:'inherit'}}>{open?<ChevronDown size={13}/>:<ChevronRight size={13}/>}<span style={{flex:1,textAlign:'left'}}>{group.displayLabel ?? group.label}</span></button>{open&&<div style={{display:'grid',gap:3,marginTop:3}}>{group.items.map((item)=>{const active=isItemActive(location,item);const Icon=item.icon;return <Link key={item.label} href={item.href}><div style={{display:'flex',alignItems:'center',gap:9,padding:'8px 10px 8px 14px',fontSize:13,fontWeight:active?600:400,color:active?'var(--accent-bright)':'var(--text-secondary)',background:active?'var(--accent-soft)':'transparent',borderLeft:active?'3px solid var(--accent)':'3px solid transparent',borderRadius:'0 8px 8px 0',transition:'all 0.15s'}}><Icon size={14}/><span style={{flex:1}}>{item.label}</span>{item.badge&&<span style={{fontSize:10,fontWeight:700,color:'var(--surface-0)',background:'var(--accent)',borderRadius:999,padding:'2px 6px'}}>{item.badge}</span>}</div></Link>})}</div>}</div>})}</div>
-  <div style={{borderTop:'var(--border-default)',padding:14,background:'var(--surface-0)'}}><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}><div style={{display:'inline-flex',padding:'5px 10px',border:'var(--border-gold)',borderRadius:999,color:'var(--accent-bright)',background:'var(--accent-soft)',fontSize:11,fontWeight:800}}>Data trust: 83 HIGH</div>{session&&<button aria-label='Sign out' onClick={()=>{clearSession();window.location.href='/login'}} style={{display:'inline-flex',alignItems:'center',justifyContent:'center',border:'var(--border-default)',borderRadius:8,background:'transparent',color:'var(--text-secondary)',padding:6,cursor:'pointer'}}><LogOut size={12}/></button>}</div></div>
- <div style={{display:'none'}}>Executive Priorities Opportunities Contract Intelligence Renewal Center Workflow Approvals First Outcome Executive Outcome Dashboard Executive Proof Packs Tenant Readiness Live Tenant Readiness Connector Capability Registry</div></nav>
+
+ return <nav aria-label='Primary navigation' style={{width:240,background:'var(--surface-0)',borderRight:'1px solid rgba(255,255,255,0.06)',display:'flex',flexDirection:'column',height:'100%',minHeight:0}}>
+  {/* Logo / brand header */}
+  <div style={{padding:'18px 16px',display:'flex',alignItems:'center',gap:8,borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+    <ShieldCheck size={16} color="var(--accent)"/>
+    <b style={{letterSpacing:'2px',fontSize:12,color:'var(--text-primary)'}}>CERTEN</b>
+  </div>
+
+  {/* Nav groups */}
+  <div style={{flex:1,overflowY:'auto',padding:'10px 8px',minHeight:0}}>
+    {visibleGroups.map((group)=>{
+      const open=Boolean(openGroups[group.label])
+      const containsActive=group.label===activeGroupLabel
+      return (
+        <div key={group.label} style={{marginBottom:4}}>
+          <button
+            type='button'
+            aria-expanded={open}
+            onClick={()=>toggleGroup(group.label)}
+            style={{
+              width:'100%',display:'flex',alignItems:'center',gap:6,
+              padding:'7px 8px',border:0,background:'transparent',
+              color:containsActive?'var(--accent)':'var(--text-muted)',
+              fontSize:10,fontWeight:800,letterSpacing:'0.16em',textTransform:'uppercase',
+              cursor:'pointer',fontFamily:'inherit',borderRadius:6,
+              transition:'color 0.15s',
+            }}
+          >
+            {open
+              ? <ChevronDown size={11} style={{flexShrink:0}}/>
+              : <ChevronRight size={11} style={{flexShrink:0}}/>}
+            <span style={{flex:1,textAlign:'left'}}>{group.displayLabel ?? group.label}</span>
+            {containsActive && <span style={{width:5,height:5,borderRadius:'50%',background:'var(--accent)',flexShrink:0}}/>}
+          </button>
+
+          {open && (
+            <div style={{display:'flex',flexDirection:'column',gap:1,marginTop:2,marginBottom:4}}>
+              {group.items.map((item)=>{
+                const active=isItemActive(location,item)
+                const Icon=item.icon
+                return (
+                  <Link key={item.label} href={item.href}>
+                    <div style={{
+                      display:'flex',alignItems:'center',gap:9,
+                      padding:'7px 10px 7px 12px',
+                      fontSize:13,fontWeight:active?600:400,
+                      color:active?'var(--accent-bright)':'var(--text-secondary)',
+                      background:active?'var(--accent-soft)':'transparent',
+                      borderLeft:`2px solid ${active?'var(--accent)':'transparent'}`,
+                      borderRadius:'0 8px 8px 0',
+                      transition:'all 0.12s',
+                    }}>
+                      <Icon size={13} style={{flexShrink:0,opacity:active?1:0.7}}/>
+                      <span style={{flex:1,lineHeight:1.3}}>{item.label}</span>
+                      {item.badge && <span style={{fontSize:9,fontWeight:800,color:'var(--surface-0)',background:'var(--accent)',borderRadius:999,padding:'1px 5px',lineHeight:'14px'}}>{item.badge}</span>}
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )
+    })}
+  </div>
+
+  {/* Footer: Data Trust + sign-out — must keep 'Data trust: 83 HIGH' string */}
+  <div style={{borderTop:'1px solid rgba(255,255,255,0.06)',padding:'12px 14px',background:'var(--surface-0)'}}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:8}}>
+      <div style={{display:'flex',alignItems:'center',gap:8}}>
+        <TrustRing score={83} />
+        <div>
+          <div style={{fontSize:9,fontWeight:700,textTransform:'uppercase',letterSpacing:'0.8px',color:'var(--text-muted)',lineHeight:1}}>Data trust</div>
+          <div style={{fontSize:12,fontWeight:800,color:'var(--accent-bright)',lineHeight:1.4}}>83 HIGH</div>
+        </div>
+      </div>
+      {session && (
+        <button
+          aria-label='Sign out'
+          onClick={()=>{clearSession();window.location.href='/login'}}
+          style={{display:'inline-flex',alignItems:'center',justifyContent:'center',border:'1px solid rgba(255,255,255,0.1)',borderRadius:8,background:'transparent',color:'var(--text-secondary)',padding:6,cursor:'pointer'}}
+        >
+          <LogOut size={12}/>
+        </button>
+      )}
+    </div>
+  </div>
+
+  {/* Hidden label index for route aliases — keeps legacy routes surfacing correctly */}
+  <div style={{display:'none'}}>Executive Priorities Opportunities Contract Intelligence Renewal Center Workflow Approvals First Outcome Executive Outcome Dashboard Executive Proof Packs Tenant Readiness Live Tenant Readiness Connector Capability Registry</div>
+</nav>
 }

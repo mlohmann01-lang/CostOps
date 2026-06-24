@@ -1,0 +1,600 @@
+Executive Command Center Visual Dashboard v2
+
+## Objective
+
+The landing page redesign is complete.
+
+Do not redesign the landing page further.
+
+Focus exclusively on transforming the Executive Command Center from a text-heavy interface into a visual executive operating system.
+
+The current Command Center is still:
+
+* too many text cards
+* too little visual hierarchy
+* almost no charts
+* no dashboard storytelling
+* weak distinction between value, risk, proof and action
+
+The goal is to make executives understand the state of their technology estate within 10 seconds.
+
+---
+
+# Critical Rule
+
+Do not break runtime-state enforcement.
+
+All visual components must respect:
+
+```text
+DEMO
+LIVE_UNCONNECTED
+LIVE_DISCOVERING
+LIVE_OPERATIONAL
+```
+
+No synthetic values may appear in:
+
+```text
+LIVE_UNCONNECTED
+```
+
+Charts must render empty states instead.
+
+---
+
+# Executive Command Center Layout
+
+Rebuild the Overview page around four visual layers.
+
+---
+
+# Layer 1 — Executive KPI Bar
+
+Replace the current Executive Summary cards.
+
+Create a premium KPI strip.
+
+Metrics:
+
+```text
+Potential Annual Value
+Verified Value
+Protected Value
+Finance Verified
+```
+
+Each KPI card must include:
+
+```text
+Large number
+Status indicator
+Trend sparkline
+Evidence badge
+```
+
+Examples:
+
+```text
+Potential Annual Value
+$576,000
+↑ 12%
+
+Verified Value
+$186,000
+Evidence Backed
+
+Protected Value
+$174,000
+Protected
+
+Finance Verified
+96%
+Finance Confirmed
+```
+
+---
+
+## Runtime Rules
+
+LIVE_UNCONNECTED:
+
+```text
+—
+No Data
+```
+
+No fake numbers.
+
+DEMO:
+
+Use demo values.
+
+LIVE_DISCOVERING:
+
+Only show values actually discovered.
+
+Verified/Protected remain Pending if not yet available.
+
+LIVE_OPERATIONAL:
+
+Show real values.
+
+---
+
+# Layer 2 — Economic Control Chain Visual
+
+Current implementation:
+
+```text
+1 Discover
+2 Own
+3 Analyse
+...
+```
+
+This is not acceptable.
+
+Replace with a visual chain.
+
+Requirements:
+
+Use:
+
+```text
+○────○────○────○────○────○────○
+```
+
+conceptually.
+
+Each node:
+
+```text
+Discover
+Own
+Analyse
+Approve
+Execute
+Verify
+Protect
+```
+
+Visual states:
+
+Green:
+
+```text
+Completed
+```
+
+Gold:
+
+```text
+Current stage
+```
+
+Grey:
+
+```text
+Not started
+```
+
+Each node should display:
+
+```text
+icon
+title
+status
+```
+
+Optional:
+
+```text
+stage count
+```
+
+---
+
+## Runtime Rules
+
+LIVE_UNCONNECTED:
+
+All nodes grey.
+
+No active stage.
+
+DEMO:
+
+Demo progression allowed.
+
+LIVE_DISCOVERING:
+
+Discover active.
+
+Remaining stages pending.
+
+LIVE_OPERATIONAL:
+
+Real chain state.
+
+---
+
+# Layer 3 — Executive Analytics Row
+
+Create three visual panels.
+
+---
+
+## Panel A — Value Waterfall
+
+Most important chart.
+
+Show:
+
+```text
+Identified
+Approved
+Executed
+Verified
+Protected
+```
+
+as a value progression.
+
+Visual:
+
+```text
+576k
+ ↓
+216k
+ ↓
+186k
+ ↓
+174k
+```
+
+Can be:
+
+* waterfall chart
+* stepped bar chart
+* connected value cards
+
+Use SVG if needed.
+
+No heavy chart library required.
+
+---
+
+## Panel B — Opportunity Portfolio
+
+Rank opportunities visually.
+
+Example:
+
+```text
+Microsoft 365
+$76k
+
+AI Consolidation
+$62k
+
+Cloud Optimisation
+$54k
+
+SaaS Rationalisation
+$43k
+```
+
+Each row should include:
+
+```text
+value
+share of total
+mini progress bar
+```
+
+Not plain text.
+
+---
+
+## Panel C — Risk & Exposure Overview
+
+Add the first real risk visualisation.
+
+Preferred:
+
+```text
+donut chart
+```
+
+showing:
+
+```text
+High
+Medium
+Low
+```
+
+findings.
+
+If no chart library exists:
+
+Create SVG radial chart.
+
+Include:
+
+```text
+High Risk
+Medium Risk
+Low Risk
+```
+
+counts.
+
+---
+
+# Layer 4 — Recommended Next Actions
+
+Current implementation:
+
+```text
+1. Connect M365
+2. Run Readiness
+3. Begin Discovery
+```
+
+This feels like text.
+
+Replace with action cards.
+
+Each action card includes:
+
+```text
+title
+reason
+impact
+CTA
+```
+
+Example:
+
+```text
+Connect Microsoft 365
+
+Required to begin discovery
+
+Potential value:
+Unknown
+
+[Connect]
+```
+
+Operational example:
+
+```text
+Optimise Inactive Licences
+
+184 inactive licences
+
+Potential value:
+$64,000
+
+[Review]
+```
+
+Cards should feel actionable.
+
+---
+
+# What Requires Attention
+
+Current implementation is a table.
+
+Replace with severity cards.
+
+Example:
+
+```text
+HIGH
+Dropbox Owner Missing
+
+$76,000 exposure
+
+Assign Owner
+```
+
+```text
+HIGH
+Renewal Risk
+
+Slack
+
+Renegotiate
+```
+
+Visual hierarchy:
+
+Red border
+Severity pill
+Impact value
+
+Not spreadsheet rows.
+
+---
+
+# Sidebar Improvements
+
+Current issue:
+
+Empty sections.
+
+Do not render:
+
+```text
+DISCOVER
+PROTECT
+INTELLIGENCE
+```
+
+if there are no visible children.
+
+Collapse empty groups automatically.
+
+Add:
+
+```text
+gold active indicator
+```
+
+for current page.
+
+Improve spacing.
+
+---
+
+# Data Trust Visualisation
+
+Current:
+
+```text
+Data Trust 91%
+```
+
+as text.
+
+Replace with:
+
+```text
+small radial ring
+```
+
+or
+
+```text
+progress indicator
+```
+
+next to the score.
+
+Rules:
+
+LIVE_UNCONNECTED:
+
+```text
+N/A
+```
+
+DEMO:
+
+demo score allowed.
+
+LIVE_OPERATIONAL:
+
+real score.
+
+---
+
+# Visual Design Standards
+
+Use the existing Economic Gold theme.
+
+Do not introduce new colours.
+
+Primary:
+
+```text
+Gold
+```
+
+Success:
+
+```text
+Green
+```
+
+Risk:
+
+```text
+Red
+```
+
+Neutral:
+
+```text
+Grey
+```
+
+Avoid:
+
+```text
+Large paragraphs
+Dense tables
+Text-only panels
+```
+
+Favor:
+
+```text
+Charts
+Progress indicators
+Status visuals
+Waterfalls
+Donut charts
+Evidence badges
+Sparklines
+```
+
+---
+
+# Componentisation
+
+Create reusable components:
+
+```text
+ExecutiveKPI
+ValueWaterfall
+ControlChainVisual
+OpportunityPortfolio
+RiskDonut
+ActionCard
+SeverityCard
+TrustIndicator
+MiniSparkline
+```
+
+Prefer:
+
+```text
+React
+CSS
+SVG
+```
+
+No heavy dependency additions unless already present.
+
+---
+
+# Acceptance Criteria
+
+The work is complete when:
+
+```text
+1. Executive Command Center no longer feels text-heavy.
+2. KPI row includes visual indicators.
+3. Economic Control Chain is a connected visual chain.
+4. Value Waterfall exists.
+5. Opportunity Portfolio exists.
+6. Risk & Exposure visual exists.
+7. Action cards replace plain text actions.
+8. Attention cards replace table rows.
+9. Data Trust has visual treatment.
+10. LIVE_UNCONNECTED remains completely honest.
+11. DEMO still showcases the platform visually.
+12. Typecheck passes.
+13. Full test suite passes.
+14. Browser visual verification completed.
+```
+
+Do not redesign routes, APIs, or business logic.
+
+Only upgrade presentation, hierarchy and executive usability.
