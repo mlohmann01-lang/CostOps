@@ -3,6 +3,7 @@ import { Shell } from '../components/layout/Shell'
 import { EmptyState, ExecutivePageHeader, ExecutiveSection, MetricCard, StatusChip, ValueLifecycle, type StatusChipTone } from '../components/executive'
 import { LiveDataError } from '../components/shared/Foundation'
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
+import { useWorkspace } from '../lib/workspaceContext'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
 
 const money = (value: number) => `$${Math.round(Number(value ?? 0)).toLocaleString()}`
@@ -37,51 +38,82 @@ const fallbackOutcomes = [
 export default function ExecutiveValueDashboard() {
   const { summary, domains, topDrivers, blockers, dataState, loading, error, refresh, generateEvidencePack } = useExecutiveValueData()
   if (error) return <Shell><LiveDataError error={error} onRetry={refresh} /></Shell>
+
+  const workspace = useWorkspace()
+  const isDemo = workspace.runtimeState === 'DEMO'
+  const isLiveUnconnected = workspace.runtimeState === 'LIVE_UNCONNECTED'
+  const isLiveDiscovering = workspace.runtimeState === 'LIVE_DISCOVERING'
+
   const metrics = summary.valueMetrics ?? {}
   const confidence = summary.confidence ?? {}
   const counts = summary.counts ?? {}
-  const projectedAnnualValue = annual(metrics.projectedAnnualSavings, metrics.projectedMonthlySavings, 320000)
-  const approvedAnnualValue = annual(metrics.approvedAnnualSavings, metrics.approvedMonthlySavings, 120000)
-  const executedAnnualValue = annual(metrics.executedAnnualSavings, metrics.executedMonthlySavings, 80000)
-  const verifiedAnnualValue = annual(metrics.verifiedAnnualSavings, metrics.verifiedMonthlySavings, 64000)
-  const driftPrevented = annual(metrics.retainedAnnualSavings ?? metrics.protectedAnnualSavings, metrics.retainedMonthlySavings ?? metrics.protectedMonthlySavings, 18000)
+
+  // No synthetic fallbacks in LIVE modes — only use fallbacks for DEMO
+  const projectedAnnualValue = annual(metrics.projectedAnnualSavings, metrics.projectedMonthlySavings, isDemo ? 320000 : 0)
+  const approvedAnnualValue = annual(metrics.approvedAnnualSavings, metrics.approvedMonthlySavings, isDemo ? 120000 : 0)
+  const executedAnnualValue = annual(metrics.executedAnnualSavings, metrics.executedMonthlySavings, isDemo ? 80000 : 0)
+  const verifiedAnnualValue = annual(metrics.verifiedAnnualSavings, metrics.verifiedMonthlySavings, isDemo ? 64000 : 0)
+  const driftPrevented = annual(metrics.retainedAnnualSavings ?? metrics.protectedAnnualSavings, metrics.retainedMonthlySavings ?? metrics.protectedMonthlySavings, isDemo ? 18000 : 0)
+
   const evidenceLevel = confidence.evidenceCompletenessPercent >= 80 ? 'HIGH' : confidence.evidenceCompletenessPercent >= 50 ? 'MEDIUM' : 'HIGH'
   const dataTrustLevel = confidence.trustCoveragePercent >= 70 ? 'HIGH' : confidence.trustCoveragePercent >= 40 ? 'MEDIUM' : 'HIGH'
+
+  // Value lifecycle — show Pending for post-identified stages in LIVE_DISCOVERING, empty in LIVE_UNCONNECTED
+  const pendingOrMoney = (v: number) => isLiveUnconnected ? '$0' : isLiveDiscovering ? 'Pending' : money(v)
   const lifecycle = [
-    { label:'Identified', value:money(projectedAnnualValue), count:counts.openOpportunities ?? 22, confidence:dataTrustLevel },
-    { label:'Trusted', value:money(Math.round(projectedAnnualValue * 0.69)), count:counts.priorityOpportunities ?? 9, confidence:dataTrustLevel },
-    { label:'Approved', value:money(approvedAnnualValue), count:counts.approvalsPending ?? 4, confidence:'HIGH' },
-    { label:'Executed', value:money(executedAnnualValue), count:counts.executionsCompleted ?? 2, confidence:'MEDIUM' },
-    { label:'Verified', value:money(verifiedAnnualValue), count:counts.outcomesVerified ?? 1, confidence:evidenceLevel },
-    { label:'Retained', value:money(driftPrevented), count:counts.driftAlertsOpen ?? 1, confidence:'HIGH' },
+    { label:'Identified', value: isLiveUnconnected ? '$0' : money(projectedAnnualValue), count: isLiveUnconnected ? 0 : (counts.openOpportunities ?? 22), confidence:dataTrustLevel },
+    { label:'Trusted', value: isLiveUnconnected ? '$0' : isLiveDiscovering ? 'Pending' : money(Math.round(projectedAnnualValue * 0.69)), count: isLiveUnconnected ? 0 : (counts.priorityOpportunities ?? 9), confidence:dataTrustLevel },
+    { label:'Approved', value: pendingOrMoney(approvedAnnualValue), count: isLiveUnconnected ? 0 : (counts.approvalsPending ?? 4), confidence:'HIGH' },
+    { label:'Executed', value: pendingOrMoney(executedAnnualValue), count: isLiveUnconnected ? 0 : (counts.executionsCompleted ?? 2), confidence:'MEDIUM' },
+    { label:'Verified', value: pendingOrMoney(verifiedAnnualValue), count: isLiveUnconnected ? 0 : (counts.outcomesVerified ?? 1), confidence:evidenceLevel },
+    { label:'Retained', value: pendingOrMoney(driftPrevented), count: isLiveUnconnected ? 0 : (counts.driftAlertsOpen ?? 1), confidence:'HIGH' },
   ]
-  const domainRows = (domains.length ? domains.map((domain: any) => ({ domain: domain.domain === 'M365' ? 'M365 Optimisation' : domain.domain, projectedAnnualValue: annual(domain.projectedAnnualSavings, domain.projectedMonthlySavings), verifiedAnnualValue: annual(domain.verifiedAnnualSavings, domain.verifiedMonthlySavings), confidence: domain.confidenceBand ?? 'MEDIUM', evidence:'Evidence Pack', nextAction:'Review evidence' })) : fallbackDomains)
-  const opportunityRows = (topDrivers.length ? topDrivers.map((driver: any) => ({ opportunity: driver.title, domain: driver.domain === 'M365' ? 'M365 Optimisation' : driver.domain, projectedAnnualValue: annual(driver.projectedAnnualSavings, driver.projectedMonthlySavings), trust: driver.status === 'VERIFIED' ? 'HIGH' : 'MEDIUM', approvalState: driver.status === 'APPROVAL_PENDING' ? 'Approval Required' : 'Approved', executionState: driver.status === 'VERIFIED' ? 'Executed' : 'Execution Ready', evidence: driver.evidencePackId ? 'Evidence Pack' : 'Missing evidence', nextStep: driver.status === 'VERIFIED' ? 'Open Outcome Ledger' : 'Approve action' })) : fallbackOpportunities)
+
+  // Domain/opportunity/outcome rows — show no fallback data in LIVE modes
+  const domainRows = isLiveUnconnected
+    ? []
+    : (domains.length ? domains.map((domain: any) => ({ domain: domain.domain === 'M365' ? 'M365 Optimisation' : domain.domain, projectedAnnualValue: annual(domain.projectedAnnualSavings, domain.projectedMonthlySavings), verifiedAnnualValue: annual(domain.verifiedAnnualSavings, domain.verifiedMonthlySavings), confidence: domain.confidenceBand ?? 'MEDIUM', evidence:'Evidence Pack', nextAction:'Review evidence' })) : fallbackDomains)
+
+  const opportunityRows = isLiveUnconnected
+    ? []
+    : (topDrivers.length ? topDrivers.map((driver: any) => ({ opportunity: driver.title, domain: driver.domain === 'M365' ? 'M365 Optimisation' : driver.domain, projectedAnnualValue: annual(driver.projectedAnnualSavings, driver.projectedMonthlySavings), trust: driver.status === 'VERIFIED' ? 'HIGH' : 'MEDIUM', approvalState: driver.status === 'APPROVAL_PENDING' ? 'Approval Required' : 'Approved', executionState: driver.status === 'VERIFIED' ? 'Executed' : 'Execution Ready', evidence: driver.evidencePackId ? 'Evidence Pack' : 'Missing evidence', nextStep: driver.status === 'VERIFIED' ? 'Open Outcome Ledger' : 'Approve action' })) : fallbackOpportunities)
+
   const verifiedRows = opportunityRows.filter((row) => row.executionState === 'Executed').map((row) => ({ outcome:row.opportunity, actionTaken:'Governed action executed', verifiedValue: Math.max(Math.round(row.projectedAnnualValue * .64), 1), evidence:row.evidence === 'Missing evidence' ? 'Outcome Ledger' : row.evidence, driftStatus:'Drift Prevented', lastChecked:'Jun 2' }))
-  const outcomeRows = verifiedRows.length ? verifiedRows : fallbackOutcomes
+  const outcomeRows = isLiveUnconnected ? [] : (verifiedRows.length ? verifiedRows : fallbackOutcomes)
+
+  const modeChipLabel = isLiveUnconnected ? 'No Data' : isLiveDiscovering ? 'Discovering' : isDemo ? 'Demo Mode' : 'Live'
+  const modeChipTone: StatusChipTone = isLiveUnconnected ? 'neutral' : isLiveDiscovering ? 'warning' : isDemo ? 'info' : 'success'
 
   return <Shell><main style={{ padding:'24px clamp(18px, 3vw, 34px)', display:'grid', gap:16, maxWidth:1480, margin:'0 auto', width:'100%', boxSizing:'border-box' }}>
-    <ExecutivePageHeader title='Executive Value' subtitle='Projected, approved, executed and verified value across technology cost and governance initiatives.' chips={[{ label:'Demo Mode', tone:'info' }, { label:`Evidence ${evidenceLevel}`, tone:confidenceTone(evidenceLevel) }, { label:`Data Trust ${dataTrustLevel}`, tone:confidenceTone(dataTrustLevel) }]} rightAction={<button disabled={loading} onClick={() => void generateEvidencePack()} style={{ border:'var(--border-teal)', background:'rgba(45,212,191,.08)', color:'var(--teal)', borderRadius:10, padding:'9px 12px', fontWeight:850 }}>Generate Executive Evidence Pack</button>} />
+    <ExecutivePageHeader title='Executive Value' subtitle='Projected, approved, executed and verified value across technology cost and governance initiatives.' chips={[{ label: modeChipLabel, tone: modeChipTone }, { label:`Evidence ${evidenceLevel}`, tone:confidenceTone(evidenceLevel) }, { label:`Data Trust ${dataTrustLevel}`, tone:confidenceTone(dataTrustLevel) }]} rightAction={<button disabled={loading} onClick={() => void generateEvidencePack()} style={{ border:'var(--border-teal)', background:'rgba(45,212,191,.08)', color:'var(--teal)', borderRadius:10, padding:'9px 12px', fontWeight:850 }}>Generate Executive Evidence Pack</button>} />
     {dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
 
     <section data-testid='executive-value-kpis' style={{ display:'grid', gridTemplateColumns:'repeat(5, minmax(150px, 1fr))', gap:12 }}>
-      <MetricCard label='Projected Annual Value' value={money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />
-      <MetricCard label='Approved Annual Value' value={money(approvedAnnualValue)} description='Audit Trail · Approval state' tone='warning' href='/actions' />
-      <MetricCard label='Executed Annual Value' value={money(executedAnnualValue)} description='Outcome Ledger · Execution proof' tone='neutral' href='/outcomes' />
-      <MetricCard label='Verified Annual Value' value={money(verifiedAnnualValue)} description='Outcome Ledger · Verification evidence' tone='success' href='/outcomes' />
-      <MetricCard label='Drift Prevented' value={money(driftPrevented)} description='Drift monitoring and retained savings.' tone='success' href='/execution' />
+      <MetricCard label='Projected Annual Value' value={isLiveUnconnected ? '—' : money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />
+      <MetricCard label='Approved Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(approvedAnnualValue)} description='Audit Trail · Approval state' tone='warning' href='/actions' />
+      <MetricCard label='Executed Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(executedAnnualValue)} description='Outcome Ledger · Execution proof' tone='neutral' href='/outcomes' />
+      <MetricCard label='Verified Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(verifiedAnnualValue)} description='Outcome Ledger · Verification evidence' tone='success' href='/outcomes' />
+      <MetricCard label='Drift Prevented' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(driftPrevented)} description='Drift monitoring and retained savings.' tone='success' href='/execution' />
     </section>
 
     <ExecutiveSection testId='executive-value-lifecycle' title='Value Lifecycle' description='Annual value, opportunity count and confidence by lifecycle stage.'><ValueLifecycle stages={lifecycle} /></ExecutiveSection>
 
     <ExecutiveSection testId='executive-value-domains' title='Value by Domain'>
-      <div style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr 1fr 1fr 1fr 1fr', gap:10, color:'var(--text-tertiary)', fontSize:11, fontWeight:850, textTransform:'uppercase', letterSpacing:'.08em' }}><span>Domain</span><span>Projected Value</span><span>Verified Value</span><span>Confidence</span><span>Evidence</span><span>Next Action</span></div>
-      {domainRows.map((domain: any) => <div key={domain.domain} style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr 1fr 1fr 1fr 1fr', gap:10, alignItems:'center', borderTop:'var(--border-default)', padding:'10px 0' }}><strong>{domain.domain}</strong><span>{money(domain.projectedAnnualValue)}</span><span style={{ color:'var(--green)', fontWeight:850 }}>{money(domain.verifiedAnnualValue)}</span><StatusChip label={domain.confidence} tone={confidenceTone(domain.confidence)} /><Link href='/evidence'>{domain.evidence}</Link><span>{domain.nextAction}</span></div>)}
+      {domainRows.length === 0
+        ? <EmptyState title='No domain data yet' description='Connect a supported platform to begin identifying value by domain.' actionLabel='Connect Platform' actionHref='/connectors' />
+        : <>
+            <div style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr 1fr 1fr 1fr 1fr', gap:10, color:'var(--text-tertiary)', fontSize:11, fontWeight:850, textTransform:'uppercase', letterSpacing:'.08em' }}><span>Domain</span><span>Projected Value</span><span>Verified Value</span><span>Confidence</span><span>Evidence</span><span>Next Action</span></div>
+            {domainRows.map((domain: any) => <div key={domain.domain} style={{ display:'grid', gridTemplateColumns:'1.2fr 1fr 1fr 1fr 1fr 1fr', gap:10, alignItems:'center', borderTop:'var(--border-default)', padding:'10px 0' }}><strong>{domain.domain}</strong><span>{money(domain.projectedAnnualValue)}</span><span style={{ color:'var(--green)', fontWeight:850 }}>{money(domain.verifiedAnnualValue)}</span><StatusChip label={domain.confidence} tone={confidenceTone(domain.confidence)} /><Link href='/evidence'>{domain.evidence}</Link><span>{domain.nextAction}</span></div>)}
+          </>}
     </ExecutiveSection>
 
     <ExecutiveSection testId='executive-value-opportunities' title='Top Value Opportunities'>
-      <div style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr .7fr 1fr 1fr 1fr 1fr', gap:10, color:'var(--text-tertiary)', fontSize:11, fontWeight:850, textTransform:'uppercase', letterSpacing:'.08em' }}><span>Opportunity</span><span>Domain</span><span>Projected Annual Value</span><span>Trust</span><span>Approval State</span><span>Execution State</span><span>Evidence</span><span>Next Step</span></div>
-      {opportunityRows.map((opportunity: any) => <div key={opportunity.opportunity} style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr .7fr 1fr 1fr 1fr 1fr', gap:10, alignItems:'center', borderTop:'var(--border-default)', padding:'10px 0' }}><strong>{opportunity.opportunity}</strong><span>{opportunity.domain}</span><span>{money(opportunity.projectedAnnualValue)}</span><StatusChip label={opportunity.trust} tone={confidenceTone(opportunity.trust)} /><span>{opportunity.approvalState}</span><span>{opportunity.executionState}</span><Link href='/evidence'>{opportunity.evidence}</Link><span style={{ color:'var(--teal)', fontWeight:850 }}>{opportunity.nextStep}</span></div>)}
+      {opportunityRows.length === 0
+        ? <EmptyState title='No opportunities yet' description='Opportunities will appear here once discovery is underway.' actionLabel='Begin Discovery' actionHref='/connectors' />
+        : <>
+            <div style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr .7fr 1fr 1fr 1fr 1fr', gap:10, color:'var(--text-tertiary)', fontSize:11, fontWeight:850, textTransform:'uppercase', letterSpacing:'.08em' }}><span>Opportunity</span><span>Domain</span><span>Projected Annual Value</span><span>Trust</span><span>Approval State</span><span>Execution State</span><span>Evidence</span><span>Next Step</span></div>
+            {opportunityRows.map((opportunity: any) => <div key={opportunity.opportunity} style={{ display:'grid', gridTemplateColumns:'1.3fr 1fr 1fr .7fr 1fr 1fr 1fr 1fr', gap:10, alignItems:'center', borderTop:'var(--border-default)', padding:'10px 0' }}><strong>{opportunity.opportunity}</strong><span>{opportunity.domain}</span><span>{money(opportunity.projectedAnnualValue)}</span><StatusChip label={opportunity.trust} tone={confidenceTone(opportunity.trust)} /><span>{opportunity.approvalState}</span><span>{opportunity.executionState}</span><Link href='/evidence'>{opportunity.evidence}</Link><span style={{ color:'var(--teal)', fontWeight:850 }}>{opportunity.nextStep}</span></div>)}
+          </>}
     </ExecutiveSection>
 
     <ExecutiveSection testId='executive-value-verified-outcomes' title='Verified Outcomes'>

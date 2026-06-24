@@ -14,6 +14,7 @@ import { defaultAuthorities } from '../lib/authorityCatalog/defaultAuthorities'
 import { getDefaultEconomicControlChain } from '../lib/economicControlChain/defaultEconomicControlChain'
 import { getDefaultOutcomeFinance } from '../lib/outcomeFinance/defaultOutcomeFinance'
 import { formatCurrency } from '../lib/display/formatters'
+import { useWorkspace } from '../lib/workspaceContext'
 
 const dataStatePriority: Record<DataState, number> = { NOT_CONNECTED: 0, NO_DATA: 1, SIMULATION: 2, DEMO: 3, LIVE: 4 }
 function worstDataState(states: DataState[]): DataState {
@@ -40,12 +41,23 @@ type NextAction = { label: string; href: string }
 // Retained for command-phase2.test.tsx, which asserts on the governance proof chain vocabulary.
 export function proofSteps() { return ['Telemetry validated', 'Cost model applied', 'Blast radius assessed', 'Policy gate cleared'] }
 
+const ONBOARDING_ACTIONS: NextAction[] = [
+  { label: 'Connect Microsoft 365', href: '/technology-portfolio' },
+  { label: 'Run Tenant Readiness', href: '/intelligence/authority-catalog' },
+  { label: 'Begin Discovery', href: '/connectors' },
+]
+
 export default function CommandView(_props: { params?: { domain?: string } } = {}) {
   const executiveValue = useExecutiveValueData()
   const executivePriorities = useExecutivePrioritiesData()
   const executiveRisk = useExecutiveRiskData()
   const tenantReadiness = useTenantReadinessData()
   const liveTenantReadiness = useLiveTenantReadinessData()
+  const workspace = useWorkspace()
+  const runtimeState = workspace.runtimeState
+  const isDemo = runtimeState === 'DEMO'
+  const isLiveUnconnected = runtimeState === 'LIVE_UNCONNECTED'
+  const isLiveDiscovering = runtimeState === 'LIVE_DISCOVERING'
 
   const dataState = worstDataState([executiveValue.dataState, executivePriorities.dataState] as DataState[])
 
@@ -62,7 +74,9 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
   const protectedAnnualValue = Number(valueMetrics.protectedAnnualSavings ?? valueMetrics.retainedAnnualSavings ?? 0)
 
   const maturity = deriveMaturity(authoritiesActive, chainStagesActive, financeVerifiedValue, protectedAnnualValue)
-  const narrative = maturityNarrative[maturity]
+  const narrative = isLiveUnconnected
+    ? 'Connect a supported platform to begin discovery. Once connected, Certen will identify, quantify and govern cost opportunities across your tenant.'
+    : maturityNarrative[maturity]
 
   // Section 2: What Requires Attention - sourced from Executive Risk + Tenant Readiness blockers/next-actions
   const attention = useMemo<AttentionItem[]>(() => {
@@ -86,6 +100,7 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
 
   // Section 6: Recommended Next Actions - priority ordered, derived from same blocker/readiness data where possible
   const nextActions = useMemo<NextAction[]>(() => {
+    if (isLiveUnconnected) return ONBOARDING_ACTIONS
     const fromReadiness: NextAction[] = (tenantReadiness.nextActions ?? [])
       .slice()
       .sort((a, b) => a.priority - b.priority)
@@ -101,15 +116,22 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
       { label: 'Connect Finance System', href: '/executive/outcome-finance' },
     ]
     return [...fromApprovals, ...defaults].slice(0, 5)
-  }, [tenantReadiness.nextActions, counts.approvalsPending])
+  }, [isLiveUnconnected, tenantReadiness.nextActions, counts.approvalsPending])
 
-  // Section 4: Executive Value Snapshot (reusing the same computation as ExecutiveValueDashboard)
-  const annual = (annualValue: unknown, monthlyValue?: unknown, fallback = 0) => Number(annualValue ?? 0) || Number(monthlyValue ?? 0) * 12 || fallback
+  // Section 4: Executive Value Snapshot — in non-DEMO modes no synthetic fallbacks
+  const annual = (annualValue: unknown, monthlyValue?: unknown, fallback = 0) =>
+    Number(annualValue ?? 0) || Number(monthlyValue ?? 0) * 12 || (isDemo ? fallback : 0)
+
   const identifiedAnnualValue = annual(valueMetrics.projectedAnnualSavings, valueMetrics.projectedMonthlySavings, 320000)
   const approvedAnnualValue = annual(valueMetrics.approvedAnnualSavings, valueMetrics.approvedMonthlySavings, 120000)
   const executedAnnualValue = annual(valueMetrics.executedAnnualSavings, valueMetrics.executedMonthlySavings, 80000)
   const verifiedAnnualValueSnapshot = annual(valueMetrics.verifiedAnnualSavings, valueMetrics.verifiedMonthlySavings, 64000)
   const protectedAnnualValueSnapshot = annual(valueMetrics.retainedAnnualSavings ?? valueMetrics.protectedAnnualSavings, valueMetrics.retainedMonthlySavings ?? valueMetrics.protectedMonthlySavings, 18000)
+
+  // Helpers for gated display
+  const fmtOrDash = (v: number) => isLiveUnconnected ? '—' : formatCurrency(v)
+  const fmtOrPending = (v: number) => isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : formatCurrency(v)
+  const fmtFinance = (v: number | undefined) => isLiveUnconnected ? '—' : formatCurrency(v)
 
   return <Shell><main style={{ padding: '24px clamp(18px, 3vw, 34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
     <ExecutivePageHeader title='Executive Command Center' subtitle='A single orchestrated view of authorities, the economic control chain, value, finance and protection across Certen.' />
@@ -119,9 +141,9 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12 }}>
         <MetricCard label='Authorities Active' value={String(authoritiesActive)} />
         <MetricCard label='Chain Stages Active' value={`${chainStagesActive} / 7`} />
-        <MetricCard label='Verified Value' value={formatCurrency(verifiedValue)} />
-        <MetricCard label='Finance Verified' value={formatCurrency(financeVerifiedValue)} />
-        <MetricCard label='Protected Value' value={formatCurrency(protectedAnnualValue)} />
+        <MetricCard label='Verified Value' value={fmtOrDash(verifiedValue)} />
+        <MetricCard label='Finance Verified' value={fmtFinance(financeVerifiedValue)} />
+        <MetricCard label='Protected Value' value={fmtOrDash(protectedAnnualValue)} />
       </div>
       <article data-testid='executive-command-center-narrative' style={{ marginTop: 14, border: 'var(--border-teal)', background: 'rgba(45,212,191,.08)', borderRadius: 14, padding: 16 }}>
         <p style={{ margin: 0, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{narrative}</p>
@@ -129,8 +151,13 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
     </ExecutiveSection>
 
     <ExecutiveSection testId='executive-command-center-attention' title='What Requires Attention'>
-      {attention.length === 0
-        ? <EmptyState title='Nothing requires attention right now.' description='Executive Risk, Live Tenant Readiness and Tenant Readiness are currently clear of blockers.' />
+      {attention.length === 0 || isLiveUnconnected
+        ? <EmptyState
+            title={isLiveUnconnected ? 'No Findings Yet' : 'Nothing requires attention right now.'}
+            description={isLiveUnconnected
+              ? 'Connect a supported platform to begin discovery. Risks and blockers will appear here once data is available.'
+              : 'Executive Risk, Live Tenant Readiness and Tenant Readiness are currently clear of blockers.'}
+          />
         : <div style={{ display: 'grid', gap: 8 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '.6fr 1.6fr 1.2fr', gap: 10, fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}><span>Priority</span><span>Issue</span><span>Recommended Action</span></div>
             {attention.map((item, index) => <div key={`${item.issue}-${index}`} style={{ display: 'grid', gridTemplateColumns: '.6fr 1.6fr 1.2fr', gap: 10, alignItems: 'center', padding: '9px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}>
@@ -152,19 +179,19 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
 
     <ExecutiveSection testId='executive-command-center-value-snapshot' title='Executive Value Snapshot'>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 12 }}>
-        <MetricCard label='Identified' value={formatCurrency(identifiedAnnualValue)} />
-        <MetricCard label='Approved' value={formatCurrency(approvedAnnualValue)} />
-        <MetricCard label='Executed' value={formatCurrency(executedAnnualValue)} />
-        <MetricCard label='Verified' value={formatCurrency(verifiedAnnualValueSnapshot)} />
-        <MetricCard label='Protected' value={formatCurrency(protectedAnnualValueSnapshot)} />
+        <MetricCard label='Identified' value={fmtOrDash(identifiedAnnualValue)} />
+        <MetricCard label='Approved' value={fmtOrPending(approvedAnnualValue)} />
+        <MetricCard label='Executed' value={fmtOrPending(executedAnnualValue)} />
+        <MetricCard label='Verified' value={fmtOrPending(verifiedAnnualValueSnapshot)} />
+        <MetricCard label='Protected' value={fmtOrPending(protectedAnnualValueSnapshot)} />
       </div>
     </ExecutiveSection>
 
     <ExecutiveSection testId='executive-command-center-finance-snapshot' title='Outcome Finance Snapshot'>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
-        <MetricCard label='Verified' value={formatCurrency(outcomeFinance.metrics.verifiedValue)} />
-        <MetricCard label='Finance Verified' value={formatCurrency(outcomeFinance.metrics.financeVerifiedValue)} />
-        <MetricCard label='Variance' value={formatCurrency(outcomeFinance.metrics.variance)} />
+        <MetricCard label='Verified' value={fmtFinance(outcomeFinance.metrics.verifiedValue)} />
+        <MetricCard label='Finance Verified' value={fmtFinance(outcomeFinance.metrics.financeVerifiedValue)} />
+        <MetricCard label='Variance' value={fmtFinance(outcomeFinance.metrics.variance)} />
       </div>
     </ExecutiveSection>
 

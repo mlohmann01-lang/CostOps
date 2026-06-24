@@ -1,0 +1,2 @@
+- [WorkspaceRuntimeState pattern](workspace-runtime-state.md) — four-state enum gates all synthetic fallbacks; test files must include runtimeState+connectedCount when constructing WorkspaceContext literals.
+- [Landing page CTA label](landing-page-cta.md) — getStartedLabel is 'Run Free Exposure Review' and getStartedHref is '/exposure-review/start' in PUBLIC_HEADER; tests that assert these values must match.

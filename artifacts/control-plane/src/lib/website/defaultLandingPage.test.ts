@@ -126,10 +126,9 @@ test('Public header has Certen wordmark, nav links, sign-in and get-started', ()
   assert.deepEqual(navLabels, ['Product', 'Economic Control', 'Exposure Report'])
   assert.equal(page.header.signInLabel, 'Sign in')
   assert.ok(page.header.signInHref.length > 0)
-  assert.equal(page.header.getStartedLabel, 'Get started')
-  // Program 10: "Get started" now routes into the M365 Exposure Review
-  // journey rather than the in-page anchor.
-  assert.equal(page.header.getStartedHref, '/exposure-review')
+  assert.equal(page.header.getStartedLabel, 'Run Free Exposure Review')
+  // CTA routes into the M365 Exposure Review signup form.
+  assert.equal(page.header.getStartedHref, '/exposure-review/start')
 })
 
 test('Public footer has Certen wordmark, caption, sign-in and Book Executive Review', () => {

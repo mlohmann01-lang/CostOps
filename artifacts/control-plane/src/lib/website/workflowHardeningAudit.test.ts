@@ -185,8 +185,9 @@ test('"Get started" appears only in the carved-out public header nav context, ne
   const landingSource = readPage('LandingPage.tsx')
   const defaultLandingPageSource = readFileSync(path.join(here, 'defaultLandingPage.ts'), 'utf8')
 
-  // The only producer of "Get started" text is PUBLIC_HEADER.getStartedLabel.
-  assert.ok(defaultLandingPageSource.includes("getStartedLabel: 'Get started'"))
+  // The CTA label is defined in PUBLIC_HEADER.getStartedLabel (currently "Run Free Exposure Review"),
+  // not hardcoded in JSX. Verify the property exists in the data model.
+  assert.ok(defaultLandingPageSource.includes("getStartedLabel: 'Run Free Exposure Review'"))
 
   // It must not appear as a separate, hardcoded literal CTA button elsewhere
   // in LandingPage.tsx (i.e. not typed directly into JSX outside of

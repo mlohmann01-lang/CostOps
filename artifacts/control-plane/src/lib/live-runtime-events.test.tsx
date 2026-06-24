@@ -9,9 +9,9 @@ import { normalizeRuntimeEvent } from './runtimeEventNormalizer'
 import { getDemoRuntimeState, resetDemoRuntimeStore } from './demoRuntimeStore'
 import type { WorkspaceContext } from '../types/workspace'
 
-const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true }
-const liveEmptyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: false }
-const liveReadyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: true }
+const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true, runtimeState: 'DEMO', connectedCount: 0 }
+const liveEmptyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: false, runtimeState: 'LIVE_UNCONNECTED', connectedCount: 0 }
+const liveReadyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: true, runtimeState: 'LIVE_DISCOVERING', connectedCount: 1 }
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test('runtime event normalizer handles governance event shapes', () => {

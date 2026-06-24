@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect } from 'react'
 import { ShieldCheck, Bell, ChevronDown, LogOut } from 'lucide-react'
 import { useRuntimeContext } from '../../lib/runtimeContext'
 import { clearSession } from '../../lib/auth/session'
+import { useWorkspace } from '../../lib/workspaceContext'
 
 export function TopBar() {
   const runtime = useRuntimeContext()
+  const workspace = useWorkspace()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -49,7 +51,9 @@ export function TopBar() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 11, color: 'var(--teal)' }}>Data trust 91%</span>
+        <span style={{ fontSize: 11, color: workspace.runtimeState === 'LIVE_UNCONNECTED' ? 'var(--text-secondary)' : 'var(--teal)' }}>
+          {workspace.runtimeState === 'LIVE_UNCONNECTED' ? 'Data trust N/A' : `Data trust ${workspace.connectedCount > 0 ? Math.min(70 + workspace.connectedCount * 7, 97) : 91}%`}
+        </span>
 
         {/* Environment selector */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
