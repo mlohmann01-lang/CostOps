@@ -64,25 +64,40 @@ function deriveReadiness(opts: { ownerPresent: boolean; hasEvidence: boolean; ap
   return { readiness: 'NOT_READY', blockers };
 }
 
+/**
+ * Capability AO1.1: which execution type this asset's own already-recorded lifecycle status calls
+ * for — RETIRE_CANDIDATE/RENEWAL_RISK are real, tenant-recorded signals, not fabricated. Falling back
+ * to the Technology Capital Allocation decision lets assets without a clear lifecycle signal still
+ * reach EXPAND/OPTIMISE/CONSOLIDATE recommendations. Ownership/evidence gaps on a RETIRE_CANDIDATE or
+ * RENEWAL_RISK asset must still produce a plan — they are reported as readiness blockers (AO1.4),
+ * never used to suppress the plan outright.
+ */
+function executionTypeFor(asset: TechnologyPortfolioAsset | undefined, decision: TechnologyAllocationDecision): RecommendationOrchestrationExecutionType | undefined {
+  if (asset?.lifecycleStatus === 'RETIRE_CANDIDATE') return 'RETIRE';
+  if (asset?.lifecycleStatus === 'RENEWAL_RISK') return 'RENEW';
+  return isExecutable(decision) ? decision : undefined;
+}
+
 export class RecommendationOrchestrationService {
   /** Capabilities AO1.1-AO1.5: a single execution plan for a technology asset's allocation recommendation. */
   async buildExecutionPlan(tenantId: string, assetId: string): Promise<RecommendationExecutionPlan | undefined> {
     const recommendation = await technologyCapitalAllocationDecisionService.getAssetAllocation(tenantId, assetId);
-    if (!isExecutable(recommendation.decision)) return undefined;
-
     const asset = await technologyPortfolioAuthorityService.summariseAsset(tenantId, assetId);
+    const executionType = executionTypeFor(asset, recommendation.decision);
+    if (!executionType) return undefined;
+
     const approvals = requiredApprovals(asset);
     const systems = executionSystems(asset);
     const hasEvidence = Boolean(asset && asset.evidenceRefs.length > 0);
     const { readiness, blockers } = deriveReadiness({ ownerPresent: Boolean(asset?.ownerUserId), hasEvidence, approvals, systems });
-    const complexity = await estimatedComplexity(tenantId, recommendation.decision, assetId, systems.length);
+    const complexity = await estimatedComplexity(tenantId, executionType, assetId, systems.length);
 
     return {
       id: `exec-plan:${assetId}`,
       tenantId,
       recommendationId: recommendation.id,
-      recommendationType: recommendation.decision,
-      executionType: recommendation.decision,
+      recommendationType: executionType,
+      executionType,
       requiredApprovals: approvals,
       requiredEvidence: asset?.evidenceRefs ?? [],
       executionSystems: systems,
