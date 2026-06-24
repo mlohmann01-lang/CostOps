@@ -55,14 +55,15 @@ export default function ExecutiveValueDashboard() {
   const verifiedAnnualValue = annual(metrics.verifiedAnnualSavings, metrics.verifiedMonthlySavings, isDemo ? 64000 : 0)
   const driftPrevented = annual(metrics.retainedAnnualSavings ?? metrics.protectedAnnualSavings, metrics.retainedMonthlySavings ?? metrics.protectedMonthlySavings, isDemo ? 18000 : 0)
 
-  const evidenceLevel = confidence.evidenceCompletenessPercent >= 80 ? 'HIGH' : confidence.evidenceCompletenessPercent >= 50 ? 'MEDIUM' : 'HIGH'
-  const dataTrustLevel = confidence.trustCoveragePercent >= 70 ? 'HIGH' : confidence.trustCoveragePercent >= 40 ? 'MEDIUM' : 'HIGH'
+  // In LIVE_UNCONNECTED: no confidence data available — N/A prevents synthetic percentage leakage
+  const evidenceLevel = isLiveUnconnected ? 'N/A' : (confidence.evidenceCompletenessPercent >= 80 ? 'HIGH' : confidence.evidenceCompletenessPercent >= 50 ? 'MEDIUM' : 'HIGH')
+  const dataTrustLevel = isLiveUnconnected ? 'N/A' : (confidence.trustCoveragePercent >= 70 ? 'HIGH' : confidence.trustCoveragePercent >= 40 ? 'MEDIUM' : 'HIGH')
 
-  // Value lifecycle — show Pending for post-identified stages in LIVE_DISCOVERING, empty in LIVE_UNCONNECTED
-  const pendingOrMoney = (v: number) => isLiveUnconnected ? '$0' : isLiveDiscovering ? 'Pending' : money(v)
+  // Value lifecycle — show dash in LIVE_UNCONNECTED, Pending in LIVE_DISCOVERING
+  const pendingOrMoney = (v: number) => isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(v)
   const lifecycle = [
-    { label:'Identified', value: isLiveUnconnected ? '$0' : money(projectedAnnualValue), count: isLiveUnconnected ? 0 : (counts.openOpportunities ?? 22), confidence:dataTrustLevel },
-    { label:'Trusted', value: isLiveUnconnected ? '$0' : isLiveDiscovering ? 'Pending' : money(Math.round(projectedAnnualValue * 0.69)), count: isLiveUnconnected ? 0 : (counts.priorityOpportunities ?? 9), confidence:dataTrustLevel },
+    { label:'Identified', value: isLiveUnconnected ? '—' : money(projectedAnnualValue), count: isLiveUnconnected ? 0 : (counts.openOpportunities ?? 22), confidence:dataTrustLevel },
+    { label:'Trusted', value: isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(Math.round(projectedAnnualValue * 0.69)), count: isLiveUnconnected ? 0 : (counts.priorityOpportunities ?? 9), confidence:dataTrustLevel },
     { label:'Approved', value: pendingOrMoney(approvedAnnualValue), count: isLiveUnconnected ? 0 : (counts.approvalsPending ?? 4), confidence:'HIGH' },
     { label:'Executed', value: pendingOrMoney(executedAnnualValue), count: isLiveUnconnected ? 0 : (counts.executionsCompleted ?? 2), confidence:'MEDIUM' },
     { label:'Verified', value: pendingOrMoney(verifiedAnnualValue), count: isLiveUnconnected ? 0 : (counts.outcomesVerified ?? 1), confidence:evidenceLevel },

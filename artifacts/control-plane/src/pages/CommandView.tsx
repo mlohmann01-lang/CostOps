@@ -64,10 +64,10 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
   const valueMetrics = executiveValue.summary.valueMetrics ?? {}
   const counts = executiveValue.summary.counts ?? {}
 
-  // Section 1: Executive Summary metrics
-  const authoritiesActive = defaultAuthorities.filter((authority) => authority.status === 'ACTIVE').length
+  // Section 1: Executive Summary metrics — both gated to 0 in LIVE_UNCONNECTED
+  const authoritiesActive = isLiveUnconnected ? 0 : defaultAuthorities.filter((authority) => authority.status === 'ACTIVE').length
   const economicControlChain = getDefaultEconomicControlChain()
-  const chainStagesActive = economicControlChain.activeStageCount
+  const chainStagesActive = isLiveUnconnected ? 0 : economicControlChain.activeStageCount
   const verifiedValue = Number(valueMetrics.verifiedAnnualSavings ?? 0)
   const outcomeFinance = getDefaultOutcomeFinance()
   const financeVerifiedValue = outcomeFinance.metrics.financeVerifiedValue
@@ -79,7 +79,9 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
     : maturityNarrative[maturity]
 
   // Section 2: What Requires Attention - sourced from Executive Risk + Tenant Readiness blockers/next-actions
+  // In LIVE_UNCONNECTED: always empty — no synthetic findings may leak
   const attention = useMemo<AttentionItem[]>(() => {
+    if (isLiveUnconnected) return []
     const riskRows: AttentionItem[] = (executiveRisk.data.topRisks ?? []).slice(0, 5).map((risk) => ({
       priority: risk.riskLevel,
       issue: risk.title,
@@ -96,7 +98,7 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
       action: 'Open Live Tenant Readiness',
     }))
     return [...riskRows, ...readinessRows, ...liveReadinessRows].slice(0, 5)
-  }, [executiveRisk.data.topRisks, tenantReadiness.requiredActions, liveTenantReadiness.readiness.blockers])
+  }, [isLiveUnconnected, executiveRisk.data.topRisks, tenantReadiness.requiredActions, liveTenantReadiness.readiness.blockers])
 
   // Section 6: Recommended Next Actions - priority ordered, derived from same blocker/readiness data where possible
   const nextActions = useMemo<NextAction[]>(() => {
@@ -172,7 +174,7 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
         {economicControlChain.stages.map((stage) => <div key={stage.key} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'var(--border-default)', borderRadius: 999, padding: '6px 10px' }}>
           <span style={{ fontSize: 12, fontWeight: 700 }}>{stage.title}</span>
-          <StatusChip label={stage.active ? 'Active' : 'Not Active'} tone={stage.active ? 'success' : 'neutral'} />
+          <StatusChip label={isLiveUnconnected || !stage.active ? 'Not Active' : 'Active'} tone={isLiveUnconnected || !stage.active ? 'neutral' : 'success'} />
         </div>)}
       </div>
     </ExecutiveSection>
