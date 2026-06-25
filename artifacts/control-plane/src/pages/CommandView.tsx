@@ -10,6 +10,7 @@ import { useExecutiveRiskData } from '../hooks/useExecutiveRiskData'
 import { useTenantReadinessData } from '../hooks/useTenantReadinessData'
 import { useLiveTenantReadinessData } from '../hooks/useLiveTenantReadinessData'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
+import { ExecutiveHealthBar } from '../components/shared/ExecutiveHealthBar'
 import type { DataState } from '../lib/dataState'
 import { defaultAuthorities } from '../lib/authorityCatalog/defaultAuthorities'
 import { getDefaultEconomicControlChain } from '../lib/economicControlChain/defaultEconomicControlChain'
@@ -277,6 +278,15 @@ export function CommandViewBody() {
             </div>
           </article>
         : (dataState !== 'LIVE' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />)}
+
+      {/* ── Executive Health Bar ─────────────────────────────────────────────── */}
+      <ExecutiveHealthBar
+        projectedValue={isLiveUnconnected ? 0 : (identifiedAnnualValue ?? 0)}
+        verifiedValue={isLiveUnconnected ? 0 : (verifiedAnnualValueSnapshot ?? 0)}
+        financeValue={isLiveUnconnected ? 0 : (financeVerifiedValue ?? 0)}
+        protectedValue={isLiveUnconnected ? 0 : (protectedAnnualValueSnapshot ?? 0)}
+        isConnected={!isLiveUnconnected}
+      />
 
       {/* ── Layer 1: Executive Summary KPI Bar ──────────────────────────────── */}
       {/* Runtime enforcement: Verified Value, Finance Verified, Protected Value shown as '—' in LIVE_UNCONNECTED */}
