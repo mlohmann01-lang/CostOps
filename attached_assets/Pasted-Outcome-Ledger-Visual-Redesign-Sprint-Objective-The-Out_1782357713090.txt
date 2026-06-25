@@ -1,0 +1,650 @@
+Outcome Ledger Visual Redesign Sprint
+
+## Objective
+
+The Outcome Ledger is now backed by the canonical ledger model.
+
+This sprint is **presentation only**.
+
+Do not redesign the data model.
+
+Do not add new business logic.
+
+Do not duplicate calculations.
+
+The page must become the executive authority for answering one question:
+
+> **Can you prove the value delivered by every technology decision?**
+
+The design should feel like an executive finance console, not a report or database table.
+
+---
+
+# Core Design Principle
+
+The Outcome Ledger is **not** a savings report.
+
+It is the **financial chain of custody for technology value**.
+
+Every optimisation is treated as a governed financial asset moving through its lifecycle:
+
+```text
+Projected
+      ↓
+Approved
+      ↓
+Executed
+      ↓
+Verified
+      ↓
+Finance Confirmed
+      ↓
+Protected
+```
+
+Every transition is backed by evidence.
+
+Every value movement is explainable.
+
+---
+
+# Runtime Rules (Must Preserve)
+
+Support all runtime states.
+
+## DEMO
+
+Use canonical demo outcome records.
+
+All charts and visuals may render demo data.
+
+Clearly display:
+
+```text
+Demo Mode
+
+Synthetic evidence only.
+No production systems connected.
+```
+
+---
+
+## LIVE_UNCONNECTED
+
+Render:
+
+```text
+No Outcomes Yet
+
+Connect Microsoft 365 or another supported platform to begin discovery.
+```
+
+No synthetic:
+
+* values
+* charts
+* pipeline cards
+* leakage
+* timelines
+
+Charts should render empty states.
+
+---
+
+## LIVE_DISCOVERING
+
+Only show outcomes that actually exist.
+
+Do not fabricate later lifecycle stages.
+
+---
+
+## LIVE_OPERATIONAL
+
+Render entirely from canonical outcome records.
+
+---
+
+# Layout
+
+Rebuild the page into six visual sections.
+
+---
+
+# Section 1 — Executive Hero
+
+Large hero.
+
+Title:
+
+```text
+Outcome Ledger
+```
+
+Subtitle:
+
+```text
+Financial chain of custody for every technology decision.
+```
+
+Replace the existing equal KPI row.
+
+Instead show:
+
+```text
+Projected Value
+
+Verified Value
+
+Finance Confirmed
+
+Protected Value
+```
+
+Each KPI card includes:
+
+* large number
+* status
+* evidence badge
+* sparkline
+* confidence
+
+Below:
+
+```text
+Value Leakage
+
+Verification Backlog
+
+Finance Backlog
+
+Drift
+```
+
+These become secondary indicators.
+
+---
+
+# Section 2 — Value Waterfall
+
+This becomes the visual centrepiece.
+
+Replace the current six columns.
+
+Render:
+
+```text
+Projected
+
+↓
+
+Approved
+
+↓
+
+Executed
+
+↓
+
+Verified
+
+↓
+
+Finance Confirmed
+
+↓
+
+Protected
+```
+
+Use:
+
+* stepped waterfall
+* connected bars
+* SVG
+* CSS
+
+No heavy chart library required.
+
+Each stage displays:
+
+```text
+value
+
+delta
+
+percentage retained
+```
+
+Colour:
+
+Gold
+
+↓
+
+Green
+
+as value becomes proven.
+
+If value decreases:
+
+show subtle loss connectors.
+
+---
+
+# Section 3 — Outcome Pipeline
+
+This is the differentiator.
+
+Do not build a Jira board.
+
+Build a value flow board.
+
+Columns:
+
+```text
+Projected
+
+Approved
+
+Executed
+
+Verified
+
+Finance Confirmed
+
+Protected
+```
+
+Each outcome appears as a compact card.
+
+Card contains:
+
+```text
+Outcome name
+
+Value
+
+Owner
+
+Confidence
+
+Evidence count
+```
+
+Cards remain in their current lifecycle stage.
+
+The executive immediately sees:
+
+Where outcomes are stuck.
+
+Where value is flowing.
+
+Where bottlenecks exist.
+
+---
+
+# Section 4 — Value Leakage
+
+Replace "Variance" thinking.
+
+Title:
+
+```text
+Value Leakage
+```
+
+Subtitle:
+
+```text
+Where projected value has been lost through the lifecycle.
+```
+
+Render:
+
+Approval Leakage
+
+Execution Leakage
+
+Verification Leakage
+
+Finance Leakage
+
+Drift Leakage
+
+Visual:
+
+horizontal stacked bars
+
+or
+
+horizontal waterfall
+
+Each stage displays:
+
+```text
+Lost
+
+Remaining
+
+Percentage retained
+```
+
+This section answers:
+
+Where did the money go?
+
+---
+
+# Section 5 — Proof Timeline
+
+Each outcome becomes expandable.
+
+Collapsed:
+
+```text
+OpenAI Route Optimisation
+
+Verified
+
+$11,200
+```
+
+Expanded:
+
+```text
+Projected
+
+↓
+
+Approved
+
+↓
+
+Executed
+
+↓
+
+Verified
+
+↓
+
+Finance Confirmed
+
+↓
+
+Protected
+```
+
+Each event shows:
+
+* timestamp
+* actor
+* reason
+* linked evidence count
+* lifecycle stage
+* value delta
+
+Do not redesign data.
+
+Use:
+
+```ts
+buildOutcomeProofTimeline()
+```
+
+directly.
+
+---
+
+# Section 6 — Ledger Table
+
+The existing table remains.
+
+Move it to the bottom.
+
+Rename:
+
+```text
+Ledger Entries
+```
+
+Columns:
+
+```text
+Outcome
+
+Lifecycle
+
+Projected
+
+Approved
+
+Executed
+
+Verified
+
+Finance Confirmed
+
+Protected
+
+Value Leakage
+
+Confidence
+
+Evidence
+
+Proof State
+```
+
+This is the audit surface.
+
+Not the executive surface.
+
+---
+
+# Visual Language
+
+Continue using the Economic Gold theme.
+
+Rules:
+
+Dark charcoal surfaces.
+
+Gold:
+
+* value
+* active
+* evidence
+* finance
+
+Green:
+
+* verified
+* protected
+
+Red:
+
+* failed
+* drift
+* high leakage
+
+Grey:
+
+* pending
+* unreached
+
+Do not introduce brown backgrounds.
+
+---
+
+# Visual Components
+
+Create reusable components:
+
+```text
+OutcomeHeroMetric
+
+ValueWaterfall
+
+OutcomePipelineBoard
+
+OutcomePipelineCard
+
+LeakageBreakdown
+
+ProofTimeline
+
+TimelineEvent
+
+LedgerTable
+
+EvidenceBadge
+
+ConfidenceBadge
+```
+
+Prefer:
+
+React
+
+CSS
+
+SVG
+
+No heavy dependency additions.
+
+---
+
+# Interaction
+
+Pipeline cards:
+
+click →
+
+expand proof timeline.
+
+Timeline:
+
+click →
+
+open evidence drawer.
+
+Ledger row:
+
+click →
+
+focus matching pipeline card.
+
+Maintain existing routes.
+
+---
+
+# Empty States
+
+LIVE_UNCONNECTED
+
+Show:
+
+```text
+No Outcomes Yet
+
+Connect Microsoft 365 to begin building your Outcome Ledger.
+```
+
+Waterfall:
+
+empty.
+
+Pipeline:
+
+empty.
+
+Leakage:
+
+empty.
+
+Timeline:
+
+empty.
+
+Ledger:
+
+empty.
+
+No synthetic placeholders.
+
+---
+
+# Responsive
+
+Desktop:
+
+2-column hero
+
+full-width waterfall
+
+pipeline board
+
+Mobile:
+
+stack KPI cards
+
+horizontal scroll pipeline
+
+collapse timeline
+
+retain usability.
+
+---
+
+# Performance
+
+Do not recalculate summaries.
+
+Consume:
+
+```ts
+buildOutcomeLedgerSummary()
+
+calculateOutcomeLeakage()
+
+buildOutcomeProofTimeline()
+```
+
+All presentation should derive from the canonical helper outputs.
+
+---
+
+# Acceptance Criteria
+
+Complete when:
+
+```text
+1. Outcome Ledger feels like an executive finance console.
+2. Hero immediately communicates value under governance.
+3. Value Waterfall becomes the visual centrepiece.
+4. Pipeline board shows lifecycle flow.
+5. Leakage replaces variance as the core executive question.
+6. Proof Timeline is interactive.
+7. Ledger table becomes the audit surface at the bottom.
+8. LIVE_UNCONNECTED shows honest empty states.
+9. DEMO showcases the full experience.
+10. Existing routes remain unchanged.
+11. No duplicate calculations introduced.
+12. Typecheck passes.
+13. Full test suite passes.
+14. Browser visually verified.
+```
+
+Run:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Do not alter the canonical Outcome Ledger schema.
+
+This sprint is purely the executive visualisation layer built on top of the canonical ledger model.
