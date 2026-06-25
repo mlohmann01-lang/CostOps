@@ -12,24 +12,27 @@ test('demo outcomes include verification packs and confidence bands', () => {
   assert.equal(m365.evidencePack.evidenceSources.includes('Graph assignment snapshot'), true)
 })
 
-test('Outcome Ledger renders verification columns and evidence action', () => {
-  // OutcomeLedgerView was redesigned into the "Outcome Proof Console/Authority"; the equivalent
-  // columns are now 'Confidence' and 'Proof State', and rows open the evidence drawer via the
-  // outcome action button rather than a literal "View Evidence" label.
+test('Outcome Ledger renders canonical columns and proof timeline action', () => {
+  // OutcomeLedgerView now uses the canonical OutcomeRecord schema.
+  // Columns: Projected / Approved / Executed / Verified / Finance Confirmed / Protected /
+  // Value Leakage / Confidence / Proof State. Each row expands to show the proof timeline.
   const page = fs.readFileSync(new URL('../pages/OutcomeLedgerView.tsx', import.meta.url), 'utf8')
   assert.equal(page.includes('Confidence'), true)
   assert.equal(page.includes('Proof State'), true)
-  assert.equal(page.includes("data-testid='outcome-evidence-pack'"), true)
-  assert.equal(page.includes('setEvidenceId(l.id)'), true)
+  assert.equal(page.includes('Finance Confirmed'), true, 'Finance Confirmed replaces Retained')
+  assert.equal(page.includes('Value Leakage'), true, 'Value Leakage replaces Variance')
+  assert.equal(page.includes('data-testid="outcome-proof-authority"'), true)
+  assert.equal(page.includes('useCanonicalOutcomeLedger'), true)
 })
 
-test('Evidence pack drawer renders timeline snapshots and supporting evidence', () => {
-  // Equivalent current sections: 'Lifecycle timeline' (was 'Execution Timeline') and
-  // 'Evidence coverage' (was 'Before/After snapshot'); 'Supporting evidence' is unchanged.
+test('Proof timeline drawer uses buildOutcomeProofTimeline and shows chronological events', () => {
+  // The old evidence pack drawer (Lifecycle timeline / Evidence coverage / Supporting evidence)
+  // has been replaced by the canonical buildOutcomeProofTimeline helper and a Proof Timeline
+  // section that renders events chronologically.
   const page = fs.readFileSync(new URL('../pages/OutcomeLedgerView.tsx', import.meta.url), 'utf8')
-  assert.equal(page.includes('Lifecycle timeline'), true)
-  assert.equal(page.includes('Evidence coverage'), true)
-  assert.equal(page.includes('Supporting evidence'), true)
+  assert.equal(page.includes('Proof Timeline'), true)
+  assert.equal(page.includes('buildOutcomeProofTimeline'), true)
+  assert.equal(page.includes('outcome-timeline-'), true, 'per-row timeline testId prefix present')
 })
 
 test('live outcomes hook calls unverified API without demo fallback', () => {

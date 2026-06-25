@@ -74,6 +74,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/live-unconnected-enforcement.test.ts',
   '../artifacts/control-plane/src/lib/command-view-live-unconnected.test.tsx',
   '../artifacts/control-plane/src/lib/outcomeLedger/outcomeLedger.test.ts',
+  '../artifacts/control-plane/src/lib/outcome-ledger-integration.test.tsx',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')
