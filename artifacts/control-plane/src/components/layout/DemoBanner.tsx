@@ -18,9 +18,9 @@ const BANNER: Record<Exclude<WorkspaceRuntimeState, 'LIVE_OPERATIONAL' | 'DEMO'>
   DEMO: {
     tag: 'DEMO',
     tagColor: 'var(--amber, #ef9f27)',
-    tagBg: 'rgba(239,159,39,0.10)',
+    tagBg: 'rgba(239,159,39,0.08)',
     borderColor: 'var(--border-amber)',
-    bg: 'rgba(239,159,39,0.10)',
+    bg: 'rgba(255,255,255,0.03)',
     message: 'Synthetic evidence only · No production systems connected · Live execution disabled',
   },
   LIVE_UNCONNECTED: {

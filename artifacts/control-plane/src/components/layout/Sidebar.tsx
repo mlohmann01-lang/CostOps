@@ -105,7 +105,7 @@ export function Sidebar(){
       const containsActive=group.label===activeGroupLabel
       return (
         <div key={group.label} style={{marginBottom:2}}>
-          {gIdx > 0 && <div style={{height:1,background:'rgba(245,196,81,0.08)',marginBottom:6,marginTop:2}}/>}
+          {gIdx > 0 && <div style={{height:1,background:'rgba(255,255,255,0.06)',marginBottom:6,marginTop:2}}/>}
           <button
             type='button'
             aria-expanded={open}
@@ -138,7 +138,7 @@ export function Sidebar(){
                       padding:'7px 10px 7px 12px',
                       fontSize:13,fontWeight:active?700:400,
                       color:active?'#FFCC4D':'var(--text-secondary)',
-                      background:active?'rgba(245,196,81,0.10)':'transparent',
+                      background:active?'rgba(255,255,255,0.04)':'transparent',
                       borderLeft:`3px solid ${active?'#F5C451':'transparent'}`,
                       borderRadius:'0 8px 8px 0',
                       transition:'all 0.12s',

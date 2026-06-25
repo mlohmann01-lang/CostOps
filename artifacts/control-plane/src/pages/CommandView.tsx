@@ -288,7 +288,7 @@ export function CommandViewBody() {
             <div style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--text-muted)' }}>Potential Annual Value</div>
             <div style={{ fontSize: 40, fontWeight: 800, letterSpacing: '-1.5px', color: '#F5C451', lineHeight: 1 }}>{fmtOrDash(identifiedAnnualValue)}</div>
             <MiniSparkline values={sparklines.identified} color="#F5C451" />
-            {!isLiveUnconnected && <span style={{ alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: '#FFCC4D', background: 'rgba(245,196,81,0.1)', borderRadius: 999, padding: '3px 10px', border: '1px solid rgba(245,196,81,0.4)' }}>↑ Identified</span>}
+            {!isLiveUnconnected && <span style={{ alignSelf: 'flex-start', fontSize: 11, fontWeight: 700, color: '#FFCC4D', background: 'rgba(245,196,81,0.06)', borderRadius: 999, padding: '3px 10px', border: '1px solid rgba(245,196,81,0.4)' }}>↑ Identified</span>}
           </div>
 
           {/* KPI: Verified Value */}
@@ -324,7 +324,7 @@ export function CommandViewBody() {
           <span style={{ fontSize: 12, fontWeight: 800, color: isLiveUnconnected ? 'var(--text-muted)' : 'var(--accent-bright)', background: 'var(--surface-2)', borderRadius: 999, padding: '4px 12px' }}>{isLiveUnconnected ? '—' : String(authoritiesActive)}</span>
         </div>
 
-        <article data-testid='executive-command-center-narrative' style={{ border: '1px solid var(--border-gold)', background: 'var(--accent-soft)', borderRadius: 16, padding: 20 }}>
+        <article data-testid='executive-command-center-narrative' style={{ borderLeft: '3px solid rgba(245,196,81,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderLeftWidth: 3, background: 'var(--surface-1)', borderRadius: 16, padding: 20 }}>
           <p style={{ margin: 0, color: 'var(--text-primary)', fontSize: 15, lineHeight: 1.65, fontWeight: 500 }}>{narrative}</p>
         </article>
       </ExecutiveSection>
@@ -339,7 +339,7 @@ export function CommandViewBody() {
             {economicControlChain.stages.map((stage, idx) => {
               const isActive = !isLiveUnconnected && stage.active
               const isComplete = isActive && idx < chainStagesActive - 1
-              const nodeColor = isLiveUnconnected ? 'var(--surface-2)' : isComplete ? 'rgba(46,204,113,0.15)' : isActive ? 'rgba(245,196,81,0.12)' : 'var(--surface-2)'
+              const nodeColor = isLiveUnconnected ? 'var(--surface-2)' : isComplete ? 'rgba(46,204,113,0.12)' : isActive ? '#14181C' : 'var(--surface-2)'
               const borderColor = isLiveUnconnected ? 'var(--border-default)' : isComplete ? '#18C37E' : isActive ? 'rgba(245,196,81,0.55)' : 'rgba(255,255,255,0.1)'
               const iconColor = isLiveUnconnected ? 'var(--text-muted)' : isComplete ? '#18C37E' : isActive ? '#FFCC4D' : 'var(--text-muted)'
               const labelColor = isActive || isComplete ? 'var(--text-primary)' : 'var(--text-muted)'
@@ -523,7 +523,7 @@ export function CommandViewBody() {
                 <Link key={`${action.label}-${index}`} href={action.href} style={{ textDecoration: 'none' }}>
                   <div style={{ border: '1px solid var(--border-gold)', background: 'var(--surface-0)', borderRadius: 16, padding: 20, cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column', gap: 12, transition: 'background 0.15s' }} className="hover-elevate">
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <div style={{ width: 32, height: 32, borderRadius: 10, background: 'var(--accent-soft)', color: 'var(--accent-bright)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
+                      <div style={{ width: 32, height: 32, borderRadius: 10, background: 'rgba(255,255,255,0.07)', color: 'var(--accent-bright)', border: '1px solid rgba(245,196,81,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 14 }}>
                         {String(index + 1).padStart(2, '0')}
                       </div>
                       <ExternalLink size={14} color="var(--accent)" />

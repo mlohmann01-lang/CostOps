@@ -75,8 +75,8 @@
 
   --accent: #F5C451;
   --accent-bright: #FFCC4D;
-  --accent-soft: rgba(245,196,81,0.08);
-  --accent-glow: rgba(245,196,81,0.22);
+  --accent-soft: rgba(245,196,81,0.05);
+  --accent-glow: rgba(245,196,81,0.18);
   --border-accent: 0.5px solid rgba(245,196,81,0.35);
   --border-gold: rgba(245,196,81,0.35);
 
@@ -90,8 +90,8 @@
   
   --teal: #F5C451;
   --teal-light: #FFCC4D;
-  --teal-bg: rgba(245,196,81,0.08);
-  --teal-bg-strong: rgba(245,196,81,0.16);
+  --teal-bg: rgba(255,255,255,0.06);
+  --teal-bg-strong: rgba(255,255,255,0.10);
   --border-teal: 0.5px solid rgba(245,196,81,0.35);
 
   --border-amber:     0.5px solid rgba(239,159,39,0.25);

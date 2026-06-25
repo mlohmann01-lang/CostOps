@@ -1,0 +1,114 @@
+Executive Command Center Palette Cleanup — Remove Brown Cast
+
+Do not change layout, tests, routes, components, or business logic.
+
+Goal: remove the remaining brown/bronze tint from the platform UI. Keep gold as an accent only. Surfaces should feel charcoal/black, not brown.
+
+## Replace brown surfaces
+
+Search for and remove/replace colours like:
+
+```css
+rgba(245,196,81,0.08)
+rgba(245,196,81,0.10)
+rgba(245,196,81,0.12)
+rgba(245,196,81,0.14)
+rgba(245,196,81,0.18)
+rgba(245,196,81,0.22)
+rgba(245,196,81,0.30)
+rgba(245,196,81,0.35)
+```
+
+Do not remove them everywhere — only where they are used as **background fills**.
+
+Use gold for:
+
+* borders
+* icons
+* small badges
+* active indicators
+* sparklines
+* chart bars
+* key numbers
+
+Do not use gold/brown for:
+
+* large card backgrounds
+* page section backgrounds
+* sidebar item backgrounds
+* alert panel fills
+* full-width banners
+
+## Preferred surface colours
+
+Use charcoal surfaces:
+
+```css
+--surface-base: #050607;
+--surface-panel: #0B0D0F;
+--surface-card: #101316;
+--surface-card-hover: #14181C;
+--surface-elevated: #171A1F;
+```
+
+## Gold usage
+
+Use restrained gold:
+
+```css
+--gold: #F5C451;
+--gold-bright: #FFCC4D;
+--gold-border: rgba(245,196,81,0.36);
+--gold-glow: rgba(245,196,81,0.18);
+```
+
+## Specific fixes
+
+1. Demo banner
+   Current banner reads brown. Change background to dark charcoal with gold border/text only.
+
+2. Executive summary notification panel
+   Current panel reads brown. Change to charcoal background, gold left border or top border only.
+
+3. Sidebar active row
+   Remove brown fill. Use charcoal row background, gold left border and gold text/icon.
+
+4. KPI card
+   Keep dark card. Gold number, gold sparkline, gold border/glow. Do not use gold-tinted card background.
+
+5. Chain node active state
+   Keep dark circular node. Gold border/glow/icon. No brown circular fill.
+
+6. Waterfall bars
+   Keep gold bars. The surrounding panel background must remain charcoal.
+
+7. Badges
+   Badges may use very subtle gold tint, but cap at `rgba(245,196,81,0.06)`.
+
+## Visual target
+
+The product should feel:
+
+* black / charcoal
+* premium
+* finance-grade
+* restrained
+* gold-accented
+
+It should not feel:
+
+* brown
+* bronze
+* muddy
+* sepia
+* old enterprise dashboard
+
+Acceptance:
+
+* No large brown panels remain.
+* Gold appears as accent, not background.
+* Demo mode still clearly labelled.
+* LIVE_UNCONNECTED remains honest and empty.
+* Full tests pass.
+* Typecheck passes.
+* Browser visually checked.

@@ -72,7 +72,7 @@ export function TopBar() {
               fontSize: 12,
               fontWeight: 600,
               color: isDemo ? 'var(--text-secondary)' : 'var(--accent-bright)',
-              background: isDemo ? 'rgba(255,255,255,0.04)' : 'var(--accent-soft)',
+              background: 'rgba(255,255,255,0.04)',
               border: `0.5px solid ${isDemo ? 'rgba(255,255,255,0.1)' : 'var(--border-gold)'}`,
               borderRadius: 20,
               padding: '4px 12px',
@@ -113,7 +113,7 @@ export function TopBar() {
                     fontSize: 13,
                     fontWeight: runtime.environment === env ? 600 : 400,
                     color: runtime.environment === env ? 'var(--accent-bright)' : 'var(--text-primary)',
-                    background: runtime.environment === env ? 'var(--accent-soft)' : 'transparent',
+                    background: runtime.environment === env ? 'rgba(255,255,255,0.08)' : 'transparent',
                     border: 'none',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
@@ -149,7 +149,7 @@ export function TopBar() {
         <button style={{ background:'transparent', border:'none', padding:6, color:'var(--text-secondary)', cursor:'pointer' }}>
           <Bell size={16} />
         </button>
-        <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent-soft)', color: 'var(--accent-bright)', border: '1px solid var(--border-gold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>D</span>
+        <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,0.07)', color: 'var(--accent-bright)', border: '1px solid var(--border-gold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 600 }}>D</span>
       </div>
     </header>
   )
