@@ -65,6 +65,7 @@ export function useLiveTenantReadinessData(): LiveTenantReadinessData {
       setDataState(isReadinessEmpty(next) ? 'NO_DATA' : 'LIVE')
     } catch (err) {
       const normalized = normalizeApiError(err)
+      // Demo fallback data — Runtime APIs unavailable. Showing demo fallback data.
       setData(normalizeReadinessPayload(demoLiveTenantReadiness)); setIsDemo(true); setError(normalized.message)
       setDataState('NO_DATA')
     } finally { setLoading(false) }

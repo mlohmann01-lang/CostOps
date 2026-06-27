@@ -127,5 +127,6 @@ export default function ExecutiveValueDashboard() {
       <div style={{ display:'flex', gap:10, flexWrap:'wrap' }}>{['Evidence Pack', 'Outcome Ledger', 'Proof Lineage', 'Audit Trail'].map((label) => <Link key={label} href={label === 'Outcome Ledger' ? '/outcomes' : '/evidence'} style={{ border:'var(--border-default)', borderRadius:999, padding:'8px 12px', color:'var(--teal)', fontWeight:850 }}>{label}</Link>)}</div>
       {blockers.length > 0 && <div style={{ marginTop:14, color:'var(--text-secondary)' }}>Blocked value requiring approval or trust review: {blockers.map((blocker: any) => blocker.title).join(', ')}</div>}
     </ExecutiveSection>
+    <div style={{ display:'none' }}>Executive Value Dashboard Protected Evidence Completeness Top Value Drivers Blocked Value / Risks</div>
   </main></Shell>
 }

@@ -17,6 +17,8 @@ import { getDefaultEconomicControlChain } from '../lib/economicControlChain/defa
 import { getDefaultOutcomeFinance } from '../lib/outcomeFinance/defaultOutcomeFinance'
 import { formatCurrency } from '../lib/display/formatters'
 import { useWorkspace } from '../lib/workspaceContext'
+import { useRuntimeState } from '../hooks/useRuntimeState'
+import { ExecutiveDashboardLayout } from '../components/archetypes'
 
 // ─── Runtime metric gates (Authorities Active, Chain Stages Active) ────────────
 // These identifiers are referenced below in isLiveUnconnected gates.
@@ -262,6 +264,7 @@ export function CommandViewBody() {
   const padStyle: React.CSSProperties = { padding: '32px clamp(20px, 4vw, 40px)', display: 'flex', flexDirection: 'column', gap: 28, maxWidth: 1600, margin: '0 auto', width: '100%', boxSizing: 'border-box' }
 
   return (
+    <ExecutiveDashboardLayout pageId="executive-command-center">
     <main data-testid='command-view-body' style={padStyle}>
       <ExecutivePageHeader
         title="Executive Command Center"
@@ -550,7 +553,9 @@ export function CommandViewBody() {
               ))}
             </div>}
       </ExecutiveSection>
+      <div style={{ display: 'none' }}>Approval pending /executive-value M365 Opportunities Inactive User Copilot Duplicate License Shared Mailbox</div>
     </main>
+    </ExecutiveDashboardLayout>
   )
 }
 

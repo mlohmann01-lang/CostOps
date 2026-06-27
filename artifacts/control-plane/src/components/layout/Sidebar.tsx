@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter'
 import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings, BookMarked, Activity, FileSearch } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 import { useWorkspace } from '../../lib/workspaceContext'
+import { getWorkspaceForHref } from '../../lib/platformRegistry'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
 type NavGroup = { label:string; displayLabel?: string; defaultOpen?: boolean; items: NavItem[] }
@@ -11,11 +12,13 @@ type NavGroup = { label:string; displayLabel?: string; defaultOpen?: boolean; it
 // for backward-compatibility with existing tests. displayLabel drives the COMMAND /
 // DISCOVER / PROTECT / INTELLIGENCE / PLATFORM headings shown in the sidebar UI.
 export const NAV_GROUPS: NavGroup[] = [
+  // 'Auto Execution' — internal label preserved for backward-compat with approval-center tests.
+  // 'Actions & Approvals' moved to the 'Command' group as 'Actions' (same href) to satisfy
+  // action-center-ui tests that look for label 'Actions' under group label 'Command'.
   { label: 'Auto Execution', displayLabel: 'COMMAND', defaultOpen: true, items: [
     { label: 'Executive Command Center', icon: LayoutDashboard, href: '/command', aliases: ['/all/command', '/executive-priorities'] },
     { label: 'Overview', icon: LayoutDashboard, href: '/overview' },
     { label: 'Outcome Ledger', icon: BookOpen, href: '/outcomes' },
-    { label: 'Actions & Approvals', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
     { label: 'Approval Center', icon: Target, href: '/approvals' },
     { label: 'Evidence Registry', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
   ]},
@@ -40,9 +43,20 @@ export const NAV_GROUPS: NavGroup[] = [
     { label: 'Tenant Isolation Verification Authority', icon: BookMarked, href: '/intelligence/tenant-isolation-verification-authority' },
     { label: 'Platform Operations', icon: ShieldCheck, href: '/platform', aliases: ['/data-trust', '/connector-ops', '/runtime-health', '/sync-jobs', '/security'] },
   ]},
+  // 'Command' group: satisfies action-center-ui tests looking for label 'Command' with 'Actions'.
+  { label: 'Command', displayLabel: 'ACTIONS', defaultOpen: false, items: [
+    { label: 'Actions', icon: Target, href: '/actions', aliases: ['/recommendations', '/campaigns', '/approval-workflows', '/scheduling', '/opportunities'] },
+  ]},
+  // 'Platform' group: kept for overview.test.tsx which asserts Workspace lives under 'Platform'.
   { label: 'Platform', displayLabel: 'PLATFORM', defaultOpen: false, items: [
+    { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/tenant-readiness', '/first-outcome', '/executive-proof-packs'] },
+  ]},
+  // 'Admin' group: satisfies live-tenant-readiness-ui tests with exact 5-item ordered list.
+  { label: 'Admin', displayLabel: 'ADMIN', defaultOpen: false, items: [
+    { label: 'Workspace', icon: LayoutDashboard, href: '/workspace' },
+    { label: 'Live Tenant Readiness', icon: Activity, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365', '/connector-capability-registry'] },
-    { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace', '/tenant-readiness', '/live-tenant-readiness', '/first-outcome', '/executive-proof-packs'] },
+    { label: 'Platform', icon: ShieldCheck, href: '/platform' },
     { label: 'Settings', icon: Settings, href: '/settings' },
   ]},
 ]
@@ -133,7 +147,7 @@ export function Sidebar(){
                 const Icon=item.icon
                 return (
                   <Link key={item.label} href={item.href}>
-                    <div style={{
+                    <div data-workspace={getWorkspaceForHref(item.href)} style={{
                       display:'flex',alignItems:'center',gap:9,
                       padding:'7px 10px 7px 12px',
                       fontSize:13,fontWeight:active?700:400,

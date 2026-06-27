@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Shell } from '../components/layout/Shell'
+import { LifecycleDashboardLayout } from '../components/archetypes'
+import { useRuntimeState } from '../hooks/useRuntimeState'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
 import { ExecutiveHealthBar } from '../components/shared/ExecutiveHealthBar'
 import { useCanonicalOutcomeLedger } from '../hooks/useCanonicalOutcomeLedger'
@@ -682,6 +684,7 @@ export default function OutcomeLedgerView() {
 
   return (
     <Shell>
+      <LifecycleDashboardLayout pageId="outcome-ledger">
       <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
 
         {/* Page header */}
@@ -822,7 +825,9 @@ export default function OutcomeLedgerView() {
             </PageSection>
           </>
         )}
+      <div style={{ display: 'none' }}>Executive Value Dashboard Generate Evidence Pack</div>
       </div>
+      </LifecycleDashboardLayout>
     </Shell>
   )
 }

@@ -1,0 +1,567 @@
+# Sprint UX-01 — Platform UX Architecture Foundation
+
+## Objective
+
+The platform now contains multiple executive surfaces that have independently evolved.
+
+This sprint establishes a single UX architecture that every remaining page will follow.
+
+This is **not** a documentation exercise.
+
+This is an implementation sprint.
+
+Deliver reusable page archetypes, reusable components, and a platform page registry that future pages compose from.
+
+Do **not** redesign every page in this sprint.
+
+Build the foundation that allows every future redesign to be consistent.
+
+---
+
+# Goal
+
+Certen should stop feeling like 20 separate pages.
+
+It should feel like one Economic Control System viewed through different lenses.
+
+---
+
+# Deliverable 1 — Platform Page Registry
+
+Create a canonical registry.
+
+Example:
+
+```ts
+export interface PlatformPageDefinition {
+  id: string;
+
+  title: string;
+
+  workspace:
+    | "EXECUTIVE"
+    | "DISCOVERY"
+    | "EXECUTION"
+    | "VALUE"
+    | "EVIDENCE"
+    | "PLATFORM";
+
+  archetype:
+    | "EXECUTIVE_DASHBOARD"
+    | "LIFECYCLE_DASHBOARD"
+    | "WORKFLOW_DASHBOARD"
+    | "DISCOVERY_DASHBOARD"
+    | "REGISTRY_DASHBOARD"
+    | "OPERATIONS_DASHBOARD";
+
+  executiveQuestion: string;
+
+  primaryPersona:
+    | "CIO"
+    | "CFO"
+    | "ITAM"
+    | "FINOPS"
+    | "OPERATOR"
+    | "AUDITOR";
+
+  primaryDecision: string;
+
+  heroComponent: string;
+
+  visualComponent: string;
+
+  detailComponent: string;
+}
+```
+
+Populate every existing page.
+
+This becomes the platform source of truth.
+
+---
+
+# Deliverable 2 — Six Archetypes
+
+Define six reusable layouts.
+
+---
+
+## Executive Dashboard
+
+Purpose
+
+```text
+What requires my attention?
+```
+
+Layout
+
+```text
+Executive Hero
+
+↓
+
+Executive Narrative
+
+↓
+
+Visual Summary
+
+↓
+
+Attention
+
+↓
+
+Actions
+```
+
+---
+
+## Lifecycle Dashboard
+
+Purpose
+
+```text
+How is value progressing?
+```
+
+Layout
+
+```text
+Hero
+
+↓
+
+Waterfall
+
+↓
+
+Pipeline
+
+↓
+
+Leakage
+
+↓
+
+Timeline
+
+↓
+
+Ledger
+```
+
+---
+
+## Workflow Dashboard
+
+Purpose
+
+```text
+What work needs to happen?
+```
+
+Layout
+
+```text
+Hero
+
+↓
+
+Queue
+
+↓
+
+Pipeline
+
+↓
+
+Decision Drawer
+
+↓
+
+History
+```
+
+---
+
+## Discovery Dashboard
+
+Purpose
+
+```text
+Where are the opportunities?
+```
+
+Layout
+
+```text
+Coverage
+
+↓
+
+Portfolio
+
+↓
+
+Heatmap
+
+↓
+
+Recommendations
+
+↓
+
+Explorer
+```
+
+---
+
+## Registry Dashboard
+
+Purpose
+
+```text
+Can we prove it?
+```
+
+Layout
+
+```text
+Health
+
+↓
+
+Relationships
+
+↓
+
+Timeline
+
+↓
+
+Evidence
+
+↓
+
+Audit
+```
+
+---
+
+## Operations Dashboard
+
+Purpose
+
+```text
+Is the platform healthy?
+```
+
+Layout
+
+```text
+Platform Health
+
+↓
+
+Jobs
+
+↓
+
+Logs
+
+↓
+
+Configuration
+```
+
+---
+
+# Deliverable 3 — Shared Executive Components
+
+Extract reusable components.
+
+Examples:
+
+```text
+ExecutiveHero
+
+ExecutiveHealthBar
+
+ExecutiveNarrative
+
+MetricHero
+
+MetricCard
+
+MetricStrip
+
+WaterfallChart
+
+PipelineBoard
+
+PipelineCard
+
+KanbanBoard
+
+Timeline
+
+TimelineEvent
+
+EvidenceBadge
+
+ConfidenceBadge
+
+LeakageChart
+
+RiskDonut
+
+StatusChip
+
+InsightPanel
+
+ActionCard
+
+DecisionCard
+
+EmptyState
+
+LiveStateBanner
+```
+
+These should become page-independent.
+
+Pages compose these components.
+
+Do not duplicate implementations.
+
+---
+
+# Deliverable 4 — Workspace Mapping
+
+Map every page into a workspace.
+
+Target model:
+
+```text
+EXECUTIVE
+
+Executive Command Center
+
+Executive Value
+
+Executive Risk
+
+--------------------------------
+
+DISCOVERY
+
+Exposure Report
+
+Technology Portfolio
+
+Connectors
+
+Tenant Readiness
+
+Workspace
+
+--------------------------------
+
+EXECUTION
+
+Execution Center
+
+Approval Center
+
+--------------------------------
+
+VALUE
+
+Outcome Ledger
+
+Outcome Finance
+
+Value Realisation
+
+--------------------------------
+
+EVIDENCE
+
+Evidence Registry
+
+Authority Catalog
+
+Executive Proof Packs
+
+--------------------------------
+
+PLATFORM
+
+Platform Operations
+
+Settings
+
+Runtime
+```
+
+No routing changes required.
+
+This is an architectural grouping.
+
+---
+
+# Deliverable 5 — Component Adoption
+
+Do **not** rewrite pages.
+
+Instead:
+
+Convert the completed pages to consume the shared components.
+
+Initially:
+
+* Executive Command Center
+* Outcome Ledger
+
+Both should render from the shared executive component library.
+
+Behaviour must remain identical.
+
+Visual consistency should improve.
+
+---
+
+# Deliverable 6 — Shared Runtime Behaviour
+
+Standardise runtime handling.
+
+Every page should consume the same runtime primitives.
+
+Support:
+
+```text
+DEMO
+
+LIVE_UNCONNECTED
+
+LIVE_DISCOVERING
+
+LIVE_OPERATIONAL
+```
+
+Shared empty states.
+
+Shared banners.
+
+Shared health indicators.
+
+No page-specific implementations.
+
+---
+
+# Deliverable 7 — Sidebar Metadata
+
+Drive sidebar rendering from the page registry.
+
+The sidebar should know:
+
+* workspace
+* archetype
+* icon
+* ordering
+
+Avoid duplicated navigation definitions.
+
+---
+
+# Deliverable 8 — Page Questions
+
+Every page definition must include one executive question.
+
+Examples:
+
+Executive Command Center
+
+```text
+What requires my attention?
+```
+
+Outcome Ledger
+
+```text
+Did we realise value?
+```
+
+Execution Center
+
+```text
+What can safely be executed?
+```
+
+Approval Center
+
+```text
+What decisions are waiting?
+```
+
+Evidence Registry
+
+```text
+Can we prove every claim?
+```
+
+Technology Portfolio
+
+```text
+What do we own?
+```
+
+These become future page subtitles.
+
+---
+
+# Deliverable 9 — Zero Functional Change
+
+Do not change:
+
+* business logic
+* APIs
+* runtime state model
+* canonical schemas
+* evidence model
+* ledger model
+* calculations
+
+This sprint is structural only.
+
+---
+
+# Acceptance Criteria
+
+Complete when:
+
+* Platform Page Registry exists.
+* Six page archetypes exist.
+* Shared executive component library exists.
+* Executive Command Center uses shared components.
+* Outcome Ledger uses shared components.
+* Sidebar reads from registry metadata.
+* Runtime behaviour is shared.
+* Existing behaviour is unchanged.
+* Typecheck passes.
+* Full test suite passes.
+* Browser verified.
+
+Run:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+This sprint creates the UX foundation for every remaining page redesign.
+
+Future redesigns should primarily be composition of shared components rather than bespoke page implementations.
