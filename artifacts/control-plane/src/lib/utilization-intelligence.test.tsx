@@ -2,6 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { demoUtilizationIntelligence } from '../data/demo'
+import { NAV_GROUPS } from '../components/layout/Sidebar'
 import { utilizationApiPaths } from '../hooks/useUtilizationIntelligenceData'
 
 test('demo utilization dataset contains required waste examples', () => {
@@ -14,10 +15,12 @@ test('demo utilization dataset contains required waste examples', () => {
 
 test('Utilization Intelligence page route and nav render', () => {
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
-  const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
+  const navLabels = NAV_GROUPS.flatMap((group) => [group.label, ...group.items.map((item) => item.label)])
+  const portfolioItem = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.label === 'Technology Portfolio')
   assert.equal(app.includes('/utilization-intelligence'), true)
-  assert.equal(sidebar.includes('Technology Portfolio'), true)
-  assert.equal(sidebar.includes('Intelligence'), true)
+  assert.equal(navLabels.includes('Technology Portfolio'), true)
+  assert.equal(navLabels.includes('Intelligence'), true)
+  assert.equal(portfolioItem?.aliases?.includes('/utilization-intelligence'), true)
 })
 
 test('Utilization Intelligence page renders summary and table columns', () => {

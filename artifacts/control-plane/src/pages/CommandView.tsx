@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react'
 import { Link } from 'wouter'
 import { Shell } from '../components/layout/Shell'
-import { EmptyState, MetricCard, SectionLabel, StatusPill } from '../components/shared/Foundation'
+import { EmptyState, SectionLabel, StatusPill } from '../components/shared/Foundation'
+import { ExecutiveMetricStrip, ExecutiveNarrative, ExecutiveSection } from '../components/executive'
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
 import { useExecutivePrioritiesData } from '../hooks/useExecutivePrioritiesData'
 import { useRuntimeEvents } from '../hooks/useRuntimeEvents'
@@ -84,31 +85,28 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
     <header><SectionLabel>Overview</SectionLabel><h1 style={{ margin: '4px 0 0' }}>Executive Brief</h1><p style={{ margin: '6px 0 0', color: 'var(--text-secondary)' }}>What changed, what matters most, what requires attention, and what value was proven.</p></header>
 
     <section data-testid='overview-executive-brief' style={{ display: 'grid', gap: 14 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 12 }}>
-        <MetricCard label='Projected Annual Value' value={`${money(projectedAnnualValue)} Annual Value`} hero />
-        <MetricCard label='Verified Annual Value' value={`${money(verifiedAnnualValue)} Verified`} hero />
-        <MetricCard label='Ready Now' value={`${readyNow} Ready`} />
-        <MetricCard label='Awaiting Approval' value={`${awaitingApproval} Awaiting Approval`} />
-        <MetricCard label='Blocked' value={`${blocked} Blocked`} />
-        <MetricCard label='Trust Coverage' value={`${trustCoverage}% Trust Coverage`} />
-      </div>
-      <article data-testid='executive-narrative' style={{ border: 'var(--border-teal)', background: 'rgba(45,212,191,.08)', borderRadius: 14, padding: 16 }}><h2 style={{ margin: 0, fontSize: 18 }}>What to care about today</h2><p style={{ margin: '8px 0 0', color: 'var(--text-secondary)', lineHeight: 1.6 }}>{narrative}</p></article>
+      <ExecutiveMetricStrip columns='repeat(6, minmax(0, 1fr))' metrics={[
+        { label: 'Projected Annual Value', value: `${money(projectedAnnualValue)} Annual Value`, hero: true },
+        { label: 'Verified Annual Value', value: `${money(verifiedAnnualValue)} Verified`, hero: true },
+        { label: 'Ready Now', value: `${readyNow} Ready` },
+        { label: 'Awaiting Approval', value: `${awaitingApproval} Awaiting Approval` },
+        { label: 'Blocked', value: `${blocked} Blocked` },
+        { label: 'Trust Coverage', value: `${trustCoverage}% Trust Coverage` },
+      ]} />
+      <ExecutiveNarrative title='What to care about today' testId='executive-narrative'><p style={{ margin: 0 }}>{narrative}</p></ExecutiveNarrative>
     </section>
 
-    <section data-testid='what-matters-most' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}><div><SectionLabel>What Matters Most</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Top 3 Executive Priorities</h2></div><Link href='/executive-priorities'>View Priorities</Link></div>
+    <ExecutiveSection testId='what-matters-most' title='Top 3 Executive Priorities' rightSlot={<Link href='/executive-priorities'>View Priorities</Link>} description={<SectionLabel>What Matters Most</SectionLabel>}>
       {topPriorities.length === 0 ? <EmptyState title='No executive priorities available.' description='Priorities will appear after opportunities are scored.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}><div style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr .8fr .8fr .6fr 1fr 90px', gap: 10, fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}><span>Rank</span><span>Title</span><span>Monthly Value</span><span>Readiness</span><span>Trust</span><span>Next Step</span><span>Action</span></div>{topPriorities.map((priority: any) => <div key={priority.priorityId} data-testid='overview-priority-row' style={{ display: 'grid', gridTemplateColumns: '52px 1.6fr .8fr .8fr .6fr 1fr 90px', gap: 10, alignItems: 'center', padding: '10px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>#{priority.priorityRank}</strong><span>{priority.title}</span><span>{money(Number(priority.projectedMonthlySavings ?? 0))}/month</span><span><StatusPill status={readinessPill(priority.readiness) as any} /> {priority.readiness}</span><span>{priority.trustScore}</span><span>Next: {priority.recommendedNextAction}</span><Link href='/actions'>Open Action</Link></div>)}</div>}
-    </section>
+    </ExecutiveSection>
 
-    <section data-testid='requires-attention' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
-      <SectionLabel>Requires Attention</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Blockers</h2>
+    <ExecutiveSection testId='requires-attention' title='Blockers' description={<SectionLabel>Requires Attention</SectionLabel>}>
       {attention.length === 0 ? <EmptyState title='No blockers require attention.' description='Trust, approvals, renewals, connectors, and drift are currently clear.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}><div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr .7fr 1fr', gap: 10, fontSize: 11, color: 'var(--text-label)', textTransform: 'uppercase' }}><span>Issue</span><span>Impact</span><span>Blocked Value</span><span>Required Action</span></div>{attention.map((item, index) => <div key={`${item.issue}-${index}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr .7fr 1fr', gap: 10, padding: '9px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>{item.issue}</strong><span>{item.impact}</span><span>{money(item.blockedValue)}</span><span>{item.requiredAction}</span></div>)}</div>}
-    </section>
+    </ExecutiveSection>
 
-    <section data-testid='what-changed' style={{ border: 'var(--border-default)', background: 'var(--bg-card)', borderRadius: 14, padding: 16 }}>
-      <SectionLabel>What Changed</SectionLabel><h2 style={{ margin: '4px 0 0' }}>Significant events in the last 24 hours</h2>
+    <ExecutiveSection testId='what-changed' title='Significant events in the last 24 hours' description={<SectionLabel>What Changed</SectionLabel>}>
       {recentChanges.length === 0 ? <EmptyState title='No significant changes in the last 24 hours.' description='Recent governed activity will appear here.' /> : <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>{recentChanges.map((event: any) => <div key={event.eventId} data-testid='overview-change-row' style={{ display: 'grid', gridTemplateColumns: '28px 1fr 110px', gap: 8, alignItems: 'center', padding: '8px 0', borderTop: 'var(--border-subtle)', fontSize: 12 }}><strong>{eventTone(event.type)}</strong><span>{event.message}</span><span>{new Date(event.createdAt).toLocaleTimeString()}</span></div>)}</div>}
-    </section>
+    </ExecutiveSection>
 
     <footer data-testid='overview-quick-links' style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}><Link href='/actions'>Open Actions</Link><Link href='/executive-value'>Open Executive Value</Link><Link href='/evidence'>Open Evidence Packs</Link><Link href='/outcomes'>Open Outcomes</Link><Link href='/executive-priorities'>Open Priorities</Link></footer>
   </div></Shell>
