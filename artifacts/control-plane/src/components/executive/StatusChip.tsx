@@ -1,3 +1,4 @@
+import React from 'react'
 export type StatusChipTone = 'success' | 'warning' | 'danger' | 'neutral' | 'info'
 
 const colors: Record<StatusChipTone, { bg:string; border:string; color:string }> = {
