@@ -6,7 +6,7 @@ const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), '
 
 test('executive value page renders metric-first proof sections', () => {
   const page = read('../pages/ExecutiveValueDashboard.tsx')
-  for (const snippet of ['Executive Value', 'Projected Annual Value', 'Approved Annual Value', 'Executed Annual Value', 'Verified Annual Value', 'Drift Prevented', 'Value by Domain', 'Top Value Opportunities', 'Verified Outcomes', 'Evidence Linkage', 'Evidence Pack', 'Outcome Ledger', 'Proof Lineage', 'Audit Trail']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Executive Value', 'Identified Value', 'Blocked Value', 'Finance Confirmed Value', 'Verified Value', 'Protected Value', 'Value Drivers', 'Blocked Value / Risks', 'Verified Outcomes', 'Finance Confidence', 'Evidence Pack', 'Outcome Ledger', 'Proof Lineage', 'Audit Trail']) assert.equal(page.includes(snippet), true)
 })
 
 test('executive value page renders exactly one executive narrative block', () => {
