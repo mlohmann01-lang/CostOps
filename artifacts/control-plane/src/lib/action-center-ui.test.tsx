@@ -17,9 +17,9 @@ test('/actions route exists and visible Command navigation includes Actions', ()
   assert.equal(command?.items.some((item) => item.label === 'Actions' && item.href === '/actions'), true)
 })
 
-test('Action Center renders required summary cards', () => {
+test('Execution Center renders required summary cards', () => {
   const page = read('../pages/ActionCenter.tsx')
-  for (const label of ['Action Center', 'Governed action lifecycle from approval to execution, verification, retained value and drift.', 'Ready', 'Awaiting Approval', 'In Execution', 'Verification', 'Verified', 'Retained', 'Drifted', 'Projected Value', 'Verified Value']) assert.equal(page.includes(label), true)
+  for (const label of ['Execution Center', 'What can safely be executed next? Governed action lifecycle from approval to execution, verification, protected value and drift.', 'Ready', 'Awaiting Approval', 'In Execution', 'Verification', 'Verified', 'Retained', 'Drifted', 'Projected Value', 'Verified Value']) assert.equal(page.includes(label), true)
   assert.equal(page.includes("data-testid='action-center-summary'"), true)
 })
 

@@ -59,7 +59,7 @@ export default function TenantReadiness() {
     <Card><SectionLabel>Cross Links</SectionLabel><div style={{ display: 'flex', gap: 14, marginTop: 8, flexWrap: 'wrap' }}>
       <Link href='/connectors'>Connectors</Link>
       <Link href='/live-tenant-readiness'>Live Tenant Readiness</Link>
-      <Link href='/actions'>Action Center</Link>
+      <Link href='/actions'>Execution Center</Link>
       <Link href='/outcomes'>Outcomes</Link>
     </div></Card>
   </div></Shell>
