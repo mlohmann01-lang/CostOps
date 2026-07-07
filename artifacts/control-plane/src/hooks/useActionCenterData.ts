@@ -61,14 +61,14 @@ export function summarizeReadinessReports(reports: Record<string, ActionReadines
   return { eligible: list.filter((r) => r.verdict === 'ELIGIBLE').length, approvalRequired: list.filter((r) => r.verdict === 'APPROVAL_REQUIRED').length, blocked: list.filter((r) => r.verdict === 'BLOCKED').length, neverEligible: list.filter((r) => r.verdict === 'NEVER_ELIGIBLE').length, highConfidence: list.filter((r) => r.confidence === 'HIGH').length, missingEvidence: list.reduce((sum, r) => sum + r.missingEvidence.length, 0), topBlockers: list.flatMap((r) => r.blockers).slice(0, 5), requiredActions: list.flatMap((r) => r.requiredActions).slice(0, 5) }
 }
 export const demoActionCenterData: ActionCenterData = { summary: summarizeActions(demoGovernedActions), readinessSummary: summarizeReadinessReports(demoReadinessReports), actions: demoGovernedActions, isDemo: true, dataState: 'DEMO' }
-const notConnectedActionCenterData: ActionCenterData = { summary: emptySummary, readinessSummary: emptyReadinessSummary, actions: [], isDemo: true, dataState: 'NOT_CONNECTED' }
+const notConnectedActionCenterData: ActionCenterData = { summary: emptySummary, readinessSummary: emptyReadinessSummary, actions: [], isDemo: false, dataState: 'NOT_CONNECTED' }
 function normalizeSummary(value: Partial<ActionCenterSummary> | null | undefined): ActionCenterSummary { return { ...emptySummary, ...(value ?? {}) } }
 function normalizeReadinessSummary(value: Partial<ReadinessDashboardSummary> | null | undefined): ReadinessDashboardSummary { return { ...emptyReadinessSummary, ...(value ?? {}) } }
 function normalizeActions(value: unknown): GovernedAction[] { return Array.isArray(value) ? value as GovernedAction[] : [] }
 
 export function useActionCenterData() {
   const workspace = useWorkspace()
-  const [data, setData] = useState<ActionCenterData>(demoActionCenterData)
+  const [data, setData] = useState<ActionCenterData>(() => workspace.mode === 'demo' ? demoActionCenterData : notConnectedActionCenterData)
   const [loading, setLoading] = useState(false)
 
   const refresh = useCallback(async () => {
@@ -110,7 +110,7 @@ export function useActionCenterData() {
   const fetchActionDetails = useCallback(async (actionId: string): Promise<GovernedActionDetail> => {
     if (data.isDemo || workspace.mode === 'demo') {
       const action = data.actions.find((item) => item.id === actionId)
-      return { history: [{ id: `${actionId}-created`, eventType: 'CREATED', actor: 'system', notes: 'Demo governed action created', createdAt: action?.createdAt ?? new Date().toISOString() }, { id: `${actionId}-updated`, eventType: action?.status ?? 'READY', actor: 'operator', notes: 'Sample lifecycle state for Action Center', createdAt: action?.updatedAt ?? new Date().toISOString() }], evidence: { actionId, totalEvidence: action?.evidenceIds.length ?? 0, evidenceIds: action?.evidenceIds ?? [], recommendationIds: action?.recommendationIds ?? [], outcomeIds: action?.outcomeIds ?? [] }, readinessReport: demoReadinessReports[actionId] ?? null }
+      return { history: [{ id: `${actionId}-created`, eventType: 'CREATED', actor: 'system', notes: 'Demo governed action created', createdAt: action?.createdAt ?? new Date().toISOString() }, { id: `${actionId}-updated`, eventType: action?.status ?? 'READY', actor: 'operator', notes: 'Sample lifecycle state for Execution Center', createdAt: action?.updatedAt ?? new Date().toISOString() }], evidence: { actionId, totalEvidence: action?.evidenceIds.length ?? 0, evidenceIds: action?.evidenceIds ?? [], recommendationIds: action?.recommendationIds ?? [], outcomeIds: action?.outcomeIds ?? [] }, readinessReport: demoReadinessReports[actionId] ?? null }
     }
     try {
       const [history, evidence, readinessReport] = await Promise.all([liveFetch<GovernedActionHistoryEvent[]>(`/api/actions/${actionId}/history`), liveFetch<GovernedActionEvidenceSummary>(`/api/actions/${actionId}/evidence`), fetchReadinessReport(actionId)])

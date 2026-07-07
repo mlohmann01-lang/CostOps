@@ -67,7 +67,7 @@ export function renderEvidenceRegistryState(state: any) {
   const chain = selectedChain(state)
   return {
     title: 'Evidence Trust Center',
-    subtitle: 'Chain of custody, integrity, provenance and audit readiness for every Certen claim.',
+    subtitle: 'Can each claim be defended with source evidence and chain of custody? Integrity, provenance and audit readiness for every Certen claim.',
     demoBanner: state.isDemo ? 'Demo Mode Synthetic sample data. No production systems connected.' : '',
     liveEmpty: !state.isDemo && state.unavailable,
     emptyTitle,
@@ -123,7 +123,7 @@ export default function EvidenceRegistry() {
   const liveEmpty = !state.isDemo && state.unavailable
   const coverage = liveEmpty ? [] : coverageRows(rows, state.isDemo)
   return <Shell><main style={{ padding: '24px clamp(18px,3vw,34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto' }}>
-    <ExecutivePageHeader title='Evidence Trust Center' subtitle='Chain of custody, integrity, provenance and audit readiness for every Certen claim.' chips={[{ label: state.isDemo ? 'Demo Mode' : 'Live Mode', tone: state.isDemo ? 'info' : 'warning' }, { label: `Audit readiness: ${s?.readiness ?? notAvailable}`, tone: tone(s?.readiness ?? 'MISSING') }, { label: `Last updated: ${s?.generatedAt ? new Date(s.generatedAt).toLocaleString() : notAvailable}`, tone: 'info' }]} />
+    <ExecutivePageHeader title='Evidence Trust Center' subtitle='Can each claim be defended with source evidence and chain of custody? Integrity, provenance and audit readiness for every Certen claim.' chips={[{ label: state.isDemo ? 'Demo Mode' : 'Live Mode', tone: state.isDemo ? 'info' : 'warning' }, { label: `Audit readiness: ${s?.readiness ?? notAvailable}`, tone: tone(s?.readiness ?? 'MISSING') }, { label: `Last updated: ${s?.generatedAt ? new Date(s.generatedAt).toLocaleString() : notAvailable}`, tone: 'info' }]} />
     {state.isDemo && <div data-testid='demo-evidence-banner' style={{ border: '1px solid rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)', borderRadius: 14, padding: 12 }}><strong>Demo Mode</strong><p style={{ margin: '4px 0 0' }}>Synthetic sample data. No production systems connected.</p></div>}
 
     <section data-testid='evidence-trust-hero' style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(170px,1fr))', gap: 12 }}>

@@ -12,7 +12,7 @@ test('route exists and navigation entry exists under Admin', () => {
   assert.equal(app.includes("import LiveTenantReadinessView from './pages/LiveTenantReadinessView'"), true)
   assert.equal(app.includes('path="/live-tenant-readiness"'), true)
   const admin = NAV_GROUPS.find((group) => group.label === 'Admin')!
-  assert.deepEqual(admin.items.map((item) => item.label), ['Workspace', 'Live Tenant Readiness', 'Connectors', 'Platform', 'Settings'])
+  assert.deepEqual(admin.items.map((item) => item.label), ['Workspace', 'Tenant Readiness', 'Live Tenant Readiness', 'Connectors', 'Connector Capability Registry', 'Platform', 'Settings'])
 })
 
 test('data hook consumes runtime APIs and demo seed boundary', () => {
@@ -64,7 +64,7 @@ test('execution gate audit completeness evidence export and blockers render', ()
 
 test('evidence missing item badges deterministic narrative and cross-links render', () => {
   const page = read('../pages/LiveTenantReadinessView.tsx')
-  for (const text of ['RECOMMENDATION_EVIDENCE', 'TRUST_EVIDENCE', 'APPROVAL_EVIDENCE', 'PRE_STATE_EVIDENCE', 'POST_STATE_EVIDENCE', 'VERIFICATION_EVIDENCE', 'OUTCOME_EVIDENCE', 'PROTECTION_EVIDENCE', 'DRIFT_EVIDENCE', 'Deterministic Narrative', 'This tenant is', 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.', 'Open Workspace', 'Open Connectors', 'Open Action Center', 'Open Approval Center', 'Open Evidence Packs', 'Open Outcome Protection']) assert.equal(page.includes(text), true)
+  for (const text of ['RECOMMENDATION_EVIDENCE', 'TRUST_EVIDENCE', 'APPROVAL_EVIDENCE', 'PRE_STATE_EVIDENCE', 'POST_STATE_EVIDENCE', 'VERIFICATION_EVIDENCE', 'OUTCOME_EVIDENCE', 'PROTECTION_EVIDENCE', 'DRIFT_EVIDENCE', 'Deterministic Narrative', 'This tenant is', 'Three certified wedges are available: M365, AI Economic Control and ServiceNow Execution.', 'Open Workspace', 'Open Connectors', 'Open Execution Center', 'Open Approval Center', 'Open Evidence Packs', 'Open Outcome Protection']) assert.equal(page.includes(text), true)
 })
 
 test('live error state does not use demo fallback and prohibited labels are absent', () => {

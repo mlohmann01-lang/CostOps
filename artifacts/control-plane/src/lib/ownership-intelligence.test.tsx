@@ -2,40 +2,37 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { demoOwnershipIntelligenceData, normalizeOwnershipIntelligencePayload } from '../hooks/useOwnershipIntelligenceData'
-import { NAV_GROUPS } from '../components/layout/Sidebar'
-const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
 
-test('Ownership Intelligence page renders header and KPI row', () => {
+const read = (rel: string) => fs.readFileSync(new URL(rel, import.meta.url), 'utf8')
+
+test('Ownership & Accountability page renders executive header and KPI row', () => {
   const page = read('../pages/OwnershipIntelligence.tsx')
-  for (const snippet of ['Vendor & Application Ownership Intelligence', 'Identify applications, vendors, renewals, AI tools, and high-spend services without clear accountability.', 'Read-only intelligence', 'Workspace Mode', 'Sample governance dataset', 'Applications Reviewed', 'Ownerless Applications', 'Annual Spend Without Owner', 'Renewals Without Owner', 'AI Apps Without Owner', 'High-Risk Ownership Findings']) assert.equal(page.includes(snippet), true)
-  assert.equal(page.includes("data-testid='ownership-kpis'"), true)
+  for (const snippet of ['Ownership & Accountability', 'Executive Accountability', 'Responsible Owner', 'Business Owner', 'Technical Owner', 'Executive Sponsor', 'Renewal Owner', 'Governed assets', 'Assets missing owner', 'Evidence completeness']) assert.equal(page.includes(snippet), true)
 })
 
-test('Ownership Intelligence demo vendors render', () => {
-  const text = JSON.stringify(demoOwnershipIntelligenceData)
-  for (const vendor of ['Slack', 'Zoom', 'Tableau', 'Dropbox', 'ChatGPT', 'Claude', 'Box', 'Miro', 'Salesforce', 'HubSpot']) assert.equal(text.includes(vendor), true)
+test('Ownership & Accountability demo scenarios render', () => {
+  const text = JSON.stringify(demoOwnershipIntelligenceData())
+  for (const snippet of ['Microsoft 365 E5', 'Legacy CRM', 'Unapproved AI Notes App', 'Slack / Teams collaboration capability', 'Snowflake Enterprise', 'ServiceNow ITSM']) assert.equal(text.includes(snippet), true)
 })
 
-test('Ownership Intelligence renders map findings accountability sections actions and evidence', () => {
+test('Ownership & Accountability renders decision model, risks, actions and evidence', () => {
   const page = read('../pages/OwnershipIntelligence.tsx')
-  for (const snippet of ['Ownership Accountability Map', 'Owned', 'Partially Owned', 'Ownerless', 'Stale', 'Conflicted', 'Ownership Findings Table', 'Spend Without Accountability', 'Renewals Without Owner', 'AI Applications Without Owner', 'Owner Conflicts / Stale Ownership', 'Recommended Actions', 'Assign business owner', 'Assign technical owner', 'Assign budget owner', 'Assign renewal owner', 'Confirm stale owner', 'Resolve owner conflict', 'Escalate high-spend ownerless app', 'Evidence Panel']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Executive Accountability Decision Model', 'Ownership Gap and Accountability Risk Register', 'Ownership Evidence Pack / Proof Pack', 'VERIFIED', 'ASSIGN', 'REASSIGN', 'REVIEW', 'ESCALATE', 'BLOCKED']) assert.equal(page.includes(snippet), true)
 })
 
-test('Ownership Intelligence survives missing API/live data', () => {
+test('Ownership & Accountability normalizer does not fallback to demo for missing API/live data', () => {
   const data = normalizeOwnershipIntelligencePayload({})
-  assert.equal(data.summary.applicationsReviewed, demoOwnershipIntelligenceData.summary.applicationsReviewed)
+  assert.equal(data.summary.governedAssets, 0)
   assert.equal(data.findings.length, 0)
 })
 
-test('Ownership Intelligence reports exposed spend not savings', () => {
-  assert.equal(demoOwnershipIntelligenceData.summary.annualSpendWithoutOwner > 0, true)
-  assert.equal(JSON.stringify(demoOwnershipIntelligenceData).includes('Potential Annual Savings'), false)
+test('Ownership & Accountability reports exposed spend not savings', () => {
+  assert.equal(demoOwnershipIntelligenceData().findings.some((finding) => (finding.spend ?? 0) > 0), true)
+  assert.equal(JSON.stringify(demoOwnershipIntelligenceData()).includes('Potential Annual Savings'), false)
 })
 
-test('Ownership Intelligence sidebar route works', () => {
+test('Ownership & Accountability route works', () => {
   const app = read('../App.tsx')
   assert.equal(app.includes("import OwnershipIntelligence from './pages/OwnershipIntelligence'"), true)
-  assert.equal(app.includes('/ownership'), true)
-  const labels = NAV_GROUPS.flatMap((group) => group.items.map((item) => `${item.label}:${item.href}`)).join(' | ')
-  assert.match(labels, /Technology Portfolio:\/technology-portfolio/)
+  assert.equal(app.includes('/ownership-accountability'), true)
 })

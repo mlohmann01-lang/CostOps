@@ -51,6 +51,9 @@ import ExecutiveOutcomeDashboard from './pages/ExecutiveOutcomeDashboard'
 import TechnologyPortfolio from './pages/TechnologyPortfolio'
 import ExecutiveProofPacks from './pages/ExecutiveProofPacks'
 import GovernedExecution from './pages/GovernedExecution'
+import DiscoveryWorkspace from './pages/DiscoveryWorkspace'
+import ProtectionWorkspace from './pages/ProtectionWorkspace'
+import PlatformOperationsWorkspace from './pages/PlatformOperationsWorkspace'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -259,8 +262,8 @@ function GovernedExecutionRoute() {
   return <RequireRuntime><GovernedExecution /></RequireRuntime>
 }
 
-function PlatformRoute() {
-  return <RequireRuntime><RuntimeHealthView /></RequireRuntime>
+function PlatformRoute({ params }: { params?: { section?: string } } = {}) {
+  return <RequireRuntime><PlatformOperationsWorkspace section={params?.section} /></RequireRuntime>
 }
 
 function LiveTenantReadinessRoute() {
@@ -349,6 +352,10 @@ function ExecutiveValueRoute() {
   return <RequireRuntime><ExecutiveValueDashboard /></RequireRuntime>
 }
 
+function FinancialGovernanceRoute() {
+  return <RequireRuntime><ExecutiveValueDashboard /></RequireRuntime>
+}
+
 function UtilizationIntelligenceRoute() {
   return <RequireRuntime><UtilizationIntelligenceView /></RequireRuntime>
 }
@@ -362,6 +369,18 @@ function RenewalsRoute() {
 }
 
 function OwnershipRoute() {
+  return <RequireRuntime><OwnershipIntelligence /></RequireRuntime>
+}
+
+function DiscoveryRoute({ params }: { params?: { domain?: string } }) {
+  return <RequireRuntime><DiscoveryWorkspace domain={params?.domain} /></RequireRuntime>
+}
+
+function ProtectionRoute({ params }: { params?: { section?: string } }) {
+  return <RequireRuntime><ProtectionWorkspace section={params?.section} /></RequireRuntime>
+}
+
+function OwnershipAccountabilityRoute() {
   return <RequireRuntime><OwnershipIntelligence /></RequireRuntime>
 }
 
@@ -471,6 +490,10 @@ function Router() {
       <Route path="/overview" component={CommandRoute} />
       <Route path="/command"><RedirectRoute to="/overview" /></Route>
       <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
+      <Route path="/discovery/:domain" component={DiscoveryRoute} />
+      <Route path="/discovery" component={DiscoveryRoute} />
+      <Route path="/protection/:section" component={ProtectionRoute} />
+      <Route path="/protection" component={ProtectionRoute} />
       <Route path="/shadow-it-exposure"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/shadow-it"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/saas-rationalisation"><RedirectRoute to="/technology-portfolio?tab=saas" /></Route>
@@ -484,7 +507,7 @@ function Router() {
       <Route path="/connector-capability-registry" component={ConnectorCapabilityRegistryRoute} />
       <Route path="/executive-outcome-dashboard" component={ExecutiveOutcomeDashboardRoute} />
       <Route path="/connectors" component={ConnectorsRoute} />
-      <Route path="/connector-hub"><RedirectRoute to="/connectors" /></Route>
+      <Route path="/connector-hub" component={ConnectorsRoute} />
       <Route path="/m365-onboarding"><RedirectRoute to="/connectors" /></Route>
       <Route path="/onboarding/m365"><RedirectRoute to="/connectors" /></Route>
       <Route path="/actions" component={ActionsRoute} />
@@ -495,7 +518,9 @@ function Router() {
       <Route path="/governed-execution" component={GovernedExecutionRoute} />
       <Route path="/governance" component={GovernanceRoute} />
       <Route path="/execution" component={ExecutionConsolidatedRoute} />
+      <Route path="/platform/:section" component={PlatformRoute} />
       <Route path="/platform" component={PlatformRoute} />
+      <Route path="/runtime" component={RuntimeHealthRoute} />
       <Route path="/evidence" component={EvidenceRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
       <Route path="/:domain/governance" component={GovernanceRoute} />
@@ -504,31 +529,33 @@ function Router() {
       <Route path="/outcomes" component={OutcomesRoute} />
       <Route path="/outcome-protection" component={OutcomeProtectionRoute} />
       <Route path="/data-trust"><RedirectRoute to="/platform" /></Route>
-      <Route path="/vendor-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
+      <Route path="/vendor-intelligence" component={VendorIntelligenceRoute} />
       <Route path="/benchmark-intelligence"><RedirectRoute to="/technology-portfolio?tab=vendors" /></Route>
       <Route path="/contract-intelligence"><RedirectRoute to="/technology-portfolio?tab=contracts" /></Route>
-      <Route path="/utilization-intelligence"><RedirectRoute to="/technology-portfolio?tab=utilisation" /></Route>
+      <Route path="/utilization-intelligence" component={UtilizationIntelligenceRoute} />
       <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
+      <Route path="/financial-governance" component={FinancialGovernanceRoute} />
       <Route path="/executive-value" component={ExecutiveValueRoute} />
       <Route path="/opportunities" component={OpportunitiesRoute} />
-      <Route path="/renewals"><RedirectRoute to="/technology-portfolio?tab=renewals" /></Route>
-      <Route path="/ownership"><RedirectRoute to="/technology-portfolio?tab=ownership" /></Route>
+      <Route path="/renewals" component={RenewalsRoute} />
+      <Route path="/ownership-accountability" component={OwnershipAccountabilityRoute} />
+      <Route path="/ownership" component={OwnershipRoute} />
       <Route path="/governance-graph"><RedirectRoute to="/governance?tab=graph" /></Route>
       <Route path="/executive-risk" component={ExecutiveRiskRoute} />
-      <Route path="/drift"><RedirectRoute to="/execution" /></Route>
-      <Route path="/drift-monitor"><RedirectRoute to="/execution" /></Route>
+      <Route path="/drift" component={ProtectionRoute} />
+      <Route path="/drift-monitor" component={ProtectionRoute} />
       <Route path="/recommendations"><RedirectRoute to="/actions" /></Route>
       <Route path="/campaigns"><RedirectRoute to="/actions" /></Route>
       <Route path="/scheduling"><RedirectRoute to="/actions" /></Route>
       <Route path="/approval-workflows"><RedirectRoute to="/approvals" /></Route>
       <Route path="/evidence-packs"><RedirectRoute to="/evidence" /></Route>
       <Route path="/evidence-audit"><RedirectRoute to="/evidence" /></Route>
-      <Route path="/runtime-health"><RedirectRoute to="/platform" /></Route>
-      <Route path="/connector-ops"><RedirectRoute to="/platform" /></Route>
-      <Route path="/security"><RedirectRoute to="/platform?tab=security" /></Route>
+      <Route path="/runtime-health" component={RuntimeHealthRoute} />
+      <Route path="/connector-ops" component={ConnectorOpsRoute} />
+      <Route path="/security"><RedirectRoute to="/platform/security" /></Route>
       <Route path="/sync-jobs" component={SyncJobsRedirectRoute} />
       <Route path="/audit-log"><RedirectRoute to="/evidence" /></Route>
-      <Route path="/settings"><RedirectRoute to="/platform?tab=configuration" /></Route>
+      <Route path="/settings" component={SettingsRoute} />
       <Route component={CatchAllRoute} />
     </Switch>
   )

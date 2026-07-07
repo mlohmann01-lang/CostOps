@@ -50,6 +50,14 @@ const tests = [
   '../artifacts/control-plane/src/lib/saas-rationalisation.test.tsx',
   '../artifacts/control-plane/src/lib/ai-governance.test.tsx',
   '../artifacts/control-plane/src/lib/demo-live-boundary.test.tsx',
+  '../artifacts/control-plane/src/lib/program1-acceptance.test.tsx',
+  '../artifacts/control-plane/src/lib/program2-technology-management.test.tsx',
+  '../artifacts/control-plane/src/lib/program2-completion.test.tsx',
+  '../artifacts/control-plane/src/lib/program3-discovery-completion.test.tsx',
+  '../artifacts/control-plane/src/lib/program3-ownership-accountability.test.tsx',
+  '../artifacts/control-plane/src/lib/program4-protection-completion.test.tsx',
+  '../artifacts/control-plane/src/lib/program5-platform-completion.test.tsx',
+  '../artifacts/control-plane/src/lib/program4-financial-governance.test.tsx',
 ]
 
 const patterns = process.argv.slice(2).filter((arg) => arg !== '--')

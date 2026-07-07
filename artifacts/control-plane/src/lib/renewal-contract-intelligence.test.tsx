@@ -8,7 +8,7 @@ const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), '
 
 test('Renewal Contract Intelligence page renders header and KPI row', () => {
   const page = read('../pages/RenewalContractIntelligence.tsx')
-  for (const snippet of ['Renewal & Contract Intelligence', 'Identify risky renewals, underused contracts, duplicate vendors, owner gaps, and negotiation opportunities before renewal deadlines.', 'Read-only intelligence', 'Workspace Mode', 'Sample governance dataset', 'Upcoming Renewals', 'Annual Spend Reviewed', 'Potential Annual Savings', 'High-Risk Renewals', 'Contracts Missing Owner', 'Negotiation Opportunities']) assert.equal(page.includes(snippet), true)
+  for (const snippet of ['Technology Management — Renewal Risk', 'Which contracts and renewals require RENEW, OPTIMISE, CONSOLIDATE, RETIRE, REVIEW or BLOCKED management decisions?', 'Read-only intelligence', 'Upcoming Renewals', 'Annual Spend Reviewed', 'Potential Annual Savings', 'High-Risk Renewals', 'Contracts Missing Owner', 'Negotiation Opportunities']) assert.equal(page.includes(snippet), true)
   assert.equal(page.includes("data-testid='renewal-contract-kpis'"), true)
 })
 
@@ -25,7 +25,7 @@ test('Renewal Contract Intelligence renders calendar windows table sections acti
 
 test('Renewal Contract Intelligence survives missing API/live data', () => {
   const data = normalizeRenewalContractPayload({})
-  assert.equal(data.summary.upcomingRenewals, demoRenewalContractData.summary.upcomingRenewals)
+  assert.equal(data.summary.upcomingRenewals, 0)
   assert.equal(data.findings.length, 0)
   assert.equal(data.renewalCalendar.length, 0)
 })

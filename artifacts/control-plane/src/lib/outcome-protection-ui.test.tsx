@@ -77,7 +77,7 @@ test('Demo fallback works', () => {
 
 test('Cross-links exist', () => {
   const page = read('../pages/OutcomeProtectionView.tsx')
-  for (const label of ['Open Governed Action', 'Open Outcome', 'Open Evidence', 'Open Action Center', 'Open Executive Value']) assert.equal(page.includes(label), true)
+  for (const label of ['Open Governed Action', 'Open Outcome', 'Open Evidence', 'Open Execution Center', 'Open Executive Value']) assert.equal(page.includes(label), true)
 })
 
 test('No LeftShield labels', () => {
