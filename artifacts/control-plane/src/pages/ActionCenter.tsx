@@ -3,6 +3,47 @@ import { Shell } from '../components/layout/Shell'
 import { EmptyState, MetricCard, SectionLabel, StatusPill } from '../components/shared/Foundation'
 import { useActionCenterData, type ActionReadinessReport, type GovernedAction, type GovernedActionDetail, type GovernedActionStatus, type ReadinessDimensionResult } from '../hooks/useActionCenterData'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
+// Absorbed from ExecutionView.tsx (Execution Hub retired, redirected here — NAV-1).
+// Kept as its own data source (execution requests) — the governed-action lifecycle
+// above tracks a different model, so nothing is deduplicated, only appended.
+import { useExecutionData } from '../hooks/useExecutionData'
+import { simulateExecution, simulateRollback } from '../lib/demoRuntimeStore'
+import { useWorkspace } from '../lib/workspaceContext'
+import { runExecutionRequestDryRun } from '../lib/executionDryRunBridge'
+import { executeExecutionRequest } from '../lib/executionRunBridge'
+import { verifyExecutionOutcome } from '../lib/outcomeVerificationBridge'
+
+function executionReadinessStatus(readiness: string) { return readiness === 'PENDING_DRY_RUN' ? 'pending' : readiness.includes('BLOCKED') ? 'blocked' : readiness.includes('READY') ? 'ready' : 'pending' }
+
+// Rendered inside the "In Execution" tab — absorbed Execution Hub "Awaiting execution" list.
+function AwaitingExecutionRequests() {
+  const workspace = useWorkspace()
+  const { data, executingIds, refresh } = useExecutionData()
+  const [running, setRunning] = useState<string | null>(null)
+  const [dryRunError, setDryRunError] = useState('')
+  const runDryRun = async (id: string) => { setRunning(id); setDryRunError(''); try { await runExecutionRequestDryRun(id); await refresh() } catch (err) { setDryRunError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) } finally { setRunning(null) } }
+  const executeLive = async (id: string) => { setRunning(id); setDryRunError(''); try { await executeExecutionRequest(id); await refresh() } catch (err) { setDryRunError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) } finally { setRunning(null) } }
+  if (!data.awaiting.length) return null
+  return <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+    <SectionLabel>Execution Request Queue (absorbed from Execution Hub)</SectionLabel>
+    {dryRunError && <div role='alert'>{dryRunError}</div>}
+    {data.awaiting.map((r: any) => { const state = executingIds[r.id]; return <div key={r.id}>{r.action} · {state === 'EXECUTING' ? 'Executing' : 'Awaiting execution'} {r.simulated && <StatusPill status='simulated' />} {workspace.mode === 'live' ? <>{(r.readiness === 'PENDING_DRY_RUN' || r.readiness === 'READY_FOR_DRY_RUN') ? <button disabled={running === r.id} onClick={() => runDryRun(r.id)}>{running === r.id ? 'Running…' : 'Run dry run'}</button> : r.readiness === 'READY_FOR_EXECUTION' ? <><StatusPill status={executionReadinessStatus(r.readiness) as any} /> <button disabled={running === r.id} onClick={() => executeLive(r.id)}>{running === r.id ? 'Executing…' : 'Execute'}</button></> : <StatusPill status={executionReadinessStatus(r.readiness) as any} />}</> : <button disabled={state === 'EXECUTING' || state === 'QUEUED_FOR_EXECUTION'} onClick={() => simulateExecution(r.id)}>{state === 'EXECUTING' || state === 'QUEUED_FOR_EXECUTION' ? 'Executing…' : 'Simulate execution'}</button>}</div> })}
+  </div>
+}
+
+// Rendered inside the "Protected" (Outcomes) tab — absorbed Execution Hub "Completed" list.
+function CompletedExecutionRequests() {
+  const workspace = useWorkspace()
+  const { data, rollbackNotices, refresh } = useExecutionData()
+  const [outcomeResults, setOutcomeResults] = useState<Record<string, any>>({})
+  const [running, setRunning] = useState<string | null>(null)
+  const verifyOutcome = async (resultId: string) => { setRunning(resultId); try { const out = await verifyExecutionOutcome(resultId); setOutcomeResults((prev) => ({ ...prev, [resultId]: out.outcome })); await refresh() } finally { setRunning(null) } }
+  if (!data.completed.length) return null
+  return <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
+    <SectionLabel>Completed Executions (absorbed from Execution Hub)</SectionLabel>
+    {data.completed.map((r: any) => { const resultId = r.certId || r.latestExecutionResultId; const outcome = outcomeResults[resultId] || r.latestOutcome; return <div key={r.id}>{r.action} · {money(r.saving)}/mo · Verified {r.simulated && <StatusPill status='simulated' />} {workspace.mode === 'demo' ? <button onClick={() => simulateRollback(r.id)}>Rollback</button> : resultId && !outcome ? <button disabled={running === resultId} onClick={() => verifyOutcome(resultId)}>{running === resultId ? 'Verifying…' : 'Verify outcome'}</button> : <span>Read-only</span>}{rollbackNotices[r.id] && <span role='status'> {rollbackNotices[r.id]}</span>}{outcome && <div><strong>Outcome verification:</strong> {outcome.verificationState}<div>Verified savings: {money(outcome.verifiedMonthlySavings ?? 0)}</div></div>}</div> })}
+  </div>
+}
 
 export const actionCenterLifecycleTabs = [
   { key: 'ready', label: 'Ready', statuses: ['READY'] as GovernedActionStatus[] },
@@ -140,5 +181,7 @@ export default function ActionCenter() {
     <section data-testid='trust-readiness-summary' style={{ display: 'grid', gridTemplateColumns: 'repeat(6, minmax(0, 1fr))', gap: 10 }}><MetricCard label='Eligible' value={String(readinessSummary.eligible)} /><MetricCard label='Approval Required' value={String(readinessSummary.approvalRequired)} /><MetricCard label='Blocked Value' value={String(readinessSummary.blocked)} /><MetricCard label='Never Eligible' value={String(readinessSummary.neverEligible)} /><MetricCard label='Execution Confidence' value={String(readinessSummary.highConfidence)} /><MetricCard label='Missing Evidence' value={String(readinessSummary.missingEvidence)} /></section>
     <nav aria-label='Action lifecycle tabs' style={{ display: 'flex', gap: 8 }}>{actionCenterLifecycleTabs.map((tab) => <button key={tab.key} aria-pressed={activeTab === tab.key} onClick={() => setActiveTab(tab.key)} style={{ border: activeTab === tab.key ? 'var(--border-teal)' : 'var(--border-default)', background: activeTab === tab.key ? 'rgba(45,212,191,.08)' : 'var(--bg-card)', color: activeTab === tab.key ? 'var(--teal)' : 'var(--text-secondary)', borderRadius: 999, padding: '8px 12px' }}>{tab.label} ({grouped[tab.key]?.length ?? 0})</button>)}</nav>
     <section style={{ display: 'grid', gap: 12 }}>{visible.length === 0 ? <EmptyState title={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : dataState === 'NO_DATA' ? 'No Actions Available' : 'No governed actions in this stage.'} description={dataState === 'NOT_CONNECTED' ? 'No executable actions yet. Connect Microsoft 365 or another supported platform to begin discovery.' : dataState === 'NO_DATA' ? 'No live governed actions exist yet for this tenant.' : 'Actions will appear here as they move through the governed lifecycle.'} /> : visible.map((action) => <ActionCard key={action.id} action={action} isDemo={isDemo} expanded={expandedId === action.id} detail={details[action.id]} pending={pendingTransition === action.id} pendingEvaluate={pendingEvaluation === action.id} onExpand={() => void expand(action)} onTransition={(targetStatus) => void runTransition(action, targetStatus)} onEvaluate={() => void runEvaluate(action)} />)}</section>
+    {activeTab === 'execution' && <AwaitingExecutionRequests />}
+    {activeTab === 'outcomes' && <CompletedExecutionRequests />}
   </div></Shell>
 }

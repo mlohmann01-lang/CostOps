@@ -150,7 +150,7 @@ export default function ExecutiveValueDashboard() {
       <MetricCard label='Identified Value' value={money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />
       <MetricCard label='Verified Value' value={money(verifiedAnnualValue)} description='Outcome Ledger · Verification evidence' tone='success' href='/outcomes' />
       <MetricCard label='Finance Confirmed Value' value={money(driftPrevented)} description='Outcome Ledger · Finance confirmation' tone='success' href='/outcomes' />
-      <MetricCard label='Protected Value' value={money(driftPrevented)} description='Drift monitoring and protected savings.' tone='success' href='/execution' />
+      <MetricCard label='Protected Value' value={money(driftPrevented)} description='Drift monitoring and protected savings.' tone='success' href='/actions' />
       <MetricCard label='Blocked Value' value={money(blockedValue)} description='Approval, owner, evidence, verification or finance blockers' tone='warning' href='/actions' />
       <MetricCard label='Value Leakage' value={money(valueLeakage)} description='Identified value not yet verified or protected' tone='danger' href='/outcomes' />
     </section>

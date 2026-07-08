@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ElementType } from 'react'
 import { Link, useLocation } from 'wouter'
-import { ShieldCheck, LayoutDashboard, Award, Play, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings } from 'lucide-react'
+import { ShieldCheck, LayoutDashboard, TrendingUp, Plug, LogOut, BookOpen, Target, FileText, ChevronDown, ChevronRight, Settings } from 'lucide-react'
 import { getSession, clearSession } from '../../lib/auth/session'
 
 type NavItem = { label:string; href:string; icon: ElementType; badge?: string | number; aliases?: string[] }
@@ -14,22 +14,18 @@ export const NAV_GROUPS: NavGroup[] = [
   ]},
   { label: 'Executive', defaultOpen: false, items: [
     { label: 'Executive Risk', icon: TrendingUp, href: '/executive-risk' },
-    { label: 'Executive Value', icon: TrendingUp, href: '/executive-value' },
     { label: 'Executive Outcome Dashboard', icon: TrendingUp, href: '/executive-outcome-dashboard' },
   ]},
   { label: 'Intelligence', defaultOpen: true, items: [
-    { label: 'Technology Portfolio', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
-    { label: 'Governance', icon: Award, href: '/governance', aliases: ['/all/governance', '/governance-graph', '/ai-governance'] },
+    { label: 'Technology Authority', icon: TrendingUp, href: '/technology-portfolio', aliases: ['/all/intelligence', '/shadow-it', '/shadow-it-exposure', '/saas-rationalisation', '/renewals', '/ownership', '/vendor-intelligence', '/benchmark-intelligence', '/contract-intelligence', '/utilization-intelligence'] },
   ]},
   { label: 'Operations', defaultOpen: false, items: [
     { label: 'Approval Center', icon: Target, href: '/approvals', aliases: ['/approval-workflows'] },
     { label: 'Evidence', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },
-    { label: 'Execution', icon: Play, href: '/execution', aliases: ['/all/execution', '/drift', '/drift-monitor'] },
     { label: 'Outcomes', icon: BookOpen, href: '/outcomes' },
     { label: 'Outcome Protection', icon: ShieldCheck, href: '/outcome-protection' },
   ]},
   { label: 'Admin', defaultOpen: false, items: [
-    { label: 'Workspace', icon: LayoutDashboard, href: '/workspace', aliases: ['/pilot-workspace'] },
     { label: 'Tenant Readiness', icon: ShieldCheck, href: '/tenant-readiness' },
     { label: 'Live Tenant Readiness', icon: ShieldCheck, href: '/live-tenant-readiness' },
     { label: 'Connectors', icon: Plug, href: '/connectors', badge: '1', aliases: ['/connector-hub', '/m365-onboarding', '/onboarding/m365'] },

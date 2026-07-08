@@ -39,7 +39,7 @@ export default function WorkspaceSelection() {
 
   function enter(env: 'DEMO' | 'LIVE') {
     runtime.selectEnvironment(env)
-    navigate('/workspace')
+    navigate('/overview')
   }
 
   return (

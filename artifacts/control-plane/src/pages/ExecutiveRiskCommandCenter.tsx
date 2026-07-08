@@ -1,16 +1,23 @@
+import React from 'react'
 import { FileText } from 'lucide-react'
 import { Shell } from '../components/layout/Shell'
 import { EvidenceBadge, ExecutiveBarChart, ExecutiveKpiCard, ExecutiveSection, RiskBadge, StatusBadge } from '../components/executive'
 import { useExecutiveRiskData } from '../hooks/useExecutiveRiskData'
+// Absorbed from GovernanceView.tsx (Governance page retired, redirected here — NAV-1).
+import { useGovernanceGraphData } from '../hooks/useGovernanceGraphData'
 
 const money = (value?: number) => typeof value === 'number' ? `$${Math.round(value).toLocaleString()}` : '—'
 const label = (value: string) => value.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase())
 const grid = (columns: string) => ({ display:'grid', gridTemplateColumns: columns, gap: 10, alignItems:'center' })
+const govColumns = (count: number) => `repeat(${count}, minmax(0, 1fr))`
+function GovRow({ cells }: { cells: React.ReactNode[] }) { return <div style={{ display: 'grid', gridTemplateColumns: govColumns(cells.length), gap: 10, border: 'var(--border-default)', borderRadius: 10, padding: 10, fontSize: 13 }}>{cells.map((cell, index) => <span key={index}>{cell}</span>)}</div> }
+function GovHeader({ cells }: { cells: string[] }) { return <div style={{ display: 'grid', gridTemplateColumns: govColumns(cells.length), gap: 10, fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 800, textTransform: 'uppercase' }}>{cells.map((cell) => <span key={cell}>{cell}</span>)}</div> }
 const executiveNarrative = 'The highest-priority governance issues are concentrated in ownerless applications, near-term renewals, AI governance exposure, and duplicate SaaS capability. Immediate attention should focus on ownership assignment, AI policy review, renewal rationalisation, and evidence-backed executive review.'
 const actionOrder = ['Assign Owners', 'Review AI Policy', 'Renegotiate Renewals', 'Consolidate Vendors', 'Retire Unused Tools', 'Validate Data', 'Generate Evidence']
 
 export default function ExecutiveRiskCommandCenter() {
   const { data } = useExecutiveRiskData()
+  const graph = useGovernanceGraphData().data
   const backed = data.topRisks.filter((risk) => risk.evidenceRefs.length > 0).length
   const missing = data.topRisks.length - backed
   const exposedSpend = data.domainBreakdown.find((domain) => domain.domain === 'RENEWALS')?.exposedSpend ?? 320000
@@ -64,5 +71,17 @@ export default function ExecutiveRiskCommandCenter() {
     </ExecutiveSection>
 
     <ExecutiveSection testId='evidence-readiness' title='Evidence Readiness' description='Confidence level for executive recommendations.' rightSlot={<EvidenceBadge confidence={data.summary.evidenceConfidence} />}><p>Evidence-backed risks: <strong>{backed}</strong></p><p>Missing evidence: <strong>{missing}</strong></p><p><FileText size={13} /> Generate evidence recommendation for any executive review gaps.</p></ExecutiveSection>
+
+    <ExecutiveSection testId='governance-graph-summary' title='Governance Summary' description='Applications, risks, opportunities and evidence coverage across the governed estate. Absorbed from Governance.'>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <GovHeader cells={['Metric', 'Value', 'Outcome']} />
+        {[
+          ['Applications', graph.summary?.applications, 'Estate mapped'],
+          ['Risks', graph.summary?.risks, 'Requires governance'],
+          ['Opportunities', graph.summary?.opportunities, 'Value path'],
+          ['Evidence Items', graph.summary?.evidenceItems, 'Proof available'],
+        ].map((cells) => <GovRow key={String(cells[0])} cells={cells} />)}
+      </div>
+    </ExecutiveSection>
   </main></Shell>
 }

@@ -168,7 +168,7 @@ export default function PilotWorkspace() {
                 : "Finance reconciled value backed by evidence."
             }
             tone={valueUnavailable ? "danger" : "success"}
-            href="/executive-value"
+            href="/overview"
           />
           <MetricCard
             label="Economic control chain audit"
