@@ -90,9 +90,10 @@ test('Workspace nav item is unchanged by the Executive Command Center rewrite', 
   assert.equal(platform?.items.some((item) => item.label === 'Workspace' && item.href === '/workspace'), true)
 })
 
-test('Overview sidebar label and route are unchanged', () => {
-  const overviewItem = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.href === '/overview')
-  assert.equal(overviewItem?.label, 'Overview')
+test('Executive Command Center sidebar item covers /overview via alias', () => {
+  const execItem = NAV_GROUPS.flatMap((group) => group.items).find((item) => item.href === '/command')
+  assert.equal(execItem?.label, 'Executive Command Center')
+  assert.equal(execItem?.aliases?.includes('/overview'), true)
 })
 
 test('No execution controls appear on Overview', () => {

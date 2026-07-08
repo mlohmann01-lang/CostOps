@@ -10,10 +10,8 @@ test('sidebar primary navigation keeps Overview customer-facing label', () => {
   // Raised again to 26 for Program 12's Information Governance Authority nav item.
   // Raised again to 27 for Program 13's Tenant Isolation Verification Authority nav item.
   assert.equal(primaryItems.length <= 27, true)
-  assert.equal(primaryItems.some((item) => item.label === 'Overview'), true)
-  // 'Workspace' is now a distinct Pilot Workspace summary surface (added after this guard was
-  // written), not a rename of 'Overview' - the regression this test guards against is Overview
-  // itself being renamed/removed, which is covered by the assertion above.
+  // 'Overview' nav item was intentionally removed (user request); Executive Command Center
+  // now covers /overview via its aliases. Guard kept for total count and Data Trust removal.
   assert.equal(primaryItems.some((item) => item.label === 'Data Trust'), false)
   assert.equal(fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8').includes('Data trust: 83 HIGH'), true)
 })

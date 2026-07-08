@@ -16,8 +16,7 @@ export const NAV_GROUPS: NavGroup[] = [
   // 'Actions & Approvals' moved to the 'Command' group as 'Actions' (same href) to satisfy
   // action-center-ui tests that look for label 'Actions' under group label 'Command'.
   { label: 'Auto Execution', displayLabel: 'COMMAND', defaultOpen: true, items: [
-    { label: 'Executive Command Center', icon: LayoutDashboard, href: '/command', aliases: ['/all/command', '/executive-priorities'] },
-    { label: 'Overview', icon: LayoutDashboard, href: '/overview' },
+    { label: 'Executive Command Center', icon: LayoutDashboard, href: '/command', aliases: ['/all/command', '/overview', '/executive-priorities'] },
     { label: 'Outcome Ledger', icon: BookOpen, href: '/outcomes' },
     { label: 'Approval Center', icon: Target, href: '/approvals' },
     { label: 'Evidence Registry', icon: FileText, href: '/evidence', aliases: ['/evidence-packs', '/evidence-audit', '/audit-log'] },

@@ -236,7 +236,7 @@ function LoginRoute() {
 
 function HomeRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/overview' : '/login'} />
+  return <Redirect to={session ? '/overview' : '/welcome'} />
 }
 
 function RequireRuntime({ children }: { children: React.ReactNode }) {
