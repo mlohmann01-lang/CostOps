@@ -23,6 +23,25 @@ None of the five areas reaches VERIFIED. Given the severity of the security find
 
 ---
 
+## Remediation Update — 2026-07-08 (Post-Fix Pass)
+
+Following the initial verification above, the six items assessed as release blockers were fixed and independently re-verified — typechecked, unit-tested, and (for the DB-dependent changes) exercised against a real local PostgreSQL 16 instance, not just mocked. Nothing outside these six items was touched; performance, monitoring/alerting, and the remaining lower-priority security/auth gaps below were explicitly left untouched per scope.
+
+| # | Blocker | Status | Evidence |
+|---|---|---|---|
+| 1 | Governed-execution RBAC too coarse (VIEWER could approve/execute/cancel) | **FIXED** | `routes/governed-execution.ts` — `requireCapability('APPROVE_ACTIONS')` added to `/plans/:id/approve`, `/plans/:id/execute`, `/plans/:id/cancel`. `APPROVE_ACTIONS` is granted only to `SYSTEM_ADMIN`/`TENANT_ADMIN`/`GOVERNANCE_ADMIN`/`APPROVER` (`lib/security/authorization-service.ts`), not `OPERATOR` or `VIEWER`/`READ_ONLY` — the same capability already used elsewhere in the codebase to gate approval decisions (`routes/workflow.ts:15`). |
+| 2 | No test proved VIEWER/read-only roles were blocked | **FIXED** | `tests/governed-execution-rbac.test.ts` (8 tests, no DB required) — behaviourally proves `VIEWER`/`OPERATOR`/`AUDITOR` are rejected (403 `CAPABILITY_FORBIDDEN`) and `APPROVER`/`TENANT_ADMIN`/`PLATFORM_ADMIN`/`GOVERNANCE_ADMIN` pass, plus a static check that the guard is actually wired onto the three routes (and not onto plain reads). `tests/governed-execution-audit-trail.test.ts` additionally proves (against a real DB) that a VIEWER's blocked attempt never reaches the handler and writes no audit event. |
+| 3 | M365 token store: in-memory `Map`, insecure default encryption key | **FIXED** | `lib/microsoft-auth/microsoft-token-store.ts` — backing store is now an injectable `MicrosoftCredentialBackingStore`; the default in-memory backing now **throws in production** (`NODE_ENV==='production'`) unless a durable store is explicitly supplied, and the encryption key now **throws in production** if `MICROSOFT_TOKEN_ENCRYPTION_KEY` is unset (no more silent fallback to `"local-dev-encryption-boundary"`). New `lib/microsoft-auth/microsoft-token-db-store.ts` adds a genuine `DatabaseMicrosoftCredentialStore` backed by a new `microsoft_oauth_credentials` Postgres table (`lib/db/src/schema/microsoftOauthCredentials.ts`), wired into production via `createMicrosoftTokenStore()`, now used by `routes/production-connectors.ts` instead of the raw in-memory constructor. `production-config-validator.ts` also fails closed at startup if `MICROSOFT_TOKEN_ENCRYPTION_KEY` is missing/short in production (mirrors the existing `JWT_SECRET` check). Verified end-to-end against a real Postgres 16 instance: `tests/microsoft-token-db-store.test.ts` shows a credential written by one store instance is readable by an independent instance (simulating a separate replica/restart) and is never stored in the clear. |
+| 4 | `dryRun()`/live M365 & Entra connectors silently returned fixture data labeled `"READY"` when uncredentialed | **FIXED** | `lib/production-connectors/m365/m365-client.ts` and `.../entra/entra-client.ts` — the fixture fallback is now gated **only** on an explicit, caller-opted-in `context.config.useFixtures` flag; missing `credentialRef`/`tokenProvider` now returns `{status:"BLOCKED", reason:"MICROSOFT_CREDENTIALS_NOT_CONFIGURED"}` for every mode (`VALIDATE`/`DRY_RUN`/`SYNC`), not just `SYNC`. New regression tests (`tests/production-connectors.test.ts`, `tests/entra-live-integration.test.ts`) assert a dry run against an unconfigured tenant is `BLOCKED`, never `COMPLETED`-with-fixtures. Existing tests/audits (`production-connector-audit.ts`, `m365-live-integration.test.ts`, `production-connectors.test.ts`) that were *relying on* the old silent-fallback bug were updated to opt into fixtures explicitly via `config:{useFixtures:true}` — re-run against a real DB, all pass. |
+| 5 | Entra login stub (`validateJwtToken("mock")`) could hand out unverified operator-role claims outside `NODE_ENV=production` | **FIXED (stub-gated, not real OAuth)** | `lib/auth/providers/microsoft-entra.ts` — `exchangeCodeForClaims` no longer routes through the generic JWT validator's `DEV_FALLBACK` path at all. It now throws `ENTRA_TOKEN_EXCHANGE_NOT_IMPLEMENTED` whenever `NODE_ENV==='production'`, and outside production returns explicitly-named placeholder claims (`dev-entra-user`/`dev-tenant`) with a loud console warning — it can no longer silently hand out `groups:['operator']`-mapped claims for arbitrary requests without any indication of what happened. **Real Entra authorization-code token exchange is still not implemented** — this was a stub-gate per the assigned scope, not a full OAuth implementation; `/login/callback` in production will now correctly error instead of ever fabricating claims. New tests: `tests/microsoft-entra-stub-gating.test.ts` (3 tests). |
+| 6 | No audit trail on governed-execution approve/execute/cancel | **FIXED** | `routes/governed-execution.ts` now calls `recordAuditEvent` (awaited, so the record is committed before the response is sent) on all three routes, mapping to `APPROVAL_GRANTED`, `EXECUTION_COMPLETED`/`EXECUTION_FAILED`, and a new `EXECUTION_CANCELLED` event type (added to `lib/db/src/schema/auditEvents.ts`), each recording tenant/actor/role/outcome/payload from the real `req.__authContext`. Verified against a real Postgres instance in `tests/governed-execution-audit-trail.test.ts`: approve, execute, and cancel each produce a real row in `audit_events`, and a VIEWER's blocked attempt produces none. |
+
+**A note on collateral findings surfaced while fixing #4:** re-running the full DB-integration suite against a real database (previously this combination had apparently never been exercised, since `DATABASE_URL` is not available by default) surfaced two **pre-existing, unrelated** failures that predate this fix pass and were reproduced identically on the original unmodified code: `production-connectors-audit.test.ts`'s "all expose capability discovery" check, and `production-connectors.test.ts`'s ServiceNow normaliser test (`APPLICATION_GRAPH_NODE` vs `OWNERSHIP_ASSIGNMENT`). Both are out of scope for this pass (unrelated to auth/connector-credential/RBAC security) and are left for a separate fix; they are called out here only for transparency since they were newly *observed* during this remediation's verification, not newly introduced by it.
+
+Everything else in the original report below is unchanged and still reflects real, open gaps — including the remaining Authentication gaps (#2–7), the remaining Live Connectors gaps (#2, #4–7), the remaining Security gaps (#3–6), and the entirety of Performance and Monitoring, which were explicitly out of scope for this pass.
+
+---
+
 ## Verification Scope
 
 This audit covered the monorepo at `/home/user/CostOps`:
@@ -49,7 +68,7 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 - Tenant identity/session schema exists: `lib/db/src/schema/auth.ts:3-27` (`auth_users`, `auth_sessions` with `expiresAt`/`revokedAt`).
 
 **Gaps:**
-1. The Entra OAuth code-exchange is a stub: `artifacts/api-server/src/lib/auth/providers/microsoft-entra.ts:9-16` never calls Entra's token endpoint — it calls `validateJwtToken("mock")` with a `TODO` comment left in place.
+1. ~~The Entra OAuth code-exchange is a stub...~~ **[FIXED — see Remediation Update above.]** The stub itself is unchanged (real Entra token exchange is still not implemented), but it no longer routes through `validateJwtToken("mock")`/`DEV_FALLBACK` — it now explicitly throws in production instead of being able to silently hand out unverified `groups:['operator']` claims. Real Entra token exchange remains a genuine functional gap, now safely fenced off from production.
 2. Session tokens issued by `/login/callback` (`artifacts/api-server/src/routes/auth.ts:15-21`) are never persisted to, or re-validated against, the `auth_sessions` table — that table is dead schema with zero other references in the codebase. The login flow and the JWT-bearer-auth flow that actually gates requests are disconnected.
 3. `/logout` (`routes/auth.ts:40`) returns `{revoked:true}` without invalidating anything server-side.
 4. The legacy `authMiddleware` (`artifacts/api-server/src/middleware/auth.ts:8-15`), still used by `jobs.ts` and `approvals.ts`, calls a context builder that never throws on missing auth (`auth-context.ts:59-70` falls back to an `UNAUTHENTICATED_CONTEXT` object) — its 401 branch is dead code, so those routes have no enforced login requirement.
@@ -58,7 +77,7 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 7. `AUTH_GUARD_REVIEW.md` documents a header-based (`x-role`/`x-user-id`) model that the code has since removed — the doc is stale relative to the implementation.
 
 **Recommended next actions:**
-- Implement the real Entra authorization-code token exchange and wire it to a persisted, re-validated session (or drop the unused `auth_sessions` table and formally document JWT-bearer as the only session mechanism).
+- Implement the real Entra authorization-code token exchange (the stub is now safely gated out of production, but still does not perform a real exchange) and wire it to a persisted, re-validated session (or drop the unused `auth_sessions` table and formally document JWT-bearer as the only session mechanism).
 - Add `requireTenantContext`/`requireCapability` to every router currently unguarded, starting with `dashboard.ts` (tenant data leak).
 - Remove or gate the client-side demo-login bypass in `App.tsx` behind a build-time flag equivalent to the backend's `ALLOW_DEMO_LOGIN`.
 - Fix or delete the dead-code 401 path in the legacy `authMiddleware`.
@@ -77,18 +96,18 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 - Live-tenant gating is real and DB-backed: `live-tenant-readiness-service.ts:4,10` explicitly flags any `source==='demo-fixture'`/`valueSource==='sample-tenant'` evidence and blocks `overallStatus='READY'`; persisted via Drizzle in `live-tenant-readiness-persistence.ts` / `connector-readiness-persistence.ts` (not in-memory).
 
 **Gaps:**
-1. The encrypted token store is `private readonly records = new Map()` — **in-memory only**, lost on process restart — and its encryption key defaults to the hardcoded string `"local-dev-encryption-boundary"` if `MICROSOFT_TOKEN_ENCRYPTION_KEY` is unset.
-2. `graphReachable` in the readiness computation defaults to `true` whenever a token is acquired unless a caller injects a `graphProbe` — and no call site anywhere in the codebase (`connectors.ts`, `m365-health.ts`, `m365-trust.ts`, `m365-discovery-service.ts`) ever passes one. `GRAPH_UNREACHABLE` can therefore never actually be detected; "health" only confirms token issuance.
-3. `artifacts/api-server/src/lib/production-connectors/m365/m365-client.ts:19` (and the equivalent `entra-client.ts`): when `credentialRef`/`tokenProvider` is missing, or `useFixtures` is set, the connector returns `{status: "READY", records: m365Fixtures}` — fixture data labeled `READY`, not `BLOCKED`/`NOT_CONFIGURED`. The `sync()` path guards against this via `tokenProvider`/`liveTenantReady` checks, but `dryRun()` calls `fetchRawRecords()` directly with no such guard, so a dry run against an unconfigured tenant silently returns fixture records marked complete.
+1. ~~The encrypted token store is `private readonly records = new Map()`...~~ **[FIXED — see Remediation Update above.]** Backing store is now injectable; production requires an explicit durable (DB-backed) store and fails closed otherwise; the encryption key also fails closed in production if unset. A real `microsoft_oauth_credentials` Postgres table now exists and was verified end-to-end.
+2. `graphReachable` in the readiness computation defaults to `true` whenever a token is acquired unless a caller injects a `graphProbe` — and no call site anywhere in the codebase (`connectors.ts`, `m365-health.ts`, `m365-trust.ts`, `m365-discovery-service.ts`) ever passes one. `GRAPH_UNREACHABLE` can therefore never actually be detected; "health" only confirms token issuance. **(Not in scope for this fix pass — still open.)**
+3. ~~`artifacts/api-server/src/lib/production-connectors/m365/m365-client.ts:19`...~~ **[FIXED — see Remediation Update above.]** Missing `credentialRef`/`tokenProvider` now returns `BLOCKED`/`MICROSOFT_CREDENTIALS_NOT_CONFIGURED` in every mode, including `dryRun()`. Fixture data is only ever returned when a caller explicitly opts in via `config.useFixtures`.
 4. M365 discovery snapshots (`m365-snapshot-repository.ts:8-10`) are stored in a `static Map()`, not the database — discovered live tenant data is lost on restart.
 5. Two divergent environment variable names gate the same live-mutation control: docs (`M365_AUTH_SETUP.md:65,86`) reference `M365_LIVE_LICENSE_MUTATION_ENABLED`, while the Graph client itself checks `M365_ENABLE_LIVE_LICENSE_MUTATION` (`m365-graph-client.ts:197`). Setting only the documented variable leaves the client's own mutation gate unaffected.
 6. `routes/health.ts:118-119` reports connector "health" from `M365_GRAPH_MODE` env presence — a config-presence label, not a live dependency check.
 7. `scripts/validate-runtime-env.ts` only validates demo-mode configuration; there is no equivalent live/production runtime-env validation script.
 
 **Recommended next actions:**
-- Persist encrypted tokens to the database (or a secrets manager), not an in-memory `Map`; require `MICROSOFT_TOKEN_ENCRYPTION_KEY` to be set in production (fail closed, matching the pattern already used for `JWT_SECRET`).
+- ~~Persist encrypted tokens to the database...~~ **Done** (see Remediation Update). Remaining: run `pnpm --filter @workspace/db run push` against the real deployment database to apply the new `microsoft_oauth_credentials` table (schema-push workflow, not yet run against any live/staging DB from this sandbox).
 - Wire a real `graphProbe` into every readiness/health call site so `GRAPH_UNREACHABLE` is reachable.
-- Close the `dryRun()` fixture-fallback gap — dry runs against unconfigured tenants must return a blocked/not-configured state, never `READY`.
+- ~~Close the `dryRun()` fixture-fallback gap...~~ **Done** (see Remediation Update).
 - Persist M365 discovery snapshots to the database.
 - Reconcile the two live-mutation env var names into one, and update `M365_AUTH_SETUP.md` to match.
 - Add a live/production counterpart to `validate-runtime-env.ts`.
@@ -108,16 +127,16 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 - A real, non-trivial supply-chain control exists: `pnpm-workspace.yaml` enforces a 1-day `minimumReleaseAge` on all npm package installs.
 
 **Gaps:**
-1. **Broken access control (critical):** the governed-execution router — `POST /plans/:id/approve`, `.../execute`, `.../cancel` (`routes/governed-execution.ts:20-22`) — is mounted (`routes/index.ts:133`) behind only `requireCapability("READ_RECOMMENDATIONS")`. No route in `governed-execution.ts`, nor anything in the `lib/governed-execution/*.ts` service layer, performs a finer-grained capability check. A token with only the read-only VIEWER role's capabilities can therefore call approve/execute/cancel on live governed actions. This directly contradicts `RBAC_MATRIX.md` ("VIEWER: read-only", "`EXECUTION_APPROVE` ❌ for viewer").
-2. **No audit trail on the execution path:** `middleware/audit-middleware.ts` implements an auto-audit wrapper but is never imported or mounted anywhere; `lib/governed-execution/*.ts` never calls `recordAuditEvent`/`recordApprovalEvent`. The most sensitive action path in the system — approving/executing live changes — produces no audit record.
+1. ~~**Broken access control (critical):** the governed-execution router...~~ **[FIXED — see Remediation Update above.]** `/plans/:id/approve`, `.../execute`, `.../cancel` now each additionally require `requireCapability('APPROVE_ACTIONS')`, which `VIEWER`/`READ_ONLY` and `OPERATOR` do not have. Proven with 8 new tests (`tests/governed-execution-rbac.test.ts`).
+2. ~~**No audit trail on the execution path:**...~~ **[FIXED — see Remediation Update above.]** `routes/governed-execution.ts` now records a real, awaited `recordAuditEvent` call on approve/execute/cancel (success and failure paths), verified against a real Postgres instance in `tests/governed-execution-audit-trail.test.ts`. Note: the generic `middleware/audit-middleware.ts` itself is still unmounted elsewhere in the app — this fix added direct, targeted calls to the three routes named in scope rather than mounting it app-wide.
 3. `RBAC_MATRIX.md`'s documented role model (OWNER/ADMIN/ECONOMIC_OPERATOR/etc.) does not match the roles actually implemented in code (`PLATFORM_ADMIN/TENANT_ADMIN/APPROVER/OPERATOR/VIEWER`) — the matrix is aspirational, not a description of enforced behavior.
 4. Input validation via zod is the minority pattern: only 13 of 86 route files use it. High-traffic mutating routes with no schema validation include `governed-execution.ts` (22 raw body/param uses), `connectors.ts` (41), `simulations.ts` (25, raw `String()`/`Number()` coercion with no rejection of malformed input), `execution-orchestration.ts` (24), `packs.ts` (26), `outcomes.ts` (20).
 5. No automated dependency/CVE scanning (Dependabot, Snyk, `npm audit` in CI) is wired in, despite the strong `minimumReleaseAge` control existing alongside it.
 6. The frontend hardcoded demo-login credential check (see Authentication section) ships in the client bundle; while backend JWT validation limits real damage, it should not visually resemble a production auth flow.
 
 **Recommended next actions:**
-- **Priority 1:** add a service-level or per-route capability check to the governed-execution approve/execute/cancel endpoints so VIEWER-role tokens are rejected — this is a live privilege-escalation gap, not a documentation gap.
-- Mount `audit-middleware.ts` (or add direct `recordAuditEvent` calls) on the governed-execution path before any live customer executes real actions through it.
+- ~~**Priority 1:** add a service-level or per-route capability check to the governed-execution approve/execute/cancel endpoints...~~ **Done** (see Remediation Update).
+- ~~Mount `audit-middleware.ts` (or add direct `recordAuditEvent` calls) on the governed-execution path...~~ **Done** for approve/execute/cancel specifically (see Remediation Update). The generic `audit-middleware.ts` is still not mounted on any other router — consider doing so more broadly in a follow-up pass.
 - Rewrite `RBAC_MATRIX.md` to match the roles/capabilities actually implemented, or update the code to match the documented model — pick one source of truth.
 - Extend zod validation to the mutating routes listed above, starting with `governed-execution.ts` and `connectors.ts`.
 - Add `npm audit`/Dependabot or equivalent SCA scanning to CI.
@@ -180,6 +199,8 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 
 ## Tests / Commands Run
 
+### Initial verification pass
+
 | Command | Result |
 |---|---|
 | `pnpm install --frozen-lockfile` | Succeeded (487 packages) |
@@ -189,20 +210,43 @@ Method: dependencies were installed fresh (`pnpm install --frozen-lockfile`), th
 | `demo-live-data-boundary.test.ts` (run by the auth investigation) | **Passed**, 6/6 |
 | `pnpm --filter @workspace/control-plane run build` (run by the performance investigation) | Succeeded; **reproduced the Vite >500kB chunk-size warning** (735.57 kB / 194.66 kB gzip main bundle) |
 
-Note: automated tests pass, but they exercise unit-level and contract-level behavior. They do not cover the broken-access-control gap found in governed-execution (no test asserts that a VIEWER-role token is rejected from `/plans/:id/execute`), nor do they constitute a load test.
+### Remediation pass (2026-07-08) — fixing the six release blockers
+
+A local PostgreSQL 16 instance was stood up in this environment specifically to run the DB-integration tests that are normally skipped (`RUN_DB_INTEGRATION_TESTS` unset, `DATABASE_URL` unset by default) — real DB behavior for the credential-persistence and audit-trail fixes was verified against Postgres, not mocked.
+
+| Command | Result |
+|---|---|
+| `pnpm install --frozen-lockfile` (re-verified) | Succeeded |
+| `pnpm run typecheck` (workspace-wide, re-run after every fix) | **Passed**, 0 errors, at every step |
+| `pnpm run test` / `node ./scripts/run-pattern-tests.mjs` (no DB, full non-DB suite, ~330 files minus 166 DB-gated) | **Passed**, exit 0, zero failures |
+| `pnpm --filter @workspace/db run push` against a real local Postgres 16 | **Succeeded** — new `microsoft_oauth_credentials` table and `EXECUTION_CANCELLED` audit event type migrate cleanly |
+| `tests/governed-execution-rbac.test.ts` (new, no DB) | **Passed**, 8/8 |
+| `tests/microsoft-token-store-persistence.test.ts` (new, no DB) | **Passed**, 4/4 |
+| `tests/microsoft-token-db-store.test.ts` (new, **real DB**) | **Passed**, 2/2 — proves credentials persist across independent store instances |
+| `tests/microsoft-entra-stub-gating.test.ts` (new, no DB) | **Passed**, 3/3 |
+| `tests/governed-execution-audit-trail.test.ts` (new, **real DB**) | **Passed**, 2/2 — proves approve/execute/cancel each write a real `audit_events` row, and a VIEWER's blocked attempt writes none |
+| `tests/production-connectors.test.ts`, `entra-live-integration.test.ts`, `m365-live-integration.test.ts` (updated, **real DB**) | **Passed**, except one pre-existing, unrelated failure — see below |
+| All 16 `governed-execution*` test files (**real DB**) | **Passed**, 0 failures |
+| All 5 `microsoft*` and 4 `entra*` test files (**real DB**) | **Passed**, 0 failures |
+| `production-config-validator.test.ts` (updated) | **Passed**, 17/17 |
+| `connector-readiness-persistence.test.ts`, `live-tenant-readiness-persistence.test.ts`, `m365-entra-live-audit.test.ts` (**real DB**, unrelated to the fix but exercises shared persistence patterns) | **Passed** |
+| Full suite with `RUN_DB_INTEGRATION_TESTS=true` (~300+ files against real Postgres) | Did not finish within a 590s budget (large repo; most files are unrelated to this fix). Not required — every file touched by, or exercising, the six fixed areas was run individually to completion above. |
+
+**Pre-existing, unrelated failure (confirmed present on the original unmodified code via `git stash`, not introduced by this fix pass):** `production-connectors-audit.test.ts` ("all expose capability discovery") and `production-connectors.test.ts` ("ServiceNow maps applications, owners, CMDB edges and missing tables" — a normaliser mismatch, `OWNERSHIP_ASSIGNMENT` vs `APPLICATION_GRAPH_NODE`). Both are unrelated to auth/connector-credential/RBAC and out of scope for this pass; flagged here for a separate follow-up since they only became *visible* once DB-integration tests were actually run against a real database during this remediation.
 
 ---
 
 ## Final Verdict
 
-**NOT_OPERATIONALLY_READY**
+**PARTIAL_OPERATIONAL_READINESS** (upgraded from `NOT_OPERATIONALLY_READY`)
 
-All five areas landed at PARTIAL or MISSING; none reached VERIFIED. The typecheck and existing test suite are clean, and a meaningful amount of real infrastructure exists (fail-closed config validation, real Graph OAuth calls, DB-scoped tenant isolation, DB-backed health checks, structured logging). But a live-customer deployment today would carry:
+The six items assessed as release blockers in the initial pass — a live privilege-escalation path on governed-execution approve/execute/cancel, a non-durable/insecurely-keyed M365 credential store, a live/dry-run connector path that silently served fixture data as `READY`, an Entra login stub capable of handing out unverified operator-role claims outside `NODE_ENV=production`, and the complete absence of an audit trail on the most sensitive action path in the system — are now fixed and independently verified against real typecheck/test runs, including against a real PostgreSQL instance for the DB-dependent changes. Full detail and evidence are in the **Remediation Update** section above.
 
-- A confirmed privilege-escalation path on the governed-execution approve/execute/cancel endpoints (Security, gap #1) with no audit trail on that same path (Security, gap #2).
-- No durable, encrypted credential storage for M365 connectors (in-memory token store, insecure default key) and a dry-run path that silently returns fixture data labeled `READY` (Connectors, gaps #1, #3).
-- No real Microsoft Entra login flow — the production login path is a stub returning mock claims (Authentication, gap #1).
-- No alerting delivery of any kind, with alert generation entirely disconnected from real failure signals (Monitoring, gaps #1–2).
-- An unmitigated, reproduced performance warning and no measured load-test results despite documentation implying scale validation is complete (Performance, all gaps).
+This still does **not** reach `OPERATIONALLY_READY`, because:
+- **Authentication** remains PARTIAL: real Entra OAuth token exchange is still not implemented (now safely stub-gated instead of live-dangerous); session tokens from `/login/callback` are still not persisted/re-validated; several routers (`dashboard.ts`, `jobs.ts`, `approvals.ts`, etc.) still mount without tenant/capability guards; the client-side demo-login bypass is still ungated.
+- **Live Connectors** remains PARTIAL: `graphReachable` health checks still never actually probe Graph; M365 discovery snapshots are still in-memory only; the two divergent live-mutation env var names are still unreconciled; there is still no live/production counterpart to `validate-runtime-env.ts`.
+- **Security Hardening** remains PARTIAL: `RBAC_MATRIX.md` still doesn't match the implemented role model; most mutating routes still lack zod validation; there is still no automated dependency/CVE scanning in CI.
+- **Performance/Load Readiness** is unchanged (**MISSING**) — out of scope for this pass per explicit instruction. The Vite bundle-size warning is still unmitigated and no real load test has been run.
+- **Monitoring/Alerting** is unchanged (**PARTIAL**) — out of scope for this pass per explicit instruction. There is still no alerting delivery channel anywhere in the codebase.
 
-These are not edge-case nitpicks — they sit directly on the live-execution, live-credential, and incident-response paths this product needs for real customers and real money. Recommend treating the Security gap #1 (broken access control on execute/approve) and Connectors gap #1 (non-persistent credential store) as release blockers, with the remaining gaps tracked as required pre-GA follow-up work.
+Recommend: treat the fixes in this pass as clearing the highest-severity live-execution and live-credential blockers for a controlled pilot, but continue to withhold general customer/live-data availability until Performance and Monitoring/Alerting are addressed and the remaining Authentication/Connector gaps above are closed — those still represent real, unverified operational risk for a system handling real customer money and live tenant credentials.

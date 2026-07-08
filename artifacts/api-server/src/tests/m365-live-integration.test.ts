@@ -8,7 +8,7 @@ describe("M365 live integration", () => {
     const raw = await client.fetchRecords({ tenantId: "t", connectorKey: "m365", credentialRef: "ref", tokenProvider: async () => "token", mode: "DRY_RUN" });
     assert.equal(raw.status, "READY"); assert.ok(raw.records.some((r) => r.kind === "sku")); assert.ok(calls > 0);
     const runner = new ProductionConnectorRunner();
-    const dry = await runner.dryRun("t", "M365", { tokenProvider: async () => "token" }); assert.equal(dry.authorityWrites, 0);
-    const sync = await runner.sync("t", "M365", { tokenProvider: async () => "token", authorised: true, liveTenantReady: true }); assert.equal(sync.status, "COMPLETED"); assert.ok(sync.authorityWrites > 0); assert.ok(sync.graphWrites > 0); assert.ok(sync.evidenceRefs.length > 0);
+    const dry = await runner.dryRun("t", "M365", { tokenProvider: async () => "token", config: { useFixtures: true } }); assert.equal(dry.authorityWrites, 0);
+    const sync = await runner.sync("t", "M365", { tokenProvider: async () => "token", authorised: true, liveTenantReady: true, config: { useFixtures: true } }); assert.equal(sync.status, "COMPLETED"); assert.ok(sync.authorityWrites > 0); assert.ok(sync.graphWrites > 0); assert.ok(sync.evidenceRefs.length > 0);
   });
 });

@@ -73,3 +73,4 @@ export * from "./workflow";
 export * from "./principalAuthority";
 
 export * from "./authorityQueries";
+export * from "./microsoftOauthCredentials";

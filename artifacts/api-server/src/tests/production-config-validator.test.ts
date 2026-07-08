@@ -52,9 +52,27 @@ test('production with wildcard CORS fails closed', () => {
 });
 
 test('production with short JWT secret fails closed', () => {
-  const result = validateProductionConfig({ databaseUrl: 'postgres://db', nodeEnv: 'production', jwtSecret: 'short', allowedOrigins: 'https://app.example.com' });
+  const result = validateProductionConfig({ databaseUrl: 'postgres://db', nodeEnv: 'production', jwtSecret: 'short', allowedOrigins: 'https://app.example.com', microsoftTokenEncryptionKey: 'x'.repeat(32) });
   assert.equal(result.valid, false);
   assert.ok(result.errors.some((e) => e.includes('JWT_SECRET')));
+});
+
+test('production with missing Microsoft token encryption key fails closed', () => {
+  const result = validateProductionConfig({ databaseUrl: 'postgres://db', nodeEnv: 'production', jwtSecret: 'x'.repeat(32), allowedOrigins: 'https://app.example.com' });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes('MICROSOFT_TOKEN_ENCRYPTION_KEY')));
+});
+
+test('production with short Microsoft token encryption key fails closed', () => {
+  const result = validateProductionConfig({ databaseUrl: 'postgres://db', nodeEnv: 'production', jwtSecret: 'x'.repeat(32), allowedOrigins: 'https://app.example.com', microsoftTokenEncryptionKey: 'short' });
+  assert.equal(result.valid, false);
+  assert.ok(result.errors.some((e) => e.includes('MICROSOFT_TOKEN_ENCRYPTION_KEY')));
+});
+
+test('production with a full valid config (including Microsoft token encryption key) passes', () => {
+  const result = validateProductionConfig({ databaseUrl: 'postgres://db', nodeEnv: 'production', jwtSecret: 'x'.repeat(32), microsoftTokenEncryptionKey: 'y'.repeat(32), allowedOrigins: 'https://app.example.com' });
+  assert.equal(result.valid, true);
+  assert.deepEqual(result.errors, []);
 });
 
 test('assertProductionConfigSafe throws on invalid config', () => {

@@ -8,7 +8,14 @@ describe("Entra live integration", () => {
     const raw = await client.fetchRecords({ tenantId: "t", connectorKey: "entra-id", credentialRef: "ref", tokenProvider: async () => "token", mode: "DRY_RUN" });
     assert.ok(raw.records.some((r) => r.kind === "managerRelation")); assert.ok(raw.records.some((r) => r.kind === "department"));
     const runner = new ProductionConnectorRunner();
-    const dry = await runner.dryRun("t", "ENTRA_ID", { tokenProvider: async () => "token" }); assert.equal(dry.authorityWrites, 0);
-    const sync = await runner.sync("t", "ENTRA_ID", { tokenProvider: async () => "token", authorised: true, liveTenantReady: true }); assert.equal(sync.status, "COMPLETED"); assert.ok(sync.authorityWrites > 0); assert.ok(sync.graphWrites > 0);
+    const dry = await runner.dryRun("t", "ENTRA_ID", { tokenProvider: async () => "token", config: { useFixtures: true } }); assert.equal(dry.authorityWrites, 0);
+    const sync = await runner.sync("t", "ENTRA_ID", { tokenProvider: async () => "token", authorised: true, liveTenantReady: true, config: { useFixtures: true } }); assert.equal(sync.status, "COMPLETED"); assert.ok(sync.authorityWrites > 0); assert.ok(sync.graphWrites > 0);
+  });
+  it("dry-run against an unconfigured/uncredentialed tenant is BLOCKED, never silently completed with fixture data", async () => {
+    const runner = new ProductionConnectorRunner();
+    const dry = await runner.dryRun("t", "ENTRA_ID", { tokenProvider: async () => "token" });
+    assert.equal(dry.status, "BLOCKED");
+    assert.equal(dry.failureReason, "MICROSOFT_CREDENTIALS_NOT_CONFIGURED");
+    assert.equal(dry.recordsDiscovered, 0);
   });
 });
