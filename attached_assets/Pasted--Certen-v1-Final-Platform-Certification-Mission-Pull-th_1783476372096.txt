@@ -1,0 +1,285 @@
+# Certen v1 — Final Platform Certification
+
+## Mission
+
+Pull the latest Git changes and perform a **full platform certification**.
+
+Do **not** build new features.
+
+Do **not** begin new roadmap work.
+
+Do **not** invent Program 6.
+
+Programs 1–5 are complete.
+
+Your only objective is to certify that the completed platform behaves as one cohesive product and is ready to be declared:
+
+> **Certen Platform v1 Complete**
+
+---
+
+# Certified Programs
+
+Treat these as complete product programs:
+
+* Program 1 — Executive Platform
+* Program 2 — Technology Management
+* Program 3 — Discovery
+* Program 4 — Protection
+* Program 5 — Platform
+
+Review them together as one platform.
+
+---
+
+# Certification Scope
+
+Review the entire application.
+
+Confirm there are no inconsistencies between programs.
+
+Specifically inspect:
+
+* navigation
+* routing
+* page hierarchy
+* executive questions
+* terminology
+* KPI presentation
+* decision presentation
+* Evidence Packs
+* Proof Packs
+* DEMO behaviour
+* LIVE_UNCONNECTED behaviour
+* runtime boundaries
+* empty states
+* screenshots
+* completion reports
+
+---
+
+# Navigation Certification
+
+Verify that navigation is complete.
+
+Look for:
+
+* dead routes
+* duplicate routes
+* hidden pages
+* inconsistent naming
+* stale menu items
+* broken links
+* orphan pages
+* duplicate workspaces
+
+Correct minor issues if safe.
+
+---
+
+# Executive Experience
+
+Move through the platform exactly as an executive would.
+
+Confirm every workspace feels like part of one product.
+
+Check consistency across:
+
+* Executive Platform
+* Technology Management
+* Discovery
+* Protection
+* Platform Operations
+
+The transition between programs should feel seamless.
+
+---
+
+# Design Consistency
+
+Review:
+
+* headings
+* page titles
+* KPI cards
+* executive questions
+* terminology
+* evidence presentation
+* proof packs
+* decision badges
+* empty states
+
+Remove any remaining inconsistencies.
+
+---
+
+# Runtime Certification
+
+Verify:
+
+## DEMO
+
+* coherent story
+* no placeholder text
+* realistic examples
+* consistent narrative
+
+## LIVE_UNCONNECTED
+
+Verify every workspace:
+
+* contains no demo leakage
+* contains no fabricated evidence
+* contains no fabricated value
+* contains no fabricated health
+* contains no fabricated trust
+* contains honest empty states
+
+---
+
+# Evidence Certification
+
+Review every Evidence Pack implementation.
+
+Confirm:
+
+* completeness logic is consistent
+* PARTIAL is honestly shown
+* COMPLETE is only awarded with sufficient evidence
+* Proof Packs remain consistent
+
+---
+
+# Decision Certification
+
+Review deterministic decisions across all programs.
+
+Ensure decisions remain consistent.
+
+Examples include:
+
+Executive
+
+* EXECUTE
+* APPROVE
+
+Management
+
+* KEEP
+* OPTIMISE
+* CONSOLIDATE
+* RETIRE
+* RENEW
+
+Discovery
+
+* EXECUTE
+* REVIEW
+* ASSIGN_OWNER
+
+Protection
+
+* VERIFIED
+* PROTECTED
+* DRIFTING
+* ROLLBACK_READY
+* ROLLBACK_REQUIRED
+
+Platform
+
+* READY
+* CONFIGURE
+* CONNECT
+* VERIFY
+* DEGRADED
+* BLOCKED
+
+Confirm they render consistently.
+
+---
+
+# Regression Testing
+
+Run the complete verification suite.
+
+Include:
+
+* all Program completion tests
+* UI tests
+* routing tests
+* typecheck
+* build
+
+Resolve only genuine certification issues.
+
+Do not introduce new capability work.
+
+---
+
+# Certification Report
+
+Create:
+
+docs/CERTEN_PLATFORM_V1_CERTIFICATION.md
+
+Include:
+
+## Executive Summary
+
+## Programs Certified
+
+* Program 1
+* Program 2
+* Program 3
+* Program 4
+* Program 5
+
+## Navigation
+
+## Runtime Behaviour
+
+## Evidence Certification
+
+## Decision Certification
+
+## UI Consistency
+
+## Test Results
+
+## Build Results
+
+## Remaining Known Limitations
+
+These should only be genuine limitations, not future roadmap ideas.
+
+## Final Verdict
+
+One verdict only:
+
+* CERTIFIED
+* CERTIFIED_WITH_LIMITATIONS
+* NOT_READY
+
+---
+
+# Constraints
+
+Do not build new features.
+
+Do not redesign pages.
+
+Do not introduce Program 6.
+
+Do not expand roadmap scope.
+
+Only fix issues that prevent platform certification.
+
+If the platform passes certification:
+
+Commit using:
+
+**Certify Certen Platform v1**
+
+Prepare PR metadata with title:
+
+**Certify Certen Platform v1**
