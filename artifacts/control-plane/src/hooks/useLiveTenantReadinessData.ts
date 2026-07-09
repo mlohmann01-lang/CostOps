@@ -33,18 +33,18 @@ function isReadinessEmpty(data: ReturnType<typeof normalizeReadinessPayload>): b
 
 export function useLiveTenantReadinessData(): LiveTenantReadinessData {
   const workspace = useWorkspace()
+  const isDemo = workspace.mode === 'demo'
   const [data, setData] = useState(() => normalizeReadinessPayload())
   const [loading, setLoading] = useState(true)
-  const [isDemo, setIsDemo] = useState(false)
   const [error, setError] = useState<string | undefined>()
   const [dataState, setDataState] = useState<LiveTenantReadinessDataState>('DEMO')
   const load = useCallback(async () => {
     if (workspace.mode === 'demo') {
-      setData(normalizeReadinessPayload(liveTenantReadinessDemoSeed())); setIsDemo(true); setError(undefined); setDataState('DEMO'); setLoading(false)
+      setData(normalizeReadinessPayload(liveTenantReadinessDemoSeed())); setError(undefined); setDataState('DEMO'); setLoading(false)
       return
     }
     if (!workspace.dataReady) {
-      setData(normalizeReadinessPayload()); setIsDemo(true); setError(undefined); setDataState('NOT_CONNECTED'); setLoading(false)
+      setData(normalizeReadinessPayload()); setError(undefined); setDataState('NOT_CONNECTED'); setLoading(false)
       return
     }
     setLoading(true)
@@ -52,11 +52,11 @@ export function useLiveTenantReadinessData(): LiveTenantReadinessData {
       const [readiness, connectorHealth, evidenceExportReadiness, tenantExecutionPolicy] = await Promise.all([liveFetch<any>('/api/runtime/live-tenant-readiness'), liveFetch<any>('/api/runtime/connector-health'), liveFetch<any>('/api/runtime/evidence-export-readiness?wedge=M365'), liveFetch<any>('/api/runtime/tenant-execution-policy')])
       const next = normalizeReadinessPayload({ readiness, connectorHealth, evidenceExportReadiness, tenantExecutionPolicy })
       setData(next)
-      setIsDemo(false); setError(undefined)
+      setError(undefined)
       setDataState(isReadinessEmpty(next) ? 'NO_DATA' : 'LIVE')
     } catch (err) {
       const normalized = normalizeApiError(err)
-      setData(normalizeReadinessPayload()); setIsDemo(false); setError(normalized.message)
+      setData(normalizeReadinessPayload()); setError(normalized.message)
       setDataState('NO_DATA')
     } finally { setLoading(false) }
   }, [workspace.mode, workspace.dataReady])

@@ -26,7 +26,7 @@ test("admin/service and missing evidence can be suppressed by evaluator outputs"
 
   const addon = PLAYBOOK_REGISTRY.find((p)=>p.id.toLowerCase().includes("addon_license_reclaim"))!;
   const miss = addon.evaluate({ email:"missing.evidence@contoso.com", displayName:"m", userPrincipalName:"missing.evidence@contoso.com", assignedLicenses:["ADDON_X"], sku:"ADDON_X", cost:12, days:10, addonUsageDaysAgo:null } as any);
-  assert.equal(miss.matched, true);
+  assert.equal(miss.matched, false);
   assert.equal(miss.evidence.addonUsageDaysAgo, null);
 });
 

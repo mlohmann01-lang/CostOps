@@ -19,9 +19,9 @@ test("repository lists ranked opportunities and summary", async () => {
   repo.clearForTests();
   seedTenantA(repo);
   const rows = repo.list("tenant-a");
-  assert.equal(rows.length, 9);
+  assert.equal(rows.length, 12);
   assert.equal(rows[0].rank, 1);
-  assert.equal(repo.summary("tenant-a").openOpportunities, 9);
+  assert.equal(repo.summary("tenant-a").openOpportunities, 12);
 });
 
 test("supports top, source, domain, get, and tenant isolation", async () => {
@@ -29,7 +29,7 @@ test("supports top, source, domain, get, and tenant isolation", async () => {
   repo.clearForTests();
   seedTenantA(repo);
   assert.equal(repo.top("tenant-a", 3).length, 3);
-  assert.ok(repo.getBySource("tenant-a", "TRUST").length >= 1);
+  assert.ok(repo.getBySource("tenant-a", "TRUST").length >= 4);
   assert.ok(repo.getByDomain("tenant-a", "AWS").some((row) => row.title.includes("AWS")));
   assert.equal(repo.getById("tenant-b", "missing"), null);
 });

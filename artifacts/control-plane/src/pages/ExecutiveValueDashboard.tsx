@@ -150,7 +150,7 @@ export default function ExecutiveValueDashboard() {
     {!isDemo && !dataReady && <EmptyState title='Financial Governance unavailable.' description='Financial evidence requires connected enterprise systems. No demo spend, savings, value, ROI, investment, confidence, finance decisions, or protected value are shown in live-unconnected mode.' />}
 
     <section data-testid='executive-value-kpis' style={{ display:'grid', gridTemplateColumns:'repeat(5, minmax(150px, 1fr))', gap:12 }}>
-      <MetricCard label='Projected Annual Value' value={isLiveUnconnected ? '—' : money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />
+      <MetricCard label='Identified Value' value={isLiveUnconnected ? '—' : money(projectedAnnualValue)} description='Evidence Pack · Proof Lineage' tone='info' href='/evidence' />
       <MetricCard label='Approved Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(approvedAnnualValue)} description='Audit Trail · Approval state' tone='warning' href='/actions' />
       <MetricCard label='Executed Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(executedAnnualValue)} description='Outcome Ledger · Execution proof' tone='neutral' href='/outcomes' />
       <MetricCard label='Verified Annual Value' value={isLiveUnconnected ? '—' : isLiveDiscovering ? 'Pending' : money(verifiedAnnualValue)} description='Outcome Ledger · Verification evidence' tone='success' href='/outcomes' />

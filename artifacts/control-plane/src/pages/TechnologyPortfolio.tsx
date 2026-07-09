@@ -78,7 +78,7 @@ export default function TechnologyPortfolio() {
     <ExecutivePageHeader title='Technology Management' subtitle={`${executiveQuestion} Govern the portfolio by ownership, renewal risk, duplicate capability, rationalisation opportunity, value leakage, and evidence-backed management decision.`} chips={[{ label: `Tenant mode: ${isDemo ? 'Demo' : 'Live'}`, tone: isDemo ? 'info' : 'warning' }, { label: `Last updated: ${snap ? new Date(snap.generatedAt).toLocaleString() : notAvailable}`, tone: 'info' }, { label: `Portfolio readiness: ${snap?.readiness ?? 'MISSING_DATA'}`, tone: tone(snap?.readiness ?? 'MISSING') as any }]} />
     {dataState && dataState !== 'LIVE' && dataState !== 'DEMO' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
     {isDemo && <div data-testid='demo-banner' style={{ border: '1px solid rgba(45,212,191,.24)', borderRadius: 14, padding: 12 }}><strong>Demo technology management data</strong><p style={{ margin: '4px 0 0' }}>Synthetic but coherent portfolio data for management decisions. No production systems are connected.</p></div>}
-    {!isDemo && !snap && <EmptyState title='Technology Management unavailable.' description='No live technology assets, contracts, renewals, owners, overlaps, recommendations, or value evidence are shown until connected portfolio sources provide evidence.' />}
+    {!isDemo && !snap && <EmptyState title='No data available yet.' description='Connect a source to begin discovery.' />}
     {loading && <p role='status'>Loading Technology Management evidence…</p>}
 
 
@@ -90,7 +90,7 @@ export default function TechnologyPortfolio() {
       <MetricCard label='Renewals inside 90 days' value={kpis.renewalsInside90Days} description='Renewal Risk requiring management decision.' />
       <MetricCard label='Duplicate capabilities detected' value={kpis.duplicateCapabilitiesDetected} description='Duplicate Capability / overlap evidence.' />
       <MetricCard label='Annualised spend under review' value={money(kpis.annualisedSpendUnderReview, currency)} description='Spend requiring management action.' />
-      <MetricCard label='Rationalisation opportunity' value={money(kpis.rationalisationOpportunity, currency)} description='Optimise, consolidate, or retire potential.' />
+      <MetricCard label='Rationalisation opportunity' value={summary.recommendations.length ? money(kpis.rationalisationOpportunity, currency) : 'Available after analysis.'} description='Optimise, consolidate, or retire potential.' />
       <MetricCard label='High-risk unmanaged assets' value={kpis.highRiskUnmanagedAssets} description='Unowned or unmanaged risk.' />
       <MetricCard label='Evidence completeness rate' value={pct(kpis.evidenceCompletenessRate)} description='Complete Evidence Pack / Proof Pack rate.' />
     </section>

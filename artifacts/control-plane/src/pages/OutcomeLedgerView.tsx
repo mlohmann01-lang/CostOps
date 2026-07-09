@@ -693,7 +693,7 @@ export default function OutcomeLedgerView() {
             Outcome Ledger
           </h1>
           <p style={{ fontSize: 15, color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.5 }}>
-            Financial chain of custody for every technology decision.
+            What value has actually been realised and protected? Financial chain of custody for every technology decision.
           </p>
         </div>
 
