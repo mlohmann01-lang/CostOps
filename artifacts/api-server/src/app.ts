@@ -44,6 +44,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(authMiddleware());
 
 app.use("/api", router);
+// Program 15 — /api/v1 versioning layer. Additive only: mounts the same
+// router so every current and future route is also reachable under the
+// canonical versioned prefix, without breaking existing /api/... (v0)
+// clients or performing a breaking migration.
+app.use("/api/v1", router);
 
 // Global error handler — must be last middleware (4-param signature)
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {

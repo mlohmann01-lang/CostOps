@@ -276,42 +276,68 @@ export function buildPilotWorkspaceData(sources: any) {
         sources?.workspace?.tenantId ?? "demo-sandbox-tenant",
       );
 }
+export type PilotWorkspaceDataState = "LIVE" | "DEMO" | "NOT_CONNECTED" | "NO_DATA";
+function isLiveSummaryEmpty(summary: PilotWorkspaceSummary): boolean {
+  return summary.executiveValue.status === "UNAVAILABLE" &&
+    summary.commercialPosition.status === "UNAVAILABLE" &&
+    summary.financialTruth.status === "UNAVAILABLE" &&
+    summary.ownershipCoverage.status === "UNAVAILABLE";
+}
 export function usePilotWorkspaceData() {
   const workspace = useWorkspace();
   const initial =
     workspace.mode === "demo"
       ? demoPilotWorkspaceSummary(workspace.tenantId)
       : liveEmptyPilotWorkspaceSummary(workspace.tenantId);
+  const initialDataState: PilotWorkspaceDataState =
+    workspace.mode === "demo"
+      ? "DEMO"
+      : !workspace.dataReady
+        ? "NOT_CONNECTED"
+        : "NO_DATA";
   const [summary, setSummary] = useState<PilotWorkspaceSummary>(initial);
+  const [dataState, setDataState] = useState<PilotWorkspaceDataState>(initialDataState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const refresh = useCallback(async () => {
+    if (workspace.mode === "demo") {
+      const next = demoPilotWorkspaceSummary(workspace.tenantId);
+      setSummary(next);
+      setDataState("DEMO");
+      setError(null);
+      return next;
+    }
+    if (!workspace.dataReady) {
+      const next = liveEmptyPilotWorkspaceSummary(workspace.tenantId);
+      setSummary(next);
+      setDataState("NOT_CONNECTED");
+      setError(null);
+      return next;
+    }
     setLoading(true);
     try {
-      const next =
-        workspace.mode === "demo"
-          ? demoPilotWorkspaceSummary(workspace.tenantId)
-          : await liveFetch<PilotWorkspaceSummary>(
-              "/api/workspace/pilot-summary",
-            );
+      const next = await liveFetch<PilotWorkspaceSummary>(
+        "/api/workspace/pilot-summary",
+      );
       setSummary(next);
+      setDataState(isLiveSummaryEmpty(next) ? "NO_DATA" : "LIVE");
       setError(null);
       return next;
     } catch (err) {
       const next = normalizeApiError(err);
       setError(next);
-      if (workspace.mode === "live")
-        setSummary(liveEmptyPilotWorkspaceSummary(workspace.tenantId));
+      setSummary(liveEmptyPilotWorkspaceSummary(workspace.tenantId));
+      setDataState("NO_DATA");
       throw next;
     } finally {
       setLoading(false);
     }
-  }, [workspace.mode, workspace.tenantId]);
+  }, [workspace.mode, workspace.tenantId, workspace.dataReady]);
   useEffect(() => {
     void refresh().catch(() => undefined);
   }, [refresh]);
   return useMemo(
-    () => ({ summary, loading, error, refresh }),
-    [summary, loading, error, refresh],
+    () => ({ summary, dataState, loading, error, refresh }),
+    [summary, dataState, loading, error, refresh],
   );
 }

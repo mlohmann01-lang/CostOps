@@ -1,0 +1,530 @@
+Outcome Ledger Integration Sprint
+
+## Objective
+
+The canonical Outcome Ledger schema now exists.
+
+Do **not** redesign the Outcome Ledger UI yet.
+
+This sprint is about replacing the existing synthetic/demo calculations with the new canonical model while preserving the current page structure.
+
+The goal is:
+
+```text
+Canonical Outcome Records
+        ↓
+Ledger Events
+        ↓
+Summary Helpers
+        ↓
+Existing Outcome Ledger Page
+```
+
+Once complete, the next sprint can redesign the page with confidence.
+
+---
+
+# Core Principle
+
+The Outcome Ledger page must no longer derive values independently.
+
+It must become a pure presentation layer over:
+
+```text
+OutcomeRecord
+OutcomeLedgerEvent
+buildOutcomeLedgerSummary()
+calculateOutcomeLeakage()
+buildOutcomeProofTimeline()
+```
+
+No duplicate calculations.
+
+No hardcoded lifecycle maths.
+
+No parallel demo structures.
+
+---
+
+# Task 1 — Replace Existing Summary Calculations
+
+Find every place where the page currently computes:
+
+```text
+Projected
+Approved
+Executed
+Verified
+Retained
+Protected
+
+Variance
+Verification backlog
+Failed
+Drifted
+```
+
+Replace those calculations with:
+
+```ts
+const summary = buildOutcomeLedgerSummary(outcomes);
+```
+
+The page should render:
+
+```ts
+summary.totalProjectedValue
+summary.totalApprovedValue
+summary.totalExecutedValue
+summary.totalVerifiedValue
+summary.totalFinanceConfirmedValue
+summary.totalProtectedValue
+```
+
+Do not calculate these directly inside the component.
+
+---
+
+# Task 2 — Replace "Variance" with "Value Leakage"
+
+Current label:
+
+```text
+Variance
+```
+
+Replace with:
+
+```text
+Value Leakage
+```
+
+Derived from:
+
+```ts
+summary.totalValueLeakage
+```
+
+Also expose stage leakage:
+
+```text
+Approval Leakage
+Execution Leakage
+Verification Leakage
+Finance Leakage
+Drift Leakage
+```
+
+These may remain hidden for now but should exist in the summary object and be available for the future waterfall.
+
+---
+
+# Task 3 — Wire Proof State Correctly
+
+The current table appears to infer proof state.
+
+Instead:
+
+```text
+OutcomeRecord.proofState
+```
+
+becomes the single source of truth.
+
+Render badges from:
+
+```text
+PROJECTED
+APPROVED
+EXECUTED
+VERIFIED
+FINANCE_CONFIRMED
+PROTECTED
+FAILED
+DRIFTED
+```
+
+Do not derive these from missing values.
+
+---
+
+# Task 4 — Render Lifecycle Values Directly
+
+Each row should bind directly to:
+
+```ts
+projectedValue
+approvedValue
+executedValue
+verifiedValue
+financeConfirmedValue
+protectedValue
+```
+
+Do not reuse values across columns.
+
+If a stage has not been reached:
+
+Render:
+
+```text
+—
+```
+
+Not:
+
+```text
+0
+```
+
+Not copied values.
+
+---
+
+# Task 5 — Wire Timeline Helper
+
+Do not redesign yet.
+
+Simply expose:
+
+```ts
+const timeline = buildOutcomeProofTimeline(
+    outcome,
+    ledgerEvents
+);
+```
+
+For now:
+
+* keep collapsed
+* expandable section is acceptable
+* simple chronological list
+
+Example:
+
+```text
+Projected
+↓
+
+Approved
+
+↓
+
+Executed
+
+↓
+
+Verified
+
+↓
+
+Finance Confirmed
+
+↓
+
+Protected
+```
+
+Each entry should display:
+
+```text
+timestamp
+
+event
+
+actor
+
+reason
+
+linked evidence count
+```
+
+The visual redesign comes later.
+
+---
+
+# Task 6 — Remove Duplicate Demo Structures
+
+Search for:
+
+```text
+demoOutcomeSummary
+demoLedger
+demoOutcomeRows
+syntheticOutcomeData
+```
+
+If functionality is duplicated by:
+
+```text
+DEMO_OUTCOME_RECORDS
+```
+
+remove the duplicate.
+
+There should be one canonical demo dataset.
+
+---
+
+# Task 7 — Update Outcome Authority Table
+
+Current columns:
+
+```text
+Projected
+
+Approved
+
+Executed
+
+Verified
+
+Retained
+
+Protected
+
+Variance
+
+Confidence
+
+Proof State
+```
+
+Update to:
+
+```text
+Projected
+
+Approved
+
+Executed
+
+Verified
+
+Finance Confirmed
+
+Protected
+
+Value Leakage
+
+Confidence
+
+Proof State
+```
+
+Finance Confirmed replaces Retained.
+
+Leakage replaces Variance.
+
+---
+
+# Task 8 — Backlog Counts
+
+Current page shows:
+
+```text
+Verification backlog
+
+Failed
+
+Drifted
+```
+
+Replace direct calculations with:
+
+```ts
+summary.verificationBacklogCount
+
+summary.financeBacklogCount
+
+summary.protectionBacklogCount
+
+summary.failedOutcomeCount
+
+summary.driftedOutcomeCount
+```
+
+---
+
+# Task 9 — Demo Data Consistency
+
+Every demo outcome must obey lifecycle rules.
+
+Examples:
+
+PROJECTED:
+
+```text
+Projected ✓
+
+Approved —
+
+Executed —
+
+Verified —
+
+Finance —
+
+Protected —
+```
+
+APPROVED:
+
+```text
+Projected ✓
+
+Approved ✓
+
+Executed —
+
+Verified —
+
+Finance —
+
+Protected —
+```
+
+VERIFIED:
+
+```text
+Projected ✓
+
+Approved ✓
+
+Executed ✓
+
+Verified ✓
+
+Finance —
+
+Protected —
+```
+
+PROTECTED:
+
+```text
+All values present
+```
+
+No demo row may violate these rules.
+
+---
+
+# Task 10 — Remove Hidden Technical Debt
+
+Search Outcome Ledger for:
+
+```text
+manual reductions
+
+duplicate value maths
+
+hardcoded totals
+
+placeholder leakage
+
+placeholder confidence
+
+placeholder backlog
+
+placeholder proof states
+```
+
+Replace with canonical helper usage.
+
+---
+
+# Runtime Behaviour
+
+## DEMO
+
+Continue using:
+
+```text
+DEMO_OUTCOME_RECORDS
+```
+
+through the canonical summary helper.
+
+No page-specific demo calculations.
+
+---
+
+## LIVE_UNCONNECTED
+
+Render:
+
+```text
+—
+
+No Outcomes Yet
+
+Connect Microsoft 365 or another supported platform to begin discovery.
+```
+
+No synthetic ledger.
+
+No synthetic totals.
+
+---
+
+## LIVE_DISCOVERING
+
+Render only outcomes actually discovered.
+
+Later stages remain empty.
+
+---
+
+## LIVE_OPERATIONAL
+
+Render production outcome records.
+
+---
+
+# Tests
+
+Add tests proving:
+
+```text
+1. Page summary values come from buildOutcomeLedgerSummary().
+2. Table renders Finance Confirmed separately.
+3. Leakage uses canonical helper.
+4. Proof state comes from OutcomeRecord.
+5. Timeline helper drives rendered timeline.
+6. No duplicate demo summary structures remain.
+7. LIVE_UNCONNECTED renders empty ledger.
+8. Existing page still renders.
+```
+
+---
+
+# Acceptance Criteria
+
+Complete when:
+
+```text
+1. Outcome Ledger page consumes canonical schema.
+2. No duplicate calculations remain.
+3. No duplicate demo datasets remain.
+4. Leakage replaces Variance.
+5. Finance Confirmed replaces Retained.
+6. Proof timeline helper is wired.
+7. Proof State is canonical.
+8. Existing layout preserved.
+9. Typecheck passes.
+10. Full test suite passes.
+11. Browser verified.
+```
+
+Run:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+This sprint is **integration only**.
+
+The full visual redesign (waterfall, kanban pipeline, leakage dashboard, proof timeline UI) will be the next sprint once the page is fully backed by the canonical Outcome Ledger model.

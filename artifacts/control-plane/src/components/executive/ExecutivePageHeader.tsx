@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import React, { type ReactNode } from 'react'
 import { StatusChip, type StatusChipTone } from './StatusChip'
 
 export type ExecutivePageHeaderChip = { label:string; tone?:StatusChipTone }

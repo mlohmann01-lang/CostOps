@@ -54,6 +54,21 @@ import GovernedExecution from './pages/GovernedExecution'
 import DiscoveryWorkspace from './pages/DiscoveryWorkspace'
 import ProtectionWorkspace from './pages/ProtectionWorkspace'
 import PlatformOperationsWorkspace from './pages/PlatformOperationsWorkspace'
+import AuthorityCatalog from './pages/intelligence/AuthorityCatalog'
+import EconomicControlChain from './pages/intelligence/EconomicControlChain'
+import InformationGovernanceAuthority from './pages/intelligence/InformationGovernanceAuthority'
+import TenantIsolationVerificationAuthority from './pages/intelligence/TenantIsolationVerificationAuthority'
+import OutcomeFinance from './pages/executive/OutcomeFinance'
+import ExposureReport from './pages/ExposureReport'
+import LandingPage from './pages/LandingPage'
+import ExposureReviewStart from './pages/ExposureReviewStart'
+import ExposureReviewSignup from './pages/ExposureReviewSignup'
+import ExposureReviewWorkspace from './pages/ExposureReviewWorkspace'
+import ExposureReviewConnect from './pages/ExposureReviewConnect'
+import ExposureReviewDiscovery from './pages/ExposureReviewDiscovery'
+import ExposureReviewReport from './pages/ExposureReviewReport'
+import ExecutiveReview from './pages/ExecutiveReview'
+import ExposureReviewConversion from './pages/ExposureReviewConversion'
 import { RuntimeContextProvider, useRuntimeContext } from './lib/runtimeContext'
 import { WorkspaceProvider } from './lib/workspaceContext'
 import { getSession, saveSession, clearSession, createDemoSession } from './lib/auth/session'
@@ -224,7 +239,7 @@ function LoginRoute() {
 
 function HomeRoute() {
   const session = getSession()
-  return <Redirect to={session ? '/overview' : '/login'} />
+  return <Redirect to={session ? '/overview' : '/welcome'} />
 }
 
 function RequireRuntime({ children }: { children: React.ReactNode }) {
@@ -464,6 +479,30 @@ function EconomicOutcomeDashboardRoute() {
   return <RequireRuntime><EconomicOutcomeDashboard /></RequireRuntime>
 }
 
+function AuthorityCatalogRoute() {
+  return <RequireRuntime><AuthorityCatalog /></RequireRuntime>
+}
+
+function EconomicControlChainRoute() {
+  return <RequireRuntime><EconomicControlChain /></RequireRuntime>
+}
+
+function OutcomeFinanceRoute() {
+  return <RequireRuntime><OutcomeFinance /></RequireRuntime>
+}
+
+function InformationGovernanceAuthorityRoute() {
+  return <RequireRuntime><InformationGovernanceAuthority /></RequireRuntime>
+}
+
+function TenantIsolationVerificationAuthorityRoute() {
+  return <RequireRuntime><TenantIsolationVerificationAuthority /></RequireRuntime>
+}
+
+function ExposureReportRoute() {
+  return <RequireRuntime><ExposureReport /></RequireRuntime>
+}
+
 function SyncJobsRedirectRoute() {
   return <RedirectRoute to="/platform" />
 }
@@ -485,6 +524,18 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={LoginRoute} />
+      <Route path="/welcome" component={LandingPage} />
+      {/* Program 10 — public M365 Exposure Review journey. Not behind
+          RequireRuntime, not wrapped in <Shell>; reachable only by URL/CTA
+          chaining like /welcome above. */}
+      <Route path="/exposure-review" component={ExposureReviewStart} />
+      <Route path="/exposure-review/start" component={ExposureReviewSignup} />
+      <Route path="/exposure-review/workspace" component={ExposureReviewWorkspace} />
+      <Route path="/exposure-review/connect" component={ExposureReviewConnect} />
+      <Route path="/exposure-review/discovery" component={ExposureReviewDiscovery} />
+      <Route path="/exposure-review/report" component={ExposureReviewReport} />
+      <Route path="/exposure-review/next-steps" component={ExposureReviewConversion} />
+      <Route path="/executive-review" component={ExecutiveReview} />
       <Route path="/" component={HomeRoute} />
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/overview" component={CommandRoute} />
@@ -513,6 +564,12 @@ function Router() {
       <Route path="/actions" component={ActionsRoute} />
       <Route path="/approvals" component={ApprovalCenterRoute} />
       <Route path="/technology-portfolio" component={TechnologyPortfolioRoute} />
+      <Route path="/intelligence/authority-catalog" component={AuthorityCatalogRoute} />
+      <Route path="/intelligence/economic-control-chain" component={EconomicControlChainRoute} />
+      <Route path="/executive/outcome-finance" component={OutcomeFinanceRoute} />
+      <Route path="/intelligence/information-governance-authority" component={InformationGovernanceAuthorityRoute} />
+      <Route path="/intelligence/tenant-isolation-verification-authority" component={TenantIsolationVerificationAuthorityRoute} />
+      <Route path="/executive/exposure-report" component={ExposureReportRoute} />
       <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
       <Route path="/governed-actions" component={GovernedExecutionRoute} />
       <Route path="/governed-execution" component={GovernedExecutionRoute} />

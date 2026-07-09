@@ -4,6 +4,7 @@ import { buildTechnologyManagementEvidencePack, notAvailable, summarizeTechnolog
 import { inferTechnologyManagementDecision, program2TechnologyManagementRoute } from '../lib/program2TechnologyManagement'
 import { program2Capabilities, program2ExecutiveQuestion } from '../lib/program2Completion'
 import type { TechnologyManagementDecision, TechnologyPortfolioAsset, TechnologyPortfolioSummary } from '../types/technologyPortfolio'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
 
 const money = (v?: number, c = 'USD') => v === undefined ? notAvailable : new Intl.NumberFormat(undefined, { style: 'currency', currency: c, maximumFractionDigits: 0 }).format(v)
 const pct = (v?: number) => v === undefined ? notAvailable : `${Math.round(v)}%`
@@ -69,12 +70,13 @@ function AssetEvidenceDetail({ asset, summary }: { asset: TechnologyPortfolioAss
 }
 
 export default function TechnologyPortfolio() {
-  const { summary, isDemo, isLiveUnconnected, loading } = useTechnologyPortfolio()
+  const { summary, isDemo, isLiveUnconnected, loading, dataState } = useTechnologyPortfolio()
   const snap = summary.snapshot
   const currency = snap?.currency ?? 'USD'
   const kpis = summarizeTechnologyManagementKpis(summary)
   return <Shell><main style={{ padding: '24px clamp(18px,3vw,34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto' }}>
     <ExecutivePageHeader title='Technology Management' subtitle={`${executiveQuestion} Govern the portfolio by ownership, renewal risk, duplicate capability, rationalisation opportunity, value leakage, and evidence-backed management decision.`} chips={[{ label: `Tenant mode: ${isDemo ? 'Demo' : 'Live'}`, tone: isDemo ? 'info' : 'warning' }, { label: `Last updated: ${snap ? new Date(snap.generatedAt).toLocaleString() : notAvailable}`, tone: 'info' }, { label: `Portfolio readiness: ${snap?.readiness ?? 'MISSING_DATA'}`, tone: tone(snap?.readiness ?? 'MISSING') as any }]} />
+    {dataState && dataState !== 'LIVE' && dataState !== 'DEMO' && <DataStateBanner state={dataState} ctaLabel={dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
     {isDemo && <div data-testid='demo-banner' style={{ border: '1px solid rgba(45,212,191,.24)', borderRadius: 14, padding: 12 }}><strong>Demo technology management data</strong><p style={{ margin: '4px 0 0' }}>Synthetic but coherent portfolio data for management decisions. No production systems are connected.</p></div>}
     {!isDemo && !snap && <EmptyState title='Technology Management unavailable.' description='No live technology assets, contracts, renewals, owners, overlaps, recommendations, or value evidence are shown until connected portfolio sources provide evidence.' />}
     {loading && <p role='status'>Loading Technology Management evidence…</p>}

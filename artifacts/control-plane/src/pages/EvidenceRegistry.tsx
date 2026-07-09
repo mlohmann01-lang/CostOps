@@ -2,6 +2,7 @@ import { Shell } from '../components/layout/Shell'
 import { EmptyState, ExecutivePageHeader, ExecutiveSection, MetricCard, StatusChip } from '../components/executive'
 import { notAvailable, type EvidenceChain, type EvidenceRecord, type EvidenceRegistrySnapshot, type EvidenceRegistryState } from '../types/evidenceRegistry'
 import { useEvidenceRegistry } from '../hooks/useEvidenceRegistry'
+import { DataStateBanner } from '../components/shared/DataStateBanner'
 
 const domains = ['Microsoft 365', 'AI Platforms', 'SaaS', 'Cloud', 'ServiceNow', 'Finance']
 const custodyStages = ['Collected', 'Validated', 'Linked', 'Retained', 'Redacted', 'Exported']
@@ -124,6 +125,7 @@ export default function EvidenceRegistry() {
   const coverage = liveEmpty ? [] : coverageRows(rows, state.isDemo)
   return <Shell><main style={{ padding: '24px clamp(18px,3vw,34px)', display: 'grid', gap: 16, maxWidth: 1480, margin: '0 auto' }}>
     <ExecutivePageHeader title='Evidence Trust Center' subtitle='Can each claim be defended with source evidence and chain of custody? Integrity, provenance and audit readiness for every Certen claim.' chips={[{ label: state.isDemo ? 'Demo Mode' : 'Live Mode', tone: state.isDemo ? 'info' : 'warning' }, { label: `Audit readiness: ${s?.readiness ?? notAvailable}`, tone: tone(s?.readiness ?? 'MISSING') }, { label: `Last updated: ${s?.generatedAt ? new Date(s.generatedAt).toLocaleString() : notAvailable}`, tone: 'info' }]} />
+    {state.dataState && state.dataState !== 'LIVE' && state.dataState !== 'DEMO' && <DataStateBanner state={state.dataState} detail={state.error} ctaLabel={state.dataState === 'NOT_CONNECTED' ? 'Connect Tenant' : undefined} ctaHref={state.dataState === 'NOT_CONNECTED' ? '/connectors' : undefined} />}
     {state.isDemo && <div data-testid='demo-evidence-banner' style={{ border: '1px solid rgba(245,158,11,.35)', background: 'rgba(245,158,11,.08)', borderRadius: 14, padding: 12 }}><strong>Demo Mode</strong><p style={{ margin: '4px 0 0' }}>Synthetic sample data. No production systems connected.</p></div>}
 
     <section data-testid='evidence-trust-hero' style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(170px,1fr))', gap: 12 }}>

@@ -35,8 +35,14 @@ test('live API wiring calls renewals APIs without demo fallback', () => {
 })
 
 test('Command page shows upcoming renewal priority action', () => {
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(command.includes('Upcoming Renewals Requiring Action'), true)
-  assert.equal(command.includes('renewal-priority-actions'), true)
-  assert.equal(command.includes('/renewals'), true)
+  // Program 6A coverage audit: CommandView's old "Upcoming Renewals Requiring Action" /
+  // "renewal-priority-actions" widget (which linked out to /renewals) was removed when
+  // CommandView became the Executive Command Center orchestrator. The renewal readiness
+  // summary itself still exists and renders on its own owning page (RenewalsView), and the
+  // /renewals route remains registered independently of CommandView, so the coverage is
+  // relocated there instead of CommandView. See PROGRAM_6A_COVERAGE_AUDIT.md.
+  const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
+  const renewalsPage = fs.readFileSync(new URL('../pages/RenewalsView.tsx', import.meta.url), 'utf8')
+  assert.equal(app.includes('/renewals'), true)
+  assert.equal(renewalsPage.includes('Upcoming Renewals'), true)
 })

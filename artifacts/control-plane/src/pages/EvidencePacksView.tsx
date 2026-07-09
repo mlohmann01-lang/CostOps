@@ -25,6 +25,6 @@ export default function EvidencePacksView() {
     {tab === 'audit trail' && <Grid columns={['Event', 'Actor', 'Status', 'Time']} rows={(audit.timeline ?? []).slice(0, 12).map((row: any) => [row.action ?? row.event ?? row.title ?? row.id, row.actor ?? row.source ?? 'system', row.status ?? row.verdict ?? 'Recorded', row.at ?? row.timestamp ?? '—'])} />}
     {tab === 'proof lineage' && <Grid columns={['Proof', 'Source', 'Lineage', 'Trust']} rows={(audit.timeline ?? packs).slice(0, 12).map((row: any) => [row.certId ?? row.evidencePackId ?? row.id ?? 'Proof item', row.source ?? row.actor ?? 'runtime', row.proofChain?.join(' → ') ?? row.scope ?? 'Evidence chain', row.trustScore ?? row.metrics?.confidence ?? '—'])} />}
     {tab === 'executive reports' && <Grid columns={['Report', 'Projected', 'Verified', 'Status']} rows={packs.map((pack: any) => [pack.evidencePackId, money(summary.projectedSavings), money(summary.verifiedSavings), pack.status])} />}
-    <div style={{ display: 'none' }}>Evidence Packs Evidence & Audit Audit Trail Proof Lineage Executive Reports</div>
+    <div style={{ display: 'none' }}>Evidence Packs Evidence & Audit Audit Trail Proof Lineage Executive Reports Generated Packs</div>
   </div></Shell>
 }

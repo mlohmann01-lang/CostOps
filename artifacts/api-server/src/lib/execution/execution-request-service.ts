@@ -6,6 +6,7 @@ import { appendUnifiedEvent } from "../events/evidence-timeline";
 import { buildExecutionRequest } from "./execution-request-builder";
 import { ExecutionRequestRepository } from "./execution-request-repository";
 import { ExecutionLifecycleAuthorityService } from "./execution-lifecycle-authority";
+import { decisionLifecycleBridge } from "../decision-authority/decision-lifecycle-bridge";
 
 export class ExecutionRequestService {
   constructor(
@@ -88,6 +89,18 @@ export class ExecutionRequestService {
     await this.eventService.emit({ tenantId: workflow.tenantId, recommendationId: workflow.targetId, eventType: "EXECUTION_REQUEST_CREATED", actorId, actorRole: "SYSTEM", eventReason: "Approved workflow created execution request", afterState: String(recommendation.recommendationState), afterReadiness: String(recommendation.executionReadiness), evidenceSnapshot: recommendation.evidencePointers as unknown[], approvalSnapshot: { workflowId: workflow.workflowId, executionRequestId: request.requestId } });
     await this.authority.recordStage({ tenantId: workflow.tenantId, entityType: "EXECUTION_REQUEST", entityId: request.requestId, stage: "EXECUTION_REQUEST_CREATED", role: "REQUESTER", actorId, sourceSystem: "execution-request-service", sourceEntityType: "execution_requests", sourceEntityId: request.requestId, relationshipType: "PROVES", payload: { request, workflow, recommendationEvidencePointers: recommendation.evidencePointers } });
     appendUnifiedEvent({ eventId: `${request.requestId}:EXECUTION_REQUEST_CREATED:${request.createdAt}`, tenantId: workflow.tenantId, entityType: "EXECUTION_REQUEST", entityId: request.requestId, eventType: "EXECUTION_REQUEST_CREATED", eventCategory: "EXECUTION", actorId, actorRole: "SYSTEM", eventReason: `Execution request created for ${workflow.targetId}`, beforeState: "", afterState: request.readinessState, evidenceSnapshot: recommendation.evidencePointers ?? [], sourceSystem: "execution-request-service", createdAt: request.createdAt });
+    try {
+      await decisionLifecycleBridge.recordExecutionApproval({
+        tenantId: workflow.tenantId,
+        recommendationId: workflow.targetId,
+        actorId,
+        targetEntityId: recommendation.targetEntityId ? String(recommendation.targetEntityId) : undefined,
+        evidencePointers: recommendation.evidencePointers as string[] | undefined,
+        projectedMonthlySavings: Number(recommendation.projectedMonthlySavings ?? 0),
+      });
+    } catch {
+      // Decision Authority is additive; failures here must never block execution request creation.
+    }
     return request;
   }
 

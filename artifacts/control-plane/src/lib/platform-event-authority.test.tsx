@@ -18,8 +18,10 @@ test('runtime activity uses platform event authority endpoint without live demo 
 })
 
 test('Command activity reuses RuntimeActivityList backed by PlatformEventTimeline', () => {
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
+  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
+  // orchestrator and no longer renders a "What Changed" runtime activity section, so it no
+  // longer imports RuntimeActivityList. The RuntimeActivityList foundation component itself
+  // (still backed by PlatformEventTimeline) is unaffected and used elsewhere.
   const runtimeList = fs.readFileSync(new URL('../components/shared/RuntimeActivityList.tsx', import.meta.url), 'utf8')
-  assert.equal(command.includes('RuntimeActivityList'), true)
   assert.equal(runtimeList.includes('PlatformEventTimeline'), true)
 })

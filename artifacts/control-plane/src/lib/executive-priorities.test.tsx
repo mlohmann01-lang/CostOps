@@ -24,19 +24,24 @@ test('live hook calls priority APIs with safe error state and no demo fallback',
   assert.equal(hook.includes("liveFetch<any>('/api/priorities/top')"), true)
   assert.equal(hook.includes("liveFetch<any>('/api/priorities/summary')"), true)
   assert.equal(hook.includes('catch (err)'), true)
-  assert.equal(hook.includes('setData(empty)'), true)
+  assert.equal(hook.includes('...empty'), true)
+  assert.equal(hook.includes("dataState: 'NO_DATA'"), true)
 })
 
 test('nav, Command, and Runtime Health show executive prioritization surfaces', () => {
+  // Program 6A coverage audit: CommandView's old "Top 5 Executive Priorities" /
+  // "executive-priorities-command" widget was removed when CommandView became the Executive
+  // Command Center orchestrator. The underlying content (top-5 monthly/annual savings, top
+  // priorities table) still exists and is already covered against its real owning page
+  // (ExecutivePrioritiesView) by the test above ('Executive Priorities page renders summary
+  // cards, top priorities, and rationale expansion'), so no additional CommandView-specific
+  // assertion is needed here. See PROGRAM_6A_COVERAGE_AUDIT.md.
   const sidebar = fs.readFileSync(new URL('../components/layout/Sidebar.tsx', import.meta.url), 'utf8')
   const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
   const runtime = fs.readFileSync(new URL('../pages/RuntimeHealthView.tsx', import.meta.url), 'utf8')
   assert.equal(sidebar.includes('Priorities'), true)
   assert.equal(sidebar.includes('Intelligence'), true)
   assert.equal(app.includes('/executive-priorities'), true)
-  assert.equal(command.includes('Top 5 Executive Priorities'), true)
-  assert.equal(command.includes('executive-priorities-command'), true)
   assert.equal(runtime.includes('Prioritization Engine'), true)
   assert.equal(runtime.includes('prioritization-engine'), true)
 })

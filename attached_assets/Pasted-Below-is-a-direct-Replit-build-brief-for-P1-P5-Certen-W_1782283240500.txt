@@ -1,0 +1,516 @@
+Below is a direct Replit build brief for **P1–P5**.
+
+---
+
+# Certen Website / Onboarding Fix — P1 to P5
+
+## Goal
+
+Fix the public Certen flow so the site no longer dead-ends at Microsoft 365 connection, supports account creation, allows Demo/Live switching, and clearly positions the M365 review as the wedge into broader Technology Economic Control.
+
+---
+
+# P1 — Fix onboarding flow
+
+## Current problem
+
+`Run Free Exposure Review` and `Get started` currently send users toward a Microsoft 365 connect screen that fails with:
+
+> Microsoft 365 connection is not configured for this environment.
+
+This makes the product feel broken.
+
+## Required new flow
+
+```text
+Landing Page
+  ↓
+Run Free Exposure Review
+  ↓
+Create Account / Request Access
+  ↓
+Choose Workspace Mode: Demo or Live
+  ↓
+Connect Microsoft 365
+  ↓
+Generate Exposure Report
+  ↓
+Book Executive Review
+```
+
+## Implementation instructions
+
+### 1. Add a signup / access page
+
+Create a new route:
+
+```text
+/exposure-review/start
+```
+
+Page title:
+
+```text
+Start your Free Exposure Review
+```
+
+Body copy:
+
+```text
+Create a secure Certen workspace to run a read-only Microsoft 365 exposure review. Certen will not modify licences, users, groups or tenant settings.
+```
+
+Primary form fields:
+
+```text
+Work email
+Full name
+Company
+Role
+Region
+```
+
+CTA:
+
+```text
+Create Review Workspace
+```
+
+Secondary CTA:
+
+```text
+Book Executive Review Instead
+```
+
+---
+
+### 2. Update CTA routing
+
+Change all public CTAs:
+
+```text
+Run Free Exposure Review
+Get started
+```
+
+to route to:
+
+```text
+/exposure-review/start
+```
+
+Do **not** route unauthenticated users directly to `/connect/microsoft-365`.
+
+---
+
+### 3. After form submit
+
+For now, create a lightweight local/session workspace state.
+
+Example state shape:
+
+```ts
+type CertenWorkspaceMode = "DEMO" | "LIVE";
+
+type CertenWorkspaceSession = {
+  userEmail: string;
+  fullName: string;
+  company: string;
+  role?: string;
+  region?: string;
+  mode: CertenWorkspaceMode;
+  createdAt: string;
+};
+```
+
+Store temporarily in:
+
+```ts
+localStorage.setItem("certen.workspace", JSON.stringify(workspace));
+```
+
+Default mode should be:
+
+```ts
+DEMO
+```
+
+Then redirect to:
+
+```text
+/exposure-review/workspace
+```
+
+---
+
+### 4. Add workspace setup page
+
+Create route:
+
+```text
+/exposure-review/workspace
+```
+
+This page should show two cards:
+
+```text
+Demo Workspace
+Explore Certen with sample tenant data.
+
+Live Workspace
+Connect Microsoft 365 using read-only permissions.
+```
+
+Buttons:
+
+```text
+Open Demo Report
+Connect Live Microsoft 365
+```
+
+Demo button routes to:
+
+```text
+/exposure-report?mode=demo
+```
+
+Live button routes to:
+
+```text
+/connect/microsoft-365?mode=live
+```
+
+---
+
+# P2 — Fix Demo / Live mode switching
+
+## Current problem
+
+Once Demo mode is selected, the app keeps forcing Demo and the user cannot switch to Live.
+
+## Required behaviour
+
+The user must always be able to see and switch environment mode.
+
+## Implementation instructions
+
+### 1. Add global environment selector
+
+Add this to the authenticated app header/top nav:
+
+```text
+Environment: Demo ▼
+Environment: Live ▼
+```
+
+Options:
+
+```text
+Demo Workspace
+Live Workspace
+```
+
+When changed, update:
+
+```ts
+localStorage.setItem("certen.workspace.mode", selectedMode);
+```
+
+---
+
+### 2. Add logout / reset session
+
+Add menu item:
+
+```text
+Sign out
+```
+
+On click:
+
+```ts
+localStorage.removeItem("certen.workspace");
+localStorage.removeItem("certen.workspace.mode");
+window.location.href = "/";
+```
+
+---
+
+### 3. Prevent forced demo redirect
+
+Search for logic like:
+
+```ts
+if (demoMode) redirect(...)
+```
+
+or hardcoded demo default routing.
+
+Replace with:
+
+```ts
+const mode =
+  new URLSearchParams(window.location.search).get("mode") ||
+  localStorage.getItem("certen.workspace.mode") ||
+  "DEMO";
+```
+
+Only use Demo data when:
+
+```ts
+mode === "DEMO"
+```
+
+Only use Live connection when:
+
+```ts
+mode === "LIVE"
+```
+
+---
+
+# P3 — Surface proof chain earlier
+
+## Current issue
+
+The page shows potential savings but not enough evidence for why Certen is different.
+
+## Add section directly below hero
+
+Section heading:
+
+```text
+From exposure to verified value
+```
+
+Subheading:
+
+```text
+Certen does not stop at recommendations. Every opportunity is tracked through evidence, approval, execution, finance validation and drift protection.
+```
+
+Add four cards:
+
+```text
+1. Potential Value Identified
+$320,000
+Unused licences, ownerless assets, duplicate tools and governance exposure.
+
+2. Governed Actions Approved
+$210,000
+Recommendations converted into controlled actions with approval and trust checks.
+
+3. Finance Verified
+$186,000
+Realised value reconciled against finance-confirmed figures.
+
+4. Protected Value
+$174,000
+Savings monitored for drift, reactivation and ownership decay.
+```
+
+Footer line:
+
+```text
+Every figure is evidence-backed, traceable and exportable into an executive proof pack.
+```
+
+---
+
+# P4 — Merge M365 review and connect experience
+
+## Current issue
+
+The M365 review page and connection page feel disconnected.
+
+## Required change
+
+Make `/exposure-review/m365` the single page that explains the review and contains the connect CTA.
+
+Page structure:
+
+```text
+Run a Free Microsoft 365 Exposure Review
+
+Discover unused licences, ownership gaps, governance risks and value opportunities without making any changes to your tenant.
+
+Security assurances:
+✓ Read-only access
+✓ No licence changes
+✓ No automated execution
+✓ Discovery only
+✓ Access revocable at any time
+
+What Certen reviews:
+- Inactive licences
+- Ownerless licences
+- Copilot exposure
+- Duplicate applications
+- Dormant users
+- Governance findings
+- Renewal and optimisation opportunities
+
+CTA:
+Connect Microsoft 365
+```
+
+If M365 is not configured, do **not** show a broken blank page.
+
+Instead show:
+
+```text
+Live Microsoft 365 connection is not enabled in this environment.
+
+You can continue with demo data or request a live onboarding session.
+```
+
+Buttons:
+
+```text
+View Demo Exposure Report
+Request Live Onboarding
+```
+
+---
+
+# P5 — Reposition M365 as wedge, not whole product
+
+## Current issue
+
+The site risks looking like only an M365 licence optimisation tool.
+
+## Required new section
+
+Add after the M365 Exposure Report section.
+
+Heading:
+
+```text
+Start with Microsoft 365. Expand into economic control.
+```
+
+Subheading:
+
+```text
+The free exposure review is the first wedge. Certen is built to connect spend, ownership, usage, risk and verified outcomes across the technology estate.
+```
+
+Add capability grid:
+
+```text
+Microsoft 365
+Unused licences, inactive users, ownership gaps and Copilot exposure.
+
+AI Platforms
+AI assets, models, agents, token spend, shadow AI and outcome attribution.
+
+SaaS Applications
+Duplication, under-utilisation, renewal exposure and business ownership.
+
+Cloud Platforms
+Spend, rightsizing, idle resources, tagging gaps and optimisation actions.
+
+ITAM / Contracts
+Entitlements, renewals, vendor exposure and commercial governance.
+
+ServiceNow / Workflow
+Governed action execution, approval evidence and operational verification.
+
+Finance
+Projected value, realised value, variance and finance reconciliation.
+
+Executive Proof Packs
+Board, CFO, CIO, procurement and audit-ready evidence packs.
+```
+
+Closing CTA:
+
+```text
+Run Free Exposure Review
+Book Executive Review
+```
+
+---
+
+# Copy changes to make globally
+
+Replace generic CTA:
+
+```text
+Get started
+```
+
+with:
+
+```text
+Run Free Exposure Review
+```
+
+Keep:
+
+```text
+Sign in
+```
+
+for existing users only.
+
+Add secondary CTA where relevant:
+
+```text
+Request Live Onboarding
+```
+
+Use this trust copy repeatedly:
+
+```text
+Read-only review. No licence changes. No automated execution. Access revocable at any time.
+```
+
+---
+
+# Acceptance criteria
+
+The fix is complete when:
+
+```text
+1. Landing page CTA no longer dead-ends.
+2. User can create/request a review workspace.
+3. Demo and Live modes can be switched.
+4. User can sign out/reset mode.
+5. M365 connection failure shows a safe fallback page.
+6. Exposure report can be viewed in Demo mode.
+7. Live mode clearly asks for Microsoft 365 connection.
+8. Site no longer looks like only an M365 optimiser.
+9. Outcome Ledger / Evidence Registry / Finance Reconciliation are visible before the user scrolls too far.
+10. All CTAs are consistent.
+```
+
+---
+
+# Suggested implementation order
+
+```text
+1. Fix routing for CTAs.
+2. Add /exposure-review/start.
+3. Add workspace session state.
+4. Add Demo/Live selector and logout.
+5. Fix M365 connection fallback.
+6. Add proof chain section.
+7. Add platform expansion section.
+8. Test full user journey.
+```
+
+Final test path:
+
+```text
+Landing Page
+→ Run Free Exposure Review
+→ Create Review Workspace
+→ Open Demo Report
+→ Switch to Live
+→ Connect Microsoft 365
+→ See safe fallback if not configured
+→ Switch back to Demo
+→ Sign out
+→ Return to Landing Page
+```

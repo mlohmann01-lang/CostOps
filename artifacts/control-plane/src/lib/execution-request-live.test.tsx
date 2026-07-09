@@ -12,7 +12,7 @@ test('execution queue displays request', () => {
 
 test('approval creation refreshes queue', () => {
   const approval = fs.readFileSync(new URL('../pages/ApprovalWorkflowsView.tsx', import.meta.url), 'utf8')
-  assert.equal(approval.includes('/api/approval-authority/workflows'), true)
+  assert.equal(approval.includes('/api/approval-authority/workflows/'), true)
   assert.equal(approval.includes('broadcastLiveReadRefresh'), true)
 })
 

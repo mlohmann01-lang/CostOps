@@ -72,16 +72,19 @@ test('connector retry updates activity stream', async () => {
 
 test('Command activity stream renders', () => {
   resetDemoRuntimeStore()
-  const source = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(source.includes("data-testid='overview-change-row'") || source.includes('recentChanges'), true)
-  assert.equal(source.includes('Recent governed activity will appear here.'), true)
+  // Overview/Command page (Program 6: Executive Command Center) no longer surfaces a
+  // dedicated "What Changed" runtime activity section - it was demoted/removed in favor of
+  // the six orchestrator sections (Executive Summary, What Requires Attention, Economic
+  // Control Chain Status, Executive Value Snapshot, Outcome Finance Snapshot, Recommended
+  // Next Actions). Runtime activity/event demo data still exists and is exercised elsewhere.
   assert.equal(getDemoRuntimeState().activity.some((event) => event.message === 'Snowflake auto-suspend verified'), true)
 })
 
 test('no live API calls in demo mode hooks', () => {
   const hookFiles = [
     '../hooks/useCommandData.ts', '../hooks/useRecommendationsData.ts', '../hooks/useApprovalWorkflowsData.ts', '../hooks/useExecutionData.ts', '../hooks/useCampaignsData.ts',
-    '../hooks/useGovernanceData.ts', '../hooks/useEvidenceAuditData.ts', '../hooks/useOutcomesData.ts', '../hooks/useDriftData.ts', '../hooks/useRuntimeHealthData.ts', '../hooks/useConnectorOpsData.ts',
+    // useOutcomesData.ts is now a thin delegate to useOutcomeProofData.ts, which holds the actual demo/live branching.
+    '../hooks/useGovernanceData.ts', '../hooks/useEvidenceAuditData.ts', '../hooks/useOutcomeProofData.ts', '../hooks/useDriftData.ts', '../hooks/useRuntimeHealthData.ts', '../hooks/useConnectorOpsData.ts',
   ]
   for (const rel of hookFiles) {
     const body = fs.readFileSync(new URL(rel, import.meta.url), 'utf8')
@@ -91,8 +94,11 @@ test('no live API calls in demo mode hooks', () => {
 })
 
 test('live mode remains empty-state/API driven', () => {
-  const commandHook = fs.readFileSync(new URL('../hooks/useCommandData.ts', import.meta.url), 'utf8')
+  // CommandView (now the Overview/Executive Command Center page, Program 6) sources its
+  // data from useExecutiveValueData/useExecutivePrioritiesData/useExecutiveRiskData/
+  // useTenantReadinessData/useLiveTenantReadinessData, not useCommandData; it surfaces
+  // empty states per section rather than a single 'No actions identified yet' message.
   const commandView = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(commandHook.includes('isEmptyLive: true') || commandHook.includes('isEmptyLive:true'), true)
-  assert.equal(commandView.includes('Executive Brief'), true)
+  assert.equal(commandView.includes('Nothing requires attention right now.'), true)
+  assert.equal(commandView.includes('DataStateBanner'), true)
 })

@@ -1,10 +1,18 @@
 export type WorkspaceMode = 'demo' | 'live'
 
+export type WorkspaceRuntimeState =
+  | 'DEMO'
+  | 'LIVE_UNCONNECTED'
+  | 'LIVE_DISCOVERING'
+  | 'LIVE_OPERATIONAL'
+
 export interface WorkspaceContext {
   mode: WorkspaceMode
   tenantId: string
   tenantName: string
   dataReady: boolean
+  runtimeState: WorkspaceRuntimeState
+  connectedCount: number
 }
 
 export const DEMO_CONTEXT: WorkspaceContext = {
@@ -12,4 +20,6 @@ export const DEMO_CONTEXT: WorkspaceContext = {
   tenantId: 'demo-sandbox-tenant',
   tenantName: 'Demo workspace',
   dataReady: true,
+  runtimeState: 'DEMO',
+  connectedCount: 0,
 }

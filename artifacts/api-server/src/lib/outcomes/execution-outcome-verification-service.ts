@@ -16,6 +16,7 @@ import { ExecutionOutcomeRepository } from './execution-outcome-repository'
 import { outcomeProjectionService } from './outcome-projection-service'
 import { monitoredOutcomeService } from '../drift/monitored-outcome-service'
 import { outcomeProofService } from './outcome-proof-service'
+import { decisionLifecycleBridge } from '../decision-authority/decision-lifecycle-bridge'
 
 export class ExecutionOutcomeVerificationError extends Error { constructor(public readonly code:string, message:string, public readonly status=400){ super(message) } }
 
@@ -96,6 +97,11 @@ export class ExecutionOutcomeVerificationService {
     await this.requests.updateExecutionRequest(tenantId, request.requestId, { metadata: { ...(request.metadata ?? {}), latestOutcomeId: (outcome as any).outcomeId, latestOutcomeState: finalState, verifiedMonthlySavings: verifiedMonthly, savingsVariance: verifiedMonthly - projectedMonthly } })
     await this.events.emit({ tenantId, recommendationId: request.recommendationId, eventType: stateEvent(finalState) as any, actorId, actorRole: 'OPERATOR', eventReason: failureReason || 'Outcome verification completed', afterState: finalState, evidenceSnapshot: result.executionEvidence as unknown[], approvalSnapshot: { executionRequestId: request.requestId, executionResultId, outcomeId: (outcome as any).outcomeId } })
     appendUnifiedEvent({ eventId: `${executionResultId}:${stateEvent(finalState)}:${now.toISOString()}`, tenantId, entityType: 'EXECUTION_RESULT', entityId: executionResultId, eventType: stateEvent(finalState), eventCategory: 'OUTCOME', actorId, actorRole: 'OPERATOR', eventReason: failureReason || 'Outcome verification completed', beforeState: 'VERIFYING', afterState: finalState, evidenceSnapshot: result.executionEvidence ?? [], sourceSystem: 'execution-outcome-verification-service', createdAt: now.toISOString() })
+    try {
+      await decisionLifecycleBridge.recordOutcomeVerification({ tenantId, recommendationId: String(request.recommendationId), outcomeId: String((outcome as any).outcomeId), verified: finalState === 'VERIFIED' })
+    } catch {
+      // Decision Authority is additive; failures here must never block outcome verification.
+    }
     return { executionResultId, outcome: normalize(outcome) }
   }
 

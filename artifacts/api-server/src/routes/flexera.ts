@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { FlexeraProductionService, runFlexeraProductionConnectorAudit } from '../lib/production-connectors/flexera';
-const router=Router();const service=new FlexeraProductionService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
+import { FlexeraRecommendationService } from '../lib/connectors/flexera-live-recommendation-bridge';
+const router=Router();const service=new FlexeraProductionService();const recommendationSvc=new FlexeraRecommendationService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
 router.post('/connect',async(req:any,res,next)=>{try{res.json(await service.connect({tenantId:tenant(req),apiBaseUrl:req.body?.apiBaseUrl,tenantName:req.body?.tenantName,credentials:req.body?.credentials,mode:req.body?.mode??'LIVE'}))}catch(e){next(e)}});
 router.post('/validate',async(req:any,res,next)=>{try{res.json(await service.validate(tenant(req)))}catch(e){next(e)}});
 router.post('/discover',async(req:any,res,next)=>{try{res.json(await service.discover(tenant(req)))}catch(e){next(e)}});
@@ -11,4 +12,5 @@ router.get('/consumption',async(req:any,res,next)=>{try{const d=await service.di
 router.get('/findings',async(req:any,res)=>res.json(service.getFindings(tenant(req))));
 router.get('/summary',async(req:any,res)=>res.json(service.getSummary(tenant(req))));
 router.get('/audit',async(_req,res,next)=>{try{res.json(await runFlexeraProductionConnectorAudit())}catch(e){next(e)}});
+router.post('/generate-recommendations',async(req:any,res)=>{const actorId=String(req.body?.actorId??'system');try{res.json(await recommendationSvc.generateForTenant(tenant(req),service,actorId))}catch(e:any){res.status(409).json({tenantId:tenant(req),error:'FLEXERA_RECOMMENDATION_GENERATION_FAILED',message:String(e?.message??e),generatedAt:new Date().toISOString()})}});
 export default router;

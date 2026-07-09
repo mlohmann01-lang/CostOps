@@ -1,5 +1,6 @@
 import { governedActionService, type GovernedActionDomain, type GovernedActionPriority } from "../actions/governed-actions";
 import { platformEventService } from "../events/platform-event-service";
+import { decisionLifecycleBridge } from "../decision-authority/decision-lifecycle-bridge";
 
 export type ProtectedOutcomeStatus = "PROTECTED" | "AT_RISK" | "DRIFTED" | "REMEDIATION_OPEN" | "RESOLVED" | "ARCHIVED";
 export type ProtectedOutcome = { id: string; tenantId: string; outcomeId: string; actionId?: string; executionId?: string; assetId?: string; assetType?: "AI_ASSET" | "M365" | "SAAS" | "CLOUD" | "ITAM" | "APPLICATION" | "OTHER"; name: string; description?: string; status: ProtectedOutcomeStatus; valueType: "SAVINGS" | "COST_AVOIDANCE" | "PRODUCTIVITY" | "RISK_REDUCTION" | "REVENUE_ENABLEMENT" | "OTHER"; protectedMonthlyValue?: number; protectedAnnualValue?: number; retainedMonthlyValue?: number; retainedAnnualValue?: number; driftedMonthlyValue?: number; driftedAnnualValue?: number; currency?: string; protectionStart: string; lastCheckedAt?: string; nextCheckAt?: string; policyIds: string[]; driftFindingIds: string[]; evidenceIds: string[]; createdAt: string; updatedAt: string };
@@ -45,6 +46,14 @@ export class OutcomeProtectionService {
     const outcome: ProtectedOutcome = { id: id("pout"), tenantId: input.tenantId, outcomeId: input.outcomeId ?? action!.outcomeIds[0], actionId: input.actionId, executionId: input.executionId, assetId: input.assetId ?? action?.sourceId, assetType: input.assetType, name: input.name ?? action?.title ?? "Protected outcome", description: input.description, status: "PROTECTED", valueType: input.valueType ?? "SAVINGS", protectedMonthlyValue: input.protectedMonthlyValue ?? action?.actualMonthlyValue ?? action?.projectedMonthlyValue, protectedAnnualValue: input.protectedAnnualValue ?? action?.actualAnnualValue ?? action?.projectedAnnualValue, retainedMonthlyValue: input.retainedMonthlyValue, retainedAnnualValue: input.retainedAnnualValue, driftedMonthlyValue: input.driftedMonthlyValue, driftedAnnualValue: input.driftedAnnualValue, currency: input.currency ?? "USD", protectionStart: input.protectionStart ?? timestamp, nextCheckAt: nextCheck(timestamp), policyIds: uniq(input.policyIds ?? []), driftFindingIds: [], evidenceIds: uniq([...(input.evidenceIds ?? []), ...(action?.evidenceIds ?? [])]), createdAt: timestamp, updatedAt: timestamp };
     this.repo.outcomes.set(this.repo.key(outcome.tenantId, outcome.id), outcome);
     await this.recordEvent(outcome.tenantId, "OUTCOME_PROTECTED", "ProtectedOutcome", outcome.id, { outcomeId: outcome.outcomeId, actionId: outcome.actionId });
+    const recommendationId = action?.recommendationIds?.[0];
+    if (recommendationId) {
+      try {
+        await decisionLifecycleBridge.recordOutcomeProtection({ tenantId: outcome.tenantId, recommendationId, outcomeId: outcome.outcomeId });
+      } catch {
+        // Decision Authority is additive; failures here must never block outcome protection.
+      }
+    }
     return outcome;
   }
 

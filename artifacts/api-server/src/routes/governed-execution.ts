@@ -1,6 +1,6 @@
 import {Router} from 'express';import {GovernedExecutionService,runGovernedExecutionExpansionAudit} from '../lib/governed-execution';
 const router=Router();const svc=new GovernedExecutionService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
-router.post('/plans',async(req:any,res,next)=>{try{res.json(await svc.createExecutionPlan({tenantId:tenant(req),...(req.body??{})}))}catch(e){next(e)}});
+router.post('/plans',async(req:any,res,next)=>{try{res.json(await svc.createExecutionPlan({...(req.body??{}),tenantId:tenant(req)}))}catch(e){next(e)}});
 router.post('/plans/from-recommendation/:recommendationId',async(req:any,res,next)=>{try{res.json(await svc.createPlanFromRecommendation(tenant(req),req.params.recommendationId))}catch(e){next(e)}});
 router.post('/plans/from-portfolio-recommendation/:portfolioRecommendationId',async(req:any,res,next)=>{try{res.json(await svc.createPlanFromPortfolioRecommendation(tenant(req),req.params.portfolioRecommendationId))}catch(e){next(e)}});
 router.get('/plans',async(req:any,res,next)=>{try{res.json(await svc.repo.listPlans(tenant(req),req.query as any))}catch(e){next(e)}});

@@ -3,7 +3,6 @@ import { demoExecutiveValueBlockers, demoExecutiveValueDomains, demoExecutiveVal
 import { liveFetch, normalizeApiError } from '../lib/liveApi'
 import { useWorkspace } from '../lib/workspaceContext'
 
-
 export type FinancialGovernanceScenario = { id:string; investmentIdentifier:string; assetOrInitiative:string; businessObjective:string; investmentOwner?:string; spendBasis?:number; budgetBasis?:number; costCentre?:string; financialPeriod?:string; expectedOutcome?:string; measuredOutcome?:string; protectedOutcome?:string; valueRealised?:number; leakage?:number; sourceSystems:string[]; lineage?:string; timestamp?:string; outcomeLinkage?:string; financeConfirmationStatus:'CONFIRMED'|'NOT_CONFIRMED'|'ESTIMATED'|'BLOCKED'; verification:'VERIFIED'|'ESTIMATED'|'MISSING_EVIDENCE'; confidence?:number; decision:any; decisionReason:string; category:string; roi?:number }
 
 export const emptyFinancialGovernanceData = { scenarios: [] as FinancialGovernanceScenario[], summary: { technologyInvestment: undefined as number|undefined, financeConfirmedValue: undefined as number|undefined, protectedValue: undefined as number|undefined, valueLeakage: undefined as number|undefined, valueUnderReview: undefined as number|undefined, budgetUnderGovernance: undefined as number|undefined, investmentConfidence: undefined as number|undefined, verifiedOutcomes: 0, evidenceCompleteness: undefined as number|undefined } }
@@ -20,25 +19,36 @@ export function demoFinancialGovernanceData() {
   return { scenarios, summary: { technologyInvestment: 2340000, financeConfirmedValue: 388000, protectedValue: 406000, valueLeakage: 496000, valueUnderReview: 244000, budgetUnderGovernance: 2470000, investmentConfidence: 71, verifiedOutcomes: 3, evidenceCompleteness: 67 } }
 }
 
+export type ExecutiveValueDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+const emptyExecutiveValueSummary: any = { valueMetrics: {}, confidence: {}, counts: {} }
+
 export function useExecutiveValueData() {
   const workspace = useWorkspace()
-  const emptySummary = { valueMetrics: {}, confidence: {}, counts: {} }
-  const [summary, setSummary] = useState<any>(workspace.mode === 'demo' ? demoExecutiveValueSummary : emptySummary)
+  const [summary, setSummary] = useState<any>(workspace.mode === 'demo' ? demoExecutiveValueSummary : emptyExecutiveValueSummary)
   const [domains, setDomains] = useState<any[]>(workspace.mode === 'demo' ? demoExecutiveValueDomains : [])
   const [topDrivers, setTopDrivers] = useState<any[]>(workspace.mode === 'demo' ? demoExecutiveValueTopDrivers : [])
   const [blockers, setBlockers] = useState<any[]>(workspace.mode === 'demo' ? demoExecutiveValueBlockers : [])
+  const [dataState, setDataState] = useState<ExecutiveValueDataState>(workspace.mode === 'demo' ? 'DEMO' : 'NOT_CONNECTED')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
   const [financialGovernance, setFinancialGovernance] = useState<any>(workspace.mode === 'demo' ? demoFinancialGovernanceData() : emptyFinancialGovernanceData)
 
   const refresh = useCallback(async () => {
-    if (workspace.mode === 'demo') { setSummary(demoExecutiveValueSummary); setDomains(demoExecutiveValueDomains); setTopDrivers(demoExecutiveValueTopDrivers); setBlockers(demoExecutiveValueBlockers); setFinancialGovernance(demoFinancialGovernanceData()); setError(null); return demoExecutiveValueSummary }
-    if (!workspace.dataReady) { setSummary(emptySummary); setDomains([]); setTopDrivers([]); setBlockers([]); setFinancialGovernance(emptyFinancialGovernanceData); setError(null); return emptySummary }
+    if (workspace.mode === 'demo') { setSummary(demoExecutiveValueSummary); setDomains(demoExecutiveValueDomains); setTopDrivers(demoExecutiveValueTopDrivers); setBlockers(demoExecutiveValueBlockers); setFinancialGovernance(demoFinancialGovernanceData()); setDataState('DEMO'); setError(null); return demoExecutiveValueSummary }
+    if (!workspace.dataReady) { setSummary(emptyExecutiveValueSummary); setDomains([]); setTopDrivers([]); setBlockers([]); setFinancialGovernance(emptyFinancialGovernanceData); setDataState('NOT_CONNECTED'); setError(null); return emptyExecutiveValueSummary }
     setLoading(true)
     try {
       const [nextSummary, nextDomains, nextDrivers, nextBlockers]: any[] = await Promise.all([liveFetch('/api/executive-value/summary'), liveFetch('/api/executive-value/domains'), liveFetch('/api/executive-value/top-drivers'), liveFetch('/api/executive-value/blockers')])
-      setSummary(nextSummary); setDomains(nextDomains.domains ?? []); setTopDrivers(nextDrivers.topDrivers ?? []); setBlockers(nextBlockers.blockers ?? []); setFinancialGovernance((nextSummary as any).financialGovernance ?? emptyFinancialGovernanceData); setError(null); return nextSummary
-    } catch (err) { const next = normalizeApiError(err); setError(next); throw next } finally { setLoading(false) }
+      const normalizedDomains = nextDomains.domains ?? []
+      const normalizedDrivers = nextDrivers.topDrivers ?? []
+      setSummary(nextSummary); setDomains(normalizedDomains); setTopDrivers(normalizedDrivers); setBlockers(nextBlockers.blockers ?? []); setFinancialGovernance((nextSummary as any).financialGovernance ?? emptyFinancialGovernanceData)
+      setDataState(normalizedDomains.length === 0 && normalizedDrivers.length === 0 ? 'NO_DATA' : 'LIVE')
+      setError(null); return nextSummary
+    } catch (err) {
+      const next = normalizeApiError(err)
+      setSummary(emptyExecutiveValueSummary); setDomains([]); setTopDrivers([]); setBlockers([]); setFinancialGovernance(emptyFinancialGovernanceData)
+      setDataState('NO_DATA'); setError(next); throw next
+    } finally { setLoading(false) }
   }, [workspace.mode, workspace.dataReady])
 
   useEffect(() => { void refresh().catch(() => undefined) }, [refresh])
@@ -50,5 +60,5 @@ export function useExecutiveValueData() {
     try { const pack = await liveFetch('/api/executive-value/evidence-pack', { method: 'POST' }); await refresh(); return pack } catch (err) { const next = normalizeApiError(err); setError(next); throw next } finally { setLoading(false) }
   }, [workspace.mode, workspace.dataReady, refresh])
 
-  return useMemo(() => ({ summary, domains, topDrivers, blockers, financialGovernance, loading, error, refresh, generateEvidencePack, isDemo: workspace.mode === 'demo', dataReady: workspace.dataReady }), [summary, domains, topDrivers, blockers, financialGovernance, loading, error, refresh, generateEvidencePack, workspace.mode, workspace.dataReady])
+  return useMemo(() => ({ summary, domains, topDrivers, blockers, financialGovernance, dataState, loading, error, refresh, generateEvidencePack, isDemo: workspace.mode === 'demo', dataReady: workspace.dataReady }), [summary, domains, topDrivers, blockers, financialGovernance, dataState, loading, error, refresh, generateEvidencePack, workspace.mode, workspace.dataReady])
 }

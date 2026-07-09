@@ -20,11 +20,11 @@ test("playbook metadata includes risk/execution/verification/rollback", ()=>{
 });
 
 test("admin/service and missing evidence can be suppressed by evaluator outputs", ()=>{
-  const disabled = PLAYBOOK_REGISTRY.find((p)=>p.id.includes("DISABLED_LICENSED_USER_RECLAIM"))!;
+  const disabled = PLAYBOOK_REGISTRY.find((p)=>p.id.toLowerCase().includes("disabled_licensed_user_reclaim"))!;
   const adminOut = disabled.evaluate({ email:"admin.service@contoso.com", displayName:"a", userPrincipalName:"admin.service@contoso.com", assignedLicenses:["E5"], sku:"E5", cost:57, days:10, accountEnabled:false } as any);
   assert.ok(adminOut.exclusions.some((e)=>String(e).includes("admin") || String(e).includes("service")));
 
-  const addon = PLAYBOOK_REGISTRY.find((p)=>p.id.includes("ADDON_LICENSE_RECLAIM"))!;
+  const addon = PLAYBOOK_REGISTRY.find((p)=>p.id.toLowerCase().includes("addon_license_reclaim"))!;
   const miss = addon.evaluate({ email:"missing.evidence@contoso.com", displayName:"m", userPrincipalName:"missing.evidence@contoso.com", assignedLicenses:["ADDON_X"], sku:"ADDON_X", cost:12, days:10, addonUsageDaysAgo:null } as any);
   assert.equal(miss.matched, true);
   assert.equal(miss.evidence.addonUsageDaysAgo, null);

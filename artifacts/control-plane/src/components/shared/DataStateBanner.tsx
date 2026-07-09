@@ -3,11 +3,11 @@ import type { DataState } from '../../lib/dataState'
 import { DATA_STATE_DESCRIPTIONS, DATA_STATE_LABELS } from '../../lib/dataState'
 
 const palette: Record<DataState, { bg: string; fg: string; border: string }> = {
-  LIVE: { bg: 'var(--green-bg)', fg: 'var(--green)', border: 'var(--border-teal)' },
-  SIMULATION: { bg: 'var(--amber-bg)', fg: 'var(--amber)', border: 'var(--border-amber)' },
-  DEMO: { bg: 'var(--amber-bg)', fg: 'var(--amber)', border: 'var(--border-amber)' },
-  NOT_CONNECTED: { bg: 'var(--red-bg)', fg: 'var(--red)', border: 'var(--border-default)' },
-  NO_DATA: { bg: 'rgba(255,255,255,.04)', fg: 'var(--text-secondary)', border: 'var(--border-default)' },
+  LIVE: { bg: 'transparent', fg: 'var(--green)', border: 'var(--border-teal)' },
+  SIMULATION: { bg: 'rgba(255,255,255,0.03)', fg: 'var(--amber)', border: 'var(--border-amber)' },
+  DEMO: { bg: 'rgba(255,255,255,0.03)', fg: 'var(--amber)', border: 'var(--border-amber)' },
+  NOT_CONNECTED: { bg: 'rgba(255,255,255,0.03)', fg: 'var(--red)', border: 'var(--border-red)' },
+  NO_DATA: { bg: 'rgba(255,255,255,0.03)', fg: 'var(--text-secondary)', border: 'var(--border-default)' },
 }
 
 export function DataStateBanner({ state, detail, ctaLabel, ctaHref }: { state: DataState; detail?: string; ctaLabel?: string; ctaHref?: string }) {

@@ -1,0 +1,312 @@
+import { test } from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+import {
+  getDefaultLandingPage,
+  LANDING_PAGE_SECTIONS,
+  TRUST_BANNER_ASSURANCES,
+  PUBLIC_HEADER,
+  PUBLIC_FOOTER,
+  RUN_EXPOSURE_REVIEW_CTA,
+  BOOK_EXECUTIVE_REVIEW_CTA,
+} from './defaultLandingPage'
+
+const POSITIONING_DENYLIST = ['Best', 'World-class', 'Revolutionary', 'Game-changing']
+
+function flattenStrings(value: unknown, out: string[] = []): string[] {
+  if (typeof value === 'string') {
+    out.push(value)
+  } else if (Array.isArray(value)) {
+    for (const item of value) flattenStrings(item, out)
+  } else if (value && typeof value === 'object') {
+    for (const v of Object.values(value)) flattenStrings(v, out)
+  }
+  return out
+}
+
+test('landing page content model has exactly 8 sections', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.sections.length, 8)
+  assert.equal(LANDING_PAGE_SECTIONS.length, 8)
+  assert.deepEqual(
+    page.sections.map((s) => s.title),
+    [
+      'Hero',
+      'Market Problem',
+      'Uncover, Execute, Protect',
+      'AI & Technology Exposure Report',
+      'Questions Certen Answers',
+      'Governed Answers',
+      'Economic Control Chain',
+      'Executive Economic Review',
+    ]
+  )
+})
+
+test('Program 9B: Exposure Report is positioned before Economic Control Chain', () => {
+  const titles = LANDING_PAGE_SECTIONS.map((s) => s.title)
+  const exposureIdx = titles.indexOf('AI & Technology Exposure Report')
+  const chainIdx = titles.indexOf('Economic Control Chain')
+  assert.ok(exposureIdx >= 0 && chainIdx >= 0)
+  assert.ok(exposureIdx < chainIdx, 'Exposure Report must appear before Economic Control Chain')
+})
+
+test('Hero contains the verbatim two-line headline', () => {
+  const page = getDefaultLandingPage()
+  assert.deepEqual(page.hero.headlineLines, [
+    'You approved the technology budget.',
+    'Can you prove what it delivered?',
+  ])
+})
+
+test('Hero subheadline and CTAs are verbatim', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(
+    page.hero.subheadline,
+    'Certen helps organisations uncover value, execute improvements, validate outcomes, reconcile savings to finance and protect gains from drift.'
+  )
+  assert.equal(page.hero.primaryCta, 'Run Free Exposure Review')
+  assert.equal(page.hero.secondaryCta, 'Book Executive Review')
+})
+
+test('Program 9B: hero has exactly the two consolidated primary CTAs', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.hero.primaryCta, RUN_EXPOSURE_REVIEW_CTA)
+  assert.equal(page.hero.secondaryCta, BOOK_EXECUTIVE_REVIEW_CTA)
+  assert.equal(RUN_EXPOSURE_REVIEW_CTA, 'Run Free Exposure Review')
+  assert.equal(BOOK_EXECUTIVE_REVIEW_CTA, 'Book Executive Review')
+})
+
+test('Program 9B: "See Economic Control Chain" no longer appears as a CTA button label', () => {
+  const page = getDefaultLandingPage()
+  const allStrings = flattenStrings(page)
+  assert.ok(!allStrings.includes('See Economic Control Chain'))
+  // The replacement is a plain anchor link, not a button-style CTA.
+  assert.ok(allStrings.includes('↓ See how it works'))
+  assert.equal(page.hero.seeHowItWorksLabel, '↓ See how it works')
+})
+
+test('Program 9B: hero credibility bridge line is present', () => {
+  const page = getDefaultLandingPage()
+  assert.ok(page.hero.credibilityBridge.includes('CIOs, CFOs, ITAM'))
+  assert.equal(
+    page.hero.credibilityBridge,
+    'Built for CIOs, CFOs, ITAM, FinOps and technology governance leaders.'
+  )
+})
+
+test('Trust Banner contains all 5 assurances verbatim (Program 9A restyle)', () => {
+  const page = getDefaultLandingPage()
+  const required = [
+    'Read-only review',
+    'No changes made',
+    'Discovery only',
+    'No licence modifications',
+    'Revoke access anytime',
+  ]
+  assert.equal(TRUST_BANNER_ASSURANCES.length, 5)
+  assert.equal(page.hero.trustBanner.length, 5)
+  for (const assurance of required) {
+    assert.ok(page.hero.trustBanner.includes(assurance), `missing assurance: ${assurance}`)
+  }
+})
+
+test('Hero eyebrow badge text is "Economic Control System"', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.hero.eyebrow, 'Economic Control System')
+})
+
+test('Public header has Certen wordmark, nav links, sign-in and get-started', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.header.wordmark, 'Certen')
+  assert.equal(PUBLIC_HEADER.wordmark, 'Certen')
+  const navLabels = page.header.navLinks.map((l) => l.label)
+  assert.deepEqual(navLabels, ['Product', 'Economic Control', 'Exposure Report'])
+  assert.equal(page.header.signInLabel, 'Sign in')
+  assert.ok(page.header.signInHref.length > 0)
+  assert.equal(page.header.getStartedLabel, 'Run Free Exposure Review')
+  // CTA routes into the M365 Exposure Review signup form.
+  assert.equal(page.header.getStartedHref, '/exposure-review/start')
+})
+
+test('Public footer has Certen wordmark, caption, sign-in and Book Executive Review', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.footer.wordmark, 'Certen')
+  assert.equal(page.footer.caption, 'Economic control for technology investments')
+  assert.equal(page.footer.signInLabel, 'Sign in')
+  assert.equal(page.footer.executiveReviewLabel, 'Book Executive Review')
+  assert.equal(PUBLIC_FOOTER.executiveReviewLabel, 'Book Executive Review')
+})
+
+test('Economic Control Chain section contains all 7 stages in order', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.economicControlChain.stages.length, 7)
+  assert.deepEqual(
+    page.economicControlChain.stages.map((s) => s.title),
+    ['Discover', 'Own', 'Analyse', 'Approve', 'Execute', 'Verify', 'Protect']
+  )
+  for (const stage of page.economicControlChain.stages) {
+    assert.ok(typeof stage.description === 'string' && stage.description.length > 0)
+  }
+})
+
+test('Questions section is grouped by audience using catalog text verbatim by id', () => {
+  const page = getDefaultLandingPage()
+  const byAudience = Object.fromEntries(page.questionsByAudience.map((g) => [g.audience, g.questions]))
+
+  assert.deepEqual(byAudience.CFO, [
+    'What value has been verified?',
+    'What value has finance validated?',
+    'What variance exists between projected and finance-verified value?',
+  ])
+  assert.deepEqual(byAudience.CIO, [
+    'What technology do we own?',
+    'Where are we exposed?',
+    'What should I do next?',
+  ])
+  assert.deepEqual(byAudience.EXECUTIVE, [
+    'What requires attention?',
+    'What value is protected?',
+  ])
+  assert.deepEqual(byAudience.ITAM, [
+    'What authorities are available?',
+    'What actions require approval?',
+  ])
+})
+
+test('Governed Answers mentions Outcome Ledger, Evidence Registry and Finance Reconciliation', () => {
+  const page = getDefaultLandingPage()
+  const terms = page.governedAnswers.conceptCallouts.map((c) => c.term)
+  assert.ok(terms.includes('Outcome Ledger'))
+  assert.ok(terms.includes('Evidence Registry'))
+  assert.ok(terms.includes('Finance Reconciliation'))
+})
+
+test('Governed Answers section never mentions Slack, Teams, MCP, or AI agents', () => {
+  const page = getDefaultLandingPage()
+  const text = flattenStrings(page.governedAnswers).join(' ').toLowerCase()
+  assert.ok(!text.includes('slack'))
+  assert.ok(!text.includes('teams'))
+  assert.ok(!text.includes('mcp'))
+  assert.ok(!text.includes('ai agent'))
+})
+
+test('Exposure Report section contains the CTA "Run Free Exposure Review"', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.exposureReportSection.cta, 'Run Free Exposure Review')
+})
+
+test('Exposure Report section reuses the Section 1 metric labels and is marked illustrative', () => {
+  const page = getDefaultLandingPage()
+  const labels = page.exposureReportSection.metrics.map((m) => m.label)
+  assert.deepEqual(labels, [
+    'Potential Annual Value',
+    'Inactive Licences',
+    'Ownerless Licences',
+    'Copilot Exposure',
+    'Governance Findings',
+  ])
+  assert.ok(page.exposureReportSection.illustrativeNote.toLowerCase().includes('sample') || page.exposureReportSection.illustrativeNote.toLowerCase().includes('illustrat'))
+})
+
+test('Program 9B: Exposure Report card contains the enlarged headline metric and secondary metrics', () => {
+  const page = getDefaultLandingPage()
+  const section = page.exposureReportSection
+  assert.equal(section.headlineMetricLabel, 'Potential Annual Value')
+  assert.equal(section.headlineMetricValue, '$320,000')
+  const secondaryValues = section.secondaryMetrics.map((m) => m.sampleValue)
+  assert.ok(secondaryValues.some((v) => v.includes('184')))
+  assert.ok(secondaryValues.some((v) => v.includes('47')))
+  assert.ok(secondaryValues.some((v) => v.includes('12')))
+})
+
+test('Program 9B: Copilot Exposure value is "Requires review", not "Not available"', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.exposureReportSection.copilotExposure.sampleValue, 'Requires review')
+  const allStrings = flattenStrings(page)
+  assert.ok(!allStrings.includes('Not available'))
+  const copilotMetric = page.exposureReportSection.metrics.find((m) => m.label === 'Copilot Exposure')
+  assert.equal(copilotMetric?.sampleValue, 'Requires review')
+})
+
+test('Program 9B: Exposure Report trust lines are present', () => {
+  const page = getDefaultLandingPage()
+  assert.deepEqual(page.exposureReportSection.trustLines, [
+    'Delivered in minutes',
+    'Read-only connection',
+    'No changes made',
+    'Generated from your own tenant data',
+  ])
+})
+
+test('Exposure Report section flow steps are verbatim, in order', () => {
+  const page = getDefaultLandingPage()
+  assert.deepEqual(page.exposureReportSection.flowSteps, [
+    'Connect Microsoft 365.',
+    'Receive an AI & Technology Exposure Report.',
+    'No changes made.',
+    'Results in minutes.',
+  ])
+})
+
+test('Final CTA section contains "Book Executive Review" and verbatim headline/copy', () => {
+  const page = getDefaultLandingPage()
+  assert.equal(page.executiveReview.cta, 'Book Executive Review')
+  assert.equal(
+    page.executiveReview.headline,
+    'Understand what you own, what you spend, what is exposed and what value can be proven.'
+  )
+  assert.equal(
+    page.executiveReview.supportingCopy,
+    'Review technology exposure, ownership, governance, opportunities, verified outcomes and protection readiness.'
+  )
+})
+
+test('Program 9B: #economic-control-chain anchor id is still present in LandingPage.tsx', () => {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const landingPagePath = path.join(here, '../../pages/LandingPage.tsx')
+  const source = readFileSync(landingPagePath, 'utf8')
+  assert.ok(source.includes('id="economic-control-chain"'))
+  assert.ok(source.includes('id="exposure-report"'))
+})
+
+test('Program 9B: "See Economic Control Chain" button no longer appears in LandingPage.tsx markup', () => {
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const landingPagePath = path.join(here, '../../pages/LandingPage.tsx')
+  const source = readFileSync(landingPagePath, 'utf8')
+  assert.ok(!source.includes('See Economic Control Chain'))
+})
+
+test('denylist: no banned superlative language anywhere in the content model', () => {
+  const page = getDefaultLandingPage()
+  const allStrings = flattenStrings(page)
+  for (const str of allStrings) {
+    for (const banned of POSITIONING_DENYLIST) {
+      assert.ok(!str.includes(banned), `found banned word "${banned}" in: "${str}"`)
+    }
+  }
+})
+
+test('denylist: "AI spend management" is never used as positioning text', () => {
+  const page = getDefaultLandingPage()
+  const allText = flattenStrings(page).join(' ').toLowerCase()
+  assert.ok(!allText.includes('ai spend management'))
+})
+
+test('Market Problem section has no hardcoded numeric statistics in card copy or values', () => {
+  const page = getDefaultLandingPage()
+  for (const card of page.marketProblem.cards) {
+    assert.ok(!/\d/.test(card.body), `card body should not contain digits/stats: "${card.body}"`)
+    assert.ok(!/\d/.test(card.value), `card value should not contain digits/stats: "${card.value}"`)
+  }
+})
+
+test('Market Problem section is presented as a 3-cell connected stat row (Program 9A)', () => {
+  const page = getDefaultLandingPage()
+  const titles = page.marketProblem.cards.map((c) => c.title)
+  assert.deepEqual(titles, ['Investment', 'Visibility', 'Proof of value'])
+  const values = page.marketProblem.cards.map((c) => c.value)
+  assert.deepEqual(values, ['↑', 'Partial', 'Few'])
+})

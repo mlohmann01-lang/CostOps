@@ -13,10 +13,14 @@ function normalizeConnectorHub(payload: unknown) {
  }]
 }
 
+export type ConnectorHubDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+
 export function useConnectorHubData(): any{
  const w=useWorkspace();
  const demo=useDemoRuntimeStore();
  const live=useLiveResource({ path: m365ConnectorProductionApiPaths, enabled: w.mode === 'live', initialData: [], normalizer: normalizeConnectorHub, isEmpty: (data) => data.length === 0 })
- if(w.mode==='demo') return { isEmptyLive:false, data:demo.connectors, loading:false, error:null, refresh: () => Promise.resolve(demo.connectors) }
- return { isEmptyLive:!w.dataReady || live.isEmpty, data: live.data, loading: live.loading, error: live.error, refresh: live.refresh }
+ if(w.mode==='demo') return { isEmptyLive:false, data:demo.connectors, loading:false, error:null, dataState:'DEMO' as ConnectorHubDataState, refresh: () => Promise.resolve(demo.connectors) }
+ if(!w.dataReady) return { isEmptyLive:true, data:[], loading:false, error:null, dataState:'NOT_CONNECTED' as ConnectorHubDataState, refresh: live.refresh }
+ const dataState: ConnectorHubDataState = live.error ? 'NO_DATA' : live.isEmpty ? 'NO_DATA' : 'LIVE'
+ return { isEmptyLive: live.isEmpty, data: live.data, loading: live.loading, error: live.error, dataState, refresh: live.refresh }
 }

@@ -16,10 +16,10 @@ test('Executive Risk Command Center sections render', () => {
   for (const snippet of ['Top Governance Risks','Risk by Domain','Leadership Action Queue','Evidence Readiness','Executive narrative','Assign Owners','Review AI Policy','Renegotiate Renewals','Consolidate Vendors','Retire Unused Tools','Validate Data','Generate Evidence']) assert.equal(page.includes(snippet), true)
 })
 
-test('Executive Risk demo payload and fallback work', () => {
+test('Executive Risk demo payload and empty live payload are distinct', () => {
   assert.ok(JSON.stringify(demoExecutiveRiskData).includes('ChatGPT'));
   const data = normalizeExecutiveRiskPayload({});
-  assert.equal(data.summary.portfolioRiskScore, demoExecutiveRiskData.summary.portfolioRiskScore);
+  assert.equal(data.summary.portfolioRiskScore, 0);
   assert.equal(data.topRisks.length, 0);
 })
 

@@ -1,0 +1,456 @@
+Certen Executive Command Center State Separation Fix
+Objective
+
+Remove all synthetic/demo leakage from LIVE mode.
+
+The Executive Command Center must support four distinct runtime states:
+
+DEMO
+LIVE_UNCONNECTED
+LIVE_DISCOVERING
+LIVE_OPERATIONAL
+
+The UI, metrics, findings, recommendations, value snapshots and chain stages must derive from the current runtime state.
+
+Problem
+
+Current behaviour:
+
+LIVE mode displays:
+
+No Data
+Connected, but no data has been recorded yet
+
+while simultaneously showing:
+
+$320,000 identified
+$120,000 approved
+$80,000 executed
+$64,000 verified
+
+ChatGPT governance risks
+Slack renewal risks
+Claude findings
+Tableau findings
+
+This creates a contradiction.
+
+If no tenant data exists, Certen must not display synthetic findings or value.
+
+Build Requirement 1
+Introduce explicit workspace runtime states
+
+Create canonical runtime state definition.
+
+export type WorkspaceRuntimeState =
+  | "DEMO"
+  | "LIVE_UNCONNECTED"
+  | "LIVE_DISCOVERING"
+  | "LIVE_OPERATIONAL";
+
+Create helper:
+
+export function getWorkspaceRuntimeState(): WorkspaceRuntimeState
+
+Rules:
+
+if (workspace.mode === "DEMO")
+  return "DEMO";
+
+if (
+  workspace.mode === "LIVE" &&
+  !connectedConnectors.length
+)
+  return "LIVE_UNCONNECTED";
+
+if (
+  workspace.mode === "LIVE" &&
+  connectedConnectors.length > 0 &&
+  discoveryComplete === false
+)
+  return "LIVE_DISCOVERING";
+
+return "LIVE_OPERATIONAL";
+
+All Executive Command Center views must use this state.
+
+Build Requirement 2
+DEMO behaviour
+
+Banner:
+
+DEMO WORKSPACE
+
+Synthetic evidence only.
+No production systems connected.
+Live execution disabled.
+
+Allow:
+
+Sample findings
+Sample value
+Sample recommendations
+Sample governance risks
+
+Current demo behaviour is acceptable.
+
+No change required.
+
+Build Requirement 3
+LIVE_UNCONNECTED behaviour
+Banner
+
+Replace:
+
+No Data
+Connected, but no data has been recorded yet
+
+with:
+
+No production systems connected.
+
+Connect Microsoft 365 or another supported platform to begin discovery.
+Executive Summary
+
+Show:
+
+Authorities Active
+0
+
+Chain Stages Active
+0 / 7
+
+Verified Value
+—
+
+Finance Verified
+—
+
+Protected Value
+—
+Executive Value Snapshot
+
+Replace values with:
+
+Identified
+—
+
+Approved
+—
+
+Executed
+—
+
+Verified
+—
+
+Protected
+—
+Outcome Finance Snapshot
+
+Replace:
+
+Verified
+$50,400
+
+with:
+
+Verified
+—
+
+Finance Verified
+—
+
+Variance
+—
+What Requires Attention
+
+Do not render synthetic findings.
+
+Instead render:
+
+No Findings Yet
+
+Connect a supported platform to begin discovery.
+Recommended Next Actions
+
+Replace current actions with:
+
+1. Connect Microsoft 365
+2. Run Tenant Readiness
+3. Begin Discovery
+Build Requirement 4
+LIVE_DISCOVERING behaviour
+
+Definition:
+
+At least one connector connected.
+Discovery not complete.
+Banner
+
+Show:
+
+Discovery In Progress
+
+Connected systems are being analysed.
+Initial findings will appear as discovery completes.
+Executive Summary
+
+Allowed:
+
+Authorities Active
+1
+
+Chain Stages Active
+1 / 7
+
+Allowed:
+
+Identified Value
+
+Only.
+
+Executive Value Snapshot
+
+Show:
+
+Identified
+$X
+
+Show:
+
+Approved
+Pending
+
+Executed
+Pending
+
+Verified
+Pending
+
+Protected
+Pending
+What Requires Attention
+
+May display:
+
+Ownership gaps
+Inactive licences
+Duplicate capabilities
+Governance findings
+
+Only if sourced from connected systems.
+
+No synthetic records.
+
+Outcome Finance Snapshot
+
+Must remain:
+
+—
+
+until verification exists.
+
+Build Requirement 5
+LIVE_OPERATIONAL behaviour
+
+Definition:
+
+Discovery complete
+At least one authority active
+Verified evidence exists
+
+Only in this state may Certen display:
+
+Approved value
+Executed value
+Verified value
+Protected value
+Finance reconciliation
+Variance
+Build Requirement 6
+Economic Control Chain enforcement
+
+Current issue:
+
+Discover = Active
+
+Approved = $120k
+Executed = $80k
+Verified = $64k
+
+This is invalid.
+
+Create chain-state gating.
+
+If current stage:
+
+DISCOVER
+
+then:
+
+Approved = Pending
+Executed = Pending
+Verified = Pending
+Protected = Pending
+
+If current stage:
+
+APPROVE
+
+then:
+
+Approved = allowed
+Executed = Pending
+Verified = Pending
+Protected = Pending
+
+If current stage:
+
+EXECUTE
+
+then:
+
+Executed = allowed
+Verified = Pending
+Protected = Pending
+
+If current stage:
+
+VERIFY
+
+then:
+
+Verified = allowed
+Protected = Pending
+
+If current stage:
+
+PROTECT
+
+then:
+
+Protected = allowed
+
+No metric may appear before its chain stage is active.
+
+Build Requirement 7
+Connector attention assistant
+
+Current prompt:
+
+Which connectors need attention?
+
+must become actionable.
+
+If LIVE_UNCONNECTED:
+
+Show:
+
+Connector Health
+
+Microsoft 365
+NOT CONNECTED
+
+OpenAI
+NOT CONNECTED
+
+Anthropic
+NOT CONNECTED
+
+GitHub Copilot
+NOT CONNECTED
+
+ServiceNow
+NOT CONNECTED
+
+AWS
+NOT CONNECTED
+
+Snowflake
+NOT CONNECTED
+
+Footer:
+
+Recommended first connection:
+Microsoft 365
+
+Expected discovery coverage:
+72%
+
+If LIVE_DISCOVERING:
+
+Show real connector statuses.
+
+Example:
+
+Microsoft 365
+CONNECTED
+
+OpenAI
+CONNECTED
+
+AWS
+NOT CONNECTED
+
+ServiceNow
+NOT CONNECTED
+Build Requirement 8
+Data trust calculation
+
+Current:
+
+Data trust 91%
+
+appears even when no systems connected.
+
+This is misleading.
+
+LIVE_UNCONNECTED:
+
+Data Trust
+Not Available
+
+or
+
+Data Trust
+0%
+
+LIVE_DISCOVERING:
+
+Calculate from connected sources only.
+
+LIVE_OPERATIONAL:
+
+Current trust model remains.
+
+Acceptance Criteria
+
+The work is complete when:
+
+1. DEMO never appears in LIVE mode.
+2. LIVE_UNCONNECTED shows zero findings.
+3. LIVE_UNCONNECTED shows zero value.
+4. LIVE_UNCONNECTED shows onboarding actions only.
+5. LIVE_DISCOVERING only shows discovered value.
+6. LIVE_DISCOVERING cannot show approved/executed/verified/protected value.
+7. Chain stage gating prevents future-stage metrics.
+8. Data trust is unavailable when nothing is connected.
+9. Connector attention panel shows actual connection state.
+10. No synthetic evidence is rendered outside DEMO.
+
+Run:
+
+pnpm typecheck
+pnpm test
+pnpm build
+
+Do not introduce new demo datasets.
+
+Do not fabricate tenant data.
+
+Do not fabricate value.
+
+Do not fabricate findings.
+
+LIVE mode must only render information derived from actual connector state and actual recorded evidence.

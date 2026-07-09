@@ -5,6 +5,7 @@ import { simulateApprove, simulateRejectApproval } from '@/lib/demoRuntimeStore'
 import { useWorkspace } from '@/lib/workspaceContext'
 import { liveFetch } from '@/lib/liveApi'
 import { broadcastLiveReadRefresh } from '@/lib/recommendationApprovalBridge'
+import { customerFacingError } from '@/lib/display/errors'
 import { useState } from 'react'
 
 export default function ApprovalWorkflowsView() {
@@ -21,9 +22,9 @@ export default function ApprovalWorkflowsView() {
       setNotice('Approval granted')
       broadcastLiveReadRefresh()
       await refresh()
-    } catch (err) { setLiveError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) }
+    } catch (err) { setLiveError(customerFacingError(err)) }
   }
-  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Approval Workflows</h1>{notice && <div role='status'>{notice}</div>}{liveError && <div role='alert'>{liveError}</div>}<div className='text-sm'>Pending {data.summary.pending} · Approved today {data.summary.approvedToday} · Escalated {data.summary.escalated}</div>
+  return <Layout><div className='space-y-4'><h1 className='text-2xl font-semibold'>Approval Workflows</h1>{notice && <div role='status'>{notice}</div>}{liveError && <div role='alert'>Live data unavailable: {liveError}</div>}<div className='text-sm'>Pending {data.summary.pending} · Approved today {data.summary.approvedToday} · Escalated {data.summary.escalated}</div>
     <div className='text-xs text-muted-foreground'>Approval authority: Workflow</div><h2 className='font-medium'>Pending approvals</h2>{data.pending.map((p:any)=><div key={p.id} className='border rounded p-2 text-sm'>{p.item} · state PENDING · stage {p.stage} · approver {p.approver} · {p.sla} · {workspace.mode === 'demo' ? <><button onClick={() => simulateApprove(p.actionId ?? p.item)}>Simulate approval</button> <button onClick={() => simulateRejectApproval(p.actionId ?? p.item)}>Reject</button></> : <button onClick={() => approveLive(p.id, p.stage, p.approver)}>Approve</button>}</div>)}
     <h2 className='font-medium'>History</h2>{data.history.map((h:any)=><div key={h.id} className='border rounded p-2 text-sm'>{h.item} · {h.result} · {h.approver}</div>)}
   </div></Layout>

@@ -1,2 +1,2 @@
 import test from 'node:test';import assert from 'node:assert/strict';import { buildTransactionPlan } from '../lib/connector-transaction-realism/connector-transaction-plan';
-test('plan blocks stale state',()=>{ const p=buildTransactionPlan({connector:'AWS',actionId:'A',requestedAt:301000,stateTimestamp:0,hasPermission:true,duplicateRequest:false}); assert.equal(p.ready,false); assert.ok(p.blockedReasons.includes('stale_provider_state')); assert.equal(p.retryBudget,0);});
+test('plan blocks stale state',()=>{ const p=buildTransactionPlan({connector:'AWS',actionId:'A',requestedAt:400000,stateTimestamp:0,hasPermission:true,duplicateRequest:false}); assert.equal(p.ready,false); assert.ok(p.blockedReasons.includes('stale_provider_state')); assert.equal(p.retryBudget,0);});

@@ -1,0 +1,427 @@
+Outcome Ledger Canonical Schema Sprint
+
+## Objective
+
+Before redesigning the Outcome Ledger UI, define the canonical data model.
+
+The Outcome Ledger is not a savings table.
+
+It is the **financial chain of custody for technology value**.
+
+Each outcome must be treated as a financial asset under governance, carrying value through:
+
+```text
+Projected → Approved → Executed → Verified → Finance Confirmed → Protected
+```
+
+Do not build another synthetic dashboard until this schema is explicit.
+
+---
+
+## Core Principle
+
+Projected value and realised value must not overwrite each other.
+
+Each stage has its own value position.
+
+An outcome should be able to answer:
+
+```text
+What was expected?
+What was approved?
+What was executed?
+What was verified?
+What did finance confirm?
+What value was protected from drift?
+Where did value leak?
+What evidence supports each transition?
+```
+
+---
+
+## Required Canonical Type
+
+Create or update a canonical Outcome record model.
+
+Suggested shape:
+
+```ts
+export type OutcomeLifecycleStage =
+  | "PROJECTED"
+  | "APPROVED"
+  | "EXECUTED"
+  | "VERIFIED"
+  | "FINANCE_CONFIRMED"
+  | "PROTECTED"
+  | "FAILED"
+  | "DRIFTED";
+
+export type OutcomeType =
+  | "COST_REDUCTION"
+  | "COST_AVOIDANCE"
+  | "RISK_REDUCTION"
+  | "PRODUCTIVITY"
+  | "CONSOLIDATION"
+  | "GOVERNANCE_CONTROL";
+
+export type OutcomeSourceDomain =
+  | "M365"
+  | "AI"
+  | "SAAS"
+  | "CLOUD"
+  | "ITAM"
+  | "SERVICENOW"
+  | "FINANCE"
+  | "MANUAL";
+
+export interface OutcomeRecord {
+  id: string;
+  tenantId: string;
+
+  name: string;
+  description?: string;
+
+  sourceDomain: OutcomeSourceDomain;
+  outcomeType: OutcomeType;
+
+  lifecycleStage: OutcomeLifecycleStage;
+  proofState: OutcomeLifecycleStage;
+
+  ownerId?: string;
+  ownerName?: string;
+  costCentre?: string;
+  businessUnit?: string;
+
+  projectedValue: number;
+  approvedValue?: number;
+  executedValue?: number;
+  verifiedValue?: number;
+  financeConfirmedValue?: number;
+  protectedValue?: number;
+
+  approvalLeakage?: number;
+  executionLeakage?: number;
+  verificationLeakage?: number;
+  financeLeakage?: number;
+  driftLeakage?: number;
+  totalValueLeakage?: number;
+
+  leakageReason?: string;
+  varianceNarrative?: string;
+
+  confidenceScore?: number;
+  evidenceCoverage?: number;
+
+  approvalEvidenceIds: string[];
+  executionEvidenceIds: string[];
+  verificationEvidenceIds: string[];
+  financeEvidenceIds: string[];
+  protectionEvidenceIds: string[];
+
+  createdAt: string;
+  updatedAt: string;
+  stageChangedAt?: string;
+}
+```
+
+---
+
+## Required Ledger Event Type
+
+Do not rely only on mutable outcome fields.
+
+Add an immutable event model.
+
+```ts
+export type OutcomeLedgerEventType =
+  | "OUTCOME_PROJECTED"
+  | "OUTCOME_APPROVED"
+  | "ACTION_EXECUTED"
+  | "OUTCOME_VERIFIED"
+  | "FINANCE_CONFIRMED"
+  | "VALUE_PROTECTED"
+  | "VALUE_DRIFTED"
+  | "OUTCOME_FAILED"
+  | "VALUE_ADJUSTED"
+  | "EVIDENCE_ATTACHED";
+
+export interface OutcomeLedgerEvent {
+  id: string;
+  tenantId: string;
+  outcomeId: string;
+
+  eventType: OutcomeLedgerEventType;
+  fromStage?: OutcomeLifecycleStage;
+  toStage?: OutcomeLifecycleStage;
+
+  valueBefore?: number;
+  valueAfter?: number;
+  valueDelta?: number;
+
+  evidenceIds: string[];
+  actorId?: string;
+  actorName?: string;
+
+  reason?: string;
+  createdAt: string;
+}
+```
+
+This event history is what powers the proof timeline.
+
+---
+
+## Transition Rules
+
+Implement transition guards.
+
+### PROJECTED → APPROVED
+
+Requires:
+
+```text
+owner
+business case / approval reason
+approval evidence
+approvedValue
+```
+
+### APPROVED → EXECUTED
+
+Requires:
+
+```text
+governed action id
+execution evidence
+executedValue
+```
+
+### EXECUTED → VERIFIED
+
+Requires:
+
+```text
+post-action measurement evidence
+verifiedValue
+```
+
+### VERIFIED → FINANCE_CONFIRMED
+
+Requires:
+
+```text
+finance reconciliation evidence
+financeConfirmedValue
+```
+
+### FINANCE_CONFIRMED → PROTECTED
+
+Requires:
+
+```text
+drift monitor / retention evidence
+protectedValue
+```
+
+Failed / drifted states must require:
+
+```text
+reason
+evidence or system event
+```
+
+---
+
+## Leakage Calculation
+
+Add a deterministic helper.
+
+```ts
+export function calculateOutcomeLeakage(outcome: OutcomeRecord) {
+  const projected = outcome.projectedValue ?? 0;
+  const approved = outcome.approvedValue ?? projected;
+  const executed = outcome.executedValue ?? approved;
+  const verified = outcome.verifiedValue ?? executed;
+  const finance = outcome.financeConfirmedValue ?? verified;
+  const protectedValue = outcome.protectedValue ?? finance;
+
+  return {
+    approvalLeakage: projected - approved,
+    executionLeakage: approved - executed,
+    verificationLeakage: executed - verified,
+    financeLeakage: verified - finance,
+    driftLeakage: finance - protectedValue,
+    totalValueLeakage: projected - protectedValue,
+  };
+}
+```
+
+Important:
+
+```text
+Missing later-stage values should not be treated as realised value in UI.
+```
+
+The helper can calculate leakage defaults, but the UI must still distinguish:
+
+```text
+not reached
+pending
+zero value
+actual zero
+```
+
+---
+
+## Required Aggregates
+
+Create helpers for page-level summaries.
+
+```ts
+export interface OutcomeLedgerSummary {
+  totalProjectedValue: number;
+  totalApprovedValue: number;
+  totalExecutedValue: number;
+  totalVerifiedValue: number;
+  totalFinanceConfirmedValue: number;
+  totalProtectedValue: number;
+
+  totalApprovalLeakage: number;
+  totalExecutionLeakage: number;
+  totalVerificationLeakage: number;
+  totalFinanceLeakage: number;
+  totalDriftLeakage: number;
+  totalValueLeakage: number;
+
+  outcomeCount: number;
+  verifiedOutcomeCount: number;
+  financeConfirmedOutcomeCount: number;
+  protectedOutcomeCount: number;
+  failedOutcomeCount: number;
+  driftedOutcomeCount: number;
+
+  verificationBacklogCount: number;
+  financeBacklogCount: number;
+  protectionBacklogCount: number;
+}
+```
+
+Add helper:
+
+```ts
+export function buildOutcomeLedgerSummary(outcomes: OutcomeRecord[]): OutcomeLedgerSummary
+```
+
+---
+
+## Proof Timeline
+
+Add helper:
+
+```ts
+export function buildOutcomeProofTimeline(
+  outcome: OutcomeRecord,
+  events: OutcomeLedgerEvent[]
+)
+```
+
+Should return ordered timeline entries:
+
+```ts
+{
+  eventType
+  stage
+  valueDelta
+  evidenceIds
+  actorName
+  reason
+  createdAt
+}
+```
+
+---
+
+## Demo Data Rules
+
+Existing demo data may be adapted.
+
+But it must obey the canonical schema.
+
+Do not create fake lifecycle values that contradict stage state.
+
+Examples:
+
+If lifecycleStage is `PROJECTED`, then only projectedValue should exist.
+
+If lifecycleStage is `VERIFIED`, then projected / approved / executed / verified may exist, but financeConfirmedValue and protectedValue should remain undefined unless actually staged.
+
+If lifecycleStage is `PROTECTED`, then all lifecycle values may exist.
+
+---
+
+## UI Preparation
+
+Do not fully redesign the Outcome Ledger UI in this sprint.
+
+Only prepare data structures and optionally adjust the current screen to consume the new summary helper.
+
+The next UI sprint will use this schema to build:
+
+```text
+Hero summary
+Value waterfall
+Pipeline kanban
+Value leakage chart
+Proof timeline
+Audit table
+```
+
+---
+
+## Tests Required
+
+Add tests for:
+
+```text
+1. OutcomeRecord supports separate projected/approved/executed/verified/finance/protected values.
+2. Values do not overwrite each other.
+3. Leakage calculation works across all stages.
+4. Missing later-stage values are not treated as realised UI values.
+5. Transition guards block invalid transitions.
+6. Transition guards allow valid transitions.
+7. Ledger events are immutable append-only records.
+8. Summary aggregates projected, verified, finance-confirmed and protected values separately.
+9. Backlog counts are correct.
+10. Demo data obeys lifecycle-stage/value consistency.
+```
+
+---
+
+## Acceptance Criteria
+
+Complete when:
+
+```text
+1. Canonical OutcomeRecord exists.
+2. OutcomeLedgerEvent exists.
+3. Transition validation exists.
+4. Leakage calculation exists.
+5. Summary aggregation exists.
+6. Proof timeline helper exists.
+7. Demo records conform to lifecycle rules.
+8. Existing Outcome Ledger screen still renders.
+9. Typecheck passes.
+10. Full test suite passes.
+```
+
+Run:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Do not redesign the page yet.
+
+This sprint is about the canonical schema and ledger model.

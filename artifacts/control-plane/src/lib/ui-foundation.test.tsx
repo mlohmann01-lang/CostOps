@@ -25,7 +25,7 @@ test('Sidebar grouped and renamed nav labels render', () => {
 })
 
 test('ActionButton demo label behavior', () => {
-  const html = renderToStaticMarkup(<WorkspaceReactContext.Provider value={{ mode:'demo', tenantId:'t', tenantName:'Demo', dataReady:true }}><ActionButton variant='approve' /><ActionButton variant='execute' /></WorkspaceReactContext.Provider>)
+  const html = renderToStaticMarkup(<WorkspaceReactContext.Provider value={{ mode:'demo', tenantId:'t', tenantName:'Demo', dataReady:true, runtimeState:'DEMO', connectedCount:0 }}><ActionButton variant='approve' /><ActionButton variant='execute' /></WorkspaceReactContext.Provider>)
   assert.match(html, /Simulate approval/)
   assert.match(html, /Simulate execution/)
 })

@@ -1,0 +1,174 @@
+Looking at the screenshots, the redesign itself is moving in the right direction, but the gold implementation is currently too muddy/brown.
+
+The landing page and dashboard feel like they were built with two different accent systems.
+
+Landing page gold (good)
+
+The landing page feels closer to:
+
+#F5C451
+#E7B93A
+#DFAA1B
+
+Which reads as:
+
+premium
+finance
+executive
+confident
+Dashboard gold (not as good)
+
+The dashboard is reading closer to:
+
+#8A6A12
+#6E5410
+#5B470F
+
+Which creates:
+
+brown
+bronze
+muted
+slightly dated enterprise software
+
+instead of:
+
+premium
+economic
+value-focused
+My recommendation
+
+Unify the entire platform to the landing page palette.
+
+Primary Gold
+--gold-primary: #F5C451;
+Active Gold
+--gold-active: #FFCC4D;
+Gold Border
+--gold-border: rgba(245,196,81,0.35);
+Gold Surface
+--gold-surface: rgba(245,196,81,0.08);
+Gold Glow
+--gold-glow: rgba(245,196,81,0.22);
+Specific fixes I'd make
+KPI cards
+
+Current:
+
+Brown card
+Brown sparkline
+Brown badge
+
+Change to:
+
+Dark card
+Gold number
+Gold sparkline
+Gold badge
+Gold glow
+
+Much cleaner.
+
+Active chain node
+
+Current active Discover node is too dark.
+
+Make active state:
+
+background: rgba(245,196,81,0.12);
+border: 1px solid rgba(245,196,81,0.45);
+box-shadow: 0 0 25px rgba(245,196,81,0.25);
+
+This becomes a focal point.
+
+Recommended Action cards
+
+Current cards look slightly empty.
+
+Add:
+
+Potential Impact
+$64,000
+
+or
+
+Evidence Confidence
+91%
+
+beneath each action.
+
+This will make them feel more substantial.
+
+Sidebar
+
+The sidebar is now structurally much better.
+
+I'd only change:
+
+Current
+COMMAND
+DISCOVER
+PROTECT
+Suggested
+
+Use subtle gold separators and make the active item much brighter.
+
+Right now:
+
+Overview
+
+still doesn't visually dominate enough.
+
+One thing I would absolutely add next
+
+The dashboard still lacks a true centerpiece.
+
+Right now the eye moves:
+
+KPIs
+↓
+Chain
+↓
+Value Snapshot
+↓
+Risk
+
+but nothing really anchors the page.
+
+I would make the Value Waterfall the hero visualization.
+
+Something like:
+
+$576k Identified
+        ↓
+$216k Approved
+        ↓
+$186k Verified
+        ↓
+$174k Protected
+
+large, full-width, visually striking.
+
+That becomes the thing people remember.
+
+Replit instruction
+
+Give them this short follow-up:
+
+Visual refinement pass only.
+
+Do not change layout, components, routes, tests or functionality.
+
+Unify all dashboard gold styling to match the landing page Economic Gold palette.
+
+Replace brown/bronze tones with brighter gold (#F5C451 family).
+
+Increase active-state glow on KPI cards, chain nodes and sidebar selections.
+
+Keep backgrounds dark and restrained.
+
+Add stronger visual emphasis to the Value Waterfall so it becomes the visual centerpiece of the Executive Command Center.
+
+Preserve all runtime-state behaviour and existing test coverage.
+
+This is a palette and hierarchy refinement pass, not a structural redesign.

@@ -13,3 +13,13 @@ export function StatusChip({ label, tone = 'neutral' }: { label:string; tone?:St
   const color = colors[tone]
   return <span style={{ display:'inline-flex', alignItems:'center', gap:6, border:`1px solid ${color.border}`, background:color.bg, color:color.color, borderRadius:999, padding:'5px 10px', fontSize:11, fontWeight:800, letterSpacing:'.03em', textTransform:'uppercase', whiteSpace:'nowrap' }}>{label}</span>
 }
+
+export type StatusTone = StatusChipTone // alias, since existing code uses StatusChipTone
+
+export function statusToneFor(value: string): StatusTone {
+  const v = value.toLowerCase()
+  if (['verified', 'ready', 'live', 'healthy', 'high'].includes(v)) return 'success'
+  if (['pending', 'preview', 'warning', 'awaiting data'].includes(v)) return 'warning'
+  if (['blocked', 'failed', 'critical', 'rejected'].includes(v)) return 'danger'
+  return 'neutral'
+}

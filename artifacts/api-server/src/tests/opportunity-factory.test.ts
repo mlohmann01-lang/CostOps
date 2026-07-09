@@ -10,7 +10,9 @@ test("factory runs all providers, persists canonical opportunities, and preserve
   const a = await runOpportunityFactory("tenant-a", { repository, now: "2026-06-01T00:00:00.000Z" });
   const b = await runOpportunityFactory("tenant-b", { repository, now: "2026-06-01T00:00:00.000Z" });
   assert.equal(a.providerResults.length, 8);
-  assert.equal(a.providerResults.some((provider) => provider.succeeded), true);
+  // M365_PLAYBOOK legitimately fails for a tenant with no M365 connector snapshot seeded;
+  // the factory isolates per-provider failures rather than crashing the whole run.
+  assert.equal(a.providerResults.filter((provider) => provider.source !== "M365_PLAYBOOK").every((provider) => provider.succeeded), true);
   assert.equal(a.health.providersSucceeded + a.health.providersFailed, a.providerResults.length);
   assert.ok(a.persisted > 0);
   assert.ok(repository.list("tenant-a").length > 0);
