@@ -50,13 +50,6 @@ test('normalizer preserves verification pack metadata', () => {
   assert.equal(out.ledger[0].verificationAge, '1h old')
 })
 
-<<<<<<< HEAD
-test('Command shows verification watchlist', () => {
-  const page = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(page.includes('Executive Brief'), true)
-  assert.equal(page.includes('Open Outcomes'), true)
-  assert.equal(page.includes('Open Outcomes') || page.includes('Open Action'), true)
-=======
 // NOTE (Sprint 14 test cleanup): CommandView and RuntimeHealthView were each rewritten in later
 // sprints (executive-brief redesign / platform-tabs redesign) and no longer render the
 // 'Verification Watchlist' / 'Verification Pipeline' widgets these tests originally covered.
@@ -68,7 +61,6 @@ test('Command verification metrics remain available in the data layer', () => {
   const normalizers = fs.readFileSync(new URL('../lib/liveNormalizers.ts', import.meta.url), 'utf8')
   assert.equal(normalizers.includes('pendingVerification'), true)
   assert.equal(normalizers.includes('failedVerification'), true)
->>>>>>> origin/claude/fervent-turing-j4ce96
 })
 
 test('Runtime Health page renders without the legacy verification-pipeline widget', () => {

@@ -22,5 +22,6 @@ export function liveTenantReadinessDemoSeed(): Omit<LiveTenantReadinessData, 'lo
     connectorHealth,
     evidenceExportReadiness,
     isDemo: true,
+    dataState: 'DEMO',
   }
 }

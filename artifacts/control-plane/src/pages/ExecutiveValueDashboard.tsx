@@ -177,7 +177,6 @@ export default function ExecutiveValueDashboard() {
       <ExecutiveSection testId='protected-value-panel' title='Protected Value' description='Which realised value is protected from recurrence or drift?'>{financeScenarios.filter((s:any)=>s.protectedOutcome).map((s:any)=><p key={s.id}><strong>{s.assetOrInitiative}</strong> · {s.protectedOutcome} · {money(Number(s.valueRealised ?? 0))}</p>)}</ExecutiveSection>
       <ExecutiveSection testId='value-leakage-panel' title='Value Leakage' description='Where is identified value being lost, blocked, or not protected?'>{financeScenarios.filter((s:any)=>Number(s.leakage ?? 0)>0).map((s:any)=><p key={s.id}><strong>{s.assetOrInitiative}</strong> · leakage {money(Number(s.leakage ?? 0))} · {s.decision}</p>)}</ExecutiveSection>
     </section>
-    </section>
 
     <ExecutiveSection testId='executive-value-lifecycle' title='Value Lifecycle' description='Annual value, opportunity count and confidence by lifecycle stage.'><ValueLifecycle stages={lifecycle} /></ExecutiveSection>
 

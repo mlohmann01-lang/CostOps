@@ -3,10 +3,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { containsForbiddenTerm } from "./helpers/boundary-term-scan";
 const read = (p: string) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
-function containsForbiddenTerm(body: string, term: string) {
-  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i').test(body);
-}
 
 
 test("non-execution routes do not import execution-engine", () => {

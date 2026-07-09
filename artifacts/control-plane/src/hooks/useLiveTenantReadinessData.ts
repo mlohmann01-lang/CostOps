@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { liveFetch, normalizeApiError } from '../lib/liveApi'
 import { useWorkspace } from '../lib/workspaceContext'
+import { liveTenantReadinessDemoSeed } from '../lib/demo-seed/liveTenantReadinessDemoSeed'
 
 export type TenantRuntimeMode = 'DEMO' | 'PILOT_READ_ONLY' | 'PILOT_CONTROLLED_EXECUTION' | 'PRODUCTION_CONTROLLED_EXECUTION'
 export type ConnectorHealthReport = { tenantId: string; connectorId: string; connectorType: 'M365' | 'AI' | 'SERVICENOW' | 'AWS' | 'AZURE'; status: 'HEALTHY' | 'DEGRADED' | 'DISCONNECTED' | 'EXPIRED_CREDENTIALS' | 'MISSING_SCOPES' | 'RATE_LIMITED'; lastCheckedAt: string; credentialExpiresAt?: string; scopes?: string[]; missingScopes?: string[]; rateLimitResetAt?: string; errors: string[] }
@@ -17,6 +18,7 @@ const emptyLiveTenantReadiness: Omit<LiveTenantReadinessData, 'loading' | 'error
   connectorHealth: [],
   evidenceExportReadiness: [],
   isDemo: false,
+  dataState: 'NOT_CONNECTED',
 }
 
 function normalizeReadinessPayload(payload: any = {}) {
@@ -38,7 +40,7 @@ export function useLiveTenantReadinessData(): LiveTenantReadinessData {
   const [dataState, setDataState] = useState<LiveTenantReadinessDataState>('DEMO')
   const load = useCallback(async () => {
     if (workspace.mode === 'demo') {
-      setData(normalizeReadinessPayload(demoLiveTenantReadiness)); setIsDemo(true); setError(undefined); setDataState('DEMO'); setLoading(false)
+      setData(normalizeReadinessPayload(liveTenantReadinessDemoSeed())); setIsDemo(true); setError(undefined); setDataState('DEMO'); setLoading(false)
       return
     }
     if (!workspace.dataReady) {
