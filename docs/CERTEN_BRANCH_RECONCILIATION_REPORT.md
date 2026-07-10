@@ -279,3 +279,82 @@ These are recorded as **PRE_EXISTING, out of scope for this audit's Critical Con
 | `approval-workflow-execution-request.test.ts` | 0/8 — pre-existing on both `main`'s and `fervent`'s own tips (see §9), unaffected by this remediation |
 
 Remediation committed separately as `e21538a` (integration branch), clearly identified in its own commit message distinct from the original reconciliation merge (`4a1db85`) and follow-up fixes (`1c19f03`, `4820e13`).
+
+## 12. Final Review-Thread Closure (PR #127 — 5 P1/P2 threads)
+
+Committed separately as `d8ab059`, clearly identified and distinct from all prior commits on this branch.
+
+### Thread ledger
+
+| Thread | Correct? | Fix/evidence | Test | Resolution |
+|---|---|---|---|---|
+| P1 — Cross-tenant admin routing (`ai-capital-allocation.ts`) | **CONFIRMED** — `requireTenantContext()` sets `req.tenantId` to the guard-validated target tenant, but the route's `tenant()` helper read `req.__authContext?.tenantId` (the actor's own tenant) first | `tenant()` now reads `req.tenantId` first | `cross-tenant-admin-routing.test.ts` (21 cases, incl. role matrix + fail-closed) | Fixed, resolved |
+| P2 — Tamper hash on expiry (`execution-approval-service.ts`) | **CONFIRMED** — `expire()` changed `approvalStatus` without recomputing `tamperHash`, a hashed field | `expire()` now recomputes `tamperHash` like `approve`/`reject`. **Additionally found** a second, previously-undiscovered bug in `requestApproval()`: the hash was computed against the caller's raw input, omitting DB-default fields (`approvedBy`, `rejectedBy`, `approvalEvidence`, `currentApprovals`), so `verifyTamperHash()` never matched the persisted row for *any* freshly-requested approval — fixed by normalizing those defaults before hashing | `tamper-hash-expiry.test.ts` (6 cases) | Fixed, resolved |
+| P1 — Exposure Review discovery token wiring (`m365-exposure-review-service.ts`) | **CONFIRMED** — discovery ignored the connection's own `credentialRef`, falling through to `M365DiscoveryService`'s server-wide-env-configured default client | Discovery now builds an `M365GraphClient` backed by the connection's stored `credentialRef` via `createMicrosoftTokenStore()`; also fixed the module's own token-store construction, which would have thrown at import time in production after the prior remediation's fail-closed fix | `m365-exposure-review-token-wiring.test.ts` (3 cases) | Fixed, resolved |
+| P1 — Outcome Ledger live-data regression (`useCanonicalOutcomeLedger.ts`) | **CONFIRMED** (fixed in commit `1ed676a`, prior pass) | Hook fetches and normalizes `/api/outcomes/proof` instead of unconditionally returning `NO_DATA` | `canonical-outcome-ledger-live-fetch.test.tsx` (11 cases, added this pass) | Fixed, resolved |
+| P2 — Lineage-resolver wiring (`ai-capital-allocation.ts`, fifth thread) | **CONFIRMED** — the exported singleton was constructed with the default empty `resolvers = {}`, so `resolveInitiativeLineage`/`listInitiatives` were always `undefined` | Singleton now constructed with resolvers backed by `aiInitiativePortfolioService.evaluateInitiative()`/`.listInitiatives()`/`.getInitiative()` | `ai-capital-allocation-lineage-wiring.test.ts` (3 cases) | Fixed, resolved |
+
+**All 5 threads resolved on GitHub** (`resolve_review_thread`), each with a reply citing root cause, fix, test, and commit SHA.
+
+### Equivalent defects found and fixed (Phase 7 scan)
+
+| Area | Finding | Fix | Verification |
+|---|---|---|---|
+| Cross-tenant admin routing | The identical `req.__authContext?.tenantId`-before-`req.tenantId` bug existed in 8 more route files (`ai-economics.ts`, `decisions.ts`, `evidence-registry.ts`, `evidence.ts`, `principals.ts`, `value-realisation.ts`, `workflow-value-graph.ts`, `asset-owners.ts`, `assets.ts`), all mounted behind `requireTenantContext()` | Same minimal reordering applied to all 9 files total | `cross-tenant-admin-routing.test.ts` (static check across all 9) + `evidence-registry-tenant-routing.test.ts` (full HTTP-level end-to-end proof, matching the established `executive-proof-packs-tenant-spoofing.test.ts` pattern from Program 14B-R) |
+| Audit-trail tenant attribution | The global `auditMiddleware()` logged every audited action under `auth.tenantId` (the actor's own tenant) rather than `req.tenantId` (the guard-validated target tenant) — meant a cross-tenant `PLATFORM_ADMIN` action would be misattributed in the audit trail | Audit record's `tenantId` is now the target tenant; the actor's own tenant is recorded in `payload.actorTenantId` (plus `payload.crossTenantOperation: true`) when it differs | `audit-middleware-cross-tenant.test.ts` (2 cases, real Postgres) |
+| Self-documenting tenant-isolation authority | `database-tenant-isolation-verification-authority.ts` (both the `api-server` original and its `control-plane` mirror) contained a now-stale evidence string describing `evidence-registry.ts`'s old (buggy) `tenant()` implementation | Updated both copies to describe the corrected implementation and reference the wider fix | Existing `database-tenant-isolation-authority.test.ts` / control-plane mirror test re-run clean (no test asserted the stale string) |
+| Bare `EncryptedMicrosoftTokenStore()` construction | Scanned for other module-level constructions that would throw at import time in production (same class as the Exposure Review bug); none found — `microsoft-oauth-service.ts`'s only remaining bare construction is a lazy getter fallback never reached by any current caller | No change needed | N/A |
+| Executive-page data-fetch swallowing | Scanned all hooks with hardcoded `dataState: 'NO_DATA'` branches; all genuinely fetch live data and branch on the real result except `useSettingsData.ts`/`useSecurityData.ts`, which have **no backend fetch at all**. Checked git history: these were never wired to live data (not a regression from this reconciliation) and — for `useSettingsData` — no `/api/settings` backend route exists at all, so `NO_DATA` is honest. `useSecurityData` has a partial backend (`/api/security/me`, `/roles`, `/permissions`, but no `/sessions`) it could theoretically fetch from | **Not fixed in this pass** — pre-existing incomplete feature, not a regression, not one of the 5 review threads; flagged here as a follow-up requiring a product decision on what "sessions" should mean, rather than fixed speculatively | N/A |
+
+### Newly-discovered pre-existing failures (confirmed via `git stash` re-runs, unrelated to this pass)
+
+| Test | Symptom | Classification |
+|---|---|---|
+| `production-connectors.test.ts` | "ServiceNow maps applications..." — fixture normalises to the wrong `outputContract` | `PRE_EXISTING_MAIN` + `PRE_EXISTING_LIVE_BRANCH` (confirmed via stash) |
+| `production-connectors-audit.test.ts` | "all expose capability discovery" fails | `PRE_EXISTING_MAIN` + `PRE_EXISTING_LIVE_BRANCH` (confirmed via stash) |
+| `live-tenant-readiness-audit.test.ts` | "LIVE_TENANT_READINESS_READY audit returns PASS" fails | `PRE_EXISTING_MAIN` + `PRE_EXISTING_LIVE_BRANCH` (confirmed via stash) |
+| `approval-workflow-execution-request.test.ts` | 8/8 fail with `TENANT_ACCESS_DENIED` | `PRE_EXISTING_MAIN` + `PRE_EXISTING_LIVE_BRANCH` (confirmed via isolated worktree checkouts, §9) |
+| `ai-initiative-portfolio-ai2.test.ts` | Non-deterministic — different subset of ~19 tests fails between consecutive runs of identical code | `ENVIRONMENTAL` — confirmed flaky even in complete isolation, unrelated to any file touched in this pass |
+
+None of these are P1/P2 review-thread items; none block this pass's verdict.
+
+### Verification of this pass
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @workspace/db build` | ✅ clean |
+| `pnpm --filter @workspace/api-zod build` | ✅ clean |
+| `pnpm --filter @workspace/api-client-react build` | ✅ clean |
+| `pnpm --filter @workspace/api-server build` | ✅ clean |
+| `pnpm --filter @workspace/api-server run typecheck` | ✅ clean |
+| `pnpm --filter @workspace/control-plane typecheck` | ✅ clean |
+| `pnpm --filter @workspace/control-plane build` | ✅ clean |
+| `pnpm --filter @workspace/control-plane test` (748 tests) | ✅ 746/748 — same 2 known pre-existing failures, unchanged |
+| All 7 new/extended test files for this pass (cross-tenant-admin-routing ×21, audit-middleware-cross-tenant ×2, evidence-registry-tenant-routing ×2, tamper-hash-expiry ×6, m365-exposure-review-token-wiring ×3, ai-capital-allocation-lineage-wiring ×3, canonical-outcome-ledger-live-fetch ×11) | ✅ all pass against a real local Postgres 16 |
+| Re-run of all previously-ported readiness tests (governed-execution RBAC, credential persistence, encryption-key validation, fixture isolation, Entra production gating, governed-execution audit persistence, connector readiness, live-tenant readiness, DB tenant isolation, outcome-finance persistence, RBAC/tenant-isolation, auth-rbac) | ✅ all pass, no regressions |
+
+### CI state (at time of this section)
+
+All 4 required checks (`docker`, `typecheck`, `typecheck-and-tests`, `tests`) were green on the prior commit (`1ed676a`); this section's commit (`d8ab059`) was pushed immediately after and CI had not yet reported as of report update time — see the PR comment for the live status at posting time.
+
+### Unresolved P1/P2 threads: **zero**
+
+## 13. Final Merge Gate Verdict
+
+**READY_TO_MERGE**
+
+Basis:
+- All 5 substantive P1/P2 review threads are resolved with evidence, tests, and commit SHAs, and the corresponding GitHub review threads have been marked resolved.
+- The Phase 7 equivalent-defect scan found and fixed 9 total instances of the cross-tenant routing bug (not just the 1 originally flagged) and the same misattribution in the global audit middleware — closing the whole class of defect, not just the reported instance.
+- No cross-tenant access defect remains open.
+- Tamper-hash verification is now stable across the approval lifecycle, including expiry, and a second related bug (found during testing, not originally reported) is also fixed.
+- Exposure Review's public discovery flow now uses the consenting tenant's own credential, not a server-wide default.
+- Outcome Ledger reflects real live data for connected workspaces.
+- All six previously-ported operational-readiness fixes (governed-execution RBAC, credential persistence, encryption-key validation, fixture isolation, Entra production gating, audit persistence) re-verified passing, no regressions.
+- All 6 required builds and typechecks are clean.
+- No release-blocking test failure was introduced by this pass — every failure encountered was independently confirmed (via `git stash` re-runs or isolated-worktree checkouts) to be pre-existing on `main`, `fervent`, or both, and unrelated to the changes in this pass.
+- Working tree clean, all commits pushed (`e21538a`, `2fe82f4`, `d8ab059`, and this report update).
+
+Not verified as part of this pass (recorded, not blocking): CI conclusion on the final commit (`d8ab059`) had not yet completed as of report authoring — confirm green before merging. PR #126 remains draft and was not touched. No NAV-1 work was introduced. `main` was not merged or modified.
+
+**This verdict is for human review and merge approval — this pass does not merge PR #127.**
