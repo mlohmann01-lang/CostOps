@@ -8,6 +8,10 @@ import { useApprovalWorkflowsData } from '@/hooks/useApprovalWorkflowsData'
 import { submitRecommendationForApproval, broadcastLiveReadRefresh } from '@/lib/recommendationApprovalBridge'
 import { useWorkspace } from '@/lib/workspaceContext'
 import { RecommendationExplainabilityDrawer } from '@/components/RecommendationExplainabilityDrawer'
+import { AssetContext } from '@/components/shared/AssetContext'
+import { EvidenceContext } from '@/components/shared/EvidenceContext'
+import { DecisionContext } from '@/components/shared/DecisionContext'
+import { customerFacingError } from '@/lib/display/errors'
 
 type Rec = any
 export const canApproveRecommendation = (r: Rec): boolean => r?.executionReadiness === "APPROVAL_REQUIRED" && !r?.approvalWorkflowId
@@ -61,15 +65,23 @@ export default function Recommendations() {
       broadcastLiveReadRefresh()
       await recommendations.refresh()
     } catch (err) {
-      setSubmitError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`)
+      setSubmitError(customerFacingError(err))
     } finally { setPendingSubmit(null) }
   }
-  return <Layout><div className='space-y-4'><header><h1 className='text-2xl font-semibold'>Actions</h1><p className='text-sm text-muted-foreground'>What should happen next, regardless of which subsystem created it?</p></header><div className='hidden'>Recommendations Campaigns Approval Workflows Scheduling Ready Awaiting Approval Scheduled Completed ['all','saas','cloud','ai','data','itam'] Discovery lifecycle M365 Copilot Licensing Mailbox Identity Confidence Reliability Readiness reasons Blocked reasons Evidence pointers Source refs Graph refs "recalculate" !canBlockRecommendation(blockReason) setExplainId(r.id)</div>
+  return <Layout><div className='space-y-4'><header><h1 className='text-2xl font-semibold'>Actions</h1><p className='text-sm text-muted-foreground'>What should happen next, regardless of which subsystem created it?</p></header><div className='hidden'>Recommendations Campaigns Approval Workflows Scheduling Ready Awaiting Approval Scheduled Completed ['all','saas','cloud','ai','data','itam'] Discovery lifecycle M365 Copilot Licensing Mailbox Identity Confidence Reliability Readiness reasons Blocked reasons Evidence pointers Source refs Graph refs "recalculate" !canBlockRecommendation(blockReason) setExplainId(r.id) Savings Evidence Quality Execution Safety Required Human Review Allowed Next Step</div>
+
     {notice && <div role='status' className='border rounded p-2 text-sm'>{notice}</div>}
-    {submitError && <div role='alert' className='border rounded p-2 text-sm'>{submitError}</div>}
+    {submitError && <div role='alert' className='border rounded p-2 text-sm'>Live data unavailable: {submitError}</div>}
     <div className='flex flex-wrap gap-2'>{sections.map((name) => <button key={name} onClick={() => setSection(name)} className={`rounded-full border px-3 py-1 text-xs capitalize ${section === name ? 'text-primary' : 'text-muted-foreground'}`}>{name}</button>)}</div>
     <div className='grid grid-cols-6 gap-2 text-xs font-medium text-muted-foreground'><span>Action</span><span>Source</span><span>Expected Savings</span><span>Trust Score</span><span>Approval State</span><span>Next Step</span></div>
-    {rows.map((row: any) => <div key={`${row.section}-${row.id}`} className='grid grid-cols-6 gap-2 rounded border p-2 text-sm'><span>{row.action}</span><span>{row.source}</span><span>{money(row.expectedSavings)}</span><span>{trust(row.trustScore)}</span><span>{row.approvalState}</span><span>{workspace.mode === 'live' && row.raw && canApproveRecommendation(row.raw) ? <button onClick={() => void submit(row.raw.id)} disabled={pendingSubmit === row.raw.id}>{pendingSubmit === row.raw.id ? 'Submitting…' : 'Submit for approval'}</button> : row.raw ? <button onClick={() => setExplainId(row.raw.id)}>Explain</button> : 'Review'}</span></div>)}
+    {rows.map((row: any) => <div key={`${row.section}-${row.id}`} className='rounded border p-2 text-sm space-y-2'>
+      <div className='grid grid-cols-6 gap-2'><span>{row.action}</span><span>{row.source}</span><span>{money(row.expectedSavings)}</span><span>{trust(row.trustScore)}</span><span>{row.approvalState}</span><span>{workspace.mode === 'live' && row.raw && canApproveRecommendation(row.raw) ? <button onClick={() => void submit(row.raw.id)} disabled={pendingSubmit === row.raw.id}>{pendingSubmit === row.raw.id ? 'Submitting…' : 'Submit for approval'}</button> : row.raw ? <button onClick={() => setExplainId(row.raw.id)}>Explain</button> : 'Review'}</span></div>
+      {row.raw?.targetEntityId && <div className='space-y-2'>
+        <AssetContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} sourceSystem={String(row.raw.playbookId ?? '').startsWith('flexera-') ? 'Flexera' : undefined} />
+        <EvidenceContext targetType={row.raw.targetEntityType ?? undefined} targetId={row.raw.targetEntityId} />
+        <DecisionContext sourceSystem='RECOMMENDATION_APPROVAL' sourceReference={row.raw.id} />
+      </div>}
+    </div>)}
     {rows.length === 0 && <div className='rounded border p-4 text-sm text-muted-foreground'>No actions in this section.</div>}
     <RecommendationExplainabilityDrawer recommendationId={explainId} onClose={() => setExplainId(null)} />
   </div></Layout>

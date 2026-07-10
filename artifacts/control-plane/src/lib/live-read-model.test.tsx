@@ -10,7 +10,7 @@ import { normalizeCommandAggregate, normalizeConnectorOps, normalizeRecommendati
 import { subscribeRuntimeEvents } from './liveRuntimeEvents'
 import type { WorkspaceContext } from '../types/workspace'
 
-const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true }
+const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true, runtimeState: 'DEMO', connectedCount: 0 }
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test('demo mode does not call live APIs', async () => {

@@ -39,7 +39,7 @@ test('Program 4 LIVE_UNCONNECTED contains no demo protection data and KPIs are m
   assert.equal(rendered.kpis.valueProtected, 0)
   assert.equal(rendered.kpis.trustEvidenceCoverage, undefined)
   assert.equal(emptyOutcomeProtectionData.dashboard.protectedAnnualValue, 0)
-  assert.equal(summarizeOutcomeProtection([]).retentionRate, 0)
+  assert.equal(summarizeOutcomeProtection([]).retentionRate, null)
   assert.deepEqual(normalizeOutcomes(undefined), [])
 })
 

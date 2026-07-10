@@ -1,37 +1,74 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { useRuntimeContext } from './runtimeContext'
 import { liveFetch } from './liveApi'
-import type { WorkspaceContext as WorkspaceContextType } from '../types/workspace'
+import type { WorkspaceContext as WorkspaceContextType, WorkspaceRuntimeState } from '../types/workspace'
+
+export type { WorkspaceRuntimeState }
+export type { WorkspaceContext as WorkspaceContextType } from '../types/workspace'
 
 export const WorkspaceReactContext = createContext<WorkspaceContextType | null>(null)
 
-export function deriveWorkspace(runtime: { environment?: string; tenantId: string }, dataReady = false): WorkspaceContextType {
+export function deriveWorkspace(
+  runtime: { environment?: string; tenantId: string },
+  dataReady = false,
+  connectedCount = 0,
+  hasOutcomes = false,
+): WorkspaceContextType {
+  const mode: WorkspaceContextType['mode'] = runtime.environment === 'LIVE' ? 'live' : 'demo'
+  const runtimeState: WorkspaceRuntimeState =
+    mode === 'demo'
+      ? 'DEMO'
+      : connectedCount === 0
+        ? 'LIVE_UNCONNECTED'
+        : !hasOutcomes
+          ? 'LIVE_DISCOVERING'
+          : 'LIVE_OPERATIONAL'
+
   return {
-    mode: runtime.environment === 'LIVE' ? 'live' : 'demo',
+    mode,
     tenantId: runtime.tenantId || 'demo-sandbox-tenant',
     tenantName: runtime.environment === 'LIVE' ? 'Live workspace' : 'Demo workspace',
     dataReady: runtime.environment === 'LIVE' ? dataReady : true,
+    runtimeState,
+    connectedCount: mode === 'live' ? connectedCount : 0,
   }
 }
 
+type LiveDataInfo = {
+  dataReady: boolean
+  connectedCount: number
+  hasOutcomes: boolean
+}
+
 /**
- * "dataReady" means a tenant has at least one connected, healthy connector — i.e. there is
- * real data to read. It is derived from /api/connectors rather than hardcoded, so live mode
- * actually serves live data once a connector is connected instead of permanently falling
- * back to demo content.
+ * Polls /api/connectors and /api/outcomes/summary to derive richer live state.
+ * dataReady = at least one connector is 'connected'
+ * connectedCount = number of connectors with status 'connected'
+ * hasOutcomes = totalMonthlySaving > 0 (proxy for "discovery+execution complete")
  */
-function useLiveDataReady(isLive: boolean): boolean {
-  const [dataReady, setDataReady] = useState(false)
+function useLiveData(isLive: boolean): LiveDataInfo {
+  const [info, setInfo] = useState<LiveDataInfo>({ dataReady: false, connectedCount: 0, hasOutcomes: false })
+
   useEffect(() => {
-    if (!isLive) { setDataReady(false); return undefined }
+    if (!isLive) {
+      setInfo({ dataReady: false, connectedCount: 0, hasOutcomes: false })
+      return undefined
+    }
     let cancelled = false
     const check = async () => {
       try {
-        const connectors = await liveFetch<Array<{ status?: string }>>('/api/connectors')
-        const connected = Array.isArray(connectors) && connectors.some((c) => String(c.status).toLowerCase() === 'connected')
-        if (!cancelled) setDataReady(connected)
+        const [connectors, outcomeSummary] = await Promise.all([
+          liveFetch<Array<{ status?: string }>>('/api/connectors'),
+          liveFetch<{ totalMonthlySaving?: number }>('/api/outcomes/summary').catch(() => ({})),
+        ])
+        const connected = Array.isArray(connectors)
+          ? connectors.filter((c) => String(c.status ?? '').toLowerCase() === 'connected')
+          : []
+        const count = connected.length
+        const hasOutcomes = Number((outcomeSummary as { totalMonthlySaving?: number }).totalMonthlySaving ?? 0) > 0
+        if (!cancelled) setInfo({ dataReady: count > 0, connectedCount: count, hasOutcomes })
       } catch {
-        if (!cancelled) setDataReady(false)
+        if (!cancelled) setInfo({ dataReady: false, connectedCount: 0, hasOutcomes: false })
       }
     }
     void check()
@@ -44,14 +81,18 @@ function useLiveDataReady(isLive: boolean): boolean {
       clearInterval(timer)
     }
   }, [isLive])
-  return dataReady
+
+  return info
 }
 
 export function WorkspaceProvider({ children }: { children: React.ReactNode }) {
   const runtime = useRuntimeContext()
   const isLive = runtime.environment === 'LIVE'
-  const liveDataReady = useLiveDataReady(isLive)
-  const value = useMemo<WorkspaceContextType>(() => deriveWorkspace(runtime, liveDataReady), [runtime.environment, runtime.tenantId, liveDataReady])
+  const liveData = useLiveData(isLive)
+  const value = useMemo<WorkspaceContextType>(
+    () => deriveWorkspace(runtime, liveData.dataReady, liveData.connectedCount, liveData.hasOutcomes),
+    [runtime.environment, runtime.tenantId, liveData.dataReady, liveData.connectedCount, liveData.hasOutcomes],
+  )
 
   return <WorkspaceReactContext.Provider value={value}>{children}</WorkspaceReactContext.Provider>
 }

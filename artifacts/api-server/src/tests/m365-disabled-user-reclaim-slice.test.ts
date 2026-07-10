@@ -14,4 +14,6 @@ test("economic operations route reads persisted M365 reclaim data", () => {
   assert.equal(src.includes("M365_ECONOMIC_PLAYBOOK_IDS"), true);
   assert.equal(src.includes("M365 Disabled Licensed User Reclaim"), true);
   assert.equal(src.includes("m365-exec-"), true);
+  const registrySrc = fs.readFileSync(path.resolve(process.cwd(), "src/lib/connectors/m365/m365-economic-operations-registry.ts"), "utf8");
+  assert.equal(registrySrc.includes("m365-disabled-licensed-user-reclaim"), true);
 });

@@ -147,7 +147,7 @@ export default function EconomicOutcomeDashboard() {
             />
             <Row
               label="Asset Type"
-              value={selected?.asset?.assetType ?? "AI_ASSET"}
+              value={selected?.asset?.assetType ?? "AI Asset"}
             />
             <Row
               label="Owner"

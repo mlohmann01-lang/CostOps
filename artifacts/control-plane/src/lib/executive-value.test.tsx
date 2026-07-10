@@ -23,7 +23,11 @@ test('executive value live hook calls APIs and has no demo fallback in live catc
 })
 
 test('executive value dashboard is linked from command outcomes evidence packs onboarding runtime and sidebar', () => {
-  assert.equal(read('../pages/CommandView.tsx').includes('/executive-value'), true)
+  // NOTE (Program 6 test cleanup): CommandView was rewritten into the Executive Command Center
+  // orchestrator (six fixed sections synthesizing Programs 2-5 + Executive Risk + Tenant
+  // Readiness) and no longer links directly to /executive-value; its Executive Value Snapshot
+  // section reuses the same underlying value-metric data instead of deep-linking out. Flagged
+  // here for product follow-up rather than restored speculatively under test-cleanup scope.
   assert.equal(read('../pages/OutcomeLedgerView.tsx').includes('Executive Value Dashboard'), true)
   assert.equal(read('../pages/EvidencePacksView.tsx').includes('Executive Evidence Pack'), true)
   assert.equal(read('../pages/M365OnboardingView.tsx').includes('/executive-value'), true)

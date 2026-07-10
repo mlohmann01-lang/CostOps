@@ -13,6 +13,10 @@ export const executionApprovalsTable = pgTable("execution_approvals", {
   approvedBy: jsonb("approved_by").notNull().default([]),
   rejectedBy: jsonb("rejected_by").notNull().default([]),
   approvalEvidence: jsonb("approval_evidence").notNull().default({}),
+  // Program 14B-R: tamper-evidence hash over the approval decision's
+  // deterministic fields, recomputed on every state transition (request,
+  // approve, reject) so any out-of-band mutation of a stored row is detectable.
+  tamperHash: text("tamper_hash").notNull().default(""),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

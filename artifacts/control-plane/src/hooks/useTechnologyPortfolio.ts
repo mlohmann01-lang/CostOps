@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import { liveFetch } from '../lib/liveApi'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { liveFetch, normalizeApiError } from '../lib/liveApi'
 import { inferTechnologyManagementDecision, getProgram2EvidencePackCompleteness } from '../lib/program2TechnologyManagement'
 import { useWorkspace } from '../lib/workspaceContext'
 import type { TechnologyPortfolioSummary } from '../types/technologyPortfolio'
 
 export const notAvailable = 'Not available'
 export const emptyTechnologyPortfolioSummary: TechnologyPortfolioSummary = { assets: [], vendors: [], products: [], applications: [], risks: [], recommendations: [], duplicateCapabilities: [], renewals: [], values: [] }
+export type TechnologyPortfolioDataState = 'LIVE' | 'DEMO' | 'NOT_CONNECTED' | 'NO_DATA'
+function hasData(summary: TechnologyPortfolioSummary): boolean { return !!summary.snapshot }
 
 const generatedAt = '2026-07-05T00:00:00.000Z'
 
@@ -88,19 +90,30 @@ export function buildTechnologyManagementEvidencePack(asset: TechnologyPortfolio
 export function useTechnologyPortfolio() {
   const workspace = useWorkspace()
   const [summary, setSummary] = useState<TechnologyPortfolioSummary>(() => workspace.mode === 'demo' ? demoTechnologyPortfolioSummary() : emptyTechnologyPortfolioSummary)
-  const [loading, setLoading] = useState(workspace.mode === 'live' && workspace.dataReady)
+  const [loading, setLoading] = useState(workspace.mode !== 'demo')
+  const [dataState, setDataState] = useState<TechnologyPortfolioDataState>(workspace.mode === 'demo' ? 'DEMO' : 'NOT_CONNECTED')
+  const [error, setError] = useState<string | undefined>(undefined)
 
-  useEffect(() => {
-    let cancel = false
-    if (workspace.mode === 'demo') { setSummary(demoTechnologyPortfolioSummary()); setLoading(false); return undefined }
-    if (!workspace.dataReady) { setSummary(emptyTechnologyPortfolioSummary); setLoading(false); return undefined }
+  const refresh = useCallback(async () => {
+    if (workspace.mode === 'demo') { setSummary(demoTechnologyPortfolioSummary()); setDataState('DEMO'); setError(undefined); setLoading(false); return }
+    if (!workspace.dataReady) { setSummary(emptyTechnologyPortfolioSummary); setDataState('NOT_CONNECTED'); setError(undefined); setLoading(false); return }
     setLoading(true)
-    liveFetch<TechnologyPortfolioSummary>('/api/technology-portfolio/summary')
-      .then((data) => { if (!cancel) setSummary(data?.snapshot || data?.assets ? { ...emptyTechnologyPortfolioSummary, ...data } : emptyTechnologyPortfolioSummary) })
-      .catch(() => { if (!cancel) setSummary(emptyTechnologyPortfolioSummary) })
-      .finally(() => { if (!cancel) setLoading(false) })
-    return () => { cancel = true }
+    try {
+      const data = await liveFetch<any>('/api/technology-portfolio/summary')
+      const next: TechnologyPortfolioSummary = data?.snapshot || data?.assets ? { ...emptyTechnologyPortfolioSummary, ...data } : emptyTechnologyPortfolioSummary
+      setSummary(next)
+      setDataState(hasData(next) ? 'LIVE' : 'NO_DATA')
+      setError(undefined)
+    } catch (err) {
+      setSummary(emptyTechnologyPortfolioSummary)
+      setDataState('NO_DATA')
+      setError(normalizeApiError(err).message)
+    } finally {
+      setLoading(false)
+    }
   }, [workspace.mode, workspace.dataReady])
 
-  return useMemo(() => ({ summary, loading, isDemo: workspace.mode === 'demo', isLiveUnconnected: workspace.mode === 'live' && !workspace.dataReady }), [summary, loading, workspace.mode, workspace.dataReady])
+  useEffect(() => { let cancel = false; (async () => { await refresh(); if (cancel) return })(); return () => { cancel = true } }, [refresh])
+
+  return useMemo(() => ({ summary, loading, isDemo: workspace.mode === 'demo', isLiveUnconnected: workspace.mode === 'live' && !workspace.dataReady, dataState, error, refresh }), [summary, loading, workspace.mode, workspace.dataReady, dataState, error, refresh])
 }

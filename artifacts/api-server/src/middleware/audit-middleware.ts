@@ -26,9 +26,20 @@ export function auditMiddleware() {
         | { userId?: unknown; tenantId?: unknown; role?: unknown }
         | undefined ?? { userId: 'anonymous', tenantId: 'unknown', role: 'VIEWER' }
 
+      // The tenant whose resources this request actually operated on. requireTenantContext()
+      // stores the guard-validated *target* tenant on req.tenantId — for a PLATFORM_ADMIN
+      // acting cross-tenant this differs from the admin's own auth.tenantId. The audit
+      // record's tenantId must reflect the target (the scope actually read/written), with
+      // the actor's home tenant recorded alongside it so cross-tenant admin actions remain
+      // traceable to who performed them, not just which tenant was affected.
+      const actorTenantId = String(auth.tenantId ?? 'unknown')
+      const targetTenantId = typeof (req as unknown as Record<string, unknown>)['tenantId'] === 'string'
+        ? String((req as unknown as Record<string, unknown>)['tenantId'])
+        : actorTenantId
+
       // Fire and forget — don't await
       recordAuditEvent({
-        tenantId: String(auth.tenantId ?? 'unknown'),
+        tenantId: targetTenantId,
         actorId: String(auth.userId ?? 'anonymous'),
         actorRole: String(auth.role ?? 'VIEWER'),
         eventType,
@@ -41,6 +52,7 @@ export function auditMiddleware() {
           method: req.method,
           path: req.path,
           statusCode: res.statusCode,
+          ...(targetTenantId !== actorTenantId ? { actorTenantId, crossTenantOperation: true } : {}),
         },
         outcome,
       }).catch(() => {

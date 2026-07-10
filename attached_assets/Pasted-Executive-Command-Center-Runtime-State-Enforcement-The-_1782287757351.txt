@@ -1,0 +1,133 @@
+Executive Command Center Runtime State Enforcement
+
+The runtime state architecture has been added but is not being enforced consistently.
+
+Current LIVE_UNCONNECTED screen still displays:
+
+* Authorities Active = 1
+* Chain Stages Active = 1/7
+* ChatGPT findings
+* Slack findings
+* Claude findings
+* Outcome Finance Verified = $50,400
+* Data Trust = 97%
+
+This violates the runtime-state model.
+
+Goal:
+
+When runtimeState === LIVE_UNCONNECTED there must be zero synthetic data rendered anywhere on the Executive Command Center.
+
+Requirements:
+
+1. Audit every data source used by:
+
+   * Executive Summary
+   * What Requires Attention
+   * Economic Control Chain Status
+   * Executive Value Snapshot
+   * Outcome Finance Snapshot
+   * Connector Attention
+   * Data Trust
+   * Recommended Next Actions
+
+2. Remove all fallback/demo/default values from LIVE_UNCONNECTED.
+
+3. Search for:
+
+   * ?? fallback operators
+   * hardcoded sample values
+   * demo datasets
+   * synthetic findings
+   * default confidence scores
+   * default finance values
+
+4. For runtimeState === LIVE_UNCONNECTED enforce:
+
+Executive Summary
+
+Authorities Active = 0
+Chain Stages Active = 0/7
+Verified Value = —
+Finance Verified = —
+Protected Value = —
+
+What Requires Attention
+
+Render:
+
+"No Findings Yet"
+
+Connect a supported platform to begin discovery.
+
+Economic Control Chain
+
+All stages inactive.
+
+Executive Value Snapshot
+
+Identified = —
+Approved = —
+Executed = —
+Verified = —
+Protected = —
+
+Outcome Finance Snapshot
+
+Verified = —
+Finance Verified = —
+Variance = —
+
+Connector Attention
+
+Show connector health only.
+
+No findings.
+
+No recommendations derived from findings.
+
+Data Trust
+
+N/A
+
+or
+
+0%
+
+Recommended Next Actions
+
+1. Connect Microsoft 365
+
+2. Run Tenant Readiness
+
+3. Begin Discovery
+
+4. Add a runtime-state assertion helper:
+
+assertNoSyntheticDataInLiveUnconnected()
+
+Use it in tests.
+
+6. Add tests that fail if any of the following appear in LIVE_UNCONNECTED:
+
+* ChatGPT
+* Slack
+* Claude
+* Tableau
+* Dropbox
+* $50,400
+* 97%
+* 1/7
+* Authorities Active = 1
+
+7. Verify all values displayed in LIVE_UNCONNECTED originate only from:
+
+   * connector state
+   * workspace state
+   * actual persisted evidence
+
+No demo data may be rendered.
+
+Acceptance criteria:
+
+Switching from DEMO → LIVE_UNCONNECTED immediately removes every synthetic finding, every synthetic value, every synthetic finance metric and every synthetic confidence score from the page.

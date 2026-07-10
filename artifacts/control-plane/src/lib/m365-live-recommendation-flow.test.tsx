@@ -25,9 +25,15 @@ test('demo mode does not call generate endpoint', () => {
 })
 
 test('successful generate refreshes or surfaces updated recommendations', () => {
+  // ConnectorHub.tsx now drives its notices through a generic runLive(label, path) helper that
+  // builds the "<label> complete" string at runtime via template literal, so the full literal
+  // phrase no longer appears verbatim in source. Assert the label text and the templated
+  // completion suffix instead, which together produce the same "M365 governance evaluation
+  // complete" notice this test originally guarded.
   const source = fs.readFileSync(new URL('../pages/ConnectorHub.tsx', import.meta.url), 'utf8')
   assert.equal(source.includes('certen:live-read-refresh'), true)
-  assert.equal(source.includes('Running M365 governance evaluation') && source.includes('complete'), true)
+  assert.equal(source.includes("'M365 governance evaluation'"), true)
+  assert.equal(source.includes('${label} complete'), true)
   const rows = normalizeRecommendations({ recommendations: [{ recommendationId: 'tenant:M365_RIGHTSIZE_LICENSE_V1:user-1:E5:abc', playbookId: 'M365_RIGHTSIZE_LICENSE_V1', actionType: 'RIGHTSIZE_LICENSE', targetEntityId: 'user-1', projectedMonthlySavings: 21, executionReadiness: 'APPROVAL_REQUIRED' }] })
   assert.equal(rows.length, 1)
   assert.equal(rows[0].id, 'tenant:M365_RIGHTSIZE_LICENSE_V1:user-1:E5:abc')

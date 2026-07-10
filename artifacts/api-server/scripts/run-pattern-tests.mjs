@@ -12,10 +12,20 @@ const distDir = resolve(import.meta.dirname, '../dist/tests');
 export const dbIntegrationTests = new Set([
   'approval-workflow.test.ts',
   'approval-workflow-execution-request.test.ts',
+  'audit-tamper-evidence-live.test.ts',
   'connector-readiness-persistence.test.ts',
+  'database-tenant-isolation-live-integration.test.ts',
   'live-tenant-readiness-persistence.test.ts',
   'm365-beta-e2e-fixture.test.ts',
   'outcome-finance-reconciliation-persistence.test.ts',
+  'technology-investment-authority.test.ts',
+  'technology-economics-authority.test.ts',
+  'technology-capital-allocation-authority.test.ts',
+  'executive-command-center-and-decision-authority.test.ts',
+  'executive-experience.test.ts',
+  'scenario-planning.test.ts',
+  'recommendation-orchestration.test.ts',
+  'closed-loop-optimisation.test.ts',
 ]);
 
 const allTests = readdirSync(testsDir).filter((f) => f.endsWith('.test.ts'));
@@ -57,7 +67,7 @@ for (const file of matching) {
   runnableOutfiles.push(outfile);
 }
 
-const childEnv = { ...process.env };
+const childEnv = { ...process.env, NODE_ENV: process.env.NODE_ENV ?? 'test' };
 if (runDbIntegration && !childEnv.DATABASE_URL) childEnv.DATABASE_URL = 'postgres://localhost:5432/test';
 for (const outfile of runnableOutfiles) {
   const result = spawnSync(process.execPath, ['--test', outfile], { stdio: 'inherit', env: childEnv });

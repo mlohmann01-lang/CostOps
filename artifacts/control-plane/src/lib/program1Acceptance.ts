@@ -1,7 +1,7 @@
 export type EvidencePackCompletenessStatus = 'COMPLETE' | 'PARTIAL'
 
 export const program1ExecutiveRoutes = [
-  { route: '/actions', name: 'Execution Center', question: 'What can safely be executed next?' },
+  { route: '/actions', name: 'Action Center', question: 'What can safely be executed next?' },
   { route: '/approvals', name: 'Approval Center', question: 'What decisions require approval today?' },
   { route: '/executive-value', name: 'Executive Value Dashboard', question: 'Where is value projected, approved, executed, verified, finance-confirmed, protected, or leaking?' },
   { route: '/outcomes', name: 'Outcome Ledger', question: 'What value has actually been realised and protected?' },

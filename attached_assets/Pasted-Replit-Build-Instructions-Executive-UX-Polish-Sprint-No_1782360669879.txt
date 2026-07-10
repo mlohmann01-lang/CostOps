@@ -1,0 +1,498 @@
+Replit Build Instructions — Executive UX Polish Sprint (No Architecture Changes)
+Objective
+
+The Executive Command Center and Outcome Ledger are now architecturally strong.
+
+This sprint is NOT about adding features.
+
+It is about making Certen feel like a premium executive operating system.
+
+Do not change:
+
+canonical Outcome schema
+runtime states
+routing
+calculations
+business logic
+lifecycle model
+evidence model
+
+Only improve presentation.
+
+All tests must continue to pass.
+
+Guiding Principle
+
+Every screen should answer one executive question immediately, with supporting detail beneath it.
+
+Not:
+
+"Here is the data."
+
+Instead:
+
+"Here is the answer."
+
+1. Executive Health Bar (NEW)
+
+At the very top of both:
+
+Executive Command Center
+Outcome Ledger
+
+Add a compact Executive Health strip.
+
+Example:
+
+Economic Control Health
+
+████████░░ 82%
+
+Excellent
+
+Evidence Confidence 92%
+
+Finance Coverage 78%
+
+Protected Value 29%
+
+Value Leakage 7.4%
+
+Verification Backlog 3
+
+Render as a horizontal executive status card.
+
+No charts.
+
+Use:
+
+thin progress bar
+metric pills
+subtle gradients
+
+LIVE_UNCONNECTED
+
+Show:
+
+Economic Control Health
+
+Not Available
+
+Connect Microsoft 365 to begin measuring governance health.
+
+No synthetic health.
+
+2. KPI Cards Become Connected
+
+Current:
+
+Projected
+
+Verified
+
+Finance
+
+Protected
+
+These still look like four unrelated numbers.
+
+Instead create a connected flow.
+
+Projected
+$235k
+
+↓
+
+Verified
+$125k
+
+↓
+
+Finance
+$68k
+
+↓
+
+Protected
+$68k
+
+Visually:
+
+thin connector
+subtle arrow
+flowing gold → green
+
+The message becomes:
+
+Value moves.
+
+Not:
+
+Numbers exist.
+
+3. Animate Value Flow
+
+Waterfall currently appears instantly.
+
+Instead:
+
+Load sequence:
+
+Projected
+
+↓
+
+Approved
+
+↓
+
+Executed
+
+↓
+
+Verified
+
+↓
+
+Finance
+
+↓
+
+Protected
+
+Use:
+
+CSS transitions only.
+
+Delay each stage by roughly:
+
+150–200 ms.
+
+No heavy animation libraries.
+
+4. Upgrade Outcome Cards
+
+Pipeline cards should feel like financial assets.
+
+Each card becomes:
+
+Microsoft 365 Licence Reclaim
+
+$68,500
+
+Protected
+
+██████████
+
+92%
+
+5 Evidence
+
+Owner
+
+Sarah Chen
+
+Add:
+
+small confidence bar
+
+owner avatar/initials
+
+evidence pill
+
+status pill
+
+current value
+
+Do not increase card height dramatically.
+
+5. Improve Proof Timeline
+
+Current:
+
+Protected
+
+$68,500
+
+6 events
+
+Instead:
+
+Collapsed card:
+
+Protected
+
+$68,500 retained
+
+92% confidence
+
+Finance Confirmed
+
+5 Evidence Items
+
+View Proof →
+
+Expanded:
+
+Timeline nodes.
+
+Each node:
+
+Verified
+
+↓
+
+Finance Confirmed
+
+↓
+
+Protected
+
+Use coloured dots.
+
+Gold
+
+↓
+
+Green
+
+Use connecting vertical line.
+
+Almost Git history.
+
+6. Improve Ledger Table
+
+Current badges feel like plain text.
+
+Upgrade:
+
+Lifecycle:
+
+🟡 Approved
+
+🟢 Verified
+
+🟢 Protected
+
+🔴 Failed
+
+🟠 Drifted
+
+Confidence:
+
+replace text
+
+92%
+
+with
+
+mini confidence bar
+
+Proof State
+
+becomes coloured chip.
+
+Evidence
+
+becomes
+
+5 files
+
+instead of
+
+5 ev
+7. Value Leakage Card
+
+Currently:
+
+Approval Leakage
+
+Execution Leakage
+
+Verification Leakage
+
+Add one visual:
+
+small horizontal retained bars.
+
+Example:
+
+Approval
+
+█████████░
+
+97.4%
+
+$5,000 lost
+
+This is easier to read than text.
+
+8. Executive Summary Card
+
+Replace:
+
+Certen has begun...
+
+with something dynamic.
+
+Example:
+
+Executive Summary
+
+4 opportunities discovered
+
+2 independently verified
+
+1 finance confirmed
+
+$68,500 currently protected
+
+7.4% value leakage
+
+Next bottleneck:
+
+Finance Confirmation
+
+LIVE_UNCONNECTED
+
+Shows onboarding guidance.
+
+DEMO
+
+Shows demo summary.
+
+LIVE
+
+Shows computed summary.
+
+9. Unify Design Language
+
+Executive Command Center
+
+Outcome Ledger
+
+Executive Value Dashboard
+
+Evidence Registry
+
+must all share:
+
+identical:
+
+KPI cards
+spacing
+shadows
+headings
+chips
+borders
+animations
+chart style
+
+No page should feel visually unrelated.
+
+10. Colour Refinement
+
+Remove remaining muddy amber/brown.
+
+Replace with:
+
+Primary Gold
+
+#F5C451
+
+Highlight
+
+#FFD166
+
+Verified
+
+#22C55E
+
+Protected
+
+#16A34A
+
+Pending
+
+#94A3B8
+
+Critical
+
+#EF4444
+
+Only charcoal backgrounds.
+
+No brown fills.
+
+11. Empty States
+
+Every empty component needs illustration.
+
+Examples:
+
+Pipeline
+
+No Outcomes Yet
+
+Connect Microsoft 365
+
+↓
+
+Discovery will populate this board.
+
+Waterfall
+
+No verified value available yet.
+
+Timeline
+
+No proof events recorded.
+
+Never blank.
+
+12. Typography
+
+Increase hierarchy.
+
+Executive numbers
+
+48–56px
+
+Section titles
+
+30px
+
+Metric labels
+
+11–12px
+
+Body
+
+15–16px
+
+Improve whitespace.
+
+Reduce visual density.
+
+Acceptance Criteria
+
+Complete when:
+
+Executive Command Center feels like an executive operating console.
+Outcome Ledger feels like a finance system rather than a report.
+KPI cards tell a connected value story.
+Waterfall animates naturally.
+Pipeline cards feel like governed financial assets.
+Proof Timeline resembles a chain of custody.
+Ledger table feels audit-grade.
+Executive Health appears consistently.
+LIVE_UNCONNECTED remains completely honest.
+No synthetic values appear outside DEMO.
+No architecture changes.
+No schema changes.
+No runtime logic changes.
+Typecheck passes.
+Full test suite passes.
+Browser verified in DEMO, LIVE_UNCONNECTED, LIVE_DISCOVERING and LIVE_OPERATIONAL.
+
+Rule: If any requested visual enhancement requires changing the canonical Outcome Ledger schema or business logic, stop and preserve the existing architecture. This sprint is a UI/UX refinement only.

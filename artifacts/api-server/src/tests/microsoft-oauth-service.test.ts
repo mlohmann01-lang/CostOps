@@ -10,6 +10,7 @@ describe("MicrosoftOAuthService", () => {
     await assert.rejects(() => service.exchangeAuthorizationCode({ tenantId: "t1", connectorKey: "M365", code: "c", state: "bad", scopes: [] }), /Invalid OAuth state/);
     const conn = await service.exchangeAuthorizationCode({ tenantId: "t1", connectorKey: "M365", code: "c", state: "state-1", scopes: ["User.Read.All"] });
     assert.ok(conn.credentialRef.startsWith("mscred_")); assert.equal((conn as any).accessToken, undefined);
-    const encrypted = await store.inspectEncryptedRecord(conn.credentialRef); assert.ok(encrypted?.encryptedTokenPayload); assert.doesNotMatch(encrypted!.encryptedTokenPayload, /access|refresh/);
+    const encrypted = await store.inspectEncryptedRecord("t1", conn.credentialRef); assert.ok(encrypted?.encryptedTokenPayload); assert.doesNotMatch(encrypted!.encryptedTokenPayload, /access|refresh/);
+    assert.equal(await store.inspectEncryptedRecord("t2-attacker", conn.credentialRef), undefined, "a different tenant must not be able to inspect another tenant's credential record even with a known credentialRef");
   });
 });

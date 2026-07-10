@@ -12,7 +12,11 @@ export class EntraGraphClient {
   async fetchUserTransitiveMemberOf(context: ProductionConnectorContext, userId: string) { return (await this.live(context)).getAllPages(`/users/${encodeURIComponent(userId)}/transitiveMemberOf`); }
   async fetchRecords(context: ProductionConnectorContext): Promise<RawFetchResult> {
     if (context.mode === "SYNC" && !context.tokenProvider) return { status: "BLOCKED", reason: "TOKEN_PROVIDER_NOT_CONFIGURED", records: [] };
-    if (!context.credentialRef || !context.tokenProvider || context.config?.useFixtures) return { status: "READY", records: entraFixtures };
+    // Explicit, caller-opted-in fixture mode (e.g. demo seeding). This must never be
+    // implied by missing credentials — an unconfigured/uncredentialed live tenant is
+    // BLOCKED below, not silently reported as READY with fixture data.
+    if (context.config?.useFixtures) return { status: "READY", records: entraFixtures };
+    if (!context.credentialRef || !context.tokenProvider) return { status: "BLOCKED", reason: "MICROSOFT_CREDENTIALS_NOT_CONFIGURED", records: [] };
     const records: RawProductionRecord[] = []; const endpointStatus: NonNullable<RawFetchResult["endpointStatus"]> = [];
     try { const users = await this.fetchDirectoryUsers(context); endpointStatus.push({ endpoint: "users", status: "AVAILABLE" }); users.forEach((u: any) => records.push({ id: String(u.id), kind: "user", payload: { ...u, costCentreId: u.costCentreId ?? u.onPremisesExtensionAttributes?.extensionAttribute1 }, sourceEndpoint: "users" })); const groups = await this.fetchGroups(context); endpointStatus.push({ endpoint: "groups", status: "AVAILABLE" }); groups.forEach((g: any) => records.push({ id: String(g.id), kind: "group", payload: g, sourceEndpoint: "groups" })); for (const u of users.slice(0, 50)) { const manager = await this.fetchUserManager(context, String(u.id)); if (manager?.id) records.push({ id: `${u.id}_manager_${manager.id}`, kind: "managerRelation", payload: { userId: u.id, managerId: manager.id }, sourceEndpoint: "users/manager" }); if (u.department) records.push({ id: `department_${u.department}`, kind: "department", payload: { id: u.department, name: u.department }, sourceEndpoint: "users" }); } return { status: "READY", records, endpointStatus }; } catch (e: any) { return { status: "BLOCKED", reason: e.code ?? e.message, records, endpointStatus }; }
   }

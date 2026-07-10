@@ -2,21 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import type { Request, Response, NextFunction } from 'express';
 import { extractOperatorActor, requireOperatorPermission, intentPermissionGuard } from '../middleware/economic-operations-rbac-middleware';
+import type { AuthRole, AuthContext } from '../lib/auth/auth-context';
 
-function mockReq(opts: { role?: 'PLATFORM_ADMIN' | 'TENANT_ADMIN' | 'APPROVER' | 'OPERATOR' | 'VIEWER'; userId?: string; tenantId?: string; headers?: Record<string, string>; query?: Record<string, string>; body?: Record<string, unknown> } = {}): Request {
+function mockReq(opts: { userId?: string; role?: AuthRole; tenantId?: string; authenticated?: boolean; headers?: Record<string, string>; query?: Record<string, string>; body?: Record<string, unknown> } = {}): Request {
   const headers = opts.headers ?? {};
+  const authContext: AuthContext = {
+    userId: opts.userId ?? 'anonymous',
+    tenantId: opts.tenantId ?? 'unknown',
+    role: opts.role ?? 'VIEWER',
+    platformAdminOverride: opts.role === 'PLATFORM_ADMIN',
+    authenticated: opts.authenticated ?? true,
+  };
   return {
-    headers,
+    headers: {},
     query: opts.query ?? {},
     body: opts.body ?? {},
     header: (name: string) => headers[name.toLowerCase()] ?? headers[name],
-    __authContext: {
-      userId: opts.userId ?? 'user-1',
-      tenantId: opts.tenantId ?? 'T1',
-      role: opts.role ?? 'VIEWER',
-      platformAdminOverride: opts.role === 'PLATFORM_ADMIN',
-      authenticated: true,
-    },
+    __authContext: authContext,
   } as unknown as Request;
 }
 
@@ -57,6 +59,13 @@ test('extractOperatorActor: tenantId comes from authenticated context, not query
   const req = mockReq({ role: 'VIEWER', tenantId: 'T2', query: { tenantId: 'QUERY-TENANT' } });
   const actor = extractOperatorActor(req);
   assert.equal(actor.tenantId, 'T2');
+});
+
+test('extractOperatorActor: no prior authMiddleware falls back to unauthenticated VIEWER', () => {
+  const req = { headers: {}, query: {}, body: {}, header: () => undefined } as unknown as Request;
+  const actor = extractOperatorActor(req);
+  assert.equal(actor.actorRole, 'VIEWER');
+  assert.equal(actor.tenantId, 'unknown');
 });
 
 // --- requireOperatorPermission ---

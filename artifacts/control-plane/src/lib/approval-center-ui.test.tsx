@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import { NAV_GROUPS } from '../components/layout/Sidebar'
-import { approvalCenterApiPaths, demoApprovalCenterData, demoApprovalRequests, summarizeApprovals } from '../hooks/useApprovalCenterData'
+import { approvalCenterApiPaths, demoApprovalCenterData, demoApprovalRequests, summarizeApprovals, buildDemoApprovalDetail, type ApprovalRequestDetail } from '../hooks/useApprovalCenterData'
 import { approvalCenterTabs } from '../pages/ApprovalCenter'
 
 const read = (path: string) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
@@ -15,8 +15,8 @@ test('Approval Center route exists', () => {
 })
 
 test('Approval Center navigation entry exists', () => {
-  const operations = NAV_GROUPS.find((group) => group.label === 'Operations')
-  assert.equal(operations?.items.some((item) => item.label === 'Approval Center' && item.href === '/approvals'), true)
+  const autoExecution = NAV_GROUPS.find((group) => group.label === 'Auto Execution')
+  assert.equal(autoExecution?.items.some((item) => item.label === 'Approval Center' && item.href === '/approvals'), true)
 })
 
 test('dashboard cards render', () => {
@@ -86,4 +86,30 @@ test('No Agent Security Analytics labels', () => {
   const hook = read('../hooks/useApprovalCenterData.ts')
   assert.equal(page.includes('Agent Security Analytics'), false)
   assert.equal(hook.includes('Agent Security Analytics'), false)
+})
+
+test('demo mode returns DEMO dataState for approval detail', () => {
+  const detail: ApprovalRequestDetail = buildDemoApprovalDetail('appr-standard')
+  assert.equal(detail.dataState, 'DEMO')
+})
+
+test('fetchApprovalDetail does not fall back to demo data on NOT_CONNECTED or error', () => {
+  const hook = read('../hooks/useApprovalCenterData.ts')
+  // The detail-fetch function must check dataReady and tag NOT_CONNECTED before any live fetch attempt.
+  assert.equal(hook.includes("if (!workspace.dataReady) return unavailableApprovalDetail(id, data.requests.find((r) => r.id === id), 'NOT_CONNECTED')"), true)
+  // Error path must use unavailableApprovalDetail with NO_DATA + the real error message, never demo data.
+  assert.equal(hook.includes("return unavailableApprovalDetail(id, data.requests.find((r) => r.id === id), 'NO_DATA', normalizeApiError(error).message)"), true)
+  // Successful live fetch must be explicitly tagged LIVE/NO_DATA, not assumed to be demo-shaped.
+  assert.equal(hook.includes("dataState: detail?.request ? 'LIVE' : 'NO_DATA'"), true)
+  // buildDemoApprovalDetail must only be reachable from the explicit demo-mode branch.
+  const fnMatch = hook.match(/const fetchApprovalDetail = useCallback\([\s\S]*?\}, \[data\.isDemo, data\.requests, workspace\.mode, workspace\.dataReady\]\)/)
+  assert.ok(fnMatch, 'fetchApprovalDetail must have the expected dependency array')
+  const catchOnly = fnMatch![0].slice(fnMatch![0].indexOf('} catch (error) {'))
+  assert.equal(catchOnly.includes('buildDemoApprovalDetail'), false, 'catch block must never return demo data')
+})
+
+test('approval request detail surfaces dataState for non-LIVE non-DEMO states', () => {
+  const page = read('../pages/ApprovalCenter.tsx')
+  assert.equal(page.includes("data-testid='approval-detail-data-state'"), true)
+  assert.equal(page.includes("detail.dataState !== 'LIVE' && detail.dataState !== 'DEMO'"), true)
 })

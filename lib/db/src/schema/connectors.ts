@@ -6,7 +6,7 @@ export const connectorsTable = pgTable("connectors", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   type: text("type").notNull(),
-  status: text("status").notNull().default("connected"),
+  status: text("status").notNull().default("not_connected"),
   lastSync: timestamp("last_sync", { withTimezone: true }),
   recordCount: integer("record_count").notNull().default(0),
   trustScore: real("trust_score").notNull().default(0.85),

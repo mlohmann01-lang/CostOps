@@ -1,5 +1,5 @@
-export { StatusChip } from './StatusChip'
-export type { StatusChipTone } from './StatusChip'
+export { StatusChip, statusToneFor } from './StatusChip'
+export type { StatusChipTone, StatusTone } from './StatusChip'
 export { MetricCard } from './MetricCard'
 export { ExecutivePageHeader } from './ExecutivePageHeader'
 export type { ExecutivePageHeaderChip } from './ExecutivePageHeader'

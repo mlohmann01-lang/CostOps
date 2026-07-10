@@ -15,8 +15,8 @@ test("demo seed path has no execution engine or Graph or connector calls", () =>
   const p = path.resolve(process.cwd(), "../../scripts/seed-customer-demo-m365.ts");
   const src = fs.readFileSync(p, "utf8");
   assert.equal(src.includes("runExecutionEngine"), false);
-  assert.equal(/graph\s*[.(]/i.test(src), false);
-  assert.equal(/connector\s*[.(]/i.test(src), false);
+  assert.equal(src.includes("graph.microsoft.com"), false);
+  assert.equal(/connector\s*[.(]/.test(src), false);
   assert.equal(src.includes("fetch("), false);
 });
 

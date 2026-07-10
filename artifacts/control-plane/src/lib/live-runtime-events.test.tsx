@@ -1,6 +1,5 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import fs from 'node:fs'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { RuntimeActivityList } from '../components/shared/RuntimeActivityList'
@@ -10,9 +9,9 @@ import { normalizeRuntimeEvent } from './runtimeEventNormalizer'
 import { getDemoRuntimeState, resetDemoRuntimeStore } from './demoRuntimeStore'
 import type { WorkspaceContext } from '../types/workspace'
 
-const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true }
-const liveEmptyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: false }
-const liveReadyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: true }
+const demoWorkspace: WorkspaceContext = { mode: 'demo', tenantId: 'demo-sandbox-tenant', tenantName: 'Demo workspace', dataReady: true, runtimeState: 'DEMO', connectedCount: 0 }
+const liveEmptyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: false, runtimeState: 'LIVE_UNCONNECTED', connectedCount: 0 }
+const liveReadyWorkspace: WorkspaceContext = { mode: 'live', tenantId: 'tenant-live', tenantName: 'Live workspace', dataReady: true, runtimeState: 'LIVE_DISCOVERING', connectedCount: 1 }
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test('runtime event normalizer handles governance event shapes', () => {
@@ -44,7 +43,7 @@ test('live mode dataReady=false does not poll', async () => {
   assert.equal(calls, 0)
 })
 
-test('live mode calls /api/events when dataReady=true', async () => {
+test('live mode calls /api/events/recent when dataReady=true', async () => {
   let url = ''
   const previousFetch = globalThis.fetch
   globalThis.fetch = (async (input: RequestInfo | URL) => { url = String(input); return new Response(JSON.stringify({ events: [{ eventId: 'e1', tenantId: 'tenant-live', category: 'SYSTEM', type: 'SYSTEM_HEALTH_CHANGED', entityType: 'system', entityId: 'runtime', message: 'Runtime healthy', severity: 'success', createdAt: '2026-05-29T00:00:00Z' }] }), { status: 200 }) }) as typeof fetch
@@ -72,10 +71,10 @@ test('Command activity renders demo events through RuntimeActivityList foundatio
 
 test('Command live empty state renders when no events', () => {
   const html = renderToStaticMarkup(<RuntimeActivityList events={[]} limit={5} emptyLabel='No runtime activity yet' compact />)
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
+  // Program 6 (Executive Command Center) removed CommandView's "What Changed" runtime
+  // activity section in favor of the six orchestrator sections. The RuntimeActivityList
+  // foundation component itself (asserted above) is unaffected and used elsewhere.
   assert.match(html, /No runtime activity yet/)
-  assert.equal(command.includes('Recent governed activity will appear here.'), true)
-  assert.equal(command.includes('useRuntimeEvents'), true)
 })
 
 test('no polling in demo mode', async () => {

@@ -22,6 +22,7 @@ export const AUDIT_EVENT_TYPES = [
   'EXECUTION_FAILED',
   'EXECUTION_ROLLBACK_REQUESTED',
   'EXECUTION_ROLLBACK_COMPLETED',
+  'EXECUTION_CANCELLED',
   // Configuration events
   'TENANT_CONFIG_CHANGED',
   'PACK_ENABLED',
@@ -63,6 +64,13 @@ export const auditEventsTable = pgTable('audit_events', {
   payload: jsonb('payload').notNull().default({}),  // event-specific data
   outcome: text('outcome').notNull().default('SUCCESS'),  // SUCCESS | FAILURE | BLOCKED
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  // Program 14B-R: tamper-evidence hash chain. prevHash links to the previous
+  // event's tamperHash for the same tenant (or '' for the first event);
+  // tamperHash = sha256(prevHash + JSON.stringify(deterministic event fields)).
+  // Any mutation to a stored row's fields, or reordering of the chain,
+  // changes the corresponding hash and is therefore detectable.
+  prevHash: text('prev_hash').notNull().default(''),
+  tamperHash: text('tamper_hash').notNull().default(''),
   // NOTE: No updatedAt — this table is intentionally immutable
 })
 

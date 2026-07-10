@@ -1,12 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { containsForbiddenTerm } from "./helpers/boundary-term-scan";
 
 const read = (p: string) => fs.readFileSync(new URL(p, import.meta.url), "utf8");
-function containsForbiddenTerm(body: string, term: string) {
-  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, 'i').test(body);
-}
 
 
 test("subsystem boundaries: recommendations/simulations/workflow avoid direct execution engine", () => {
@@ -38,25 +35,25 @@ test("subsystem boundaries: runtime hardening remains non-executing",()=>{ const
 
 test("subsystem boundaries: sustained load simulation remains canonical helper only",()=>{ const scale=read('../lib/runtime-hardening/sustained-runtime-load-phase-c.ts'); assert.equal(scale.includes('class '), false); assert.equal(scale.includes('new telemetry subsystem'), false); assert.equal(scale.includes('execute'), false); });
 
-test("decision-intelligence boundary keywords absent",()=>{ const di=read("../lib/decision-intelligence/recommendation-confidence-engine.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","workflow engine","replay engine","telemetry engine"].forEach(k=>assert.equal(di.includes(k), false)); });
+test("decision-intelligence boundary keywords absent",()=>{ const di=read("../lib/decision-intelligence/recommendation-confidence-engine.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","workflow engine","replay engine","telemetry engine"].forEach(k=>assert.equal(containsForbiddenTerm(di, k), false)); });
 
 
-test("m365 recommendation packaging layer keeps outcome-ledger boundaries",()=>{ const m=read("../lib/decision-intelligence/m365-expansion-pack-1.ts"); ["new outcome ledger system","new replay system","new telemetry system"].forEach(k=>assert.equal(m.includes(k), false)); });
+test("m365 recommendation packaging layer keeps outcome-ledger boundaries",()=>{ const m=read("../lib/decision-intelligence/m365-expansion-pack-1.ts"); ["new outcome ledger system","new replay system","new telemetry system"].forEach(k=>assert.equal(containsForbiddenTerm(m, k), false)); });
 
 
-test("ai-economics boundary keywords absent",()=>{ const ai=read("../lib/ai-economics/ai-decision-intelligence-integration.ts")+read("../lib/ai-economics/ai-cost-playbooks.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","approval bypass","direct vendor API mutation","new execution engine","new replay engine","new telemetry engine","new workflow engine"].forEach(k=>assert.equal(ai.includes(k), false)); });
+test("ai-economics boundary keywords absent",()=>{ const ai=read("../lib/ai-economics/ai-decision-intelligence-integration.ts")+read("../lib/ai-economics/ai-cost-playbooks.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","approval bypass","direct vendor API mutation","new execution engine","new replay engine","new telemetry engine","new workflow engine"].forEach(k=>assert.equal(containsForbiddenTerm(ai, k), false)); });
 
 
-test("cross-domain-economics boundary keywords absent",()=>{ const x=read("../lib/cross-domain-economics/cross-domain-recommendation-arbitration.ts")+read("../lib/cross-domain-economics/cross-domain-economic-report.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","autonomous spend control","autonomous licence changes","autonomous model switching","autonomous procurement actions","direct vendor API mutation","approval bypass","execution engine creation","replay engine fork","telemetry engine fork","workflow engine fork","outcome-ledger fork"].forEach(k=>assert.equal(x.includes(k), false)); });
+test("cross-domain-economics boundary keywords absent",()=>{ const x=read("../lib/cross-domain-economics/cross-domain-recommendation-arbitration.ts")+read("../lib/cross-domain-economics/cross-domain-economic-report.ts"); ["AUTO_EXECUTE","AUTO_REMEDIATE","autonomous spend control","autonomous licence changes","autonomous model switching","autonomous procurement actions","direct vendor API mutation","approval bypass","execution engine creation","replay engine fork","telemetry engine fork","workflow engine fork","outcome-ledger fork"].forEach(k=>assert.equal(containsForbiddenTerm(x, k), false)); });
 
-test('economic-forecasting remains non-executing subsystem',()=>{ const ef=read('../lib/economic-forecasting/economic-risk-forecast.ts')+read('../lib/economic-forecasting/spend-forecast-engine.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','autonomous budget mutation','autonomous vendor actions','direct SaaS mutation','approval bypass','execution-engine creation','replay-engine fork','telemetry-engine fork','workflow-engine fork','outcome-ledger fork'].forEach(k=>assert.equal(ef.includes(k), false)); });
+test('economic-forecasting remains non-executing subsystem',()=>{ const ef=read('../lib/economic-forecasting/economic-risk-forecast.ts')+read('../lib/economic-forecasting/spend-forecast-engine.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','autonomous budget mutation','autonomous vendor actions','direct SaaS mutation','approval bypass','execution-engine creation','replay-engine fork','telemetry-engine fork','workflow-engine fork','outcome-ledger fork'].forEach(k=>assert.equal(containsForbiddenTerm(ef, k), false)); });
 
-test('economic-simulation remains non-executing subsystem',()=>{ const sim=read('../lib/economic-simulation/scenario-comparison-engine.ts')+read('../lib/economic-simulation/scenario-risk-simulation.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','autonomous SaaS mutation','autonomous vendor actions','approval bypass','execution engine creation','replay engine forks','telemetry engine forks','workflow engine forks'].forEach(k=>assert.equal(sim.includes(k), false)); });
+test('economic-simulation remains non-executing subsystem',()=>{ const sim=read('../lib/economic-simulation/scenario-comparison-engine.ts')+read('../lib/economic-simulation/scenario-risk-simulation.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','autonomous SaaS mutation','autonomous vendor actions','approval bypass','execution engine creation','replay engine forks','telemetry engine forks','workflow engine forks'].forEach(k=>assert.equal(containsForbiddenTerm(sim, k), false)); });
 
 
-test('economic-memory module remains non-executing and non-mutating',()=>{ const mem=read('../lib/economic-memory/index.ts')+read('../lib/economic-memory/economic-memory-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','budget mutation','vendor mutation','policy mutation','execution engine','replay fork','telemetry fork','workflow fork'].forEach(k=>assert.equal(mem.includes(k), false)); });
+test('economic-memory module remains non-executing and non-mutating',()=>{ const mem=read('../lib/economic-memory/index.ts')+read('../lib/economic-memory/economic-memory-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous procurement','budget mutation','vendor mutation','policy mutation','execution engine','replay fork','telemetry fork','workflow fork'].forEach(k=>assert.equal(containsForbiddenTerm(mem, k), false)); });
 
-test('finops-operationalization remains governed non-mutating',()=>{ const mem=read('../lib/finops-operationalization/index.ts')+read('../lib/finops-operationalization/finops-operationalization-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','direct cloud mutation','resource deletion','resource resize execution','commitment purchase','ServiceNow API mutation','budget mutation','vendor mutation','approval bypass','new execution engine','replay fork','telemetry fork','workflow fork'].forEach(k=>assert.equal(mem.includes(k), false)); });
+test('finops-operationalization remains governed non-mutating',()=>{ const mem=read('../lib/finops-operationalization/index.ts')+read('../lib/finops-operationalization/finops-operationalization-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','direct cloud mutation','resource deletion','resource resize execution','commitment purchase','ServiceNow API mutation','budget mutation','vendor mutation','approval bypass','new execution engine','replay fork','telemetry fork','workflow fork'].forEach(k=>assert.equal(containsForbiddenTerm(mem, k), false)); });
 
 test('executive-economic-governance remains non-mutating',()=>{ const body=read('../lib/executive-economic-governance/index.ts')+read('../lib/executive-economic-governance/executive-economic-governance-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','autonomous budgeting','autonomous procurement','policy mutation','ERP mutation','ServiceNow mutation','cloud mutation','vendor mutation','execution engine','replay fork','telemetry fork','workflow fork'].forEach(k=>assert.equal(containsForbiddenTerm(body, k), false)); });
 test('subsystem boundaries: enterprise decision module remains recommendation-only',()=>{ const body=read('../lib/enterprise-economic-decision/index.ts')+read('../lib/enterprise-economic-decision/enterprise-decision-report.ts'); ['AUTO_EXECUTE','AUTO_REMEDIATE','execution-engine','workflow engine','ui component'].forEach(k=>assert.equal(containsForbiddenTerm(body, k), false)); });

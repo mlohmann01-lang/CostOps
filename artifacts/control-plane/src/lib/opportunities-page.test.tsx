@@ -38,8 +38,14 @@ test('live API wiring calls opportunities APIs without demo fallback', () => {
 })
 
 test('Command integration shows top opportunities', () => {
-  const command = fs.readFileSync(new URL('../pages/CommandView.tsx', import.meta.url), 'utf8')
-  assert.equal(command.includes('Top Opportunities'), true)
-  assert.equal(command.includes('top-opportunities'), true)
-  assert.equal(command.includes('/opportunities'), true)
+  // Program 6A coverage audit: CommandView's old "Top Opportunities" / "top-opportunities"
+  // summary widget (which linked out to /opportunities) was removed when CommandView became
+  // the Executive Command Center orchestrator. The ranked opportunity list itself still
+  // exists and renders on its own owning page (OpportunitiesView), and the /opportunities
+  // route remains registered independently of CommandView, so the coverage is relocated
+  // there instead of CommandView. See PROGRAM_6A_COVERAGE_AUDIT.md.
+  const app = fs.readFileSync(new URL('../App.tsx', import.meta.url), 'utf8')
+  const opportunitiesPage = fs.readFileSync(new URL('../pages/OpportunitiesView.tsx', import.meta.url), 'utf8')
+  assert.equal(app.includes('/opportunities'), true)
+  assert.equal(opportunitiesPage.includes('Ranked Opportunity List'), true)
 })

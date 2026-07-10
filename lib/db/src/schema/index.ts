@@ -1,3 +1,7 @@
+export * from "./aiCapitalAllocation";
+export * from "./aiEconomics";
+export * from "./aiInitiativePortfolio";
+export * from "./aiValueAttribution";
 export * from "./assets";
 export * from "./approvals";
 export * from "./auditEvents";
@@ -7,6 +11,7 @@ export * from "./connectorMetrics";
 export * from "./connectorReadiness";
 export * from "./connectorTrust";
 export * from "./connectors";
+export * from "./decisionAuthority";
 export * from "./distributedLocks";
 export * from "./driftEvents";
 export * from "./economicOperationsJobs";
@@ -69,7 +74,10 @@ export * from "./syncCheckpoints";
 export * from "./technologyCommercialAuthority";
 export * from "./technologyPortfolioAuthority";
 export * from "./tenantOnboarding";
+export * from "./valueRealisation";
 export * from "./workflow";
 export * from "./principalAuthority";
 
 export * from "./authorityQueries";
+export * from "./workflowValueGraph";
+export * from "./microsoftOauthCredentials";

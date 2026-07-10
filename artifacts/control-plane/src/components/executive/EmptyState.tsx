@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import React, { type ReactNode } from 'react'
 import { Link } from 'wouter'
 
 export function EmptyState({ title, description, icon, actionLabel, actionHref }: { title:string; description:string; icon?:ReactNode; actionLabel?:string; actionHref?:string }) {
