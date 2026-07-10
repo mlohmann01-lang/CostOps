@@ -42,7 +42,10 @@ export class ExecutionApprovalService {
     const tamperHash=approvalTamperHash(deterministicApprovalFields(next));
     const [u]=await db.update(executionApprovalsTable).set({ rejectedBy, approvalStatus:"REJECTED", approvalEvidence, tamperHash}).where(eq(executionApprovalsTable.id,id)).returning();
     await emitPlatformEvent({ tenantId:u.tenantId,eventType:"EXECUTION_APPROVAL_REJECTED",severity:"WARNING",source:"governance-approval",correlationId:`approval:${u.id}`,entityType:u.entityType,entityId:u.entityId,message:"Approval rejected",evidence:u }); return u; }
-  async expire(id:number){ const [u]=await db.update(executionApprovalsTable).set({ approvalStatus:"EXPIRED" }).where(and(eq(executionApprovalsTable.id,id),eq(executionApprovalsTable.approvalStatus,"PENDING"))).returning(); return u; }
+  async expire(id:number){ const [r]=await db.select().from(executionApprovalsTable).where(eq(executionApprovalsTable.id,id)).limit(1); if(!r) return undefined;
+    const next={ ...r, approvalStatus:"EXPIRED" };
+    const tamperHash=approvalTamperHash(deterministicApprovalFields(next));
+    const [u]=await db.update(executionApprovalsTable).set({ approvalStatus:"EXPIRED", tamperHash }).where(and(eq(executionApprovalsTable.id,id),eq(executionApprovalsTable.approvalStatus,"PENDING"))).returning(); return u; }
   getApprovalStatus(id:number){ return db.select().from(executionApprovalsTable).where(eq(executionApprovalsTable.id,id)).orderBy(desc(executionApprovalsTable.updatedAt)).limit(1).then((r)=>r[0] ?? null); }
   // Program 14B-R: verify a stored approval row's tamperHash still matches
   // its deterministic fields — returns false if the row was altered outside

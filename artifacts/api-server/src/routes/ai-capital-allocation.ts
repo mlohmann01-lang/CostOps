@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { aiCapitalAllocationAuthorityService } from '../lib/ai-capital-allocation/ai-capital-allocation-service';
 
 const router = Router();
-const tenant = (req: any) => req.__authContext?.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
+const tenant = (req: any) => req.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
 
 router.get('/allocations', async (req, res, next) => {
   try { res.json(await aiCapitalAllocationAuthorityService.listAllocations(tenant(req), req.query as any)); } catch (e) { next(e); }
