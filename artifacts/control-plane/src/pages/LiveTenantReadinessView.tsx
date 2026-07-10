@@ -52,6 +52,6 @@ export default function LiveTenantReadinessView() {
 
     <Card><SectionLabel>Required Fixes Before Live Execution</SectionLabel>{readiness.blockers.length ? <ul>{readiness.blockers.map((blocker) => <li key={blocker}>{blocker}</li>)}</ul> : <p>No live tenant blockers detected.</p>}</Card>
 
-    <Card><SectionLabel>Cross Links</SectionLabel><div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{[['Open Workspace', '/workspace'], ['Open Connectors', '/connectors'], ['Open Execution Center', '/actions'], ['Open Approval Center', '/approvals'], ['Open Evidence Packs', '/evidence'], ['Open Outcome Protection', '/outcome-protection']].map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}</div></Card>
+    <Card><SectionLabel>Cross Links</SectionLabel><div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>{[['Open Overview', '/overview'], ['Open Connectors', '/connectors'], ['Open Execution Center', '/actions'], ['Open Approval Center', '/approvals'], ['Open Evidence Packs', '/evidence'], ['Open Outcome Protection', '/outcome-protection']].map(([label, href]) => <Link key={label} href={href}>{label}</Link>)}</div></Card>
   <div style={{ display: 'none' }}>HEALTHY DEGRADED DISCONNECTED EXPIRED_CREDENTIALS MISSING_SCOPES RATE_LIMITED RECOMMENDATION_EVIDENCE TRUST_EVIDENCE APPROVAL_EVIDENCE PRE_STATE_EVIDENCE POST_STATE_EVIDENCE VERIFICATION_EVIDENCE OUTCOME_EVIDENCE PROTECTION_EVIDENCE DRIFT_EVIDENCE</div></div></Shell>
 }

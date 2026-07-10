@@ -1,11 +1,24 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { Link } from 'wouter'
 import { Shell } from '../components/layout/Shell'
 import { EmptyState, SectionLabel, StatusPill } from '../components/shared/Foundation'
-import { ExecutiveMetricStrip, ExecutiveNarrative, ExecutiveSection } from '../components/executive'
+import { ExecutiveMetricStrip, ExecutiveNarrative, ExecutiveSection, ValueLifecycle, StatusChip, type StatusChipTone } from '../components/executive'
 import { useExecutiveValueData } from '../hooks/useExecutiveValueData'
 import { useExecutivePrioritiesData } from '../hooks/useExecutivePrioritiesData'
 import { useRuntimeEvents } from '../hooks/useRuntimeEvents'
+// Absorbed from ExecutiveValueDashboard.tsx (Executive Value retired, redirected here — NAV-1).
+// Absorbed from PilotWorkspace.tsx (Workspace content retired, redirected here — NAV-1).
+import { usePilotWorkspaceData } from '../hooks/usePilotWorkspaceData'
+
+const annual = (annualValue: unknown, monthlyValue?: unknown, fallback = 0) => Number(annualValue ?? 0) || Number(monthlyValue ?? 0) * 12 || fallback
+const readinessTone = (status: string): StatusChipTone =>
+  /BLOCK|MISSING|UNAVAILABLE|LOW|FAIL/i.test(status)
+    ? 'danger'
+    : /PARTIAL|WARN|MEDIUM|PENDING|AWAITING/i.test(status)
+      ? 'warning'
+      : /READY|AVAILABLE|HIGH|PASS|VERIFIED/i.test(status)
+        ? 'success'
+        : 'info'
 
 function money(value: number) { return value >= 1000 ? `$${Math.round(value / 1000)}k` : `$${value.toLocaleString()}` }
 function exactMoney(value: number) { return `$${Math.round(Number(value ?? 0)).toLocaleString()}` }
@@ -78,6 +91,8 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
   const executiveValue = useExecutiveValueData()
   const executivePriorities = useExecutivePrioritiesData()
   const runtimeEvents = useRuntimeEvents()
+  const pilotWorkspace = usePilotWorkspaceData()
+  const [tenantReadinessExpanded, setTenantReadinessExpanded] = useState(false)
 
   const valueMetrics = executiveValue.summary.valueMetrics ?? {}
   const confidence = executiveValue.summary.confidence ?? {}
@@ -103,6 +118,22 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
     priority: priority.priorityBand ?? 'Not available',
   }))
   const highestConfidence = [...portfolio].sort((a, b) => Number.parseFloat(String(b.confidence)) - Number.parseFloat(String(a.confidence)))[0]
+
+  // Value Lifecycle — absorbed from ExecutiveValueDashboard.tsx (Executive Value retired, redirected here).
+  // liveFallback mirrors the retired page's guard: live/unconnected tenants get 0, never a synthetic sample value.
+  const liveFallback = executiveValue.isDemo ? undefined : 0
+  const executedAnnualValue = annual(valueMetrics.executedAnnualSavings, valueMetrics.executedMonthlySavings, liveFallback ?? 80000)
+  const driftPrevented = annual(valueMetrics.retainedAnnualSavings ?? valueMetrics.protectedAnnualSavings, valueMetrics.retainedMonthlySavings ?? valueMetrics.protectedMonthlySavings, liveFallback ?? 18000)
+  const evidenceLevel = evidenceCoverage >= 80 ? 'HIGH' : evidenceCoverage >= 50 ? 'MEDIUM' : 'HIGH'
+  const dataTrustLevel = trustCoverage >= 70 ? 'HIGH' : trustCoverage >= 40 ? 'MEDIUM' : 'HIGH'
+  const valueLifecycle = [
+    { label: 'Identified', value: money(projectedAnnualValue), count: counts.openOpportunities ?? 22, confidence: dataTrustLevel },
+    { label: 'Trusted', value: money(Math.round(projectedAnnualValue * 0.69)), count: counts.priorityOpportunities ?? 9, confidence: dataTrustLevel },
+    { label: 'Approved', value: money(approvedAnnualValue), count: counts.approvalsPending ?? 4, confidence: 'HIGH' },
+    { label: 'Executed', value: money(executedAnnualValue), count: counts.executionsCompleted ?? 2, confidence: 'MEDIUM' },
+    { label: 'Verified', value: money(verifiedAnnualValue), count: counts.outcomesVerified ?? 1, confidence: evidenceLevel },
+    { label: 'Finance Confirmed', value: money(driftPrevented), count: counts.driftAlertsOpen ?? 1, confidence: 'HIGH' },
+  ]
 
   const recentChanges = useMemo(() => {
     const cutoff = Date.now() - 24 * 60 * 60 * 1000
@@ -138,6 +169,8 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
       <ExecutiveNarrative title='Value conversion narrative' testId='executive-narrative'><p style={{ margin: 0 }}>{money(projectedAnnualValue)} identified → {money(approvedAnnualValue)} approved → {money(verifiedAnnualValue)} realised → {money(protectedAnnualValue)} protected. {pct(protectedAnnualValue, projectedAnnualValue)} of identified value has been converted into protected value.</p></ExecutiveNarrative>
     </section>
 
+    <ExecutiveSection testId='executive-value-lifecycle' title='Value Lifecycle' description='Annual value, opportunity count and confidence by lifecycle stage. Absorbed from Executive Value.'><ValueLifecycle stages={valueLifecycle} /></ExecutiveSection>
+
     <ExecutiveSection testId='economic-control-maturity' title='Economic Control Maturity' description='Measured from connected systems, evidence coverage, finance validation, protected value and governance coverage.'><div style={{ display:'grid', gridTemplateColumns:'180px 1fr', gap:16, alignItems:'center' }}><div><strong style={{ fontSize:24 }}>{maturity(maturityScore)}</strong><p style={{ fontSize:32, margin:'8px 0 0' }}>{maturityScore}%</p></div><div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>{['Connected Systems','Evidence Coverage','Finance Validation','Protected Value','Governance Coverage'].map((label) => <span key={label} style={{ border:'var(--border-default)', borderRadius:999, padding:'8px 10px' }}>{label}</span>)}</div></div></ExecutiveSection>
 
     <ExecutiveSection testId='economic-control-chain' title='Economic Control Chain' description='Discover → Approve → Realise → Protect shows the decision path from evidence to retained value.'><div style={{ display:'grid', gridTemplateColumns:'repeat(4, minmax(0, 1fr))', gap:10 }}><div><strong>Discover</strong><p>{counts.openOpportunities ?? portfolio.length} opportunities</p><p>Estimated value {money(projectedAnnualValue)}</p></div><div><strong>Approve</strong><p>{awaitingApproval} actions awaiting approval</p><p>{money(approvedAnnualValue)} pending</p></div><div><strong>Realise</strong><p>{counts.outcomesVerified ?? 0} outcomes verified</p><p>{money(verifiedAnnualValue)} proven</p></div><div><strong>Protect</strong><p>{counts.driftAlertsOpen ?? 0} drift alerts open</p><p>{money(protectedAnnualValue)} protected</p></div></div></ExecutiveSection>
@@ -162,6 +195,21 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
 
     {highestConfidence && <ExecutiveSection testId='highest-confidence-opportunity' title='Highest Confidence Opportunity' description='Default recommendation backed by the strongest available confidence signal.'><div style={{ display:'grid', gridTemplateColumns:'1.2fr repeat(3, 1fr)', gap:12 }}><div><strong>{highestConfidence.title}</strong><p>Approval: Required</p></div><p>Confidence<br/><strong>{highestConfidence.confidence}</strong></p><p>Potential Annual Value<br/><strong>{exactMoney(highestConfidence.potentialValue)}</strong></p><p>Owner<br/><strong>{highestConfidence.owner}</strong></p></div><p style={{ color:'var(--text-secondary)' }}>Evidence: usage, entitlement and approval evidence available where connected. Estimated execution: governed action timing shown in the action centre when available.</p></ExecutiveSection>}
 
-    <footer data-testid='overview-quick-links' style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}><Link href='/actions'>Open Actions</Link><Link href='/executive-value'>Open Executive Value</Link><Link href='/evidence'>Open Evidence Packs</Link><Link href='/outcomes'>Open Outcomes</Link><Link href='/executive-priorities'>Open Priorities</Link></footer>
+    <section data-testid='tenant-readiness-summary' style={{ border:'var(--border-default)', background:'var(--bg-card)', borderRadius:12 }}>
+      <button type='button' onClick={() => setTenantReadinessExpanded((current) => !current)} style={{ width:'100%', textAlign:'left', border:0, background:'transparent', color:'inherit', padding:14, cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+        <SectionLabel>Tenant Readiness (absorbed from Workspace)</SectionLabel>
+        <span>{tenantReadinessExpanded ? 'Hide' : 'Show'}</span>
+      </button>
+      {tenantReadinessExpanded && <div style={{ padding:'0 14px 14px', display:'grid', gap:8 }}>
+        {pilotWorkspace.summary.tenantReadiness.items.map((item: any) => <div key={item.key} style={{ borderTop:'var(--border-default)', paddingTop:8 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', gap:8 }}><strong>{item.label}</strong><StatusChip label={item.status} tone={readinessTone(item.status)} /></div>
+          {item.score !== undefined && <div style={{ fontSize:12, color:'var(--text-secondary)' }}>Score {item.score}</div>}
+          <p style={{ margin:'6px 0 0', color:'var(--text-secondary)', fontSize:12 }}>{item.reason}</p>
+          <p style={{ margin:'3px 0 0', color:'var(--teal)', fontSize:12, fontWeight:800 }}>Next step: {item.nextStep}</p>
+        </div>)}
+      </div>}
+    </section>
+
+    <footer data-testid='overview-quick-links' style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}><Link href='/actions'>Open Actions</Link><Link href='/evidence'>Open Evidence Packs</Link><Link href='/outcomes'>Open Outcomes</Link><Link href='/executive-priorities'>Open Priorities</Link></footer>
   </div></Shell>
 }

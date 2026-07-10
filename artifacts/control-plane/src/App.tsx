@@ -239,8 +239,12 @@ function WorkspaceRoute() {
   const session = getSession()
   const runtime = useRuntimeContext()
   if (!session) return <Redirect to="/login" />
+  // Environment-selection gating is preserved — RequireRuntime redirects here when no
+  // environment is selected yet, so this must keep rendering the picker in that case.
+  // Once an environment IS selected, the retired PilotWorkspace content page redirects
+  // to Overview (NAV-1 — Tenant Readiness content absorbed into CommandView).
   if (!runtime.hasSelectedEnvironment) return <WorkspaceSelection />
-  return <PilotWorkspace />
+  return <Redirect to="/overview" />
 }
 
 function ConnectorsRoute() {
@@ -489,7 +493,7 @@ function Router() {
       <Route path="/workspace" component={WorkspaceRoute} />
       <Route path="/overview" component={CommandRoute} />
       <Route path="/command"><RedirectRoute to="/overview" /></Route>
-      <Route path="/pilot-workspace" component={PilotWorkspaceRoute} />
+      <Route path="/pilot-workspace"><RedirectRoute to="/overview" /></Route>
       <Route path="/discovery/:domain" component={DiscoveryRoute} />
       <Route path="/discovery" component={DiscoveryRoute} />
       <Route path="/protection/:section" component={ProtectionRoute} />
@@ -497,7 +501,7 @@ function Router() {
       <Route path="/shadow-it-exposure"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/shadow-it"><RedirectRoute to="/technology-portfolio?tab=shadow-it" /></Route>
       <Route path="/saas-rationalisation"><RedirectRoute to="/technology-portfolio?tab=saas" /></Route>
-      <Route path="/ai-governance"><RedirectRoute to="/governance?tab=ai" /></Route>
+      <Route path="/ai-governance"><RedirectRoute to="/executive-risk" /></Route>
       <Route path="/ai-economic-command/recommendations/:id" component={AIEconomicCommandRoute} />
       <Route path="/ai-economic-command" component={AIEconomicCommandRoute} />
       <Route path="/economic-outcomes" component={EconomicOutcomeDashboardRoute} />
@@ -516,15 +520,15 @@ function Router() {
       <Route path="/executive-proof-packs" component={ExecutiveProofPacksRoute} />
       <Route path="/governed-actions" component={GovernedExecutionRoute} />
       <Route path="/governed-execution" component={GovernedExecutionRoute} />
-      <Route path="/governance" component={GovernanceRoute} />
-      <Route path="/execution" component={ExecutionConsolidatedRoute} />
+      <Route path="/governance"><RedirectRoute to="/executive-risk" /></Route>
+      <Route path="/execution"><RedirectRoute to="/actions" /></Route>
       <Route path="/platform/:section" component={PlatformRoute} />
       <Route path="/platform" component={PlatformRoute} />
       <Route path="/runtime" component={RuntimeHealthRoute} />
       <Route path="/evidence" component={EvidenceRoute} />
       <Route path="/:domain/command" component={CommandRoute} />
-      <Route path="/:domain/governance" component={GovernanceRoute} />
-      <Route path="/:domain/execution" component={ExecutionRoute} />
+      <Route path="/:domain/governance"><RedirectRoute to="/executive-risk" /></Route>
+      <Route path="/:domain/execution"><RedirectRoute to="/actions" /></Route>
       <Route path="/:domain/intelligence" component={IntelligenceRoute} />
       <Route path="/outcomes" component={OutcomesRoute} />
       <Route path="/outcome-protection" component={OutcomeProtectionRoute} />
@@ -534,13 +538,13 @@ function Router() {
       <Route path="/contract-intelligence"><RedirectRoute to="/technology-portfolio?tab=contracts" /></Route>
       <Route path="/utilization-intelligence" component={UtilizationIntelligenceRoute} />
       <Route path="/executive-priorities" component={ExecutivePrioritiesRoute} />
-      <Route path="/financial-governance" component={FinancialGovernanceRoute} />
-      <Route path="/executive-value" component={ExecutiveValueRoute} />
+      <Route path="/financial-governance"><RedirectRoute to="/overview" /></Route>
+      <Route path="/executive-value"><RedirectRoute to="/overview" /></Route>
       <Route path="/opportunities" component={OpportunitiesRoute} />
       <Route path="/renewals" component={RenewalsRoute} />
       <Route path="/ownership-accountability" component={OwnershipAccountabilityRoute} />
       <Route path="/ownership" component={OwnershipRoute} />
-      <Route path="/governance-graph"><RedirectRoute to="/governance?tab=graph" /></Route>
+      <Route path="/governance-graph"><RedirectRoute to="/executive-risk" /></Route>
       <Route path="/executive-risk" component={ExecutiveRiskRoute} />
       <Route path="/drift" component={ProtectionRoute} />
       <Route path="/drift-monitor" component={ProtectionRoute} />

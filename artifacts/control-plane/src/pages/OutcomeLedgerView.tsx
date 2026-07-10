@@ -25,7 +25,7 @@ export default function OutcomeLedgerView() {
   if (isEmptyLive) return <Shell><div style={{ padding: 20 }}><DataStateBanner state={dataState ?? 'NO_DATA'} /><EmptyState title='No Outcomes Recorded' description='No outcomes have been recorded yet for this tenant. Outcomes will appear here as projected, approved, executed, verified, finance-confirmed, protected, and value leakage evidence accrues.' /></div></Shell>
   const summary = data.proofSummary ?? {}
   const selected = data.ledger.find((item: any) => item.id === evidenceId)
-  return <Shell><div style={{ padding: 20 }}><h1>Outcome Ledger</h1>{dataState && dataState !== 'LIVE' && <DataStateBanner state={dataState} />}<a href='/evidence-packs'>Generate Evidence Pack</a> · <a href='/executive-value'>Executive Value Dashboard</a><p>What value has actually been realised and protected? Financial assets under governance across projected, approved, executed, verified, finance-confirmed, protected and leaked value.</p>
+  return <Shell><div style={{ padding: 20 }}><h1>Outcome Ledger</h1>{dataState && dataState !== 'LIVE' && <DataStateBanner state={dataState} />}<a href='/evidence-packs'>Generate Evidence Pack</a> · <a href='/overview'>Executive Value Dashboard</a><p>What value has actually been realised and protected? Financial assets under governance across projected, approved, executed, verified, finance-confirmed, protected and leaked value.</p>
     <ExecutiveMetricStrip columns='repeat(6, 1fr)' metrics={[
       { label: 'Projected', value: money(summary.projectedMonthlySavings ?? data.stats[0]) },
       { label: 'Approved', value: money(summary.approvedMonthlySavings) },
