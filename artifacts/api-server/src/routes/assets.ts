@@ -5,7 +5,7 @@ import { AssetRegistryService } from "../lib/assets/asset-registry-service";
 const router = Router();
 const assets = new AssetRegistryService();
 const evidence = new EvidenceRegistryV2Service();
-const tenant = (req: any) => String(req.__authContext?.tenantId ?? req.tenantId ?? req.header?.("x-tenant-id") ?? req.query.tenantId ?? req.body?.tenantId ?? "default");
+const tenant = (req: any) => String(req.tenantId ?? req.__authContext?.tenantId ?? req.header?.("x-tenant-id") ?? req.query.tenantId ?? req.body?.tenantId ?? "default");
 const send = (fn: any) => async (req: any, res: any) => { try { const out = await fn(req, res); if (!res.headersSent) res.json(out); } catch (e: any) { res.status(400).json({ error: String(e?.message ?? e) }); } };
 
 router.get("/", send((req: any) => assets.listAssets(tenant(req), { assetType: req.query.assetType, status: req.query.status })));

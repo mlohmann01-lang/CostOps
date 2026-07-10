@@ -26,7 +26,8 @@
 
 import { randomUUID } from 'node:crypto'
 import { MicrosoftOAuthService } from '../../microsoft-auth/microsoft-oauth-service'
-import { EncryptedMicrosoftTokenStore } from '../../microsoft-auth/microsoft-token-store'
+import { createMicrosoftTokenStore } from '../../microsoft-auth/microsoft-token-db-store'
+import { M365GraphClient } from './m365-graph-client'
 import { checkExposureReviewScopes, defaultExposureReviewScopes } from './m365-exposure-scope-guard'
 import { m365DiscoveryService } from './m365-discovery-service'
 import { m365SnapshotRepository } from './m365-snapshot-repository'
@@ -116,7 +117,7 @@ const oauthService = new MicrosoftOAuthService({
   clientId: process.env.M365_CLIENT_ID ?? '',
   clientSecret: process.env.M365_CLIENT_SECRET,
   redirectUri: process.env.EXPOSURE_REVIEW_REDIRECT_URI ?? 'http://localhost:3000/exposure-review/connect',
-  tokenStore: new EncryptedMicrosoftTokenStore(),
+  tokenStore: createMicrosoftTokenStore(),
 })
 
 export function isExposureReviewM365Configured(): boolean {
@@ -232,7 +233,24 @@ export async function runExposureReviewDiscovery(tenantId: string): Promise<Expo
   await discoveryRunStore.upsert(run)
 
   try {
-    const discovery = await m365DiscoveryService.discover({ tenantId })
+    // Use the consented connection's own stored credentialRef/token — never the
+    // server-wide M365 env configuration — so discovery queries the Microsoft
+    // tenant this review session actually connected to, not whatever tenant
+    // happens to be configured server-side (or nothing, if none is).
+    const client = connection.credentialRef
+      ? new M365GraphClient({
+          tenantId,
+          tokenProvider: async () => {
+            try {
+              const accessToken = await oauthService.getAccessTokenForTenant({ tenantId, credentialRef: connection.credentialRef! })
+              return { accessToken }
+            } catch (error) {
+              return { error: (error as { code?: string })?.code ?? 'MICROSOFT_AUTH_FAILED' }
+            }
+          },
+        })
+      : undefined
+    const discovery = await m365DiscoveryService.discover({ tenantId, client })
     const failed = discovery.status === 'FAILED'
     const partial = discovery.status === 'PARTIAL'
     const stepStatus: ExposureReviewStepState = failed ? 'FAILED' : 'COMPLETED'

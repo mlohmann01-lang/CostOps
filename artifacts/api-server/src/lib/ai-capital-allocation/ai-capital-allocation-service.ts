@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { AICapitalAllocationRepository, aiCapitalAllocationRepository } from './ai-capital-allocation-repository';
+import { aiInitiativePortfolioService } from '../ai-initiative-portfolio/ai-initiative-portfolio-service';
 import type { AICapitalAllocation, AllocationVerdict, ExecutiveAllocationSummary, PortfolioAllocationSummary, RecommendedAction } from './ai-capital-allocation-types';
 
 export interface ResolvedInitiativeLineage {
@@ -221,4 +222,30 @@ export class AICapitalAllocationAuthorityService {
   }
 }
 
-export const aiCapitalAllocationAuthorityService = new AICapitalAllocationAuthorityService();
+// Wires capital allocation to AIInitiativePortfolioService's lineage (Workstream 6):
+// without this, resolveInitiativeLineage/listInitiatives are undefined and every
+// evaluation falls into the "no lineage available" INSUFFICIENT_DATA path even when
+// the initiative has real portfolio/economics/attribution history.
+export const aiCapitalAllocationAuthorityService = new AICapitalAllocationAuthorityService(aiCapitalAllocationRepository, {
+  async resolveInitiativeLineage(tenantId, initiativeId) {
+    const initiative = await aiInitiativePortfolioService.getInitiative(tenantId, initiativeId);
+    if (!initiative) return undefined;
+    const evaluation = await aiInitiativePortfolioService.evaluateInitiative(tenantId, initiativeId);
+    return {
+      initiativeId,
+      initiativeName: initiative.name,
+      portfolioVerdict: evaluation.portfolioVerdict,
+      economicVerdict: evaluation.economicVerdict,
+      attributedValue: evaluation.attributedValue,
+      verifiedValue: evaluation.verifiedValue,
+      protectedValue: evaluation.protectedValue,
+      totalSpend: evaluation.totalSpend,
+      valueToCostRatio: evaluation.valueToCostRatio,
+      confidence: evaluation.confidence,
+    };
+  },
+  async listInitiatives(tenantId) {
+    const initiatives = await aiInitiativePortfolioService.listInitiatives(tenantId);
+    return initiatives.map((initiative) => ({ id: initiative.id, name: initiative.name }));
+  },
+});

@@ -26,6 +26,7 @@ const tests = [
   '../artifacts/control-plane/src/lib/trust-resolution-actions.test.tsx',
   '../artifacts/control-plane/src/lib/trust-accountability.test.tsx',
   '../artifacts/control-plane/src/lib/outcome-verification-evidence.test.tsx',
+  '../artifacts/control-plane/src/lib/canonical-outcome-ledger-live-fetch.test.tsx',
   '../artifacts/control-plane/src/lib/vendor-intelligence.test.tsx',
   '../artifacts/control-plane/src/lib/opportunities-page.test.tsx',
   '../artifacts/control-plane/src/lib/renewals-page.test.tsx',

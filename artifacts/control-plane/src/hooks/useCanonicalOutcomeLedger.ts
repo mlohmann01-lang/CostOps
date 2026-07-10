@@ -60,7 +60,7 @@ function evidenceIdsForStage(timeline: any[], stageNames: string[]): string[] {
     .filter((id): id is string => typeof id === 'string' && id.length > 0)
 }
 
-function normalizeCanonicalOutcomeLedger(payload: unknown): { records: OutcomeRecord[]; events: OutcomeLedgerEvent[] } {
+export function normalizeCanonicalOutcomeLedger(payload: unknown): { records: OutcomeRecord[]; events: OutcomeLedgerEvent[] } {
   const proofs: any[] = Array.isArray((payload as any)?.proofs) ? (payload as any).proofs : []
   const records: OutcomeRecord[] = []
   const events: OutcomeLedgerEvent[] = []

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { workflowValueGraphService } from '../lib/workflow-value-graph/workflow-value-graph-service';
 
 const router = Router();
-const tenant = (req: any) => req.__authContext?.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
+const tenant = (req: any) => req.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
 
 router.get('/workflows', async (req, res, next) => {
   try { res.json(await workflowValueGraphService.listWorkflows(tenant(req), req.query as any)); } catch (e) { next(e); }

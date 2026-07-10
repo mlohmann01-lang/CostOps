@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { aiEconomicsAuthorityService } from '../lib/ai-economics/ai-economics-service';
 
 const router = Router();
-const tenant = (req: any) => req.__authContext?.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
+const tenant = (req: any) => req.tenantId ?? req.headers['x-tenant-id'] ?? req.query.tenantId ?? 'default';
 
 router.get('/profiles', async (req, res, next) => {
   try { res.json(await aiEconomicsAuthorityService.listEconomicProfiles(tenant(req), req.query as any)); } catch (e) { next(e); }
