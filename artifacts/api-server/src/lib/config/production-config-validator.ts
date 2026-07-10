@@ -15,6 +15,7 @@ export type ProductionConfig = {
   liveMutationEnabled?: string;
   authRequired?: string;
   jwtSecret?: string;
+  microsoftTokenEncryptionKey?: string;
   allowedOrigins?: string;
   demoMode?: string;
   previewMode?: string;
@@ -33,6 +34,7 @@ function envToConfig(): ProductionConfig {
     liveMutationEnabled: process.env['LIVE_MUTATION_ENABLED'],
     authRequired: process.env['AUTH_REQUIRED'],
     jwtSecret: process.env['JWT_SECRET'],
+    microsoftTokenEncryptionKey: process.env['MICROSOFT_TOKEN_ENCRYPTION_KEY'],
     allowedOrigins: process.env['ALLOWED_ORIGINS'],
     demoMode: process.env['DEMO_MODE'],
     previewMode: process.env['PREVIEW_MODE'],
@@ -76,6 +78,10 @@ export function validateProductionConfig(config: ProductionConfig = envToConfig(
 
     if (!config.jwtSecret || config.jwtSecret.length < 32) {
       errors.push('FAIL_CLOSED: JWT_SECRET missing or too short for production');
+    }
+
+    if (!config.microsoftTokenEncryptionKey || config.microsoftTokenEncryptionKey.length < 32) {
+      errors.push('FAIL_CLOSED: MICROSOFT_TOKEN_ENCRYPTION_KEY missing or too short for production — Microsoft/M365 credentials would be encrypted with an insecure default key');
     }
 
     if (!config.allowedOrigins || config.allowedOrigins === '*') {

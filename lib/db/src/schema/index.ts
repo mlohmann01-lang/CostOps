@@ -80,3 +80,4 @@ export * from "./principalAuthority";
 
 export * from "./authorityQueries";
 export * from "./workflowValueGraph";
+export * from "./microsoftOauthCredentials";

@@ -1,5 +1,16 @@
 import {Router} from 'express';import {GovernedExecutionService,runGovernedExecutionExpansionAudit} from '../lib/governed-execution';
+import {requireCapability} from '../middleware/security-guards';
+import {recordAuditEvent} from '../lib/audit/audit-service.js';
+import type {AuditEventType} from '@workspace/db';
 const router=Router();const svc=new GovernedExecutionService();const tenant=(req:any)=>req.tenantId??req.header('x-tenant-id')??'default';
+// Audit trail for the approve/execute/cancel actions on governed execution plans —
+// the most sensitive action path in the system. Awaited (not fire-and-forget) so the
+// record is committed before the response is sent; recordAuditEvent never throws
+// (it logs and swallows internally), so this can never fail the request.
+async function auditGovernedExecutionAction(req:any,eventType:AuditEventType,planId:string,outcome:'SUCCESS'|'FAILURE'|'BLOCKED',payload:Record<string,unknown> = {}){
+  const auth=req.__authContext??{};
+  await recordAuditEvent({tenantId:String(tenant(req)),actorId:String(auth.userId??'unknown'),actorRole:String(auth.role??'VIEWER'),eventType,resourceType:'governed_execution_plan',resourceId:planId,requestId:req.id?String(req.id):undefined,payload,outcome});
+}
 router.post('/plans',async(req:any,res,next)=>{try{res.json(await svc.createExecutionPlan({...(req.body??{}),tenantId:tenant(req)}))}catch(e){next(e)}});
 router.post('/plans/from-recommendation/:recommendationId',async(req:any,res,next)=>{try{res.json(await svc.createPlanFromRecommendation(tenant(req),req.params.recommendationId))}catch(e){next(e)}});
 router.post('/plans/from-portfolio-recommendation/:portfolioRecommendationId',async(req:any,res,next)=>{try{res.json(await svc.createPlanFromPortfolioRecommendation(tenant(req),req.params.portfolioRecommendationId))}catch(e){next(e)}});
@@ -17,9 +28,9 @@ router.post('/plans/:id/generate-rollback',async(req:any,res,next)=>{try{res.jso
 router.post('/plans/:id/dry-run',async(req:any,res,next)=>{try{res.json(await svc.runDryRun(tenant(req),req.params.id,req.body??{}))}catch(e){next(e)}});
 router.post('/plans/:id/evaluate-gates',async(req:any,res,next)=>{try{res.json(await svc.evaluateExecutionGates(tenant(req),req.params.id,req.body??{}))}catch(e){next(e)}});
 router.post('/plans/:id/submit-approval',async(req:any,res,next)=>{try{res.json(await svc.submitForApproval(tenant(req),req.params.id))}catch(e){next(e)}});
-router.post('/plans/:id/approve',async(req:any,res,next)=>{try{res.json(await svc.markApproved(tenant(req),req.params.id,req.body?.approvedByUserId??req.body?.approvedBy??'approver'))}catch(e){next(e)}});
-router.post('/plans/:id/execute',async(req:any,res,next)=>{try{res.json(await svc.runExecution(tenant(req),req.params.id,req.body??{}))}catch(e){next(e)}});
-router.post('/plans/:id/cancel',async(req:any,res,next)=>{try{res.json(await svc.cancelExecution(tenant(req),req.params.id,req.body?.reason??'Cancelled'))}catch(e){next(e)}});
+router.post('/plans/:id/approve',requireCapability('APPROVE_ACTIONS'),async(req:any,res,next)=>{const approvedBy=req.body?.approvedByUserId??req.body?.approvedBy??'approver';try{const result=await svc.markApproved(tenant(req),req.params.id,approvedBy);await auditGovernedExecutionAction(req,'APPROVAL_GRANTED',req.params.id,'SUCCESS',{approvedBy});res.json(result)}catch(e:any){await auditGovernedExecutionAction(req,'APPROVAL_GRANTED',req.params.id,'FAILURE',{approvedBy,error:String(e?.message??e)});next(e)}});
+router.post('/plans/:id/execute',requireCapability('APPROVE_ACTIONS'),async(req:any,res,next)=>{try{const run=await svc.runExecution(tenant(req),req.params.id,req.body??{});await auditGovernedExecutionAction(req,run.status==='COMPLETED'?'EXECUTION_COMPLETED':'EXECUTION_FAILED',req.params.id,run.status==='COMPLETED'?'SUCCESS':'BLOCKED',{runId:run.id,status:run.status,failureReason:run.failureReason});res.json(run)}catch(e:any){await auditGovernedExecutionAction(req,'EXECUTION_FAILED',req.params.id,'FAILURE',{error:String(e?.message??e)});next(e)}});
+router.post('/plans/:id/cancel',requireCapability('APPROVE_ACTIONS'),async(req:any,res,next)=>{const reason=req.body?.reason??'Cancelled';try{const result=await svc.cancelExecution(tenant(req),req.params.id,reason);await auditGovernedExecutionAction(req,'EXECUTION_CANCELLED',req.params.id,'SUCCESS',{reason});res.json(result)}catch(e:any){await auditGovernedExecutionAction(req,'EXECUTION_CANCELLED',req.params.id,'FAILURE',{reason,error:String(e?.message??e)});next(e)}});
 router.post('/plans/:id/verify',async(req:any,res,next)=>{try{res.json(await svc.verifyExecution(tenant(req),req.params.id,req.body?.runId))}catch(e){next(e)}});
 router.post('/snapshot/build',async(req:any,res,next)=>{try{res.json(await svc.buildExecutionSnapshot(tenant(req)))}catch(e){next(e)}});
 router.get('/snapshot/latest',async(req:any,res,next)=>{try{res.json((await svc.repo.listSnapshots(tenant(req))).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0])}catch(e){next(e)}});
