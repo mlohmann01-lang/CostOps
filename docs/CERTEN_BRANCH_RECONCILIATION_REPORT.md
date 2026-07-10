@@ -357,4 +357,115 @@ Basis:
 
 Not verified as part of this pass (recorded, not blocking): CI conclusion on the final commit (`d8ab059`) had not yet completed as of report authoring — confirm green before merging. PR #126 remains draft and was not touched. No NAV-1 work was introduced. `main` was not merged or modified.
 
+## 14. PR #127 — Merge and Canonical Main Verification
+
+### Merge record
+
+| Field | Value |
+|---|---|
+| PR | #127 |
+| Merge method | merge commit |
+| Merged head | `acc39d0` (final review-thread-closure commit; no new commits/comments appeared between final verification and merge) |
+| Resulting `main` commit SHA | `3596b8ca39e2371750bba91f4d61830300feb7ae` |
+| Merge/close timestamp | 2026-07-10T07:05:24Z |
+| Pre-merge gate | All 4 required checks (`docker`, `typecheck`, `typecheck-and-tests`, `tests`) green; all 5 P1/P2 threads resolved; `mergeable_state: clean` confirmed immediately before merge |
+
+Local `main` was fast-forwarded cleanly from `22d1a9f` to `3596b8c` (91 commits: `git fetch origin main && git checkout main && git pull --ff-only origin main`). `git status --short` is empty; `git rev-parse HEAD` matches `origin/main` exactly.
+
+### Canonical-branch content verification
+
+Every required item was confirmed present in merged `main` by direct source inspection (grep/find), not inferred:
+
+| Item | Verified via |
+|---|---|
+| Full live Replit product capability (fervent-turing-j4ce96) | fervent-turing tip (`3bd9a00b`) confirmed an ancestor of `3596b8c` |
+| Authority Catalog, Information Governance Authority, Tenant Isolation Verification Authority | `lib/authorityCatalog`, `lib/informationGovernance`, `lib/tenantIsolation` present, backed by passing tests |
+| Economic Control Chain, Outcome Finance, Exposure Review | `economicControlChain/`, `outcomeFinance/`, `exposureReport/` present |
+| Landing page, Workspace Control Center, Executive Value, Programs 1–15+ | `website/defaultLandingPage.ts`, workspace/pilot pages, `program1`–`program5` test suites present |
+| Governed-execution RBAC fixes | `requireCapability('APPROVE_ACTIONS')` + awaited `auditGovernedExecutionAction()` on approve/execute/cancel in `routes/governed-execution.ts` |
+| Tenant-scoped DB-backed Microsoft credential persistence | `microsoft-token-db-store.ts`, `microsoftOauthCredentials` schema, `createMicrosoftTokenStore()` wired into `production-connectors.ts` |
+| Explicit fixture isolation | Entra/M365 clients require `config?.useFixtures`; missing credentials → `BLOCKED` |
+| Entra production gating | `exchangeCodeForClaims()` throws in production instead of routing through the JWT mock path |
+| Awaited governed-execution audit writes | confirmed in the same route file |
+| Cross-tenant route protections | 9-file `tenant(req)` ordering fix + audit-middleware fix, all present |
+| Corrected tamper-hash behaviour | `expire()` + `requestApproval()` both normalize deterministic fields before hashing |
+| Exposure Review credential wiring | `m365-exposure-review-service.ts` builds a connection-scoped `M365GraphClient` via `createMicrosoftTokenStore()` |
+| Lineage-resolver wiring | `aiCapitalAllocationAuthorityService` constructed with real `resolveInitiativeLineage`/`listInitiatives` resolvers |
+
+### Post-merge build verification (Step 5)
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @workspace/db build` | ✅ clean |
+| `pnpm --filter @workspace/api-zod build` | ✅ clean |
+| `pnpm --filter @workspace/api-client-react build` | ✅ clean |
+| `pnpm --filter @workspace/api-server build` | ✅ clean |
+| `pnpm --filter @workspace/control-plane typecheck` | ✅ clean |
+| `pnpm --filter @workspace/control-plane build` | ✅ clean |
+
+### Post-merge targeted tests (Step 6)
+
+Run against merged `main`, using a real local PostgreSQL 16 instance for all DB-backed suites:
+
+| Category | Test file(s) | Result |
+|---|---|---|
+| Governed-execution RBAC | `governed-execution-rbac.test.ts` | ✅ 8/8 |
+| Audit persistence | `governed-execution-audit-trail.test.ts` (DB) | ✅ 2/2 |
+| Microsoft credential persistence | `microsoft-token-store-persistence.test.ts`, `microsoft-token-db-store.test.ts` (DB) | ✅ 5/5, 2/2 |
+| Encryption-key validation | `encryption-key-fail-closed.test.ts` | ✅ 6/6 (see fix below) |
+| Fixture isolation | `m365-beta-e2e-fixture.test.ts`, `m365-exposure-review-scope-guard.test.ts` (DB) | ✅ 1/1 (+1 skipped by design), 20/20 |
+| Entra production gating | `microsoft-entra-stub-gating.test.ts`, `entra-live-integration.test.ts`, `m365-entra-live-audit.test.ts` (DB) | ✅ 3/3, 2/2, 1/1 |
+| Cross-tenant admin routing | `cross-tenant-admin-routing.test.ts`, `audit-middleware-cross-tenant.test.ts` (DB) | ✅ 21/21, 2/2 |
+| Tamper hash and expiry | `tamper-hash-expiry.test.ts` (DB) | ✅ 6/6 |
+| Exposure Review credential flow | `m365-exposure-review-token-wiring.test.ts` (DB) | ✅ 3/3 |
+| Outcome Ledger live fetch | `canonical-outcome-ledger-live-fetch.test.tsx` (control-plane suite) | ✅ 11/11 |
+| Lineage resolution | `ai-capital-allocation-lineage-wiring.test.ts` (DB) | ✅ 3/3 |
+| Route registration | `app-shell-routes.test.ts` (control-plane suite) | ✅ pass |
+| Workspace/environment selection | `pilot-workspace.test.tsx` (control-plane suite) | ✅ pass |
+| Authority pages | `authorityCatalog`, `informationGovernance`, `tenantIsolation`, `databaseTenantIsolation` suites | ✅ all pass |
+| Full control-plane suite | `pnpm --filter @workspace/control-plane test` | ✅ 746/748 — 2 known pre-existing NAV-1 label mismatches (unchanged, see below) |
+
+**Fix made during this verification pass:** `encryption-key-fail-closed.test.ts`'s Scenario 3 constructed `new EncryptedMicrosoftTokenStore()` directly in production mode with no backing store — this predates (and directly conflicts with) this reconciliation's own fail-closed-in-production hardening of that constructor (added in `e21538a`). This test was never exercised by CI (`tests`/`typecheck-and-tests` workflows don't run the general pattern-test suite over this file), so the conflict was invisible until this pass's targeted verification. Fixed by passing an explicit `new InMemoryMicrosoftCredentialStore()` backing store, since the test's actual intent (encrypt/decrypt round-trip with a real key) is orthogonal to the fail-closed guard it was incidentally tripping. This is a direct, necessary consequence of validating this reconciliation's own credential-store hardening, not an unrelated fix.
+
+**Known pre-existing failures carried forward (unchanged by this pass):**
+
+| Test | Symptom | Classification |
+|---|---|---|
+| `executive-ui-components.test.tsx` — "sidebar keeps enterprise navigation groups and key routes" | Sidebar's `/overview` entry is now labelled "Executive Command Center" (aliased from `/overview`), not the literal string `'Overview'` this test expects | `PRE_EXISTING` — NAV-1 label mismatch, documented in §7; out of scope for this pass (no NAV-1 work permitted) |
+| `outcome-protection-ui.test.tsx` — "Cross-links exist" | Page's footer link now reads "Open Action Center" (post NAV-1-precursor consolidation) where this test still expects "Open Execution Center" | `PRE_EXISTING` — same class, documented in §7 |
+| `production-connectors.test.ts`, `production-connectors-audit.test.ts`, `live-tenant-readiness-audit.test.ts`, `approval-workflow-execution-request.test.ts` | See §12 | `PRE_EXISTING_MAIN` + `PRE_EXISTING_LIVE_BRANCH` (unchanged) |
+| `ai-initiative-portfolio-ai2.test.ts` | Flaky, non-deterministic subset failures | `ENVIRONMENTAL` (unchanged) |
+
+None of these are regressions introduced by PR #127 or this verification pass; none touch routes, navigation, or product surfaces in violation of this pass's rules.
+
+### Replit alignment check (Step 7)
+
+This session has no direct shell access to a separate Replit environment. Read-only inspection was performed via the Replit MCP `ask_question` tool against the "SaaS Outcome Engine" Repl (the app whose current branch matched the live product branch name), explicitly instructed to run the requested read-only git commands and report literal output, with no modification.
+
+| Command | Reported output |
+|---|---|
+| `git fetch origin` | Objects fetched successfully; the sandbox's restricted-agent policy blocked the local-ref update step (a known Replit main-agent restriction on `git fetch`/ref-updating operations) |
+| `git status --short` | (empty — clean working tree) |
+| `git branch --show-current` | `claude/fervent-turing-j4ce96` |
+| `git rev-parse HEAD` | `3bd9a00bd105c7a8a3934bade4e928bb36d2cf7e` |
+| `git rev-parse origin/main` | `22d1a9f43db661decdead40c053d95a30da91251` (stale — reflects the last successful ref update, from before PR #127 merged) |
+
+Independently, from this session, `3bd9a00bd105c7a8a3934bade4e928bb36d2cf7e` was confirmed (a) the current tip of `origin/claude/fervent-turing-j4ce96` and (b) an ancestor of merged `main` (`3596b8c`) via `git merge-base --is-ancestor`.
+
+**Classification: B — Replit is behind merged main on the former live branch.** Its working tree is clean with no local/unpushed changes and no divergence — its current commit content is already fully absorbed into `main`; it simply hasn't fetched/checked out `main` yet.
+
+**Recommended safe synchronisation action (not performed):** in the Replit shell, `git fetch origin && git checkout main && git pull --ff-only origin main`. Because the working tree is clean and Replit's HEAD is already an ancestor of `main`, this is a pure fast-forward with no local work at risk — but per this task's rules, no reset/checkout/rebase was performed automatically. This recommendation requires explicit user approval before execution.
+
+### PR #126 disposition (Step 8)
+
+Comment posted to PR #126 stating: its Phase 0 route-inventory analysis remains useful; its code is based on pre-reconciliation `main` (base `22d1a9f`) and several of its "does not exist anywhere" findings (Authority Catalog, Information Governance Authority, Tenant Isolation Verification Authority, Outcome Finance page) are no longer accurate against the new canonical `main`; NAV-1 must be redone from the new canonical `main`, not rebased onto it; the PR should not be merged or rebased. PR #126 remains open and draft; no code or state changes were made to it.
+
+### Canonical-branch declaration
+
+`main` at `3596b8ca39e2371750bba91f4d61830300feb7ae` is declared the canonical Certen product branch: it contains the full live Replit product capability plus all accepted readiness/security fixes from this reconciliation, all 6 required builds/typechecks are clean, all 14 targeted post-merge test categories pass (one legitimate encryption-key test conflict found and fixed during this pass), and the only test failures present are previously-documented, pre-existing, non-blocking, and unrelated to routes/navigation changes (none of which were made in this pass).
+
+## 15. Final Verdict
+
+**CANONICAL_MAIN_ESTABLISHED**
+
 **This verdict is for human review and merge approval — this pass does not merge PR #127.**

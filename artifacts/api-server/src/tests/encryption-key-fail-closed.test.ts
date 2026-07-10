@@ -71,7 +71,10 @@ test("[Program 14B-R / Scenario 1, end-to-end] EncryptedMicrosoftTokenStore fail
 test("[Program 14B-R / Scenario 3] encryption/decryption still functions correctly when a key is present (existing credential behaviour preserved)", async () => {
   const mod = await import("../lib/microsoft-auth/microsoft-token-store");
   await withEnv({ NODE_ENV: "production", MICROSOFT_TOKEN_ENCRYPTION_KEY: "a-real-production-secret-value" }, async () => {
-    const store = new mod.EncryptedMicrosoftTokenStore();
+    // A durable backing store must be supplied explicitly in production (see the
+    // regression test above and microsoft-token-store.ts) — this exercises the
+    // encrypt/decrypt path itself, not the fail-closed constructor guard.
+    const store = new mod.EncryptedMicrosoftTokenStore(undefined, new mod.InMemoryMicrosoftCredentialStore());
     const connection = await store.store(
       { tenantId: "t1", userPrincipalName: "user@tenant.com", scopes: ["read"] } as any,
       { accessToken: "secret-access-token", refreshToken: "secret-refresh-token", expiresAt: new Date(Date.now() + 3600_000).toISOString() } as any,
