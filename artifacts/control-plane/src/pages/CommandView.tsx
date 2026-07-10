@@ -120,8 +120,10 @@ export default function CommandView(_props: { params?: { domain?: string } } = {
   const highestConfidence = [...portfolio].sort((a, b) => Number.parseFloat(String(b.confidence)) - Number.parseFloat(String(a.confidence)))[0]
 
   // Value Lifecycle — absorbed from ExecutiveValueDashboard.tsx (Executive Value retired, redirected here).
-  const executedAnnualValue = annual(valueMetrics.executedAnnualSavings, valueMetrics.executedMonthlySavings, 80000)
-  const driftPrevented = annual(valueMetrics.retainedAnnualSavings ?? valueMetrics.protectedAnnualSavings, valueMetrics.retainedMonthlySavings ?? valueMetrics.protectedMonthlySavings, 18000)
+  // liveFallback mirrors the retired page's guard: live/unconnected tenants get 0, never a synthetic sample value.
+  const liveFallback = executiveValue.isDemo ? undefined : 0
+  const executedAnnualValue = annual(valueMetrics.executedAnnualSavings, valueMetrics.executedMonthlySavings, liveFallback ?? 80000)
+  const driftPrevented = annual(valueMetrics.retainedAnnualSavings ?? valueMetrics.protectedAnnualSavings, valueMetrics.retainedMonthlySavings ?? valueMetrics.protectedMonthlySavings, liveFallback ?? 18000)
   const evidenceLevel = evidenceCoverage >= 80 ? 'HIGH' : evidenceCoverage >= 50 ? 'MEDIUM' : 'HIGH'
   const dataTrustLevel = trustCoverage >= 70 ? 'HIGH' : trustCoverage >= 40 ? 'MEDIUM' : 'HIGH'
   const valueLifecycle = [

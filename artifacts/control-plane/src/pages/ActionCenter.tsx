@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import { Shell } from '../components/layout/Shell'
-import { EmptyState, MetricCard, SectionLabel, StatusPill } from '../components/shared/Foundation'
+import { EmptyState, LiveDataError, MetricCard, SectionLabel, StatusPill } from '../components/shared/Foundation'
 import { useActionCenterData, type ActionReadinessReport, type GovernedAction, type GovernedActionDetail, type GovernedActionStatus, type ReadinessDimensionResult } from '../hooks/useActionCenterData'
 import { DataStateBanner } from '../components/shared/DataStateBanner'
 // Absorbed from ExecutionView.tsx (Execution Hub retired, redirected here — NAV-1).
@@ -18,11 +18,12 @@ function executionReadinessStatus(readiness: string) { return readiness === 'PEN
 // Rendered inside the "In Execution" tab — absorbed Execution Hub "Awaiting execution" list.
 function AwaitingExecutionRequests() {
   const workspace = useWorkspace()
-  const { data, executingIds, refresh } = useExecutionData()
+  const { data, executingIds, error, refresh } = useExecutionData()
   const [running, setRunning] = useState<string | null>(null)
   const [dryRunError, setDryRunError] = useState('')
   const runDryRun = async (id: string) => { setRunning(id); setDryRunError(''); try { await runExecutionRequestDryRun(id); await refresh() } catch (err) { setDryRunError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) } finally { setRunning(null) } }
   const executeLive = async (id: string) => { setRunning(id); setDryRunError(''); try { await executeExecutionRequest(id); await refresh() } catch (err) { setDryRunError(`Live data unavailable: ${err instanceof Error ? err.message : String(err)}`) } finally { setRunning(null) } }
+  if (error) return <LiveDataError error={error} onRetry={refresh} />
   if (!data.awaiting.length) return null
   return <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
     <SectionLabel>Execution Request Queue (absorbed from Execution Hub)</SectionLabel>
@@ -34,10 +35,11 @@ function AwaitingExecutionRequests() {
 // Rendered inside the "Protected" (Outcomes) tab — absorbed Execution Hub "Completed" list.
 function CompletedExecutionRequests() {
   const workspace = useWorkspace()
-  const { data, rollbackNotices, refresh } = useExecutionData()
+  const { data, rollbackNotices, error, refresh } = useExecutionData()
   const [outcomeResults, setOutcomeResults] = useState<Record<string, any>>({})
   const [running, setRunning] = useState<string | null>(null)
   const verifyOutcome = async (resultId: string) => { setRunning(resultId); try { const out = await verifyExecutionOutcome(resultId); setOutcomeResults((prev) => ({ ...prev, [resultId]: out.outcome })); await refresh() } finally { setRunning(null) } }
+  if (error) return <LiveDataError error={error} onRetry={refresh} />
   if (!data.completed.length) return null
   return <div style={{ display: 'grid', gap: 10, marginTop: 14 }}>
     <SectionLabel>Completed Executions (absorbed from Execution Hub)</SectionLabel>
