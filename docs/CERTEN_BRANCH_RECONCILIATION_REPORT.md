@@ -201,6 +201,81 @@ Compared against `claude/fervent-turing-j4ce96` @ `3bd9a00bd105c7a8a3934bade4e92
 | Landing page | ✅ `pages/LandingPage.tsx` + `website/defaultLandingPage.ts` | ✅ present, mounted at `/welcome`, terminology/denylist tests pass | **PRESERVED** |
 | Workspace Control Center | ✅ `pages/PilotWorkspace.tsx` (`/pilot-workspace`) + `pages/WorkspaceView` (`/workspace`) | ✅ both present and mounted | **PRESERVED** |
 | Executive Value | ✅ `pages/ExecutiveValueDashboard.tsx` + `hooks/useExecutiveValueData.ts` | ✅ present, mounted at `/executive-value` — dual-feature merge of main's `financialGovernance` + fervent's `dataState`/live-safe fallbacks (§2 of file ledger) | **PRESERVED** (enhanced — both branches' features combined) |
-| Operational-readiness fixes (6 items, Phase 4) | N/A (fixes originated across this engagement, pre-dating fervent/main split in some cases) | 4 of 6 fully verified working end-to-end (RBAC matrix, fixture-fallback gate, Entra production gating, tamper-hash audit trail); 2 of 6 (persistent credential storage, strictly-awaited audit write) found to have pre-existing gaps identical on both `main` and `fervent` — not regressed by this merge, recorded as follow-ups | **PRESERVED** where implemented; **pre-existing gaps documented, not silently hidden** |
+| Operational-readiness fixes (6 items, Phase 4) | N/A (fixes originated across this engagement, pre-dating fervent/main split in some cases) | **Superseded by §11:** an independent acceptance audit traced the credential-store and audit-awaiting gaps to commit `85b429b`, whose fixes lived on an unrelated, unmerged third branch and were never part of this reconciliation's inputs — not a genuine pre-existing design gap on `main` or `fervent`. All six controls, including a previously-unaudited governed-execution RBAC gap, are now fixed and verified on this branch (commit `e21538a`) | **PRESERVED** — see §11 for the corrected, complete verification |
 
 Nothing on the live branch was found to be lost, retired, or degraded by this reconciliation.
+
+## 11. Independent Integration Acceptance Audit (post-hoc, addendum)
+
+**This section supersedes §8's Phase 4 verification for the credential-persistence and audit-awaiting controls.** A follow-up, independently-run acceptance audit ("Do not trust the reconciliation report... without confirming each material claim against the actual integration-branch code and executed tests") found that §8's original verification, while accurately describing what it read, did not go far enough: it correctly observed that the credential store was in-memory and the audit write was fire-and-forget, and correctly noted these were identical on `main`'s and `fervent`'s own tips — but it stopped there rather than asking *why*, and incorrectly treated "identical on both source branches" as grounds to file these as acceptable pre-existing follow-ups rather than release blockers.
+
+### Root cause: commit `85b429b` never made it into either reconciled branch
+
+The real fixes for these gaps were written and committed as `85b429b` ("Fix Certen v1 operational readiness release blockers") earlier in this engagement, but on a **third, separate branch** — `claude/certen-v1-readiness-check-ux7vtt` — that forked from `main` at the exact commit (`22d1a9f`) used as this reconciliation's `main` parent, but was never merged into `main`, into `claude/fervent-turing-j4ce96`, or into this integration branch:
+
+```
+git merge-base --is-ancestor 85b429b HEAD                                        → not an ancestor
+git merge-base --is-ancestor 85b429b origin/main                                 → not an ancestor
+git merge-base --is-ancestor 85b429b origin/claude/fervent-turing-j4ce96          → not an ancestor
+git merge-base claude/certen-v1-readiness-check-ux7vtt origin/main               → 22d1a9f (fork point)
+```
+
+Because the reconciliation in this PR only ever merged `main` and `claude/fervent-turing-j4ce96` — the two branches named in the reconciliation task — commit `85b429b`'s fixes were structurally invisible to it. This is not a case of the fixes being reverted, overwritten, or dropped during conflict resolution; they were simply never on either side of the merge to begin with. The original §7 "Verification result" table describing these controls as "verified working" was checking the *presence of the class of fix conceptually* (encryption-key fail-closed behaviour, tenant scoping) rather than diffing against the specific commit that was supposed to have landed it — an honest but incomplete verification.
+
+### Disposition: Outcome B — ported and adapted, not blindly cherry-picked
+
+`85b429b` was **not** cherry-picked as-is, because its credential-store code was written against `main`'s original (non-tenant-scoped) `EncryptedMicrosoftTokenStore` API (`getTokenSet(credentialRef)`), whereas this integration branch already carries `fervent`'s tenant-scoped version (`getTokenSet(tenantId, credentialRef)`) — a genuine security improvement from the live branch that a blind cherry-pick would have silently regressed. Each of the six changes in `85b429b` was reviewed individually and re-implemented on top of the current tree in commit `e21538a`:
+
+1. **Governed-execution RBAC** — ported verbatim; `routes/governed-execution.ts`'s approve/execute/cancel now carry `requireCapability('APPROVE_ACTIONS')` (previously gated only by the router-level `READ_RECOMMENDATIONS`), and an awaited `recordAuditEvent(...)` call before every response.
+2. **Persistent Microsoft credential storage** — re-implemented as a `MicrosoftCredentialBackingStore` interface with tenant-scoped `get(tenantId, credentialRef)` (adapted from `85b429b`'s single-arg version), a new `DatabaseMicrosoftCredentialStore` backed by the restored `microsoft_oauth_credentials` table, and a `createMicrosoftTokenStore()` production entrypoint that fails closed without `DATABASE_URL` in production.
+3. **Fixture isolation** — `entra-client.ts`/`m365-client.ts`'s `fetchRecords()` no longer treats "no credentials" as "return fixtures"; fixtures require an explicit `config.useFixtures` opt-in, and missing credentials return `BLOCKED`/`MICROSOFT_CREDENTIALS_NOT_CONFIGURED`.
+4. **Entra production gating** — `exchangeCodeForClaims()` no longer routes through the generic JWT dev-fallback validator (which only accidentally failed in production because the literal string `"mock"` doesn't parse as a valid JWT); it now has an explicit `NODE_ENV === 'production'` check with a clear `ENTRA_TOKEN_EXCHANGE_NOT_IMPLEMENTED` error.
+5. **Startup config validation** — `production-config-validator.ts` now fails closed if `MICROSOFT_TOKEN_ENCRYPTION_KEY` is missing or under 32 characters in production.
+6. **Tests** — all 7 new/updated test files from `85b429b` were ported, with the two credential-store test files (`microsoft-token-store-persistence.test.ts`, `microsoft-token-db-store.test.ts`) adapted to call the tenant-scoped API and to add a tenant-isolation assertion that `85b429b`'s original (pre-tenant-scoping) version didn't need.
+
+### Acceptance table
+
+| Control | Reconciliation report claim (§8, superseded) | Independently observed (this audit) | Action |
+|---|---|---|---|
+| Credential persistence | "in-memory, not DB-backed... pre-existing on both branches" (filed as a follow-up) | Confirmed in-memory on the reconciled branch; root cause traced to `85b429b` (the real fix) living on an unrelated, unmerged third branch — not a genuine design decision on either `main` or `fervent` | **Fixed** — `DatabaseMicrosoftCredentialStore` + `createMicrosoftTokenStore()` ported and adapted for tenant scoping; production fails closed without `DATABASE_URL` |
+| Audit awaiting | "fire-and-forget by design... pre-existing on both branches" (filed as a follow-up, generic `auditMiddleware()` only) | Confirmed the *generic* HTTP-path audit middleware is intentionally fire-and-forget (unaffected by this fix — that design choice stands for the broad "audit every mutating request" catch-all), but the *specific* approve/execute/cancel governed-execution audit trail claimed as "fix #6" was never wired in at all on this branch — same root cause as above | **Fixed** — `governed-execution.ts` now awaits `recordAuditEvent()` before responding on approve/execute/cancel, verified against a real Postgres instance (`governed-execution-audit-trail.test.ts`, 2/2 passing) |
+| RBAC (governed-execution approve/execute/cancel) | Not separately flagged as a gap in §8 (only the `economic-operations` intent-based RBAC path was verified, which is a *different* execution surface) | The `/governed-execution/plans/:id/{approve,execute,cancel}` routes were gated only by the router-mount-level `READ_RECOMMENDATIONS` capability — any authenticated VIEWER-role caller could approve/execute/cancel governed execution plans | **Fixed** — `requireCapability('APPROVE_ACTIONS')` added per-route; `ROLES_WITHOUT_APPROVE_ACTIONS = [VIEWER, OPERATOR, AUDITOR]` rejected (403), `ROLES_WITH_APPROVE_ACTIONS = [APPROVER, TENANT_ADMIN, PLATFORM_ADMIN, GOVERNANCE_ADMIN]` accepted — 8/8 `governed-execution-rbac.test.ts` cases pass |
+| Fixture isolation | "fail-closed by default... ✅" (verified against the `economic-operations`/`m365-live-execution-readiness-gate.ts` path only) | That path was correctly verified, but a **second, separate** connector implementation (`production-connectors/entra` and `production-connectors/m365`, used by `runProductionConnectorsAudit`) still silently returned `READY` with fixture data whenever credentials were missing — the exact anti-pattern §8 believed was already closed everywhere | **Fixed** — both clients now require an explicit `useFixtures` opt-in; missing credentials return `BLOCKED`/`MICROSOFT_CREDENTIALS_NOT_CONFIGURED` in every mode including dry-run |
+| Entra production gating | "fails closed... ✅" (verified against `jwt-validation.ts`'s `validateDevFallback()` only) | That check is correct and unaffected, but `microsoft-entra.ts`'s `exchangeCodeForClaims()` — the actual `/login/callback` exchange — relied on `validateJwtToken("mock")` happening to reject the literal string `"mock"` as an invalid JWT once a real `JWT_SECRET`/`JWKS_URI` is configured in production; this is an accidental, fragile protection, not a deliberate one, and in non-production returned real usable `operator`-role claims for **any** authorization code | **Fixed** — explicit `NODE_ENV === 'production'` check added, independent of JWT-validation-library behaviour |
+| Route preservation | All 13 required routes present and resolving | Reconfirmed unchanged — this remediation touches only `api-server` backend files, no route/nav/page files | No change; re-verified |
+| Product preservation | Programs 3–15, Authority pages, Exposure Review, landing page, Workspace Control Center, Executive Value all preserved | Reconfirmed unchanged — no frontend or product-surface files were touched in this remediation | No change; re-verified |
+
+### Newly-confirmed pre-existing failures (unrelated to the above, investigated during this audit)
+
+Two additional failures were found while re-running the full targeted test matrix after the remediation, both confirmed via `git stash`/re-run to be **byte-for-byte pre-existing on the reconciled branch before this remediation commit** (i.e. not introduced by porting `85b429b`), and both unrelated to the credential/audit/RBAC scope of this audit:
+
+- `production-connectors.test.ts` — `"ServiceNow maps applications, owners, CMDB edges and missing tables"` fails (`serviceNowFixtures[0]` normalises to `OWNERSHIP_ASSIGNMENT` instead of the expected `APPLICATION_GRAPH_NODE`) — a ServiceNow normaliser/fixture-ordering bug, unrelated to Microsoft/Entra.
+- `production-connectors-audit.test.ts` / `live-tenant-readiness-audit.test.ts` — `"all expose capability discovery"` and `"LIVE_TENANT_READINESS_READY audit returns PASS"` both fail; the latter's `runLiveTenantReadinessAudit()` doesn't touch Microsoft/Entra code at all, ruling out any connection to this remediation.
+
+These are recorded as **PRE_EXISTING, out of scope for this audit's Critical Concern**, and should be triaged separately — they do not block this remediation, and were not silently fixed under the "do not broaden scope" instruction, but are disclosed here rather than omitted per Rule 8 ("a pre-existing release blocker remains a release blocker").
+
+### Verification of the remediation itself
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @workspace/db build` | ✅ clean |
+| `pnpm --filter @workspace/api-server build` | ✅ clean |
+| `pnpm --filter @workspace/control-plane typecheck` | ✅ clean (untouched by this remediation) |
+| `pnpm --filter @workspace/control-plane build` | ✅ clean (untouched by this remediation) |
+| `pnpm --filter @workspace/control-plane test` | ✅ 735/737 — same 2 known pre-existing failures, unchanged |
+| `governed-execution-rbac.test.ts` | ✅ 8/8 |
+| `governed-execution-audit-trail.test.ts` (real Postgres) | ✅ 2/2 |
+| `microsoft-token-store-persistence.test.ts` | ✅ 5/5 |
+| `microsoft-token-db-store.test.ts` (real Postgres) | ✅ 2/2 |
+| `microsoft-entra-stub-gating.test.ts` | ✅ 3/3 |
+| `production-config-validator.test.ts` | ✅ 17/17 |
+| `entra-live-integration.test.ts` | ✅ 2/2 |
+| `m365-live-integration.test.ts` | ✅ 1/1 |
+| `production-connectors.test.ts` | 7/8 — the ServiceNow failure above, confirmed pre-existing |
+| `economic-operations-rbac.test.ts` / `economic-operations-rbac-middleware.test.ts` | ✅ 17/17, 19/19 — unaffected by this remediation (separate RBAC subsystem) |
+| `database-tenant-isolation-live-integration.test.ts` | ✅ 3/3 |
+| `audit-tamper-evidence.test.ts` | ✅ 5/5 |
+| `outcome-finance-reconciliation-persistence.test.ts` | ✅ 1/1 |
+| `approval-workflow-execution-request.test.ts` | 0/8 — pre-existing on both `main`'s and `fervent`'s own tips (see §9), unaffected by this remediation |
+
+Remediation committed separately as `e21538a` (integration branch), clearly identified in its own commit message distinct from the original reconciliation merge (`4a1db85`) and follow-up fixes (`1c19f03`, `4820e13`).
